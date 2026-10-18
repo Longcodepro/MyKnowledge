@@ -1,0 +1,12 @@
+{
+  "framework": null,
+  "buildCommand": "node scripts/build.mjs",
+  "outputDirectory": "dist",
+  "cleanUrls": false,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    }
+  ]
+}
