@@ -1,0 +1,1260 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="vi" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Postman Lab</title>
+<style>
+:root{--bg:#fff;--bg2:#f6f6f8;--bg3:#ececf0;--fg:#1f1f23;--fg2:#6a6a72;--bd:#dcdce2;--acc:#ff6c37;--acc-bg:#fff0ea;--blue:#0b6bcb;--onblue:#fff;--ok:#0a7d3c;--warn:#a15c00;--err:#c62828;--m-get:#0a7d3c;--m-post:#a15c00;--m-put:#1565c0;--m-patch:#7b1fa2;--m-delete:#c62828;--code:#f4f4f7;--shadow:0 6px 24px rgba(0,0,0,.16)}
+[data-theme=dark]{--bg:#1c1c1f;--bg2:#242428;--bg3:#2f2f34;--fg:#ececf0;--fg2:#a2a2ac;--bd:#3b3b41;--acc:#ff8a5c;--acc-bg:#3a2a22;--blue:#5aa8ff;--onblue:#06213f;--ok:#4cc57e;--warn:#e8a54b;--err:#ff7b72;--m-get:#4cc57e;--m-post:#e8a54b;--m-put:#5aa8ff;--m-patch:#c58bff;--m-delete:#ff7b72;--code:#151518;--shadow:0 6px 24px rgba(0,0,0,.55)}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font:13px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;background:var(--bg);color:var(--fg);display:flex;flex-direction:column;overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+input[type=text],input[type=number],select,textarea{background:var(--bg);border:1px solid var(--bd);border-radius:5px;padding:5px 8px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--blue);outline-offset:-1px}
+code,pre,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
+pre{margin:0;white-space:pre-wrap;word-break:break-word}
+h2{font-size:17px;margin:20px 0 8px;font-weight:600}
+h3{font-size:14px;margin:16px 0 6px;font-weight:600}
+.top{display:flex;align-items:center;gap:6px;padding:0 12px;height:44px;border-bottom:1px solid var(--bd);background:var(--bg2);flex:none}
+.brand{font-weight:700;margin-right:12px;color:var(--acc)}
+.top nav{display:flex;gap:2px;flex:1;overflow-x:auto}
+.top nav button{border:0;background:none;padding:12px 12px;border-bottom:2px solid transparent;color:var(--fg2);white-space:nowrap}
+.top nav button.on{color:var(--fg);border-bottom-color:var(--acc);font-weight:600}
+.btn{border:1px solid var(--bd);background:var(--bg);border-radius:5px;padding:4px 10px}
+.btn:hover{background:var(--bg3)}
+.btn.pri{background:var(--blue);border-color:var(--blue);color:var(--onblue);font-weight:600}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn.flat{border-color:transparent;background:none}
+.btn.flat:hover{background:var(--bg3)}
+.btn.sm{padding:1px 8px;font-size:12px}
+.view{display:none;flex:1;min-height:0}
+.view.on{display:flex}
+.page{flex:1;overflow:auto;padding:18px 24px 60px}
+.page>*{max-width:1080px;margin-left:auto;margin-right:auto}
+.dim{color:var(--fg2)}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--err)}
+.badge{font-size:11px;padding:0 6px;border-radius:9px;border:1px solid var(--bd);background:var(--bg3);white-space:nowrap}
+.badge.acc{background:var(--acc-bg);border-color:var(--acc);color:var(--acc)}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--bd);vertical-align:top}
+th{font-weight:600;background:var(--bg2);font-size:12px}
+.card{border:1px solid var(--bd);border-radius:8px;background:var(--bg);margin:8px 0}
+.toast{position:fixed;left:50%;bottom:48px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:6px 14px;border-radius:6px;z-index:99}
+.mbg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:50}
+.modal{background:var(--bg);border:1px solid var(--bd);border-radius:10px;width:min(720px,94vw);max-height:90vh;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+.mh{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;font-weight:600;border-bottom:1px solid var(--bd)}
+.mb{padding:14px;overflow:auto}
+.mf{display:flex;justify-content:flex-end;gap:8px;padding:10px 14px;border-top:1px solid var(--bd)}
+.mb label{display:block;margin:10px 0 3px;font-weight:600}
+.full{width:100%}
+.menu{position:fixed;background:var(--bg);border:1px solid var(--bd);border-radius:8px;box-shadow:var(--shadow);padding:4px;z-index:60;min-width:190px}
+.menu button{display:block;width:100%;text-align:left;border:0;background:none;padding:6px 10px;border-radius:5px}
+.menu button:hover{background:var(--bg3)}
+.menu hr{border:0;border-top:1px solid var(--bd);margin:4px 0}
+.pm{display:flex;flex-direction:column;flex:1;min-width:0;min-height:0}
+.pm-body{flex:1;display:flex;min-height:0}
+.rail{width:86px;flex:none;border-right:1px solid var(--bd);background:var(--bg2);display:flex;flex-direction:column;padding:6px 4px;gap:4px}
+.rb{border:0;background:none;border-radius:6px;padding:9px 2px;font-size:11px;color:var(--fg2)}
+.rb.on{background:var(--bg3);color:var(--fg);font-weight:600}
+.side{width:292px;flex:none;border-right:1px solid var(--bd);overflow:auto;background:var(--bg2);padding-bottom:20px}
+.sh{display:flex;align-items:center;gap:6px;padding:8px 10px;font-weight:600}
+.sp{flex:1}
+.filt{margin:0 10px 8px;width:calc(100% - 20px)}
+.tr{display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;border-radius:5px;margin:0 4px;white-space:nowrap}
+.tr:hover{background:var(--bg3)}
+.tr.on{background:var(--bg3);font-weight:600}
+.tr .nm{flex:1;overflow:hidden;text-overflow:ellipsis}
+.tr .dots{visibility:hidden;border:0;background:none;padding:0 4px}
+.tr:hover .dots{visibility:visible}
+.chev{width:12px;color:var(--fg2)}
+.mt{font-size:10px;font-weight:700;min-width:32px}
+.m-get{color:var(--m-get)}.m-post{color:var(--m-post)}.m-put{color:var(--m-put)}.m-patch{color:var(--m-patch)}.m-delete{color:var(--m-delete)}.m-head,.m-options,.m-env,.m-col{color:var(--fg2)}
+.mainp{flex:1;min-width:0;display:flex;flex-direction:column}
+.tabstrip{display:flex;border-bottom:1px solid var(--bd);background:var(--bg2);height:38px;flex:none}
+.tabs{display:flex;overflow-x:auto;flex:1}
+.tb{display:flex;align-items:center;gap:6px;padding:0 10px;border-right:1px solid var(--bd);cursor:pointer;white-space:nowrap;max-width:210px;color:var(--fg2)}
+.tb .t{overflow:hidden;text-overflow:ellipsis}
+.tb.on{background:var(--bg);color:var(--fg);box-shadow:inset 0 2px 0 var(--acc)}
+.tb .x{border:0;background:none;visibility:hidden;padding:0 2px}
+.tb:hover .x,.tb.on .x{visibility:visible}
+.newtab{border:0;background:none;padding:0 12px;font-size:16px}
+.envbar{display:flex;align-items:center;gap:6px;padding:0 8px;border-left:1px solid var(--bd)}
+.main{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.req{flex:1;display:flex;flex-direction:column;min-height:0}
+.crumb{display:flex;align-items:center;gap:6px;padding:8px 14px 0}
+.rname{border:1px solid transparent;background:none;font-weight:600;font-size:14px;padding:2px 6px;min-width:80px}
+.rname:hover{border-color:var(--bd)}
+.urlrow{display:flex;gap:0;padding:8px 14px}
+.msel{width:104px;font-weight:700;border-radius:5px 0 0 5px;background:var(--bg2)}
+.urlwrap{position:relative;flex:1;min-width:0}
+.hl,.urlin{font:13px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;padding:6px 10px;height:33px;border:1px solid var(--bd);border-left:0;border-radius:0;width:100%}
+.hl{position:absolute;inset:0;white-space:pre;overflow:hidden;pointer-events:none;line-height:19px;background:var(--bg)}
+.urlin{position:relative;background:transparent;color:transparent;caret-color:var(--fg)}
+.urlin::selection{color:transparent;background:rgba(11,107,203,.28)}
+.urlin::placeholder{color:var(--fg2)}
+.v-ok{background:var(--acc-bg);color:var(--acc);border-radius:3px}
+.v-miss{color:var(--err);text-decoration:underline wavy}
+.sendbtn{border-radius:0 5px 5px 0;padding:0 22px;font-size:14px}
+.subtabs{display:flex;gap:2px;padding:0 14px;border-bottom:1px solid var(--bd);flex:none}
+.subtabs button{border:0;background:none;padding:7px 10px;border-bottom:2px solid transparent;color:var(--fg2);white-space:nowrap}
+.subtabs button.on{color:var(--fg);border-bottom-color:var(--acc)}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ok);margin-left:4px;vertical-align:middle}
+.sub{flex:0 0 42%;min-height:130px;overflow:auto;padding:10px 14px}
+.resp{flex:1;min-height:120px;overflow:auto;border-top:1px solid var(--bd);display:flex;flex-direction:column}
+.ph{display:flex;align-items:center;gap:8px;font-weight:600;margin:4px 0 6px}
+.ph .sp{flex:1}
+.linkbtn{border:0;background:none;color:var(--blue);padding:0}
+.kv input[type=text]{width:100%;border:0;border-radius:0;background:transparent;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;padding:5px 6px}
+.kv td,.kv th{border:1px solid var(--bd);padding:0}
+.kv th{padding:4px 8px}
+.kv td.ck{width:34px;text-align:center}
+.kv td.dl{width:30px;text-align:center}
+.kv tr.off input[type=text]{color:var(--fg2);text-decoration:line-through}
+.kv input[readonly]{color:var(--fg2)}
+.kv .hid td{background:var(--bg2);color:var(--fg2);padding:5px 8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+.xbtn{border:0;background:none;color:var(--fg2)}
+.radios{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:8px;align-items:center}
+.radios label{display:flex;gap:4px;align-items:center;cursor:pointer}
+textarea.code{width:100%;min-height:200px;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;resize:vertical;background:var(--code);tab-size:2}
+.scr{display:flex;gap:12px}
+.scr .ed{flex:1;min-width:0}
+.snip{width:230px;flex:none;border-left:1px solid var(--bd);padding-left:12px}
+.snip button{display:block;width:100%;text-align:left;border:0;background:none;padding:3px 4px;border-radius:4px;color:var(--blue)}
+.snip button:hover{background:var(--bg3)}
+.row{display:flex;gap:10px;align-items:center;margin:6px 0;flex-wrap:wrap}
+.row label{min-width:110px;font-weight:600}
+.empty{margin:auto;color:var(--fg2);text-align:center;padding:30px}
+.spin{width:22px;height:22px;border:3px solid var(--bd);border-top-color:var(--acc);border-radius:50%;margin:0 auto 8px;animation:sp 0.8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+.rhead{display:flex;align-items:center;gap:4px;padding:0 14px;border-bottom:1px solid var(--bd);flex:none}
+.rhead button.t{border:0;background:none;padding:7px 10px;border-bottom:2px solid transparent;color:var(--fg2)}
+.rhead button.t.on{color:var(--fg);border-bottom-color:var(--acc)}
+.stat{display:flex;gap:14px;font-size:12px;margin-left:auto}
+.stat span{cursor:help}
+.rbody{flex:1;overflow:auto;padding:8px 14px}
+.vtabs{display:flex;gap:4px;margin-bottom:6px}
+.vtabs button{border:0;background:none;padding:2px 10px;border-radius:12px;color:var(--fg2)}
+.vtabs button.on{background:var(--bg3);color:var(--fg)}
+.jk{color:#a31515}.js{color:#0b6b25}.jn{color:#0451a5}.jb{color:#a15c00}
+[data-theme=dark] .jk{color:#ff9d8f}[data-theme=dark] .js{color:#8fdc9f}[data-theme=dark] .jn{color:#8ec5ff}[data-theme=dark] .jb{color:#f0b866}
+.tres{padding:5px 8px;border-bottom:1px solid var(--bd)}
+.errbox{border:1px solid var(--err);border-radius:8px;padding:12px 14px;margin:12px 14px;background:var(--bg2)}
+.pm-console{height:230px;border-top:1px solid var(--bd);background:var(--bg2);display:flex;flex-direction:column;flex:none}
+.pm-console[hidden]{display:none}
+.ch{display:flex;gap:8px;align-items:center;padding:4px 10px;border-bottom:1px solid var(--bd)}
+.cb{flex:1;overflow:auto;padding:4px 10px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+.cb summary{cursor:pointer;padding:2px 0}
+.cd{padding:4px 0 8px 14px;color:var(--fg2)}
+.cd b{color:var(--fg)}
+.lg{padding:1px 0 1px 14px}.lg.warn{color:var(--warn)}.lg.error{color:var(--err)}
+.pm-bar{display:flex;gap:4px;align-items:center;padding:2px 8px;border-top:1px solid var(--bd);background:var(--bg2);flex:none}
+.varpop{position:fixed;right:14px;top:96px;width:380px;max-height:60vh;overflow:auto;background:var(--bg);border:1px solid var(--bd);border-radius:10px;box-shadow:var(--shadow);padding:10px 12px;z-index:40}
+.mrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0}
+.epc{padding:10px 14px}
+.epc .hd{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.epc .pth{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:600}
+.epc .mb2{min-width:56px;font-weight:700;font-size:12px}
+details>summary{cursor:pointer}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:860px){.grid2{grid-template-columns:1fr}.side{display:none}}
+.ctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.pipe{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;margin:10px 0}
+.chip{border:1.5px solid var(--bd);border-radius:8px;padding:6px 10px;min-width:92px;text-align:center;background:var(--bg);margin:2px 0}
+.chip small{display:block;color:var(--fg2);font-size:11px}
+.chip.done{background:var(--bg2)}
+.chip.cur{border-color:var(--acc);background:var(--acc-bg);font-weight:700}
+.chip.fail{border-color:var(--err);border-style:dashed}
+.chip.skip{opacity:.55;border-style:dotted}
+.arrow{align-self:center;padding:0 4px;color:var(--fg2)}
+.split{display:grid;grid-template-columns:330px 1fr;gap:14px;align-items:start}
+@media(max-width:860px){.split{grid-template-columns:1fr}}
+.steps button{display:block;width:100%;text-align:left;border:1px solid var(--bd);background:var(--bg);border-radius:8px;padding:7px 10px;margin:0 0 6px}
+.steps button.cur{border-color:var(--acc);background:var(--acc-bg)}
+.steps button.later{opacity:.55}
+.steps b{display:block}
+.lane{font-size:11px;font-weight:700;margin-right:6px;padding:0 6px;border-radius:9px;border:1px solid var(--bd)}
+.detail{border:1px solid var(--bd);border-radius:8px;padding:12px 14px;background:var(--bg)}
+.detail pre{background:var(--code);padding:10px;border-radius:6px;margin-top:8px;max-height:56vh;overflow:auto}
+.lab{display:flex;gap:12px;align-items:flex-start;padding:10px 14px}
+.lab .st{min-width:92px;font-weight:700}
+.bar{height:8px;border-radius:4px;background:var(--bg3);overflow:hidden;margin:6px 0 14px}
+.bar i{display:block;height:100%;background:var(--ok)}
+.rtab{margin:10px 0;overflow:auto}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">Postman Lab</div>
+  <nav>
+    <button data-v="postman" class="on">Postman</button>
+    <button data-v="guide">Hướng dẫn</button>
+    <button data-v="server">Endpoint và dữ liệu</button>
+    <button data-v="flow">Luồng request</button>
+    <button data-v="labs" id="navLabs">Bài lab</button>
+    <button data-v="ref">Tra cứu</button>
+  </nav>
+  <button class="btn" id="themeBtn">Chế độ tối</button>
+</header>
+
+<section class="view on" id="view-postman">
+  <div class="pm">
+    <div class="pm-body">
+      <div class="rail" id="rail"></div>
+      <aside class="side" id="side"></aside>
+      <div class="mainp">
+        <div class="tabstrip"><div class="tabs" id="tabs"></div><button class="newtab" id="newTab" title="New request">+</button>
+          <div class="envbar"><select id="envSel" title="Environment (môi trường đang dùng)"></select><button class="btn flat" id="eyeBtn" title="Quick look: xem biến đang có hiệu lực">Variables</button></div>
+        </div>
+        <div class="main" id="main"></div>
+      </div>
+    </div>
+    <div class="pm-console" id="console" hidden></div>
+    <div class="pm-bar"><button class="btn flat sm" id="btnConsole">Console</button><button class="btn flat sm" id="btnRunner">Runner</button></div>
+  </div>
+</section>
+<section class="view" id="view-guide"></section>
+<section class="view" id="view-server"></section>
+<section class="view" id="view-flow"></section>
+<section class="view" id="view-labs"></section>
+<section class="view" id="view-ref"></section>
+
+<script>
+/*LOGIC*/
+const HTTP=['get','post','put','patch','delete','head','options'];
+const CODES=[[200,'OK','Thành công, có nội dung trả về'],[201,'Created','Tạo mới thành công (thường kèm header Location)'],[202,'Accepted','Đã nhận, sẽ xử lý sau'],[204,'No Content','Thành công nhưng không có body (hay gặp ở DELETE)'],[301,'Moved Permanently','Chuyển hướng vĩnh viễn'],[302,'Found','Chuyển hướng tạm thời'],[304,'Not Modified','Dùng bản cache, nội dung không đổi'],[400,'Bad Request','Request sai cú pháp (JSON hỏng, tham số sai kiểu)'],[401,'Unauthorized','Chưa xác thực: thiếu token hoặc token sai'],[403,'Forbidden','Đã xác thực nhưng không đủ quyền'],[404,'Not Found','Không tìm thấy tài nguyên'],[405,'Method Not Allowed','Sai method cho endpoint này'],[408,'Request Timeout','Server chờ request quá lâu'],[409,'Conflict','Xung đột dữ liệu (ví dụ email đã tồn tại)'],[415,'Unsupported Media Type','Content-Type không được server chấp nhận'],[418,"I'm a teapot",'Mã đùa trong RFC 2324'],[422,'Unprocessable Entity','Cú pháp đúng nhưng dữ liệu không hợp lệ (validate lỗi)'],[429,'Too Many Requests','Gọi quá nhiều, bị giới hạn tốc độ'],[500,'Internal Server Error','Lỗi bên trong server'],[502,'Bad Gateway','Cổng nhận phản hồi hỏng từ server phía sau'],[503,'Service Unavailable','Server tạm thời không phục vụ'],[504,'Gateway Timeout','Server phía sau trả lời quá chậm']];
+const stText=c=>{const f=CODES.find(x=>x[0]===c);return f?f[1]:(c<300?'Success':c<400?'Redirect':c<500?'Client Error':'Server Error')};
+const stVi=c=>{const f=CODES.find(x=>x[0]===c);return f?f[2]:''};
+let uid=0;const nid=p=>p+(++uid);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const uuid=()=>'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&3|8)).toString(16)});
+const b64=s=>btoa(unescape(encodeURIComponent(s)));
+const b64u=s=>b64(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const utf8len=s=>new TextEncoder().encode(s).length;
+const cap=k=>k.replace(/(^|-)([a-z])/g,(m,a,b)=>a+b.toUpperCase());
+const fmtSize=n=>n<1024?n+' B':(n/1024).toFixed(2)+' KB';
+const KNOWN={'localhost:8080':'127.0.0.1','staging.api.test':'203.0.113.25','postman-echo.com':'52.20.137.171'};
+
+const S={cols:[],drafts:[],envs:[],activeEnv:null,globals:{vars:[]},tabs:[],active:null,history:[],logs:[],flow:null,fi:0,flags:{},srv:new Set(),view:'postman',side:'cols',console:false,speed:1};
+const newVar=()=>({key:'',initial:'',current:'',enabled:true});
+const newKV=()=>({key:'',value:'',desc:'',enabled:true});
+const mkAuth=(type,token)=>({type,token:token||'',user:'',pass:'',key:'',value:'',in:'header'});
+function newReq(o){return Object.assign({id:nid('r'),type:'request',name:'New Request',method:'GET',url:'',params:[],pathVars:[],headers:[],bodyMode:'none',rawType:'json',raw:'',form:[],urlenc:[],auth:mkAuth('inherit'),pre:'',post:'',doc:'',timeout:0,noCache:false,noToken:false},o||{})}
+const mkEnv=(name,base)=>({id:nid('e'),name,vars:[{key:'baseUrl',initial:base,current:base,enabled:true}]});
+function seed(){
+  const col={id:nid('c'),name:'My Collection',auth:mkAuth('none'),vars:[],items:[]};
+  col.items.push(newReq({name:'Get data',method:'GET',url:'postman-echo.com/get',post:'pm.test("Status code is 200", function () {\n    pm.response.to.have.status(200);\n});'}));
+  col.items.push(newReq({name:'Post data',method:'POST',url:'postman-echo.com/post',bodyMode:'raw',rawType:'json',raw:'{\n  "name": "Nguyen Van A",\n  "job": "developer"\n}'}));
+  S.cols=[col];S.envs=[mkEnv('Local','http://localhost:8080'),mkEnv('Staging','https://staging.api.test')];resetDB();
+}
+function walk(items,fn){for(const it of items){if(fn(it)===true)return true;if(it.type==='folder'&&walk(it.items,fn))return true}return false}
+function findItem(id){let f=null;S.cols.forEach(c=>walk(c.items,it=>{if(it.id===id){f=it;return true}}));return f||S.drafts.find(d=>d.id===id)||null}
+function colOf(id){return S.cols.find(c=>walk(c.items,it=>it.id===id))}
+function parentOf(id){let res=null;S.cols.forEach(c=>{if(c.items.some(i=>i.id===id))res=c;walk(c.items,it=>{if(it.type==='folder'&&it.items.some(i=>i.id===id))res=it})});return res}
+const activeEnvObj=()=>S.envs.find(e=>e.id===S.activeEnv);
+const snapshot=r=>JSON.parse(JSON.stringify(r,(k,v)=>k[0]==='_'?undefined:v));
+const flatReqs=c=>{const l=[];walk(c.items,it=>{if(it.type==='request')l.push(it)});return l};
+
+/* ---------- URL & params ---------- */
+function splitUrl(u){const i=u.indexOf('?');return i<0?[u,'']:[u.slice(0,i),u.slice(i+1)]}
+function parseUrl(u){if(!/^[a-z][a-z0-9+.-]*:\/\//i.test(u))u='http://'+u;try{return new URL(u)}catch(e){return null}}
+function syncParamsFromUrl(r){const q=splitUrl(r.url)[1];const dis=r.params.filter(p=>!p.enabled);const oldEn=r.params.filter(p=>p.enabled);const en=q?q.split('&').map((s,i)=>{const j=s.indexOf('=');return{key:j<0?s:s.slice(0,j),value:j<0?'':s.slice(j+1),desc:(oldEn[i]&&oldEn[i].desc)||'',enabled:true}}):[];r.params=[...en,...dis];syncPathVars(r)}
+function syncUrlFromParams(r){const b=splitUrl(r.url)[0];const q=r.params.filter(p=>p.enabled&&(p.key||p.value)).map(p=>p.key+'='+p.value).join('&');r.url=b+(q?'?'+q:'');syncPathVars(r)}
+function syncPathVars(r){const base=splitUrl(r.url)[0].replace(/^[a-z][a-z0-9+.-]*:\/\//i,'');const names=[];base.replace(/\/:([A-Za-z_]\w*)/g,(m,n)=>{if(!names.includes(n))names.push(n);return m});r.pathVars=names.map(n=>r.pathVars.find(p=>p.key===n)||{key:n,value:'',desc:''})}
+
+/* ---------- variables ---------- */
+function dyn(n){switch(n){case'$guid':case'$randomUUID':return uuid();case'$timestamp':return String(Math.floor(Date.now()/1000));case'$isoTimestamp':return new Date().toISOString();case'$randomInt':return String(rnd(0,1000));case'$randomEmail':return'user'+rnd(100,9999)+'@example.com';case'$randomFullName':return['Nguyen Van An','Tran Thi Binh','Le Minh Chau','Pham Quoc Dat'][rnd(0,3)];default:return null}}
+function lookup(n,ctx){
+  if(ctx.local&&Object.prototype.hasOwnProperty.call(ctx.local,n))return{v:String(ctx.local[n]),scope:'Local'};
+  const e=activeEnvObj();let x=e&&e.vars.find(v=>v.enabled&&v.key===n);if(x)return{v:x.current||x.initial,scope:'Environment'};
+  x=ctx.col&&ctx.col.vars.find(v=>v.enabled&&v.key===n);if(x)return{v:x.current||x.initial,scope:'Collection'};
+  x=S.globals.vars.find(v=>v.enabled&&v.key===n);if(x)return{v:x.current||x.initial,scope:'Globals'};
+  return null;
+}
+function resolve(str,ctx,used){
+  let s=String(str);
+  for(let i=0;i<3&&s.includes('{{');i++){
+    const before=s;
+    s=s.replace(/\{\{\s*([^{}]+?)\s*\}\}/g,(m,n)=>{
+      if(n[0]==='$'){const d=dyn(n);if(d!==null){if(used&&i===0)used.list.push({name:n,value:d,scope:'Dynamic'});return d}}
+      const f=lookup(n,ctx);
+      if(f){if(used&&!used.list.some(u=>u.name===n))used.list.push({name:n,value:f.v,scope:f.scope});return f.v}
+      if(used&&!used.miss.includes(n))used.miss.push(n);return m;
+    });
+    if(s===before)break;
+  }
+  return s;
+}
+function effAuth(r,col){return r.auth.type!=='inherit'?{a:r.auth,from:'request'}:{a:col?col.auth:{type:'none'},from:'collection'}}
+
+/* ---------- build request ---------- */
+const CT={json:'application/json',text:'text/plain',javascript:'application/javascript',html:'text/html',xml:'application/xml'};
+function autoHeaders(r){
+  const l=[];let ct=null;
+  if(r.bodyMode==='raw')ct=CT[r.rawType]||'text/plain';else if(r.bodyMode==='urlencoded')ct='application/x-www-form-urlencoded';else if(r.bodyMode==='form-data')ct='multipart/form-data; boundary=<calculated when request is sent>';
+  const calc='<calculated when request is sent>';
+  if(ct)l.push(['Content-Type',ct]);
+  if(r.bodyMode!=='none')l.push(['Content-Length',calc]);
+  l.push(['User-Agent','PostmanRuntime/7.43.0'],['Accept','*/*']);
+  if(r.noCache)l.push(['Cache-Control','no-cache']);
+  if(!r.noToken)l.push(['Postman-Token',calc]);
+  l.push(['Host',calc],['Accept-Encoding','gzip, deflate, br'],['Connection','keep-alive']);
+  return l.filter(h=>!r.headers.some(u=>u.enabled&&u.key.toLowerCase()===h[0].toLowerCase()));
+}
+function buildRequest(r,ctx){
+  const used={list:[],miss:[]};const RS=s=>resolve(String(s==null?'':s),ctx,used);
+  let [base,q]=splitUrl(r.url.trim());
+  r.pathVars.forEach(pv=>{if(pv.value!=='')base=base.replace(new RegExp('/:'+pv.key+'(?=/|$)'),'/'+pv.value)});
+  let url=RS(base+(q?'?'+q:'')).replace(/ /g,'%20');
+  if(!/^[a-z][a-z0-9+.-]*:\/\//i.test(url))url='http://'+url;
+  const {a}=effAuth(r,ctx.col);const hdrs=[];const has=k=>hdrs.some(h=>h[0].toLowerCase()===k.toLowerCase());
+  r.headers.filter(h=>h.enabled&&h.key).forEach(h=>hdrs.push([RS(h.key),RS(h.value)]));
+  let authDesc='No Auth';
+  if(a.type==='bearer'){const t=RS(a.token);if(!has('authorization'))hdrs.push(['Authorization','Bearer '+t]);authDesc='Bearer Token → header Authorization'}
+  else if(a.type==='basic'){hdrs.push(['Authorization','Basic '+b64(RS(a.user)+':'+RS(a.pass))]);authDesc='Basic Auth → header Authorization (base64 của user:pass)'}
+  else if(a.type==='apikey'){const k=RS(a.key),v=RS(a.value);if(a.in==='query'){url+=(url.includes('?')?'&':'?')+encodeURIComponent(k)+'='+encodeURIComponent(v);authDesc='API Key → query ?'+k+'=…'}else{hdrs.push([k,v]);authDesc='API Key → header '+k}}
+  let body='',ct=null,pairs=null;
+  if(r.bodyMode==='raw'){body=RS(r.raw);ct=CT[r.rawType]||'text/plain'}
+  else if(r.bodyMode==='urlencoded'){pairs=r.urlenc.filter(x=>x.enabled&&x.key).map(x=>[RS(x.key),RS(x.value)]);body=pairs.map(p=>encodeURIComponent(p[0])+'='+encodeURIComponent(p[1])).join('&');ct='application/x-www-form-urlencoded'}
+  else if(r.bodyMode==='form-data'){pairs=r.form.filter(x=>x.enabled&&x.key).map(x=>[RS(x.key),RS(x.value)]);const bd='--------------------------'+Array.from({length:24},()=>rnd(0,9)).join('');body=pairs.map(p=>'--'+bd+'\r\nContent-Disposition: form-data; name="'+p[0]+'"\r\n\r\n'+p[1]+'\r\n').join('')+'--'+bd+'--';ct='multipart/form-data; boundary='+bd}
+  if(ct&&!has('content-type'))hdrs.push(['Content-Type',ct]);
+  if(r.bodyMode!=='none'&&!has('content-length'))hdrs.push(['Content-Length',String(utf8len(body))]);
+  if(!has('user-agent'))hdrs.push(['User-Agent','PostmanRuntime/7.43.0']);
+  if(!has('accept'))hdrs.push(['Accept','*/*']);
+  if(r.noCache&&!has('cache-control'))hdrs.push(['Cache-Control','no-cache']);
+  if(!r.noToken&&!has('postman-token'))hdrs.push(['Postman-Token',uuid()]);
+  const uo=parseUrl(url);if(!has('host'))hdrs.push(['Host',uo?uo.host:'']);
+  if(!has('accept-encoding'))hdrs.push(['Accept-Encoding','gzip, deflate, br']);
+  if(!has('connection'))hdrs.push(['Connection','keep-alive']);
+  return{method:r.method,url,uo,headers:hdrs,body,pairs,used,authDesc,ct};
+}
+const reqText=b=>{const u=b.uo;return b.method+' '+u.pathname+u.search+' HTTP/1.1\n'+b.headers.map(h=>h[0]+': '+h[1]).join('\n')+'\n\n'+(b.body||'')};
+const resText=res=>'HTTP/1.1 '+res.status+' '+stText(res.status)+'\n'+Object.entries(res.headers).map(([k,v])=>cap(k)+': '+v).join('\n')+(res.body?'\n\n'+res.body:'');
+
+/* ---------- mock server ---------- */
+const DB={users:[],nextId:7,tokens:new Set()};
+function resetDB(){DB.users=[['Admin','admin@example.com','admin'],['Nguyễn Văn An','an.nguyen@example.com','user'],['Trần Thị Bích','bich.tran@example.com','user'],['Lê Hoàng Cường','cuong.le@example.com','user'],['Phạm Minh Dũng','dung.pham@example.com','user'],['Võ Thanh Hà','ha.vo@example.com','user']].map((u,i)=>({id:i+1,name:u[0],email:u[1],role:u[2],createdAt:'2026-0'+(i+1)+'-15T08:00:00Z'}));DB.nextId=7;DB.tokens.clear()}
+const ROUTE_LABEL={echo:null,headers:'GET /headers',status:'ANY /status/:code',delay:'GET /delay/:seconds',login:'POST /auth/login',list:'GET /users',create:'POST /users',get:'GET /users/:id',put:'PUT /users/:id',patch:'PATCH /users/:id',del:'DELETE /users/:id'};
+function serve(q){
+  const trace=[];const T=(stage,title,detail,ok)=>trace.push({stage,title,detail,ok:ok!==false});
+  const u=q.url,host=u.host,method=q.method,path=u.pathname.replace(/\/+$/,'')||'/';
+  const isEcho=host==='postman-echo.com';const delay=rnd(40,180);
+  const baseH={'content-type':'application/json; charset=utf-8','date':new Date().toUTCString(),'connection':'keep-alive'};
+  if(isEcho)baseH.server='nginx';else{baseH['x-powered-by']='Express';baseH['x-server']=host==='staging.api.test'?'staging':'local-dev'}
+  const out={delay};
+  const fin=(status,body,extra)=>{const txt=body===undefined?'':(typeof body==='string'?body:JSON.stringify(body,null,2));const h=Object.assign({},baseH,extra||{});if(status===204||status===304||!txt)delete h['content-type'];if(txt)h['content-length']=String(utf8len(txt));T('serialize','Đóng gói response',status+' '+stText(status)+' · '+(txt?txt.length+' ký tự JSON':'không có body'));return{status,body:txt,headers:h,trace,delay:out.delay}};
+  const R=[['GET',/^\/get$/,'echo'],['POST',/^\/post$/,'echo'],['PUT',/^\/put$/,'echo'],['PATCH',/^\/patch$/,'echo'],['DELETE',/^\/delete$/,'echo'],['GET',/^\/headers$/,'headers'],['*',/^\/status\/(\d{3})$/,'status'],['GET',/^\/delay\/(\d+)$/,'delay']];
+  if(!isEcho)R.push(['POST',/^\/auth\/login$/,'login'],['GET',/^\/users$/,'list'],['POST',/^\/users$/,'create'],['GET',/^\/users\/([^/]+)$/,'get'],['PUT',/^\/users\/([^/]+)$/,'put'],['PATCH',/^\/users\/([^/]+)$/,'patch'],['DELETE',/^\/users\/([^/]+)$/,'del']);
+  const pm=R.filter(r=>r[1].test(path));
+  if(!pm.length){T('router','Router','Không có route nào khớp "'+path+'"'+(isEcho?' (host này chỉ có endpoint tiện ích)':''),false);return fin(404,{error:'Not Found',message:'Cannot '+method+' '+path})}
+  const hit=pm.find(r=>r[0]==='*'||r[0]===method);
+  if(!hit){const allow=[...new Set(pm.map(r=>r[0]))].join(', ');T('router','Router','Đường dẫn "'+path+'" có tồn tại nhưng không hỗ trợ '+method+'. Hỗ trợ: '+allow,false);return fin(405,{error:'Method Not Allowed',message:method+' is not allowed on '+path},{allow})}
+  const m=hit[1].exec(path),param=m[1],name=hit[2];
+  T('router','Router','Khớp route '+(ROUTE_LABEL[name]||(method+' '+path))+(param!==undefined?' · tham số: "'+param+'"':''));
+  const needAuth=()=>{
+    const a=q.headers.authorization;
+    if(!a){T('auth','Middleware xác thực','Không thấy header Authorization',false);return fin(401,{error:'Unauthorized',message:'Missing or invalid Bearer token'},{'www-authenticate':'Bearer realm="api"'})}
+    const mm=/^Bearer\s+(.+)$/i.exec(a);
+    if(!mm||!DB.tokens.has(mm[1])){T('auth','Middleware xác thực',mm?'Token không nằm trong danh sách hợp lệ (sai hoặc đã hết hạn)':'Header Authorization không đúng dạng "Bearer <token>"',false);return fin(401,{error:'Unauthorized',message:'Missing or invalid Bearer token'},{'www-authenticate':'Bearer realm="api"'})}
+    T('auth','Middleware xác thực','Token hợp lệ');return null;
+  };
+  const needJson=()=>{
+    const ct=q.headers['content-type']||'';
+    if(!/application\/json/i.test(ct)){T('parse','Parse body','Content-Type là "'+(ct||'(trống)')+'" nhưng server chỉ nhận application/json',false);return{err:fin(415,{error:'Unsupported Media Type',message:'Content-Type must be application/json'})}}
+    let b;try{b=JSON.parse(q.body||'')}catch(e){T('parse','Parse body JSON',e.message,false);return{err:fin(400,{error:'Bad Request',message:'Invalid JSON body: '+e.message})}}
+    if(!b||typeof b!=='object'||Array.isArray(b)){T('parse','Parse body JSON','Body phải là một object JSON',false);return{err:fin(400,{error:'Bad Request',message:'Body must be a JSON object'})}}
+    T('parse','Parse body JSON','Đã parse thành object, các key: '+(Object.keys(b).join(', ')||'(rỗng)'));return{b};
+  };
+  const idCheck=()=>{if(!/^\d+$/.test(param)){T('validate','Validate tham số','id "'+param+'" không phải số nguyên',false);return fin(400,{error:'Bad Request',message:'id must be a number'})}T('validate','Validate tham số','id = '+param+' hợp lệ');return null};
+  const vUser=(b,full)=>{const e=[];if(full||'name' in b){if(typeof b.name!=='string'||b.name.trim().length<2)e.push({field:'name',message:'name must be a string with at least 2 characters'})}if(full||'email' in b){if(typeof b.email!=='string'||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(b.email))e.push({field:'email',message:'email must be a valid email address'})}if('role' in b&&!['user','admin'].includes(b.role))e.push({field:'role',message:'role must be "user" or "admin"'});return e};
+  const vFail=e=>{T('validate','Validate dữ liệu','Sai: '+e.map(x=>x.field).join(', '),false);return fin(422,{error:'Unprocessable Entity',details:e})};
+  let r1;
+  switch(name){
+    case'echo':{
+      const args={};u.searchParams.forEach((v,k)=>{args[k]=v});
+      const hdr={host};Object.keys(q.headers).forEach(k=>{if(k!=='host')hdr[k]=q.headers[k]});hdr['x-forwarded-proto']=u.protocol.replace(':','');
+      let o;
+      if(method==='GET')o={args,headers:hdr,url:u.href};
+      else{const ct=q.headers['content-type']||'';let data=q.body||'',json=null,form={};
+        if(/json/i.test(ct)){try{json=JSON.parse(q.body);data=json}catch(e){json=null}}
+        else if(/urlencoded|form-data/i.test(ct)&&q.pairs){q.pairs.forEach(p=>{form[p[0]]=p[1]});data=''}
+        o={args,data,files:{},form,headers:hdr,json,url:u.href}}
+      T('handler','Handler echo','Đọc lại request và trả nguyên văn dưới dạng JSON');return fin(200,o);
+    }
+    case'headers':T('handler','Handler headers','Trả danh sách header server nhận được');return fin(200,{headers:Object.assign({host},q.headers)});
+    case'status':{const c=+param;T('handler','Handler status','Trả đúng mã '+c+' như yêu cầu');return fin(c,[204,304].includes(c)?undefined:{status:c})}
+    case'delay':{const n=Math.min(+param,5);out.delay=n*1000;T('handler','Handler delay','Chờ '+n+' giây rồi mới trả lời');return fin(200,{delay:+param})}
+    case'login':{
+      const j=needJson();if(j.err)return j.err;const b=j.b,e=[];
+      if(typeof b.email!=='string'||!b.email)e.push({field:'email',message:'email is required'});
+      if(typeof b.password!=='string'||!b.password)e.push({field:'password',message:'password is required'});
+      if(e.length)return vFail(e);T('validate','Validate dữ liệu','email và password đều có');
+      const us=DB.users.find(x=>x.email===b.email);
+      if(!us||b.password!=='123456'){T('handler','Handler đăng nhập','Sai email hoặc mật khẩu',false);return fin(401,{error:'Unauthorized',message:'Invalid email or password'})}
+      const iat=Math.floor(Date.now()/1000);const tok='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.'+b64u(JSON.stringify({sub:us.id,email:us.email,iat,exp:iat+3600}))+'.'+Array.from({length:43},()=>'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[rnd(0,61)]).join('');
+      DB.tokens.add(tok);T('handler','Handler đăng nhập','Tạo token cho '+us.email+', hết hạn sau 3600 giây');
+      return fin(200,{access_token:tok,token_type:'Bearer',expires_in:3600,user:{id:us.id,name:us.name,email:us.email,role:us.role}},{'set-cookie':'sid='+uuid().replace(/-/g,'')+'; Path=/; HttpOnly; Max-Age=3600'});
+    }
+    case'list':{
+      if(r1=needAuth())return r1;
+      const page=Math.max(1,parseInt(u.searchParams.get('page'))||1),limit=Math.min(50,Math.max(1,parseInt(u.searchParams.get('limit'))||5)),qq=(u.searchParams.get('q')||'').toLowerCase();
+      T('validate','Đọc query','page='+page+', limit='+limit+', q="'+qq+'"');
+      const all=DB.users.filter(x=>!qq||x.name.toLowerCase().includes(qq)||x.email.toLowerCase().includes(qq));const data=all.slice((page-1)*limit,page*limit);
+      T('handler','Handler danh sách','Lọc được '+all.length+' người dùng, trả '+data.length+' bản ghi của trang '+page);
+      return fin(200,{data,page,limit,total:all.length},{'x-total-count':String(all.length)});
+    }
+    case'get':{
+      if(r1=needAuth())return r1;if(r1=idCheck())return r1;
+      const us=DB.users.find(x=>x.id===+param);if(!us){T('handler','Handler lấy chi tiết','Không có user id '+param,false);return fin(404,{error:'Not Found',message:'User '+param+' not found'})}
+      T('handler','Handler lấy chi tiết','Tìm thấy '+us.email);return fin(200,us);
+    }
+    case'create':{
+      if(r1=needAuth())return r1;const j=needJson();if(j.err)return j.err;const b=j.b,e=vUser(b,true);if(e.length)return vFail(e);T('validate','Validate dữ liệu','name, email hợp lệ');
+      if(DB.users.some(x=>x.email===b.email)){T('handler','Handler tạo user','Email "'+b.email+'" đã tồn tại',false);return fin(409,{error:'Conflict',message:'Email already exists'})}
+      const us={id:DB.nextId++,name:b.name.trim(),email:b.email,role:b.role||'user',createdAt:new Date().toISOString()};DB.users.push(us);
+      T('handler','Handler tạo user','Thêm user id '+us.id+' vào database');return fin(201,us,{location:'/users/'+us.id});
+    }
+    case'put':case'patch':{
+      if(r1=needAuth())return r1;if(r1=idCheck())return r1;const j=needJson();if(j.err)return j.err;const b=j.b,full=name==='put';
+      if(!full&&!['name','email','role'].some(k=>k in b)){return vFail([{field:'body',message:'at least one of name, email, role is required'}])}
+      const e=vUser(b,full);if(e.length)return vFail(e);T('validate','Validate dữ liệu',full?'name, email hợp lệ':'các field gửi lên hợp lệ');
+      const us=DB.users.find(x=>x.id===+param);if(!us){T('handler','Handler cập nhật','Không có user id '+param,false);return fin(404,{error:'Not Found',message:'User '+param+' not found'})}
+      if(b.email&&DB.users.some(x=>x.email===b.email&&x.id!==us.id)){T('handler','Handler cập nhật','Email đã thuộc user khác',false);return fin(409,{error:'Conflict',message:'Email already exists'})}
+      if(full){us.name=b.name.trim();us.email=b.email;us.role=b.role||'user'}else{['name','email','role'].forEach(k=>{if(k in b)us[k]=b[k]})}
+      T('handler','Handler cập nhật',(full?'Thay toàn bộ':'Sửa một phần')+' user id '+us.id);return fin(200,us);
+    }
+    case'del':{
+      if(r1=needAuth())return r1;if(r1=idCheck())return r1;
+      const i=DB.users.findIndex(x=>x.id===+param);if(i<0){T('handler','Handler xóa','Không có user id '+param,false);return fin(404,{error:'Not Found',message:'User '+param+' not found'})}
+      DB.users.splice(i,1);T('handler','Handler xóa','Đã xóa user id '+param+', không có body trả về');return fin(204);
+    }
+  }
+  return fin(500,{error:'Internal Server Error'});
+}
+
+/* ---------- sandbox pm.* ---------- */
+class AssertionError extends Error{constructor(m){super(m);this.name='AssertionError'}}
+function deepEqual(a,b){if(a===b)return true;if(typeof a!=='object'||typeof b!=='object'||!a||!b)return false;const ka=Object.keys(a),kb=Object.keys(b);if(ka.length!==kb.length||Array.isArray(a)!==Array.isArray(b))return false;return ka.every(k=>deepEqual(a[k],b[k]))}
+const show=v=>{try{return typeof v==='string'?"'"+v+"'":(v===undefined?'undefined':JSON.stringify(v))}catch(e){return String(v)}};
+const typeOf=v=>Array.isArray(v)?'array':v===null?'null':typeof v;
+function expect(val,neg){
+  neg=!!neg;const o={};
+  const A=(cond,verb,exp)=>{if(neg?cond:!cond)throw new AssertionError('expected '+show(val)+' to '+(neg?'not ':'')+verb+(exp===undefined?'':' '+show(exp)))};
+  ['to','be','been','is','that','which','and','has','have','with','at','of','same','does','still','deep','nested','own'].forEach(k=>Object.defineProperty(o,k,{get:()=>o}));
+  Object.defineProperty(o,'not',{get:()=>expect(val,!neg)});
+  const G=(k,f,v)=>Object.defineProperty(o,k,{get:()=>{A(f(),v);return o}});
+  G('ok',()=>!!val,'be truthy');G('true',()=>val===true,'be true');G('false',()=>val===false,'be false');G('null',()=>val===null,'be null');G('undefined',()=>val===undefined,'be undefined');G('exist',()=>val!=null,'exist');
+  G('empty',()=>val==null||(typeof val==='object'?Object.keys(val).length===0:String(val).length===0),'be empty');
+  const M=(names,f,verb)=>names.forEach(n=>{o[n]=(x,y)=>{A(f(x,y),verb,x);return o}});
+  M(['equal','equals','eq'],x=>val===x,'equal');M(['eql','eqls'],x=>deepEqual(val,x),'deeply equal');
+  M(['above','gt','greaterThan'],x=>val>x,'be above');M(['below','lt','lessThan'],x=>val<x,'be below');M(['least','gte'],x=>val>=x,'be at least');M(['most','lte'],x=>val<=x,'be at most');
+  o.within=(a,b)=>{A(val>=a&&val<=b,'be within '+a+'..'+b);return o};
+  M(['a','an'],x=>typeOf(val)===String(x).toLowerCase(),'be a');
+  o.property=(k,v)=>{const has=val!=null&&Object.prototype.hasOwnProperty.call(Object(val),k);if(arguments.length>1||v!==undefined){A(has&&deepEqual(val[k],v),'have property '+show(k)+' of '+show(v))}else A(has,'have property '+show(k));return o};
+  M(['include','includes','contain','contains'],x=>typeof val==='string'?val.includes(x):Array.isArray(val)?val.some(i=>deepEqual(i,x)):val&&typeof val==='object'?(typeof x==='object'?Object.keys(x).every(k=>deepEqual(val[k],x[k])):false):false,'include');
+  M(['lengthOf','length'],x=>val!=null&&val.length===x,'have length of');
+  M(['oneOf'],x=>Array.isArray(x)&&x.some(i=>deepEqual(i,val)),'be one of');
+  o.match=re=>{A(re.test(String(val)),'match '+re);return o};
+  o.string=s=>{A(String(val).includes(s),'contain string '+show(s));return o};
+  o.keys=(...ks)=>{const k=Array.isArray(ks[0])?ks[0]:ks;A(val&&k.every(x=>x in val),'have keys '+show(k));return o};
+  return o;
+}
+function makePm(E){
+  const lst=(get,label)=>({
+    get:k=>{const L=get();const v=L&&L.find(x=>x.key===k&&x.enabled);return v?(v.current||v.initial):undefined},
+    set:(k,val)=>{const L=get();if(!L){E.logs.push({lvl:'warn',text:'pm.'+label+'.set: không có Environment nào đang được chọn nên giá trị không được lưu'});return}let v=L.find(x=>x.key===k);if(!v){v={key:k,initial:'',current:'',enabled:true};L.push(v)}v.current=String(val);v.enabled=true;E.changes.push({scope:label,key:k,value:String(val)})},
+    unset:k=>{const L=get();if(L){const i=L.findIndex(x=>x.key===k);if(i>=0)L.splice(i,1)}},
+    has:k=>{const L=get();return !!(L&&L.some(x=>x.key===k))}
+  });
+  const env=lst(()=>{const e=activeEnvObj();return e&&e.vars},'environment');
+  const pm={
+    environment:Object.assign(env,{get name(){const e=activeEnvObj();return e&&e.name}}),
+    collectionVariables:lst(()=>E.ctx.col&&E.ctx.col.vars,'collectionVariables'),
+    globals:lst(()=>S.globals.vars,'globals'),
+    variables:{get:k=>{const f=lookup(k,E.ctx);return f?f.v:undefined},set:(k,v)=>{E.ctx.local[k]=v},has:k=>!!lookup(k,E.ctx),replaceIn:s=>resolve(s,E.ctx,null)},
+    info:{requestName:E.r.name,eventName:E.kind==='pre'?'prerequest':'test'},
+    request:{method:E.r.method,url:{toString:()=>E.r.url},headers:{get:k=>{const h=E.r.headers.find(x=>x.key.toLowerCase()===String(k).toLowerCase());return h?h.value:undefined}}},
+    expect:v=>expect(v),
+    test:(name,fn)=>{try{fn();E.tests.push({name,pass:true})}catch(e){E.tests.push({name,pass:false,error:(e.name||'Error')+': '+e.message})}},
+  };
+  pm.test.skip=(name)=>{E.tests.push({name,pass:true,skipped:true})};
+  if(E.res){
+    const res=E.res,hd=Object.fromEntries(Object.entries(res.headers).map(([k,v])=>[k.toLowerCase(),v]));
+    const need=(c,msg)=>{if(!c)throw new AssertionError(msg)};
+    const to={have:{status:x=>{const ok=typeof x==='number'?res.status===x:String(x).toLowerCase()===res.statusText.toLowerCase();need(ok,'expected response to have status '+(typeof x==='number'?'code ':'reason ')+show(x)+' but got '+(typeof x==='number'?res.status:show(res.statusText)))},header:(k,v)=>{const has=String(k).toLowerCase() in hd;need(has,"expected response to have header with key '"+k+"'");if(v!==undefined)need(hd[String(k).toLowerCase()]===v,"expected response to have header with key '"+k+"' and value '"+v+"'")},body:s=>need(res.body===s||(s&&res.body.includes(s)),'expected response body to contain '+show(s)),jsonBody:(k,v)=>{const j=JSON.parse(res.body);need(k in j,"expected response to have JSON key '"+k+"'");if(v!==undefined)need(deepEqual(j[k],v),"expected JSON key '"+k+"' to equal "+show(v))}},be:{}};
+    [['ok',c=>c===200,'200'],['success',c=>c>=200&&c<300,'2xx'],['accepted',c=>c===202,'202'],['badRequest',c=>c===400,'400'],['unauthorized',c=>c===401,'401'],['forbidden',c=>c===403,'403'],['notFound',c=>c===404,'404'],['rateLimited',c=>c===429,'429'],['clientError',c=>c>=400&&c<500,'4xx'],['serverError',c=>c>=500,'5xx'],['error',c=>c>=400,'4xx hoặc 5xx']].forEach(([n,f,d])=>Object.defineProperty(to.be,n,{get:()=>{need(f(res.status),'expected response to have status '+d+' but got '+res.status);return true}}));
+    Object.defineProperty(to.be,'json',{get:()=>{try{JSON.parse(res.body)}catch(e){throw new AssertionError('expected response body to be JSON')}return true}});
+    Object.defineProperty(to,'withBody',{get:()=>{need(!!res.body,'expected response to have a body');return true}});
+    pm.response={code:res.status,status:res.statusText,responseTime:res.time,responseSize:res.size,headers:{get:k=>hd[String(k).toLowerCase()],has:k=>String(k).toLowerCase() in hd,toObject:()=>Object.assign({},hd)},json:()=>{try{return JSON.parse(res.body)}catch(e){const er=new Error(e.message);er.name='JSONError';throw er}},text:()=>res.body,to};
+  }
+  return pm;
+}
+function runScript(code,E){
+  if(!code||!code.trim())return;
+  const pm=makePm(E),fmt=a=>a.map(x=>typeof x==='string'?x:show(x)).join(' ');
+  const cons={log:(...a)=>E.logs.push({lvl:'log',text:fmt(a)}),info:(...a)=>E.logs.push({lvl:'log',text:fmt(a)}),warn:(...a)=>E.logs.push({lvl:'warn',text:fmt(a)}),error:(...a)=>E.logs.push({lvl:'error',text:fmt(a)})};
+  try{new Function('pm','console','expect',code)(pm,cons,pm.expect)}catch(e){E.error=(e.name||'Error')+': '+e.message}
+}
+
+/* ---------- gửi request ---------- */
+function mkNet(uo,wait){const https=uo.protocol==='https:';const n={prep:rnd(1,3),dns:uo.hostname==='localhost'?rnd(1,3):rnd(4,16),tcp:rnd(6,24),tls:https?rnd(18,52):0,wait,dl:rnd(1,5),proc:rnd(1,3)};n.total=n.prep+n.dns+n.tcp+n.tls+n.wait+n.dl+n.proc;n.ip=KNOWN[uo.host];return n}
+async function sendRequest(r,opt){
+  opt=opt||{};
+  const col=colOf(r.id)||S.cols[0],ctx={local:{},col};
+  const flow={ts:new Date(),name:r.name,method:r.method,rawUrl:r.url,env:(activeEnvObj()||{name:'No Environment'}).name,snap:snapshot(r)};
+  const E={r,ctx,tests:[],logs:[],changes:[],error:null,kind:'pre'};
+  const preRan=!!(r.pre&&r.pre.trim());if(preRan)runScript(r.pre,E);
+  flow.pre={ran:preRan,code:r.pre,logs:E.logs.slice(),error:E.error,changes:E.changes.slice()};
+  if(E.error){flow.fail={type:'script',msg:'There was an error in evaluating the Pre-request Script:\n'+E.error,hint:[]};return finish(r,flow)}
+  const b=buildRequest(r,ctx);flow.b=b;
+  const hostTok=b.url.replace(/^[a-z][a-z0-9+.-]*:\/\//i,'').split(/[/?#]/)[0];
+  const hosts='localhost:8080, staging.api.test, postman-echo.com';
+  let err=null,hint=[];
+  if(hostTok.includes('{{')){err='Error: getaddrinfo ENOTFOUND '+hostTok;hint=['Biến '+hostTok+' chưa có giá trị.','Chọn Environment ở góc phải trên hoặc khai báo biến này (Environment / Collection / Globals).']}
+  else if(!b.uo){err='Error: Invalid URI "'+b.url+'"';hint=['URL không hợp lệ. Kiểm tra lại địa chỉ.']}
+  else if(!KNOWN[b.uo.host]){if(['localhost','127.0.0.1'].includes(b.uo.hostname)){err='Error: connect ECONNREFUSED 127.0.0.1:'+(b.uo.port||(b.uo.protocol==='https:'?443:80));hint=['Đúng host nhưng sai cổng hoặc server chưa chạy.','Máy chủ giả đang lắng nghe tại: '+hosts]}else{err='Error: getaddrinfo ENOTFOUND '+b.uo.hostname;hint=['Không phân giải được tên miền "'+b.uo.hostname+'".','Máy chủ giả chỉ nhận: '+hosts]}}
+  if(err){flow.fail={type:'net',msg:err,hint};await sleep(opt.fast?60:350);return finish(r,flow)}
+  const q={method:b.method,url:b.uo,headers:Object.fromEntries(b.headers.map(h=>[h[0].toLowerCase(),h[1]])),body:b.body,pairs:b.pairs};
+  const res=serve(q);const net=mkNet(b.uo,res.delay);
+  if(r.timeout>0&&net.total>r.timeout){flow.fail={type:'net',msg:'Error: ESOCKETTIMEDOUT',hint:['Server trả lời sau '+net.total+' ms, vượt Request timeout ('+r.timeout+' ms).','Tăng hoặc đặt về 0 trong Settings của request.']};flow.net=net;await sleep(Math.min(r.timeout,2000));return finish(r,flow)}
+  await sleep(opt.fast?Math.min(net.total,150):Math.min(net.total,2500));
+  const size=utf8len(res.body)+utf8len(Object.entries(res.headers).map(([k,v])=>cap(k)+': '+v).join('\r\n'));
+  flow.net=net;flow.res={status:res.status,statusText:stText(res.status),headers:res.headers,body:res.body,time:net.total,size};
+  flow.trace=res.trace;flow.reqText=reqText(b);flow.resText=resText(res);
+  const P={r,ctx,tests:[],logs:[],changes:[],error:null,kind:'post',res:flow.res};
+  const postRan=!!(r.post&&r.post.trim());if(postRan)runScript(r.post,P);
+  flow.post={ran:postRan,code:r.post,tests:P.tests,logs:P.logs,changes:P.changes,error:P.error};
+  return finish(r,flow);
+}
+function finish(r,flow){flow.steps=buildSteps(flow);S.flow=flow;S.fi=0;r._res=flow;record(r,flow);return flow}
+
+/* ---------- lịch sử, console, bài lab ---------- */
+const LABS=[
+['get200','GET /get trả về 200','Nhận phản hồi 200 từ endpoint echo (postman-echo.com/get hoặc {{baseUrl}}/get).'],
+['login','Đăng nhập và lưu token','POST /auth/login trả 200 và biến token xuất hiện trong Environment đang chọn.'],
+['u401','Bị từ chối khi không có token','GET /users trả về 401.'],
+['u200','Gọi API có xác thực','GET /users trả về 200 kèm Bearer token.'],
+['c201','Tạo tài nguyên','POST /users trả về 201.'],
+['c422','Gây lỗi validate','POST /users trả về 422 vì dữ liệu sai.'],
+['c415','Gây lỗi Content-Type','Nhận 415 vì body không được gửi dạng JSON.'],
+['d204','Xóa tài nguyên','DELETE /users/:id trả về 204 No Content.'],
+['test','Bài test đầu tiên','Ít nhất một pm.test chạy PASS trong tab Scripts.'],
+['env2','Chuyển môi trường','Gọi thành công cả server Local và Staging chỉ bằng đổi Environment (header x-server khác nhau).'],
+['import','Import OpenAPI','Import file OpenAPI/Swagger để sinh collection tự động.'],
+['run','Chạy cả collection','Dùng Runner chạy nhiều request liên tiếp.']];
+const labCount=()=>LABS.filter(l=>S.flags[l[0]]).length;
+function evalLabs(f){
+  const F=S.flags,st=f.res&&f.res.status;if(!st||!f.b||!f.b.uo)return;
+  const p=f.b.uo.pathname.replace(/\/+$/,''),m=f.method;
+  if(m==='GET'&&/\/get$/.test(p)&&st===200)F.get200=1;
+  if(m==='POST'&&p==='/auth/login'&&st===200){const e=activeEnvObj();if(e&&e.vars.some(v=>v.key==='token'&&v.current))F.login=1}
+  if(m==='GET'&&p==='/users'&&st===401)F.u401=1;
+  if(m==='GET'&&p==='/users'&&st===200)F.u200=1;
+  if(m==='POST'&&p==='/users'&&st===201)F.c201=1;
+  if(m==='POST'&&p==='/users'&&st===422)F.c422=1;
+  if(st===415)F.c415=1;
+  if(m==='DELETE'&&/^\/users\/\d+$/.test(p)&&st===204)F.d204=1;
+  if(f.post&&f.post.tests.some(t=>t.pass&&!t.skipped))F.test=1;
+  const xs=f.res.headers['x-server'];if(xs){S.srv.add(xs);if(S.srv.has('local-dev')&&S.srv.has('staging'))F.env2=1}
+}
+function record(r,flow){
+  const url=flow.b?flow.b.url:flow.rawUrl;
+  S.history.unshift({id:nid('h'),ts:flow.ts,method:flow.method,url,status:flow.res?flow.res.status:null,time:flow.res?flow.res.time:null,snap:flow.snap});
+  if(S.history.length>60)S.history.pop();
+  const logs=[...(flow.pre?flow.pre.logs:[]),...(flow.post?flow.post.logs:[])];
+  S.logs.push({t:flow.ts.toLocaleTimeString('vi-VN'),method:flow.method,url,status:flow.res&&flow.res.status,time:flow.res&&flow.res.time,fail:flow.fail&&flow.fail.msg,reqH:flow.b?flow.b.headers:[],reqB:flow.b?flow.b.body:'',resH:flow.res?flow.res.headers:{},resB:flow.res?flow.res.body:'',logs});
+  if(S.logs.length>120)S.logs.shift();
+  evalLabs(flow);
+}
+
+/* ---------- các bước của luồng ---------- */
+const STAGE_NODE={router:'router',auth:'auth',parse:'parse',validate:'validate',handler:'handler',serialize:'resp'};
+function buildSteps(f){
+  const st=[],P=(node,lane,title,sub,body,ok)=>st.push({node,lane,title,sub,body:[].concat(body).join('\n'),ok:ok!==false});
+  const pre=f.pre;
+  P('client','Postman','Chạy Pre-request script',pre.ran?pre.code.trim().split('\n').length+' dòng':'không có script',
+    pre.ran?['// Pre-request script chạy TRƯỚC mọi bước khác, kể cả thay biến',pre.code.trim()].concat(pre.logs.length?['','console:'].concat(pre.logs.map(l=>'  '+l.text)):[],pre.changes.length?['','Biến được ghi:'].concat(pre.changes.map(c=>'  '+c.scope+'.'+c.key+' = '+c.value)):[],pre.error?['','LỖI: '+pre.error]:[]):'Request này không có Pre-request script nên Postman bỏ qua bước này.',!pre.error);
+  if(f.fail&&f.fail.type==='script'){P('client','Postman','Script lỗi, hủy gửi','',f.fail.msg,false);return st}
+  const b=f.b,u=b.used;
+  P('client','Postman','Thay biến {{...}}',u.list.length||u.miss.length?u.list.length+' biến'+(u.miss.length?', '+u.miss.length+' thiếu':''):'không có biến',
+    (u.list.length?u.list.map(x=>'{{'+x.name+'}}  →  '+x.value+'   ['+x.scope+']'):['Request không dùng biến nào.']).concat(u.miss.map(n=>'{{'+n+'}}  →  KHÔNG TÌM THẤY, giữ nguyên chuỗi này'),['','URL sau khi thay:  '+b.url,'Môi trường đang chọn:  '+f.env]),!u.miss.length);
+  P('client','Postman','Gắn header, auth và body',b.headers.length+' header',['Auth: '+b.authDesc,'Body: '+(b.body?(b.ct||'')+' · '+utf8len(b.body)+' byte':'không có'),'','Header sẽ gửi:'].concat(b.headers.map(h=>'  '+h[0]+': '+h[1])));
+  if(f.fail&&f.fail.type==='net'){P('net','Mạng','Không gửi được request','lỗi mạng',[f.fail.msg,''].concat(f.fail.hint),false);return st}
+  const n=f.net;
+  P('net','Mạng','Gửi request đến server',n.total+' ms tổng',['DNS: '+b.uo.hostname+' → '+n.ip+'  ('+n.dns+' ms)','TCP handshake  ('+n.tcp+' ms)'].concat(n.tls?['TLS handshake  ('+n.tls+' ms)']:[],['','Request thật sự đi trên đường truyền:','',f.reqText]));
+  f.trace.forEach(t=>{if(t.stage!=='serialize')P(STAGE_NODE[t.stage],'Server',t.title,t.ok?'qua':'dừng ở đây',t.detail,t.ok)});
+  const last=f.trace[f.trace.length-1];
+  P('resp','Server','Gửi response về',f.res.status+' '+f.res.statusText,['Server đóng gói response: '+last.detail,'','Response trên đường truyền:','',f.resText]);
+  P('client2','Postman','Nhận và hiển thị response',f.res.time+' ms · '+fmtSize(f.res.size),['Status: '+f.res.status+' '+f.res.statusText+(stVi(f.res.status)?'  ('+stVi(f.res.status)+')':''),'','Phân rã thời gian (ms):','  Prepare '+n.prep+' · DNS '+n.dns+' · TCP '+n.tcp+(n.tls?' · TLS '+n.tls:'')+' · Chờ server '+n.wait+' · Tải về '+n.dl+' · Xử lý '+n.proc,'  Tổng '+n.total+' ms','','Kích thước: '+fmtSize(f.res.size)+' (header + body)','Số header nhận được: '+Object.keys(f.res.headers).length]);
+  const po=f.post;
+  P('client2','Postman','Post-response script và Tests',po.ran?po.tests.length+' test':'không có script',
+    po.ran?['// Post-response script chạy SAU khi đã có response',po.code.trim(),''].concat(po.tests.length?po.tests.map(t=>(t.pass?'PASS  ':'FAIL  ')+t.name+(t.error?'\n      '+t.error:'')):['(script không có pm.test nào)'],po.logs.length?['','console:'].concat(po.logs.map(l=>'  '+l.text)):[],po.changes.length?['','Biến được ghi:'].concat(po.changes.map(c=>'  '+c.scope+'.'+c.key+' = '+c.value)):[],po.error?['','LỖI: '+po.error]:[]):'Request không có Post-response script nên không có test nào chạy.',!po.error&&po.tests.every(t=>t.pass));
+  return st;
+}
+
+/* ---------- mô tả API và OpenAPI ---------- */
+const API=[
+{id:'login',name:'Login',tag:'Auth',m:'POST',p:'/auth/login',sum:'Đăng nhập, nhận access token',auth:false,body:{email:'admin@example.com',password:'123456'},res:[[200,'Đăng nhập thành công, trả access_token'],[400,'JSON sai cú pháp'],[401,'Sai email hoặc mật khẩu'],[415,'Content-Type không phải application/json'],[422,'Thiếu email hoặc password']],post:'const data = pm.response.json();\npm.environment.set("token", data.access_token);'},
+{id:'list',name:'List users',tag:'Users',m:'GET',p:'/users',sum:'Danh sách người dùng, có phân trang và tìm kiếm',auth:true,query:[['page','1'],['limit','5'],['q','']],res:[[200,'Danh sách + page, limit, total'],[401,'Thiếu hoặc sai token']]},
+{id:'get',name:'Get user',tag:'Users',m:'GET',p:'/users/:id',sum:'Chi tiết một người dùng',auth:true,pv:[['id','1']],res:[[200,'Thông tin user'],[400,'id không phải số'],[401,'Thiếu hoặc sai token'],[404,'Không có user này']]},
+{id:'create',name:'Create user',tag:'Users',m:'POST',p:'/users',sum:'Tạo người dùng mới',auth:true,body:{name:'Nguyen Van A',email:'a@example.com',role:'user'},res:[[201,'Đã tạo, kèm header Location'],[400,'JSON sai cú pháp'],[401,'Thiếu hoặc sai token'],[409,'Email đã tồn tại'],[415,'Content-Type không phải JSON'],[422,'name/email/role không hợp lệ']]},
+{id:'put',name:'Replace user',tag:'Users',m:'PUT',p:'/users/:id',sum:'Thay toàn bộ thông tin một người dùng',auth:true,pv:[['id','2']],body:{name:'Nguyen Van An',email:'an.nguyen@example.com',role:'user'},res:[[200,'Đã cập nhật'],[401,'Thiếu hoặc sai token'],[404,'Không có user này'],[409,'Email thuộc user khác'],[422,'Dữ liệu không hợp lệ']]},
+{id:'patch',name:'Update user',tag:'Users',m:'PATCH',p:'/users/:id',sum:'Sửa một phần thông tin người dùng',auth:true,pv:[['id','2']],body:{name:'Nguyen Van An (da sua)'},res:[[200,'Đã cập nhật'],[401,'Thiếu hoặc sai token'],[404,'Không có user này'],[422,'Dữ liệu không hợp lệ']]},
+{id:'del',name:'Delete user',tag:'Users',m:'DELETE',p:'/users/:id',sum:'Xóa một người dùng',auth:true,pv:[['id','6']],res:[[204,'Đã xóa, không có body'],[401,'Thiếu hoặc sai token'],[404,'Không có user này']]},
+{id:'eg',name:'Echo GET',tag:'Tiện ích',m:'GET',p:'/get',sum:'Trả lại request nhận được (giống postman-echo)',auth:false,query:[['foo','bar']],res:[[200,'args, headers, url']]},
+{id:'ep',name:'Echo POST',tag:'Tiện ích',m:'POST',p:'/post',sum:'Trả lại body và header nhận được',auth:false,body:{hello:'world'},res:[[200,'args, data, form, headers, json, url']]},
+{id:'sc',name:'Status code',tag:'Tiện ích',m:'GET',p:'/status/:code',sum:'Trả đúng mã trạng thái được yêu cầu',auth:false,pv:[['code','404']],res:[[200,'hoặc bất kỳ mã nào bạn truyền vào']]},
+{id:'dl',name:'Delay',tag:'Tiện ích',m:'GET',p:'/delay/:seconds',sum:'Chờ N giây (tối đa 5) rồi trả lời',auth:false,pv:[['seconds','2']],res:[[200,'sau N giây']]}];
+function schemaOf(v){if(Array.isArray(v))return{type:'array',items:v.length?schemaOf(v[0]):{}};if(v&&typeof v==='object'){const p={};Object.keys(v).forEach(k=>p[k]=schemaOf(v[k]));return{type:'object',properties:p,example:v}}return{type:typeof v==='number'?'integer':typeof v}}
+function openapi(){
+  const paths={};
+  API.forEach(a=>{
+    const key=a.p.replace(/:(\w+)/g,'{$1}');paths[key]=paths[key]||{};
+    const op={tags:[a.tag],summary:a.name,description:a.sum,parameters:[],responses:{}};
+    (a.pv||[]).forEach(x=>op.parameters.push({name:x[0],in:'path',required:true,schema:{type:'string'},example:x[1]}));
+    (a.query||[]).forEach(x=>op.parameters.push({name:x[0],in:'query',required:false,schema:{type:'string'},example:x[1]}));
+    if(!op.parameters.length)delete op.parameters;
+    if(a.body)op.requestBody={required:true,content:{'application/json':{schema:schemaOf(a.body)}}};
+    a.res.forEach(x=>op.responses[x[0]]={description:x[1]});
+    if(a.auth)op.security=[{bearerAuth:[]}];
+    paths[key][a.m.toLowerCase()]=op;
+  });
+  return{openapi:'3.0.3',info:{title:'Mock Users API',version:'1.0.0'},servers:[{url:'http://localhost:8080'}],paths,components:{securitySchemes:{bearerAuth:{type:'http',scheme:'bearer'}}}};
+}
+
+/* ---------- import / export ---------- */
+function sampleFrom(s,spec,d){d=d||0;if(!s||d>6)return null;if(s.$ref){const n=s.$ref.split('/').pop();return sampleFrom(((spec.components||{}).schemas||{})[n],spec,d+1)}if(s.example!==undefined)return s.example;if(s.default!==undefined)return s.default;if(s.enum)return s.enum[0];if(s.type==='object'||s.properties){const o={};Object.entries(s.properties||{}).forEach(([k,v])=>o[k]=sampleFrom(v,spec,d+1));return o}if(s.type==='array')return[sampleFrom(s.items,spec,d+1)];if(s.type==='integer'||s.type==='number')return 0;if(s.type==='boolean')return true;return s.format==='email'?'user@example.com':'string'}
+function importOpenApi(spec){
+  const col={id:nid('c'),name:(spec.info&&spec.info.title)||'Imported API',auth:mkAuth('none'),vars:[],items:[]};
+  const server=(spec.servers&&spec.servers[0]&&spec.servers[0].url)||'http://localhost:8080';
+  col.vars.push({key:'baseUrl',initial:server,current:server,enabled:true});
+  const schemes=(spec.components&&spec.components.securitySchemes)||{};
+  const usesSec=Object.values(spec.paths||{}).some(ops=>Object.values(ops).some(o=>o&&o.security&&o.security.length))||(spec.security&&spec.security.length);
+  const bearer=usesSec&&Object.values(schemes).some(s=>s.type==='http'&&s.scheme==='bearer');
+  if(bearer)col.auth=mkAuth('bearer','{{token}}');
+  const folders={};let count=0;
+  Object.entries(spec.paths||{}).forEach(([p,ops])=>{
+    const shared=ops.parameters||[];
+    Object.entries(ops).forEach(([m,op])=>{
+      if(!HTTP.includes(m.toLowerCase()))return;
+      const secured=(op.security&&op.security.length)||(op.security===undefined&&spec.security&&spec.security.length);
+      const r=newReq({name:op.summary||op.operationId||m.toUpperCase()+' '+p,method:m.toUpperCase(),url:'{{baseUrl}}'+p.replace(/\{(\w+)\}/g,':$1'),auth:mkAuth(bearer?(secured?'inherit':'none'):'none')});
+      const pv={};
+      [...shared,...(op.parameters||[])].forEach(x=>{
+        const ex=x.example!==undefined?x.example:(x.schema&&x.schema.example!==undefined?x.schema.example:(x.schema&&x.schema.default));
+        if(x.in==='query')r.params.push({key:x.name,value:ex===undefined?'':String(ex),desc:x.description||'',enabled:!!x.required||ex!==undefined});
+        else if(x.in==='path')pv[x.name]=ex===undefined?'':String(ex);
+        else if(x.in==='header')r.headers.push({key:x.name,value:ex===undefined?'':String(ex),desc:x.description||'',enabled:true});
+      });
+      syncUrlFromParams(r);r.pathVars.forEach(v=>{if(pv[v.key]!==undefined)v.value=pv[v.key]});
+      const js=op.requestBody&&op.requestBody.content&&op.requestBody.content['application/json'];
+      if(js){r.bodyMode='raw';r.rawType='json';r.raw=JSON.stringify(sampleFrom(js.schema,spec),null,2)}
+      const tag=(op.tags&&op.tags[0])||null;
+      if(tag){folders[tag]=folders[tag]||{id:nid('f'),type:'folder',name:tag,open:true,items:[]};if(!folders[tag].items.length)col.items.push(folders[tag]);folders[tag].items.push(r)}else col.items.push(r);
+      count++;
+    });
+  });
+  return{col,count};
+}
+function importPostman(j){
+  const col={id:nid('c'),name:j.info.name||'Imported',auth:mkAuth('none'),vars:(j.variable||[]).map(v=>({key:v.key,initial:v.value||'',current:v.value||'',enabled:true})),items:[]};let count=0;
+  const authOf=a=>{if(!a)return null;const g=k=>{const x=(a[a.type]||[]).find(i=>i.key===k);return x?x.value:''};if(a.type==='bearer')return mkAuth('bearer',g('token'));if(a.type==='basic'){const x=mkAuth('basic');x.user=g('username');x.pass=g('password');return x}if(a.type==='apikey'){const x=mkAuth('apikey');x.key=g('key');x.value=g('value');x.in=g('in')||'header';return x}return mkAuth('none')};
+  if(j.auth)col.auth=authOf(j.auth)||col.auth;
+  const script=(ev,k)=>{const e=(ev||[]).find(x=>x.listen===k);return e&&e.script&&e.script.exec?[].concat(e.script.exec).join('\n'):''};
+  const conv=items=>items.map(it=>{
+    if(it.item)return{id:nid('f'),type:'folder',name:it.name,open:true,items:conv(it.item)};
+    const q=it.request||{};count++;
+    const r=newReq({name:it.name,method:(q.method||'GET').toUpperCase(),url:typeof q.url==='string'?q.url:((q.url&&q.url.raw)||''),pre:script(it.event,'prerequest'),post:script(it.event,'test')});
+    r.headers=(q.header||[]).map(h=>({key:h.key,value:h.value,desc:h.description||'',enabled:!h.disabled}));
+    const bd=q.body;if(bd){if(bd.mode==='raw'){r.bodyMode='raw';r.raw=bd.raw||'';r.rawType=(bd.options&&bd.options.raw&&bd.options.raw.language)||'text'}else if(bd.mode==='urlencoded'){r.bodyMode='urlencoded';r.urlenc=(bd.urlencoded||[]).map(x=>({key:x.key,value:x.value,desc:'',enabled:!x.disabled}))}else if(bd.mode==='formdata'){r.bodyMode='form-data';r.form=(bd.formdata||[]).map(x=>({key:x.key,value:x.value,desc:'',enabled:!x.disabled}))}}
+    const a=authOf(q.auth);if(a)r.auth=a;
+    syncParamsFromUrl(r);return r;
+  });
+  col.items=conv(j.item||[]);return{col,count};
+}
+function exportCol(c){
+  const conv=items=>items.map(it=>it.type==='folder'?{name:it.name,item:conv(it.items)}:{name:it.name,event:[...(it.pre?[{listen:'prerequest',script:{type:'text/javascript',exec:it.pre.split('\n')}}]:[]),...(it.post?[{listen:'test',script:{type:'text/javascript',exec:it.post.split('\n')}}]:[])],request:{method:it.method,header:it.headers.map(h=>({key:h.key,value:h.value,disabled:!h.enabled})),body:it.bodyMode==='raw'?{mode:'raw',raw:it.raw,options:{raw:{language:it.rawType}}}:undefined,url:{raw:it.url}}});
+  const o={info:{name:c.name,schema:'https://schema.getpostman.com/json/collection/v2.1.0/collection.json'},item:conv(c.items),variable:c.vars.map(v=>({key:v.key,value:v.initial}))};
+  if(c.auth.type==='bearer')o.auth={type:'bearer',bearer:[{key:'token',value:c.auth.token,type:'string'}]};
+  return JSON.stringify(o,null,2);
+}
+/*UI*/
+const $=(s,r)=>(r||document).querySelector(s),$$=(s,r)=>[...(r||document).querySelectorAll(s)];
+function el(tag,a,...kids){const e=document.createElement(tag);a=a||{};let val;for(const k in a){const v=a[k];if(k==='class')e.className=v;else if(k==='html')e.innerHTML=v;else if(k==='value')val=v;else if(['checked','selected','disabled','readOnly','hidden'].includes(k))e[k]=!!v;else if(k.slice(0,2)==='on')e.addEventListener(k.slice(2),v);else if(v!==false&&v!=null)e.setAttribute(k,v)}kids.flat(9).forEach(c=>{if(c==null||c===false)return;e.append(c.nodeType?c:document.createTextNode(String(c)))});if(val!==undefined)e.value=val;return e}
+function toast(t){const d=el('div',{class:'toast'},t);document.body.append(d);setTimeout(()=>d.remove(),2200)}
+function modal(title,body,btns){const bg=el('div',{class:'mbg'});const box=el('div',{class:'modal'},el('div',{class:'mh'},title,el('button',{class:'btn flat',onclick:()=>bg.remove()},'×')),el('div',{class:'mb'},body),el('div',{class:'mf'},(btns||[]).map(b=>el('button',{class:'btn'+(b.pri?' pri':''),onclick:()=>{if(b.fn(bg)!==false)bg.remove()}},b.t))));bg.append(box);bg.addEventListener('mousedown',e=>{if(e.target===bg)bg.remove()});document.body.append(bg);return bg}
+function askText(title,val,cb){const i=el('input',{type:'text',value:val,class:'full'});const m=modal(title,i,[{t:'Cancel',fn:()=>{}},{t:'OK',pri:1,fn:()=>{const v=i.value.trim();if(v)cb(v)}}]);i.focus();i.select();i.addEventListener('keydown',e=>{if(e.key==='Enter'){const v=i.value.trim();if(v){cb(v);m.remove()}}})}
+function showMenu(x,y,items){hideMenu();const m=el('div',{class:'menu',id:'ctx'},items.map(it=>it==='-'?el('hr'):el('button',{onclick:()=>{hideMenu();it.fn()}},it.t)));document.body.append(m);m.style.left=Math.max(4,Math.min(x,innerWidth-m.offsetWidth-8))+'px';m.style.top=Math.max(4,Math.min(y,innerHeight-m.offsetHeight-8))+'px'}
+function hideMenu(){const m=$('#ctx');if(m)m.remove()}
+document.addEventListener('mousedown',e=>{if(!e.target.closest('#ctx'))hideMenu();const p=$('#varpop');if(p&&!e.target.closest('#varpop')&&!e.target.closest('#eyeBtn'))p.remove()});
+const stc=c=>c>=400?'bad':c>=300?'warn':'ok';
+const stIcon=c=>c>=400?'✕':c>=300?'→':'✓';
+const methodTag=m=>el('span',{class:'mt m-'+m.toLowerCase()},m==='DELETE'?'DEL':m);
+const activeTab=()=>S.tabs.find(t=>t.id===S.active);
+const activeReq=()=>{const t=activeTab();return t&&t.type==='request'?findItem(t.ref):null};
+
+/* ---------- JSON tô màu, url tô màu ---------- */
+function hlJson(s){let out='',last=0,m;const re=/("(?:\\.|[^"\\])*")(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/g;while((m=re.exec(s))){out+=esc(s.slice(last,m.index));if(m[1])out+=m[2]?'<span class="jk">'+esc(m[1])+'</span>'+esc(m[2]):'<span class="js">'+esc(m[1])+'</span>';else if(m[3])out+='<span class="jb">'+m[3]+'</span>';else out+='<span class="jn">'+m[0]+'</span>';last=re.lastIndex}return out+esc(s.slice(last))}
+function hlUrl(s){const r=activeReq();const col=r?colOf(r.id):S.cols[0];return esc(s).replace(/\{\{\s*([^{}]+?)\s*\}\}/g,(m,n)=>{const ok=n[0]==='$'?dyn(n)!==null:!!lookup(n,{local:{},col});return'<span class="'+(ok?'v-ok':'v-miss')+'">'+m+'</span>'})}
+
+/* ---------- bảng key/value ---------- */
+function kvTable(list,o){
+  o=o||{};const cols=o.cols||['Key','Value','Description'],fields=o.fields||['key','value','desc'],mk=o.mk||newKV,fixed=o.fixed;
+  const wrap=el('div',{class:'kvwrap'});
+  function draw(f){
+    wrap.innerHTML='';const t=el('table',{class:'kv'});
+    t.append(el('tr',{},fixed?null:el('th',{}),cols.map(c=>el('th',{},c)),fixed?null:el('th',{})));
+    const rows=fixed?list.slice():list.concat([null]);
+    rows.forEach((it,i)=>{
+      const tr=el('tr',{class:it&&it.enabled===false?'off':''});
+      if(!fixed)tr.append(el('td',{class:'ck'},it?el('input',{type:'checkbox',checked:it.enabled,onchange:e=>{it.enabled=e.target.checked;tr.classList.toggle('off',!it.enabled);o.onChange&&o.onChange()}}):null));
+      fields.forEach((fn,fi)=>{
+        const inp=el('input',{type:'text',spellcheck:'false',placeholder:it?'':cols[fi],value:it?it[fn]:'',readOnly:fixed&&fn==='key'});inp.dataset.r=i;inp.dataset.f=fn;
+        inp.addEventListener('input',()=>{
+          if(!it){const n=mk();n[fn]=inp.value;if(o.link&&fn===o.link[0])n[o.link[1]]=inp.value;list.push(n);o.onChange&&o.onChange();draw({r:i,f:fn,p:inp.selectionStart});return}
+          const old=it[fn];it[fn]=inp.value;
+          if(o.link&&fn===o.link[0]&&it[o.link[1]]===old){it[o.link[1]]=inp.value;const sib=tr.querySelector('input[data-f="'+o.link[1]+'"]');if(sib)sib.value=inp.value}
+          o.onChange&&o.onChange();
+        });
+        tr.append(el('td',{},inp));
+      });
+      if(!fixed)tr.append(el('td',{class:'dl'},it?el('button',{class:'xbtn',title:'Delete',onclick:()=>{list.splice(i,1);o.onChange&&o.onChange();draw()}},'×'):null));
+      t.append(tr);
+    });
+    if(o.after)t.append(o.after());
+    wrap.append(t);
+    if(f){const x=wrap.querySelector('input[data-r="'+f.r+'"][data-f="'+f.f+'"]');if(x){x.focus();try{x.setSelectionRange(f.p,f.p)}catch(e){}}}
+  }
+  draw();return wrap;
+}
+const toBulk=l=>l.map(x=>(x.enabled?'':'//')+x.key+':'+x.value).join('\n');
+const fromBulk=(t,old)=>t.split('\n').filter(s=>s.trim()).map((s,i)=>{const dis=s.startsWith('//');if(dis)s=s.slice(2);const j=s.indexOf(':');return{key:j<0?s:s.slice(0,j).trim(),value:j<0?'':s.slice(j+1).trim(),desc:(old[i]&&old[i].desc)||'',enabled:!dis}});
+
+/* ---------- khung chính ---------- */
+function renderAll(){renderRail();renderSide();renderTabs();renderMain();renderConsole();updateLabsNav();renderEnvSel()}
+function updateLabsNav(){$('#navLabs').textContent='Bài lab ('+labCount()+'/'+LABS.length+')'}
+function renderEnvSel(){const s=$('#envSel');s.innerHTML='';s.append(el('option',{value:''},'No Environment'));S.envs.forEach(e=>s.append(el('option',{value:e.id},e.name)));s.value=S.activeEnv||''}
+function renderRail(){const r=$('#rail');r.innerHTML='';[['cols','Collections'],['envs','Environments'],['hist','History']].forEach(([k,t])=>r.append(el('button',{class:'rb'+(S.side===k?' on':''),onclick:()=>{S.side=k;renderRail();renderSide()}},t)))}
+function cleanTabs(){S.tabs=S.tabs.filter(t=>tabInfo(t));if(!S.tabs.find(t=>t.id===S.active))S.active=S.tabs.length?S.tabs[S.tabs.length-1].id:null}
+function tabInfo(t){if(t.type==='request'){const r=findItem(t.ref);return r?{label:r.name==='New Request'&&r._draft?'Untitled Request':r.name,m:r.method}:null}if(t.type==='env'){const e=t.ref==='globals'?{name:'Globals'}:S.envs.find(x=>x.id===t.ref);return e?{label:e.name,m:'ENV'}:null}const c=S.cols.find(x=>x.id===t.ref);return c?{label:c.name,m:'COL'}:null}
+function openTab(type,ref){let t=S.tabs.find(x=>x.type===type&&x.ref===ref);if(!t){t={id:nid('t'),type,ref};S.tabs.push(t)}S.active=t.id;if(S.view!=='postman')switchView('postman');renderTabs();renderMain();renderSide()}
+function closeTab(id){S.tabs=S.tabs.filter(t=>t.id!==id);cleanTabs();renderTabs();renderMain();renderSide()}
+function renderTabs(){
+  cleanTabs();const c=$('#tabs');c.innerHTML='';
+  S.tabs.forEach(t=>{const i=tabInfo(t);c.append(el('div',{class:'tb'+(t.id===S.active?' on':''),onclick:()=>{S.active=t.id;renderTabs();renderMain();renderSide()}},el('span',{class:'mt m-'+i.m.toLowerCase()},i.m==='DELETE'?'DEL':i.m),el('span',{class:'t'},i.label),el('button',{class:'x',title:'Close',onclick:e=>{e.stopPropagation();closeTab(t.id)}},'×')))});
+}
+function newDraft(o){const r=newReq(Object.assign({name:'New Request'},o||{}));r._draft=true;S.drafts.push(r);openTab('request',r.id);return r}
+
+/* ---------- sidebar ---------- */
+function addReqTo(c){const r=newReq({name:'New Request'});c.items.push(r);if(c.open===false)c.open=true;openTab('request',r.id)}
+function addFolderTo(c){askText('New Folder','New Folder',n=>{c.items.push({id:nid('f'),type:'folder',name:n,open:true,items:[]});renderSide()})}
+function colMenu(x,y,c){showMenu(x,y,[{t:'Add request',fn:()=>addReqTo(c)},{t:'Add folder',fn:()=>addFolderTo(c)},{t:'Run collection',fn:()=>openRunner(c)},{t:'Edit (Authorization, Variables)',fn:()=>openTab('collection',c.id)},{t:'Export',fn:()=>doExport(c)},'-',{t:'Rename',fn:()=>askText('Rename collection',c.name,n=>{c.name=n;renderAll()})},{t:'Delete',fn:()=>{S.cols=S.cols.filter(z=>z!==c);cleanTabs();renderAll()}}])}
+function folderMenu(x,y,f){showMenu(x,y,[{t:'Add request',fn:()=>addReqTo(f)},{t:'Add folder',fn:()=>addFolderTo(f)},'-',{t:'Rename',fn:()=>askText('Rename folder',f.name,n=>{f.name=n;renderSide()})},{t:'Delete',fn:()=>{const p=parentOf(f.id);if(p)p.items=p.items.filter(i=>i!==f);cleanTabs();renderAll()}}])}
+function reqMenu(x,y,r){showMenu(x,y,[{t:'Duplicate',fn:()=>{const p=parentOf(r.id);const n=Object.assign(snapshot(r),{id:nid('r'),name:r.name+' Copy'});if(p){p.items.splice(p.items.indexOf(r)+1,0,n);openTab('request',n.id)}}},{t:'Rename',fn:()=>askText('Rename request',r.name,n=>{r.name=n;renderAll()})},'-',{t:'Delete',fn:()=>{const p=parentOf(r.id);if(p)p.items=p.items.filter(i=>i!==r);cleanTabs();renderAll()}}])}
+function treeNode(it,depth,flt){
+  const pad='padding-left:'+(8+depth*14)+'px';
+  if(it.type==='folder'){
+    const kids=it.items.map(c=>treeNode(c,depth+1,flt)).filter(Boolean);
+    if(flt&&!kids.length&&!it.name.toLowerCase().includes(flt))return null;
+    const row=el('div',{class:'tr',style:pad,oncontextmenu:e=>{e.preventDefault();folderMenu(e.clientX,e.clientY,it)},onclick:()=>{it.open=!it.open;renderSide()}},el('span',{class:'chev'},it.open||flt?'▾':'▸'),el('span',{class:'nm'},it.name),el('button',{class:'dots',onclick:e=>{e.stopPropagation();const b=e.target.getBoundingClientRect();folderMenu(b.left,b.bottom,it)}},'⋯'));
+    const w=el('div',{},row);if(it.open||flt)kids.forEach(k=>w.append(k));return w;
+  }
+  if(flt&&!it.name.toLowerCase().includes(flt)&&!it.url.toLowerCase().includes(flt))return null;
+  const t=activeTab(),on=t&&t.type==='request'&&t.ref===it.id;
+  return el('div',{class:'tr'+(on?' on':''),style:pad,onclick:()=>openTab('request',it.id),oncontextmenu:e=>{e.preventDefault();reqMenu(e.clientX,e.clientY,it)}},methodTag(it.method),el('span',{class:'nm'},it.name),el('button',{class:'dots',onclick:e=>{e.stopPropagation();const b=e.target.getBoundingClientRect();reqMenu(b.left,b.bottom,it)}},'⋯'));
+}
+function renderSide(){
+  const s=$('#side');s.innerHTML='';
+  if(S.side==='cols'){
+    s.append(el('div',{class:'sh'},'Collections',el('span',{class:'sp'}),el('button',{class:'btn sm',onclick:openImport},'Import'),el('button',{class:'btn sm',title:'New collection',onclick:()=>askText('New collection','New Collection',n=>{const c={id:nid('c'),name:n,auth:mkAuth('none'),vars:[],items:[]};S.cols.push(c);renderSide();openTab('collection',c.id)})},'+')));
+    const f=el('input',{type:'text',class:'filt',placeholder:'Filter',value:S.flt||'',oninput:e=>{S.flt=e.target.value;renderSideList()}});s.append(f);s.append(el('div',{id:'sidelist'}));renderSideList();
+  }else if(S.side==='envs'){
+    s.append(el('div',{class:'sh'},'Environments',el('span',{class:'sp'}),el('button',{class:'btn sm',title:'New environment',onclick:()=>{const e={id:nid('e'),name:'New Environment',vars:[]};S.envs.push(e);renderEnvSel();openTab('env',e.id)}},'+')));
+    const row=(name,ref,act)=>el('div',{class:'tr',onclick:()=>openTab('env',ref)},el('span',{class:'nm'},name),act);
+    s.append(row('Globals','globals',null));
+    S.envs.forEach(e=>s.append(row(e.name,e.id,S.activeEnv===e.id?el('span',{class:'badge acc'},'Active'):el('button',{class:'btn sm',onclick:ev=>{ev.stopPropagation();setEnv(e.id)}},'Set active'))));
+  }else{
+    s.append(el('div',{class:'sh'},'History',el('span',{class:'sp'}),el('button',{class:'btn sm',onclick:()=>{S.history=[];renderSide()}},'Clear')));
+    if(!S.history.length)s.append(el('div',{class:'dim',style:'padding:8px 12px'},'Chưa có request nào'));
+    S.history.forEach(h=>s.append(el('div',{class:'tr',title:h.url,onclick:()=>{const r=newDraft(Object.assign(JSON.parse(JSON.stringify(h.snap)),{id:nid('r')}));r._draft=true}},methodTag(h.method),el('span',{class:'nm'},h.url),h.status?el('span',{class:stc(h.status)},h.status):el('span',{class:'bad'},'ERR'))));
+  }
+}
+function renderSideList(){const l=$('#sidelist');if(!l)return;l.innerHTML='';const flt=(S.flt||'').toLowerCase();S.cols.forEach(c=>{const kids=c.items.map(i=>treeNode(i,1,flt)).filter(Boolean);if(flt&&!kids.length&&!c.name.toLowerCase().includes(flt))return;const row=el('div',{class:'tr',oncontextmenu:e=>{e.preventDefault();colMenu(e.clientX,e.clientY,c)},onclick:()=>{c.open=c.open===false;renderSide()}},el('span',{class:'chev'},c.open===false?'▸':'▾'),el('b',{class:'nm'},c.name),el('button',{class:'dots',onclick:e=>{e.stopPropagation();const b=e.target.getBoundingClientRect();colMenu(b.left,b.bottom,c)}},'⋯'));l.append(row);if(c.open!==false)kids.forEach(k=>l.append(k))})}
+function setEnv(id){S.activeEnv=id||null;renderEnvSel();renderSide();const r=activeReq();if(r&&r._paint)r._paint();const t=activeTab();if(t&&t.type==='env')renderMain()}
+
+/* ---------- vùng chính ---------- */
+function renderMain(){
+  const m=$('#main');m.innerHTML='';const t=activeTab();
+  if(!t){m.append(el('div',{class:'empty'},el('button',{class:'btn pri',onclick:()=>newDraft()},'New request')));return}
+  if(t.type==='request')renderRequestView(findItem(t.ref));else if(t.type==='env')renderEnvView(t.ref);else renderColView(S.cols.find(c=>c.id===t.ref));
+}
+const METHODS=['GET','POST','PUT','PATCH','DELETE','HEAD','OPTIONS'];
+function saveReq(r){
+  if(!r._draft){toast('Saved');return}
+  if(!S.cols.length){toast('Chưa có collection nào');return}
+  const sel=el('select',{class:'full'},S.cols.map((c,i)=>el('option',{value:i},c.name)));
+  const inp=el('input',{type:'text',class:'full',value:r.name==='New Request'?'':r.name,placeholder:'Request name'});
+  modal('Save request',el('div',{},el('label',{},'Request name'),inp,el('label',{},'Save to'),sel),[{t:'Cancel',fn:()=>{}},{t:'Save',pri:1,fn:()=>{r.name=inp.value.trim()||'Untitled Request';S.cols[+sel.value].items.push(r);S.drafts=S.drafts.filter(d=>d!==r);delete r._draft;renderAll()}}]);
+  inp.focus();
+}
+async function doSend(r){
+  if(r._sending)return;r._sending=true;if(activeReq()===r)renderResponse(r);
+  try{await sendRequest(r)}finally{r._sending=false}
+  if(activeReq()===r)renderResponse(r);renderConsole();if(S.side==='hist')renderSide();updateLabsNav();if(S.view==='flow')renderFlow();
+}
+function subCount(r){return r.headers.filter(h=>h.enabled&&h.key).length+autoHeaders(r).length}
+function renderRequestView(r){
+  const m=$('#main');const col=colOf(r.id);r._tab=r._tab||'params';
+  const crumb=el('div',{class:'crumb'},el('span',{class:'dim'},(col?col.name:'Draft')+' /'),el('input',{class:'rname',value:r.name,oninput:e=>{r.name=e.target.value;renderTabs();renderSide()}}),el('span',{class:'sp'}),el('button',{class:'btn',onclick:()=>saveReq(r)},'Save'));
+  const sel=el('select',{class:'msel m-'+r.method.toLowerCase(),onchange:e=>{r.method=e.target.value;sel.className='msel m-'+r.method.toLowerCase();renderTabs();renderSide()}},METHODS.map(x=>el('option',{value:x},x)));sel.value=r.method;
+  const hl=el('div',{class:'hl'}),inp=el('input',{type:'text',class:'urlin',value:r.url,spellcheck:'false',placeholder:'Enter URL or paste text'});
+  const paint=()=>{hl.innerHTML=hlUrl(inp.value);hl.scrollLeft=inp.scrollLeft};r._paint=paint;
+  inp.addEventListener('input',()=>{r.url=inp.value;syncParamsFromUrl(r);paint();if(r._tab==='params')renderSub(r)});
+  ['keyup','click','scroll'].forEach(ev=>inp.addEventListener(ev,()=>{hl.scrollLeft=inp.scrollLeft}));
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.ctrlKey)doSend(r)});
+  r._setUrl=()=>{inp.value=r.url;paint()};paint();
+  const row=el('div',{class:'urlrow'},sel,el('div',{class:'urlwrap'},hl,inp),el('button',{class:'btn pri sendbtn',onclick:()=>doSend(r)},'Send'));
+  const tabs=el('div',{class:'subtabs',id:'subtabs'});
+  const sub=el('div',{class:'sub',id:'sub'}),resp=el('div',{class:'resp',id:'resp'});
+  m.append(el('div',{class:'req'},crumb,row,tabs,sub,resp));
+  renderSubTabs(r);renderSub(r);renderResponse(r);
+}
+function renderSubTabs(r){
+  const t=$('#subtabs');if(!t)return;t.innerHTML='';
+  [['docs','Docs'],['params','Params'],['auth','Authorization'],['headers','Headers ('+subCount(r)+')'],['body','Body'],['scripts','Scripts'],['settings','Settings']].forEach(([k,l])=>t.append(el('button',{class:r._tab===k?'on':'',onclick:()=>{r._tab=k;renderSubTabs(r);renderSub(r)}},l,k==='scripts'&&(r.pre.trim()||r.post.trim())?el('span',{class:'dot',title:'Có script'}):null,k==='body'&&r.bodyMode!=='none'?el('span',{class:'dot',title:'Có body'}):null)));
+}
+function bulkBtn(r,key,list,after){return el('button',{class:'linkbtn',onclick:()=>{r._bulk=r._bulk||{};r._bulk[key]=!r._bulk[key];renderSub(r)}},(r._bulk&&r._bulk[key])?'Key-Value Edit':'Bulk Edit')}
+function listEditor(r,key,list,onChange,cols){
+  r._bulk=r._bulk||{};
+  if(r._bulk[key]){const ta=el('textarea',{class:'code',value:toBulk(list),oninput:e=>{const n=fromBulk(e.target.value,list);list.splice(0,list.length,...n);onChange&&onChange()}});return ta}
+  return kvTable(list,{onChange,cols});
+}
+function renderSub(r){
+  const s=$('#sub');if(!s)return;s.innerHTML='';const k=r._tab;
+  if(k==='params'){
+    s.append(el('div',{class:'ph'},'Query Params',el('span',{class:'sp'}),bulkBtn(r,'params')));
+    s.append(listEditor(r,'params',r.params,()=>{syncUrlFromParams(r);r._setUrl()}));
+    if(r.pathVars.length){s.append(el('div',{class:'ph',style:'margin-top:14px'},'Path Variables'));s.append(kvTable(r.pathVars,{fixed:true,cols:['Key','Value','Description'],onChange:()=>{}}))}
+  }else if(k==='headers'){
+    s.append(el('div',{class:'ph'},'Headers',el('span',{class:'sp'}),el('button',{class:'linkbtn',onclick:()=>{r._hid=!r._hid;renderSub(r)}},(r._hid?'Hide ':'')+autoHeaders(r).length+' hidden'),bulkBtn(r,'headers')));
+    const after=()=>{const f=document.createDocumentFragment();if(r._hid)autoHeaders(r).forEach(h=>f.append(el('tr',{class:'hid'},el('td',{class:'ck'},'✓'),el('td',{},h[0]),el('td',{},h[1]),el('td',{},''),el('td',{},''))));return f};
+    if(r._bulk&&r._bulk.headers)s.append(listEditor(r,'headers',r.headers,()=>renderSubTabs(r)));
+    else s.append(kvTable(r.headers,{onChange:()=>renderSubTabs(r),after}));
+  }else if(k==='body'){
+    const modes=[['none','none'],['form-data','form-data'],['urlencoded','x-www-form-urlencoded'],['raw','raw']];
+    const rad=el('div',{class:'radios'},modes.map(([v,l])=>el('label',{},el('input',{type:'radio',name:'bm',checked:r.bodyMode===v,onchange:()=>{r.bodyMode=v;renderSubTabs(r);renderSub(r)}}),l)));
+    if(r.bodyMode==='raw'){const ts=el('select',{onchange:e=>{r.rawType=e.target.value;renderSubTabs(r)}},[['text','Text'],['javascript','JavaScript'],['json','JSON'],['html','HTML'],['xml','XML']].map(x=>el('option',{value:x[0]},x[1])));ts.value=r.rawType;rad.append(ts);if(r.rawType==='json')rad.append(el('button',{class:'linkbtn',onclick:()=>{try{r.raw=JSON.stringify(JSON.parse(r.raw),null,2);renderSub(r)}catch(e){toast('JSON chưa hợp lệ: '+e.message)}}},'Beautify'))}
+    s.append(rad);
+    if(r.bodyMode==='none')s.append(el('div',{class:'dim'},'This request does not have a body'));
+    else if(r.bodyMode==='raw')s.append(el('textarea',{class:'code',spellcheck:'false',value:r.raw,oninput:e=>{r.raw=e.target.value}}));
+    else s.append(kvTable(r.bodyMode==='form-data'?r.form:r.urlenc,{onChange:()=>{}}));
+  }else if(k==='auth'){s.append(authForm(r.auth,true,r,()=>renderSubTabs(r)))}
+  else if(k==='scripts'){
+    r._stab=r._stab||'pre';
+    const sw=el('div',{class:'radios'},[['pre','Pre-request'],['post','Post-response']].map(([v,l])=>el('label',{},el('input',{type:'radio',name:'sc',checked:r._stab===v,onchange:()=>{r._stab=v;renderSub(r)}}),l,r[v].trim()?el('span',{class:'dot'}):null)));
+    const ta=el('textarea',{class:'code',spellcheck:'false',value:r[r._stab],oninput:e=>{r[r._stab]=e.target.value;renderSubTabs(r)}});
+    ta.addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();const p=ta.selectionStart;ta.setRangeText('  ',p,ta.selectionEnd,'end');r[r._stab]=ta.value}});
+    const SN=[['Status code is 200','pm.test("Status code is 200", function () {\n    pm.response.to.have.status(200);\n});'],['Response time is below 500ms','pm.test("Response time is below 500ms", function () {\n    pm.expect(pm.response.responseTime).to.be.below(500);\n});'],['Response body: JSON value check','pm.test("Body has data", function () {\n    const json = pm.response.json();\n    pm.expect(json).to.have.property("data");\n});'],['Response has header','pm.test("Has Content-Type", function () {\n    pm.response.to.have.header("Content-Type");\n});'],['Set an environment variable','pm.environment.set("variable_key", "variable_value");'],['Get an environment variable','const v = pm.environment.get("variable_key");\nconsole.log(v);'],['Log to console','console.log(pm.response.json());']];
+    const sn=el('div',{class:'snip'},el('b',{},'Snippets'),SN.map(x=>el('button',{onclick:()=>{r[r._stab]=(r[r._stab].trim()?r[r._stab].replace(/\s*$/,'\n\n'):'')+x[1]+'\n';renderSubTabs(r);renderSub(r)}},x[0])));
+    s.append(el('div',{class:'scr'},el('div',{class:'ed'},sw,ta),sn));
+  }else if(k==='docs'){s.append(el('textarea',{class:'code',placeholder:'Mô tả request này',value:r.doc,oninput:e=>{r.doc=e.target.value}}))}
+  else if(k==='settings'){
+    const tm=el('input',{type:'number',min:'0',value:r.timeout,style:'width:110px',oninput:e=>{r.timeout=Math.max(0,+e.target.value||0)}});
+    s.append(el('div',{class:'row'},el('label',{},'Request timeout (ms)'),tm,el('span',{class:'dim'},'0 = không giới hạn')),
+      el('div',{class:'row'},el('label',{},'Send no-cache header'),el('input',{type:'checkbox',checked:r.noCache,onchange:e=>{r.noCache=e.target.checked;renderSubTabs(r)}})),
+      el('div',{class:'row'},el('label',{},'Send Postman-Token header'),el('input',{type:'checkbox',checked:!r.noToken,onchange:e=>{r.noToken=!e.target.checked;renderSubTabs(r)}})));
+  }
+}
+function authForm(a,allowInherit,r,onType){
+  const w=el('div',{});const types=[...(allowInherit?[['inherit','Inherit auth from parent']]:[]),['none','No Auth'],['basic','Basic Auth'],['bearer','Bearer Token'],['apikey','API Key']];
+  const sel=el('select',{onchange:e=>{a.type=e.target.value;onType&&onType();redo()}},types.map(x=>el('option',{value:x[0]},x[1])));sel.value=a.type;
+  const fld=(l,k,ph)=>el('div',{class:'row'},el('label',{},l),el('input',{type:'text',class:'mono',style:'width:360px',placeholder:ph||'',value:a[k],oninput:e=>{a[k]=e.target.value}}));
+  function redo(){
+    w.innerHTML='';w.append(el('div',{class:'row'},el('label',{},'Auth Type'),sel));
+    if(a.type==='inherit'){const col=r&&colOf(r.id);const ca=col?col.auth:{type:'none'};const nm={none:'No Auth',bearer:'Bearer Token',basic:'Basic Auth',apikey:'API Key'}[ca.type];w.append(el('div',{class:'dim'},'This request is using '+nm+' from '+(col?col.name:'collection')+(ca.type==='bearer'?' (token: '+ca.token+')':'')))}
+    else if(a.type==='none')w.append(el('div',{class:'dim'},'This request does not use any authorization.'));
+    else if(a.type==='bearer')w.append(fld('Token','token','{{token}}'));
+    else if(a.type==='basic')w.append(fld('Username','user'),fld('Password','pass'));
+    else{w.append(fld('Key','key','X-API-Key'),fld('Value','value'));const ins=el('select',{onchange:e=>{a.in=e.target.value}},[['header','Header'],['query','Query Params']].map(x=>el('option',{value:x[0]},x[1])));ins.value=a.in;w.append(el('div',{class:'row'},el('label',{},'Add to'),ins))}
+  }
+  redo();return w;
+}
+
+/* ---------- response ---------- */
+function parseCookies(h){const v=h['set-cookie'];if(!v)return[];return[].concat(v).map(s=>{const p=s.split(';').map(x=>x.trim());const [n,...val]=p[0].split('=');return{name:n,value:val.join('='),path:(p.find(x=>/^path=/i.test(x))||'').slice(5)||'/',http:p.some(x=>/^httponly$/i.test(x)),age:(p.find(x=>/^max-age=/i.test(x))||'').slice(8)}})}
+function renderResponse(r){
+  const box=$('#resp');if(!box||activeReq()!==r)return;box.innerHTML='';
+  if(r._sending){box.append(el('div',{class:'empty'},el('div',{class:'spin'}),'Sending request…'));return}
+  const f=r._res;if(!f){box.append(el('div',{class:'empty'},'Click Send to get a response'));return}
+  if(f.fail){box.append(el('div',{class:'errbox'},el('b',{},f.fail.type==='script'?'Script error':'Could not get response'),el('pre',{class:'mono bad',style:'margin:8px 0'},f.fail.msg),f.fail.hint&&f.fail.hint.length?el('div',{},el('b',{},'Suggestions'),el('ul',{},f.fail.hint.map(h=>el('li',{},h)))):null));return}
+  const res=f.res,tests=f.post.tests,pass=tests.filter(t=>t.pass).length;r._rtab=r._rtab||'body';
+  const tabs=[['body','Body'],['cookies','Cookies'],['headers','Headers ('+Object.keys(res.headers).length+')'],['tests','Test Results'+(tests.length?' ('+pass+'/'+tests.length+')':'')]];
+  const n=f.net,tip='Prepare: '+n.prep+' ms\nDNS Lookup: '+n.dns+' ms\nTCP Handshake: '+n.tcp+' ms'+(n.tls?'\nSSL Handshake: '+n.tls+' ms':'')+'\nTransfer Start: '+n.wait+' ms\nDownload: '+n.dl+' ms\nProcess: '+n.proc+' ms';
+  const head=el('div',{class:'rhead'},tabs.map(([k,l])=>el('button',{class:'t'+(r._rtab===k?' on':''),onclick:()=>{r._rtab=k;renderResponse(r)}},l)),
+    el('div',{class:'stat'},el('span',{class:stc(res.status),title:res.status+' '+res.statusText+(stVi(res.status)?' — '+stVi(res.status):'')},stIcon(res.status)+' '+res.status+' '+res.statusText),el('span',{class:'ok',title:tip},res.time+' ms'),el('span',{class:'ok',title:'Kích thước = header + body'},fmtSize(res.size))));
+  const body=el('div',{class:'rbody'});box.append(head,body);
+  if(r._rtab==='body'){
+    r._rview=r._rview||'pretty';
+    body.append(el('div',{class:'vtabs'},['pretty','raw','preview'].map(v=>el('button',{class:r._rview===v?'on':'',onclick:()=>{r._rview=v;renderResponse(r)}},v[0].toUpperCase()+v.slice(1)))));
+    if(!res.body)body.append(el('div',{class:'dim'},'(response không có body)'));
+    else if(r._rview==='raw')body.append(el('pre',{class:'mono'},res.body));
+    else if(r._rview==='preview')body.append(el('iframe',{sandbox:'',srcdoc:res.body,style:'width:100%;height:240px;border:1px solid var(--bd);background:#fff'}));
+    else{let pretty=res.body,isJson=false;try{pretty=JSON.stringify(JSON.parse(res.body),null,2);isJson=true}catch(e){}body.append(el('pre',{class:'mono',html:isJson?hlJson(pretty):esc(pretty)}))}
+  }else if(r._rtab==='cookies'){
+    const ck=parseCookies(res.headers);
+    body.append(ck.length?el('table',{},el('tr',{},['Name','Value','Path','HttpOnly','Max-Age'].map(h=>el('th',{},h))),ck.map(c=>el('tr',{},el('td',{class:'mono'},c.name),el('td',{class:'mono'},c.value),el('td',{},c.path),el('td',{},c.http?'✓':''),el('td',{},c.age)))):el('div',{class:'dim'},'No cookies were received'));
+  }else if(r._rtab==='headers'){
+    body.append(el('table',{},el('tr',{},el('th',{},'Key'),el('th',{},'Value')),Object.entries(res.headers).map(([k,v])=>el('tr',{},el('td',{class:'mono'},cap(k)),el('td',{class:'mono'},v)))));
+  }else{
+    if(f.post.error)body.append(el('div',{class:'errbox',style:'margin:0 0 8px'},el('b',{},'There was an error in evaluating the Post-response Script'),el('pre',{class:'mono bad'},f.post.error)));
+    if(!tests.length&&!f.post.error)body.append(el('div',{class:'dim'},'No tests were run for this request'));
+    tests.forEach(t=>body.append(el('div',{class:'tres'},el('b',{class:t.pass?'ok':'bad'},t.pass?'✓ PASS':'✕ FAIL'),' ',t.name,t.error?el('div',{class:'mono dim'},t.error):null)));
+  }
+}
+
+/* ---------- env / collection ---------- */
+function renderEnvView(ref){
+  const m=$('#main');const g=ref==='globals';const e=g?S.globals:S.envs.find(x=>x.id===ref);
+  const head=el('div',{class:'crumb'},g?el('b',{style:'font-size:14px;padding:2px 6px'},'Globals'):el('input',{class:'rname',value:e.name,oninput:ev=>{e.name=ev.target.value;renderTabs();renderSide();renderEnvSel()}}),el('span',{class:'sp'}),!g?(S.activeEnv===e.id?el('span',{class:'badge acc'},'Active'):el('button',{class:'btn',onclick:()=>setEnv(e.id)},'Set as active')):null,!g?el('button',{class:'btn',onclick:()=>{S.envs=S.envs.filter(x=>x!==e);if(S.activeEnv===e.id)S.activeEnv=null;cleanTabs();renderAll()}},'Delete'):null);
+  const box=el('div',{style:'padding:10px 14px;overflow:auto;flex:1'},kvTable(e.vars,{cols:['Variable','Initial value','Current value'],fields:['key','initial','current'],mk:newVar,link:['initial','current'],onChange:()=>{}}));
+  m.append(head,box);
+}
+function renderColView(c){
+  const m=$('#main');c._tab=c._tab||'auth';
+  const head=el('div',{class:'crumb'},el('input',{class:'rname',value:c.name,oninput:e=>{c.name=e.target.value;renderTabs();renderSideList()}}),el('span',{class:'sp'}),el('button',{class:'btn',onclick:()=>openRunner(c)},'Run'),el('button',{class:'btn',onclick:()=>doExport(c)},'Export'));
+  const tabs=el('div',{class:'subtabs'},[['auth','Authorization'],['vars','Variables']].map(([k,l])=>el('button',{class:c._tab===k?'on':'',onclick:()=>{c._tab=k;renderMain()}},l)));
+  const body=el('div',{style:'padding:10px 14px;overflow:auto;flex:1'},c._tab==='auth'?authForm(c.auth,false,null,null):kvTable(c.vars,{cols:['Variable','Initial value','Current value'],fields:['key','initial','current'],mk:newVar,link:['initial','current'],onChange:()=>{}}));
+  m.append(head,tabs,body);
+}
+
+/* ---------- quick look biến ---------- */
+function toggleVarPop(){
+  const old=$('#varpop');if(old){old.remove();return}
+  const r=activeReq(),col=r?colOf(r.id):S.cols[0],e=activeEnvObj();
+  const sec=(t,l)=>el('div',{},el('h3',{},t),l.length?el('table',{},el('tr',{},el('th',{},'Variable'),el('th',{},'Value')),l.filter(v=>v.enabled&&v.key).map(v=>el('tr',{},el('td',{class:'mono'},v.key),el('td',{class:'mono'},v.current||v.initial)))):el('div',{class:'dim'},'Trống'));
+  document.body.append(el('div',{class:'varpop',id:'varpop'},sec('Environment'+(e?' — '+e.name:' (chưa chọn)'),e?e.vars:[]),sec('Collection'+(col?' — '+col.name:''),col?col.vars:[]),sec('Globals',S.globals.vars)));
+}
+
+/* ---------- console ---------- */
+function renderConsole(){
+  const c=$('#console');c.hidden=!S.console;if(!S.console)return;c.innerHTML='';
+  c.append(el('div',{class:'ch'},el('b',{},'Console'),el('span',{class:'sp'}),el('button',{class:'btn sm',onclick:()=>{S.logs=[];renderConsole()}},'Clear'),el('button',{class:'btn sm',onclick:()=>{S.console=false;renderConsole()}},'×')));
+  const body=el('div',{class:'cb'});
+  S.logs.forEach(L=>{
+    const sec=(t,txt)=>el('div',{},el('b',{},t),el('pre',{},txt));
+    const sum=el('summary',{},el('span',{class:'dim'},L.t+' '),el('b',{class:'m-'+L.method.toLowerCase()},L.method),' '+L.url+'  ',L.fail?el('span',{class:'bad'},'✕ '+L.fail):el('span',{class:stc(L.status)},stIcon(L.status)+' '+L.status+' '+stText(L.status)+' '+L.time+'ms'));
+    body.append(el('details',{},sum,el('div',{class:'cd'},sec('Request Headers',L.reqH.map(h=>h[0]+': '+h[1]).join('\n')||'(không có)'),sec('Request Body',L.reqB||'(không có)'),L.fail?null:sec('Response Headers',Object.entries(L.resH).map(([k,v])=>cap(k)+': '+v).join('\n')),L.fail?null:sec('Response Body',L.resB||'(không có)'))));
+    L.logs.forEach(g=>body.append(el('div',{class:'lg '+g.lvl},g.text)));
+  });
+  c.append(body);body.scrollTop=body.scrollHeight;
+}
+
+/* ---------- runner ---------- */
+function openRunner(c){
+  const reqs=flatReqs(c);const checks=reqs.map(()=>true);
+  const list=el('div',{},reqs.map((r,i)=>el('div',{class:'row',style:'margin:2px 0'},el('input',{type:'checkbox',checked:true,onchange:e=>{checks[i]=e.target.checked}}),methodTag(r.method),el('span',{},r.name))));
+  const res=el('div',{style:'margin-top:12px'});const delay=el('input',{type:'number',min:'0',value:'0',style:'width:90px'});
+  const run=async()=>{
+    res.innerHTML='';const tb=el('table',{},el('tr',{},['Request','Status','Time','Tests'].map(h=>el('th',{},h))));res.append(tb);let tp=0,tf=0;
+    for(let i=0;i<reqs.length;i++){
+      if(!checks[i])continue;const r=reqs[i];const f=await sendRequest(r,{fast:true});
+      const t=f.post?f.post.tests:[],p=t.filter(x=>x.pass).length;tp+=p;tf+=t.length-p;
+      tb.append(el('tr',{},el('td',{},r.name),el('td',{},f.res?el('span',{class:stc(f.res.status)},stIcon(f.res.status)+' '+f.res.status):el('span',{class:'bad'},'✕ '+(f.fail?f.fail.msg:'lỗi'))),el('td',{},f.res?f.res.time+' ms':'—'),el('td',{},t.length?p+'/'+t.length:'—')));
+      if(+delay.value>0)await sleep(+delay.value);
+    }
+    res.append(el('p',{},el('b',{},'Tổng kết: '),el('span',{class:'ok'},tp+' test pass'),' · ',el('span',{class:tf?'bad':'dim'},tf+' test fail')));
+    S.flags.run=1;updateLabsNav();renderConsole();if(S.side==='hist')renderSide();
+  };
+  modal('Runner — '+c.name,el('div',{},list,el('div',{class:'row'},el('label',{},'Delay (ms)'),delay),res),[{t:'Close',fn:()=>{}},{t:'Run',pri:1,fn:()=>{run();return false}}]);
+}
+
+/* ---------- import / export ---------- */
+function openImport(){
+  const ta=el('textarea',{class:'code',style:'min-height:300px',spellcheck:'false',value:JSON.stringify(openapi(),null,2)});
+  const file=el('input',{type:'file',accept:'.json,application/json',onchange:e=>{const f=e.target.files[0];if(f)f.text().then(t=>{ta.value=t})}});
+  modal('Import',el('div',{},el('div',{class:'row'},file),ta),[{t:'Cancel',fn:()=>{}},{t:'Import',pri:1,fn:()=>{
+    let j;try{j=JSON.parse(ta.value)}catch(e){toast('JSON không hợp lệ: '+e.message);return false}
+    let out;if(j.openapi||j.swagger)out=importOpenApi(j);else if(j.info&&j.item)out=importPostman(j);else{toast('Không nhận ra định dạng (cần OpenAPI/Swagger hoặc Postman Collection v2.1)');return false}
+    S.cols.push(out.col);if(j.openapi||j.swagger)S.flags.import=1;S.side='cols';renderAll();toast('Đã import "'+out.col.name+'" — '+out.count+' request');
+  }}]);
+}
+function doExport(c){const blob=new Blob([exportCol(c)],{type:'application/json'});const a=el('a',{href:URL.createObjectURL(blob),download:c.name.replace(/\W+/g,'_')+'.postman_collection.json'});document.body.append(a);a.click();a.remove()}
+
+/* ---------- tab: endpoint và dữ liệu ---------- */
+function addApi(a){
+  const c=S.cols[0];if(!c){toast('Cần có ít nhất một collection');return null}
+  let fold=c.items.find(i=>i.type==='folder'&&i.name===a.tag);if(!fold){fold={id:nid('f'),type:'folder',name:a.tag,open:true,items:[]};c.items.push(fold)}
+  let ex=fold.items.find(i=>i._api===a.id);if(ex)return ex;
+  const r=newReq({name:a.name,method:a.m,url:'{{baseUrl}}'+a.p,auth:mkAuth(a.auth?'bearer':'none',a.auth?'{{token}}':'')});r._api=a.id;
+  r.params=(a.query||[]).map(x=>({key:x[0],value:x[1],desc:'',enabled:x[1]!==''}));syncUrlFromParams(r);r.pathVars.forEach(v=>{const x=(a.pv||[]).find(y=>y[0]===v.key);if(x)v.value=x[1]});
+  if(a.body){r.bodyMode='raw';r.rawType='json';r.raw=JSON.stringify(a.body,null,2)}
+  if(a.post)r.post=a.post;
+  fold.items.push(r);return r;
+}
+function renderServer(){
+  const v=$('#view-server');v.innerHTML='';const page=el('div',{class:'page'});v.append(page);
+  page.append(el('h2',{style:'margin-top:0'},'Máy chủ giả đang chạy trong trang này'),el('div',{class:'dim'},'localhost:8080 (Local) · staging.api.test (Staging, HTTPS) · postman-echo.com (chỉ có endpoint tiện ích)'));
+  const tags=[...new Set(API.map(a=>a.tag))];
+  tags.forEach(tag=>{
+    page.append(el('h3',{},tag));
+    API.filter(a=>a.tag===tag).forEach(a=>{
+      const exist=!!(S.cols[0]&&walk(S.cols[0].items,i=>i._api===a.id));
+      const card=el('div',{class:'card epc'},el('div',{class:'hd'},el('span',{class:'mb2 m-'+a.m.toLowerCase()},a.m),el('span',{class:'pth'},a.p),el('span',{class:'dim'},a.sum),el('span',{class:'sp'}),el('span',{class:'badge'+(a.auth?' acc':'')},a.auth?'Bearer token':'Public'),
+        el('button',{class:'btn sm',onclick:()=>{const r=addApi(a);if(r){toast(exist?'Request đã có trong collection':'Đã thêm vào My Collection');renderAll();renderServer()}}},exist?'Đã có trong collection':'Thêm vào My Collection'),
+        el('button',{class:'btn sm pri',onclick:()=>{const r=addApi(a);if(r){renderSide();openTab('request',r.id)}}},'Mở trong Postman')));
+      const det=el('details',{style:'margin-top:6px'},el('summary',{},'Chi tiết'));
+      if(a.pv||a.query)det.append(el('div',{},el('b',{},'Tham số: '),[...(a.pv||[]).map(x=>x[0]+' (path)'),...(a.query||[]).map(x=>x[0]+' (query)')].join(', ')));
+      if(a.body)det.append(el('div',{},el('b',{},'Body mẫu (application/json)'),el('pre',{class:'mono'},JSON.stringify(a.body,null,2))));
+      det.append(el('table',{style:'margin-top:6px'},el('tr',{},el('th',{style:'width:70px'},'Mã'),el('th',{},'Khi nào')),a.res.map(x=>el('tr',{},el('td',{class:stc(x[0])},x[0]+' '+stText(x[0])),el('td',{},x[1])))));
+      card.append(det);page.append(card);
+    });
+  });
+  page.append(el('h2',{},'Dữ liệu trên server (cập nhật theo thời gian thực)'));
+  const tb=el('table',{},el('tr',{},['id','name','email','role','createdAt'].map(h=>el('th',{},h))),DB.users.map(u=>el('tr',{},el('td',{class:'mono'},u.id),el('td',{},u.name),el('td',{class:'mono'},u.email),el('td',{},u.role),el('td',{class:'mono'},u.createdAt))));
+  page.append(el('div',{class:'ctl'},el('span',{},DB.users.length+' user · '+DB.tokens.size+' token đang hợp lệ'),el('span',{class:'sp'}),el('button',{class:'btn sm',onclick:()=>{resetDB();renderServer()}},'Reset dữ liệu')),el('div',{class:'card rtab'},tb));
+  page.append(el('div',{class:'dim'},'Tài khoản đăng nhập mẫu: admin@example.com / 123456 (mọi user đều dùng mật khẩu 123456).'));
+  const spec=JSON.stringify(openapi(),null,2);
+  page.append(el('h2',{},'OpenAPI JSON của server này'),el('div',{class:'ctl'},el('button',{class:'btn sm',onclick:()=>{(navigator.clipboard?navigator.clipboard.writeText(spec):Promise.reject()).then(()=>toast('Đã sao chép'),()=>toast('Không sao chép được, hãy bôi đen và copy'))}},'Sao chép'),el('button',{class:'btn sm pri',onclick:()=>{switchView('postman');openImport()}},'Mở hộp Import')),el('details',{},el('summary',{},'Xem file'),el('pre',{class:'mono card',style:'padding:10px;max-height:420px;overflow:auto'},spec)));
+}
+
+/* ---------- tab: luồng request ---------- */
+let playT=null;
+function stopPlay(){if(playT){clearInterval(playT);playT=null}}
+const NODES=[['client','Postman'],['net','Mạng'],['router','Router'],['auth','Auth'],['parse','Parse body'],['validate','Validate'],['handler','Handler'],['resp','Response'],['client2','Postman']];
+function renderFlow(){
+  const v=$('#view-flow');v.innerHTML='';const page=el('div',{class:'page'});v.append(page);
+  const f=S.flow;if(!f){stopPlay();page.append(el('div',{class:'empty'},'Chưa có request nào được gửi.'));return}
+  const steps=f.steps;S.fi=Math.max(0,Math.min(S.fi,steps.length-1));const cur=steps[S.fi];
+  const url=f.b?f.b.url:f.rawUrl;
+  page.append(el('div',{style:'display:flex;gap:10px;align-items:center;flex-wrap:wrap'},el('b',{class:'mono m-'+f.method.toLowerCase()},f.method),el('span',{class:'mono'},url),f.res?el('span',{class:stc(f.res.status)},stIcon(f.res.status)+' '+f.res.status+' '+f.res.statusText+' · '+f.res.time+' ms'):el('span',{class:'bad'},'✕ '+(f.fail?f.fail.msg.split('\n')[0]:''))));
+  const go=i=>{S.fi=Math.max(0,Math.min(i,steps.length-1));renderFlow()};
+  const playing=!!playT;
+  page.append(el('div',{class:'ctl'},el('button',{class:'btn',onclick:()=>{stopPlay();go(0)}},'⏮ Về đầu'),el('button',{class:'btn',onclick:()=>{stopPlay();go(S.fi-1)}},'◀ Lùi'),
+    el('button',{class:'btn pri',onclick:()=>{if(playT){stopPlay();renderFlow();return}if(S.fi>=steps.length-1)S.fi=0;playT=setInterval(()=>{if(S.fi>=steps.length-1){stopPlay();renderFlow();return}S.fi++;renderFlow()},1500/S.speed);renderFlow()}},playing?'⏸ Dừng':'▶ Chạy tự động'),
+    el('button',{class:'btn',onclick:()=>{stopPlay();go(S.fi+1)}},'Tiếp ▶'),
+    el('select',{onchange:e=>{S.speed=+e.target.value;if(playT){stopPlay();renderFlow()}}},[[0.5,'Chậm'],[1,'Vừa'],[2,'Nhanh']].map(x=>el('option',{value:x[0],selected:S.speed===x[0]},x[1]))),
+    el('span',{class:'dim'},'Bước '+(S.fi+1)+'/'+steps.length)));
+  const idxOf={};steps.forEach((s,i)=>{if(idxOf[s.node]===undefined)idxOf[s.node]=i});const lastIdx={};steps.forEach((s,i)=>{lastIdx[s.node]=i});
+  const pipe=el('div',{class:'pipe'});
+  NODES.forEach(([id,label],i)=>{
+    const first=idxOf[id],last=lastIdx[id];let cls='chip skip',sub='không chạy';
+    if(first!==undefined){
+      const here=steps.map((s,k)=>s.node===id?k:-1).filter(k=>k>=0);const failed=here.some(k=>!steps[k].ok&&steps[k].node!=='client'&&steps[k].node!=='client2')||(id==='client'&&here.some(k=>!steps[k].ok&&k===S.fi));
+      if(cur.node===id){cls='chip cur';sub='đang ở đây'}
+      else if(first>S.fi){cls='chip';sub='chưa tới'}
+      else{cls='chip done';sub='đã qua'}
+      const bad=here.filter(k=>k<=S.fi).some(k=>!steps[k].ok);
+      if(bad){cls=cls.replace('done','fail')+(cls.includes('cur')?'':' fail');sub=(cls.includes('cur')?'đang ở đây · ':'')+'✕ lỗi'}
+      void failed;void last;
+    }
+    pipe.append(el('div',{class:cls},label,el('small',{},sub)));if(i<NODES.length-1)pipe.append(el('span',{class:'arrow'},i<7?'→':'←'));
+  });
+  page.append(pipe);
+  const list=el('div',{class:'steps'},steps.map((s,i)=>el('button',{class:(i===S.fi?'cur':i>S.fi?'later':''),onclick:()=>{stopPlay();go(i)}},el('b',{},(i+1)+'. '+s.title,s.ok?'':' ✕'),el('span',{class:'lane'},s.lane),el('span',{class:'dim'},s.sub))));
+  const det=el('div',{class:'detail'},el('div',{},el('span',{class:'lane'},cur.lane),el('b',{style:'font-size:15px'},cur.title),cur.ok?'':el('span',{class:'bad'},'  ✕ lỗi ở bước này')),el('pre',{class:'mono'},cur.body));
+  page.append(el('div',{class:'split'},list,det));
+}
+
+/* ---------- tab: bài lab ---------- */
+function renderLabs(){
+  const v=$('#view-labs');v.innerHTML='';const page=el('div',{class:'page'});v.append(page);
+  const n=labCount();
+  page.append(el('h2',{style:'margin-top:0'},'Bài lab ('+n+'/'+LABS.length+')'),el('div',{class:'bar'},el('i',{style:'width:'+Math.round(n/LABS.length*100)+'%'})));
+  LABS.forEach((l,i)=>page.append(el('div',{class:'card lab'},el('div',{class:'st '+(S.flags[l[0]]?'ok':'dim')},S.flags[l[0]]?'✓ Hoàn thành':'○ Chưa xong'),el('div',{},el('b',{},(i+1)+'. '+l[1]),el('div',{class:'dim'},l[2])))));
+  page.append(el('div',{class:'ctl'},el('button',{class:'btn sm',onclick:()=>{S.flags={};S.srv.clear();updateLabsNav();renderLabs()}},'Đặt lại tiến độ')));
+}
+
+/* ---------- tab: tra cứu ---------- */
+function tbl(head,rows){return'<table><tr>'+head.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr>'+rows.map(r=>'<tr>'+r.map((c,i)=>'<td'+(i===0?' class="mono"':'')+'>'+esc(c)+'</td>').join('')+'</tr>').join('')+'</table>'}
+function renderRef(){
+  const v=$('#view-ref');v.innerHTML='';const page=el('div',{class:'page'});v.append(page);
+  const sec=(t,html)=>{page.append(el('h2',{},t),el('div',{class:'card rtab',html}))};
+  sec('Swagger và Postman: cái gì ứng với cái gì',tbl(['Swagger UI','Postman','Ghi chú'],[['Try it out','Gửi request bằng nút Send','Postman lưu lại request vào Collection'],['Parameters (query)','Tab Params','Bảng Params và thanh URL là một, sửa bên nào bên kia đổi theo'],['Parameters (path) {id}','Params → Path Variables (:id)','Import tự đổi {id} thành :id'],['Request body','Tab Body (raw + JSON)','Chọn JSON thì Postman tự gắn Content-Type: application/json'],['Authorize','Tab Authorization','Đặt ở cấp collection, request chọn Inherit auth from parent'],['Curl / Request URL','Console','Console hiện request thật sau khi thay biến'],['Server dropdown','Environment + biến {{baseUrl}}','Đổi môi trường không cần sửa từng request'],['Responses (schema)','Response + Tests','Postman cho phép kiểm tra tự động bằng pm.test']]));
+  sec('Phương thức HTTP',tbl(['Method','Dùng để','Safe','Idempotent','Có body'],[['GET','Đọc dữ liệu','Có','Có','Không'],['POST','Tạo mới / kích hoạt hành động','Không','Không','Có'],['PUT','Thay thế toàn bộ tài nguyên','Không','Có','Có'],['PATCH','Sửa một phần tài nguyên','Không','Không đảm bảo','Có'],['DELETE','Xóa tài nguyên','Không','Có','Thường không'],['HEAD','Như GET nhưng chỉ lấy header','Có','Có','Không'],['OPTIONS','Hỏi server hỗ trợ gì (CORS)','Có','Có','Không']]));
+  const codes=el('div',{class:'card rtab'});const flt=el('input',{type:'text',placeholder:'Lọc: 404, auth, token…',style:'margin:8px;width:260px'});
+  const drawCodes=()=>{const q=flt.value.toLowerCase();codes.querySelector('.tbox').innerHTML=tbl(['Mã','Tên','Ý nghĩa'],CODES.filter(c=>!q||(c[0]+' '+c[1]+' '+c[2]).toLowerCase().includes(q)).map(c=>[String(c[0]),c[1],c[2]]))};
+  codes.append(flt,el('div',{class:'tbox'}));flt.addEventListener('input',drawCodes);drawCodes();page.append(el('h2',{},'Mã trạng thái HTTP'),codes);
+  sec('Thứ tự ưu tiên của biến (từ cao xuống thấp)',tbl(['Phạm vi','Khai báo ở đâu','Ghi bằng script'],[['Local','Chỉ sống trong một lần chạy','pm.variables.set()'],['Environment','Mục Environments, chọn ở góc phải trên','pm.environment.set()'],['Collection','Collection → Variables','pm.collectionVariables.set()'],['Globals','Environments → Globals','pm.globals.set()']])+'<div style="padding:8px 12px" class="dim">Hai cột giá trị: Initial value được chia sẻ khi export/share, Current value chỉ nằm trên máy bạn. Token và mật khẩu chỉ để ở Current value. Biến chưa có giá trị hiện màu đỏ trên thanh URL.</div>');
+  sec('Header Postman tự thêm',tbl(['Header','Giá trị','Khi nào'],[['User-Agent','PostmanRuntime/7.43.0','Luôn có'],['Accept','*/*','Luôn có'],['Postman-Token','UUID ngẫu nhiên','Bật mặc định (Settings)'],['Host','Lấy từ URL','Luôn có'],['Accept-Encoding','gzip, deflate, br','Luôn có'],['Connection','keep-alive','Luôn có'],['Content-Type','Theo kiểu Body','Khi request có body'],['Content-Length','Số byte của body','Khi request có body'],['Cache-Control','no-cache','Khi bật Send no-cache header']]));
+  sec('Kiểu Body và Content-Type',tbl(['Body','Content-Type được gắn','Dùng cho'],[['raw + JSON','application/json','REST API thông thường'],['raw + Text','text/plain','Văn bản thuần'],['form-data','multipart/form-data; boundary=…','Form có upload file'],['x-www-form-urlencoded','application/x-www-form-urlencoded','Form HTML thường'],['none','(không gắn)','GET, DELETE']]));
+  sec('Biến động có sẵn',tbl(['Biến','Cho ra'],[['{{$guid}}','UUID v4'],['{{$timestamp}}','Unix timestamp (giây)'],['{{$isoTimestamp}}','Thời gian dạng ISO 8601'],['{{$randomInt}}','Số nguyên 0–1000'],['{{$randomEmail}}','Email ngẫu nhiên hợp lệ'],['{{$randomFullName}}','Họ tên ngẫu nhiên']]));
+  sec('Các lệnh pm.* trong Scripts',tbl(['Lệnh','Ý nghĩa'],[['pm.test("tên", fn)','Khai báo một bài test; ném lỗi trong fn là FAIL'],['pm.expect(x).to.eql(y)','Khẳng định kiểu Chai: equal, eql, above, below, include, property, a("string")…'],['pm.response.code','Mã trạng thái dạng số'],['pm.response.json()','Parse body thành object'],['pm.response.text()','Body dạng chuỗi'],['pm.response.responseTime','Thời gian phản hồi (ms)'],['pm.response.headers.get("Tên")','Đọc một header của response'],['pm.response.to.have.status(200)','Kiểm tra mã trạng thái'],['pm.response.to.have.header("Tên")','Kiểm tra có header'],['pm.environment.set/get/unset','Đọc ghi biến môi trường'],['pm.collectionVariables.set/get','Đọc ghi biến collection'],['pm.globals.set/get','Đọc ghi biến toàn cục'],['pm.variables.set/get','Biến cục bộ cho lần chạy này'],['console.log(...)','In ra Console (nút Console ở thanh dưới)']]));
+  sec('Lỗi thường gặp và nguyên nhân',tbl(['Triệu chứng','Nguyên nhân hay gặp'],[['ENOTFOUND {{baseUrl}}','Chưa chọn Environment hoặc biến chưa khai báo'],['ECONNREFUSED','Đúng host nhưng sai cổng, hoặc server chưa chạy'],['401 Unauthorized','Thiếu token, token hết hạn, hoặc Authorization chưa Inherit đúng'],['400 Bad Request','JSON sai cú pháp: dấu phẩy thừa, thiếu ngoặc, nháy đơn thay vì nháy kép'],['415 Unsupported Media Type','Body chọn raw + Text thay vì JSON nên không có Content-Type: application/json'],['422 Unprocessable Entity','JSON đúng cú pháp nhưng dữ liệu sai quy tắc (thiếu field, email sai)'],['404 Not Found','Sai đường dẫn hoặc id không tồn tại'],['405 Method Not Allowed','Đúng đường dẫn nhưng sai method'],['Test FAIL: expected … to equal …','Giá trị thực khác giá trị bạn kỳ vọng; mở Body để so sánh']]));
+}
+
+/* ---------- tab: hướng dẫn ---------- */
+const fmtG=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/`(.+?)`/g,'<code>$1</code>');
+function openApiReq(id){const a=API.find(x=>x.id===id);const r=addApi(a);if(!r)return;renderSide();openTab('request',r.id)}
+const GUIDE=[
+{t:'Làm quen màn hình Postman',lab:null,why:'Biết mỗi vùng làm gì thì mới không bị lạc. Gần như mọi thứ trong Postman đều nằm ở 4 chỗ này.',do:[['Mở tab **Postman**. Cột ngoài cùng bên trái có 3 mục: **Collections** (nơi cất request đã lưu), **Environments** (các bộ biến theo môi trường), **History** (mọi request đã gửi, kể cả chưa lưu).','Thanh trên cùng của vùng làm việc: mỗi tab là một request đang mở, dấu `+` mở request mới, ô **No Environment** bên phải để chọn môi trường, nút **Variables** để xem nhanh biến đang có hiệu lực.'],['Một request gồm: ô chọn **method** (GET/POST…), ô **URL**, nút **Send**, rồi các tab con **Params, Authorization, Headers, Body, Scripts, Settings**. Phần bên dưới là **Response**.'],['Thanh dưới cùng có **Console** (xem request thật sự đã gửi) và **Runner** (chạy cả collection).']],res:'Bạn chỉ ra được: request nằm ở đâu, biến chọn ở đâu, kết quả xem ở đâu.'},
+{t:'Gửi request đầu tiên (GET)',lab:'get200',why:'GET chỉ đọc dữ liệu, không thay đổi gì trên server nên an toàn để thử đầu tiên.',do:[['Mở tab **Postman**, bấm vào request **Get data** ở cột Collections. URL đang là `postman-echo.com/get`.'],['Bấm **Send** (hoặc `Ctrl + Enter`).'],['Nhìn khung **Response** phía dưới: góc phải có **200 OK**, thời gian (ms) và kích thước. Rê chuột lên thời gian để xem phân rã DNS, TCP, TLS, chờ server.'],['Chuyển qua lại các tab **Body, Cookies, Headers, Test Results**. Ở Body có 3 cách nhìn: **Pretty** (tô màu JSON), **Raw**, **Preview**.']],res:'Body trả về là JSON có `args`, `headers`, `url`. Đây là server echo nên nó phản chiếu lại đúng những gì Postman gửi, kể cả các header Postman tự thêm.',btn:['Mở Get data',()=>{switchView('postman');openTab('request',S.cols[0].items[0].id)}]},
+{t:'Query Params và Path Variables',lab:null,why:'Query param là phần sau dấu `?` để lọc/phân trang. Path variable (`:id`) là một phần của đường dẫn để chỉ đúng một tài nguyên.',do:[['Bấm nút bên dưới để mở request **List users** (`GET {{baseUrl}}/users`). Chọn Environment **Local** ở góc phải trên trước (xem bài 4 nếu chưa biết).'],['Vào tab **Params**. Bảng Params và thanh URL là một: gõ thêm `&q=an` vào cuối URL thì bảng tự có dòng `q = an`; ngược lại sửa trong bảng thì URL tự đổi.'],['Bỏ tick ô vuông đầu dòng `limit` để tạm tắt tham số đó mà không phải xóa.'],['Mở request **Get user** (`/users/:id`). Phần **Path Variables** xuất hiện bên dưới Query Params, điền `id = 2` rồi Send.']],res:'Danh sách đổi theo `page`, `limit`, `q`. Với `:id`, Postman thay `:id` bằng giá trị bạn điền khi gửi. Request này cần token nên sẽ ra 401 cho tới bài 5.',btn:['Mở List users',()=>openApiReq('list')]},
+{t:'Environment và biến {{baseUrl}}',lab:'env2',why:'Gõ cứng `http://localhost:8080` vào mọi request thì đổi sang server khác phải sửa từng cái. Dùng biến thì đổi một chỗ, cả collection đi theo.',do:[['Ở cột trái bấm **Environments**. Bạn có sẵn **Local** (`localhost:8080`) và **Staging** (`staging.api.test`). Mỗi cái có biến `baseUrl`.'],['Chọn Local ở ô **No Environment** góc phải trên (hoặc bấm **Set active**).'],['Mở một request có URL dạng `{{baseUrl}}/get`. Biến hợp lệ tô **cam**, biến chưa có giá trị tô **đỏ gạch chân**. Bấm **Variables** để xem toàn bộ giá trị đang hiệu lực.'],['Thử bỏ chọn Environment (No Environment) rồi Send: sẽ ra lỗi `getaddrinfo ENOTFOUND {{baseUrl}}`. Đây là lỗi hay gặp nhất khi quên chọn môi trường.'],['Mở một Environment, nhìn hai cột: **Initial value** (được chia sẻ khi export) và **Current value** (chỉ trên máy bạn). Token và mật khẩu chỉ để ở Current.']],res:'Đổi Local sang Staging thì cùng một request gọi sang server khác. Header `x-server` trong response đổi từ `local-dev` sang `staging`.',btn:['Đặt Local làm môi trường',()=>{setEnv(S.envs[0].id);toast('Đang dùng Local')}]},
+{t:'Đăng nhập (POST JSON) và lưu token',lab:'login',why:'POST gửi dữ liệu lên server. Với JSON, bạn phải chọn đúng kiểu body để Postman gắn header `Content-Type: application/json`, nếu không server sẽ trả 415.',do:[['Chọn môi trường **Local**. Bấm nút bên dưới mở request **Login** (`POST {{baseUrl}}/auth/login`).'],['Vào tab **Body**: radio **raw** đã chọn, ô bên phải là **JSON**. Body mẫu có `email` và `password`.'],['Vào tab **Headers** và bấm dòng **hidden**: bạn sẽ thấy `Content-Type: application/json` do Postman tự thêm. Thử đổi JSON thành **Text** ở tab Body rồi Send: ra 415 Unsupported Media Type. Đổi lại JSON.'],['Vào tab **Scripts**, chọn **Post-response**: có 2 dòng script lấy `access_token` từ response và ghi vào biến `token` của Environment. Bên phải là danh sách **Snippets** để chèn mẫu có sẵn.'],['Bấm **Send**. Sau đó bấm **Variables**: biến `token` đã xuất hiện trong Environment.']],res:'Status 200 và có `access_token`. Token này được lưu tự động nên các request sau chỉ cần gọi `{{token}}`.',btn:['Mở Login',()=>openApiReq('login')]},
+{t:'Authorization và lỗi 401',lab:'u401',why:'401 nghĩa là server không biết bạn là ai (thiếu hoặc sai token). Khác 403 là biết bạn nhưng bạn không đủ quyền.',do:[['Đã đăng nhập ở bài 5 (có biến `token`). Mở request **List users**.'],['Vào tab **Authorization**: Type là **Bearer Token**, Token là `{{token}}`. Postman tự chuyển nó thành header `Authorization: Bearer …`.'],['Đổi Type sang **No Auth** rồi Send: ra **401 Unauthorized**. Bấm sang tab **Luồng request** để thấy luồng dừng ngay ở bước **Middleware xác thực**, không đi tới handler.'],['Đổi lại **Bearer Token** rồi Send: ra **200**.'],['Cách gọn hơn: bấm **Edit** trên collection (menu `⋯` cạnh tên collection) → tab **Authorization** → đặt Bearer `{{token}}`. Mỗi request chọn **Inherit auth from parent**, token hết hạn chỉ cần sửa một chỗ.']],res:'Không token: 401. Có token: 200 kèm `data`, `page`, `limit`, `total`.',btn:['Mở List users',()=>openApiReq('list')]},
+{t:'Tạo, sửa, xóa: POST, PATCH, DELETE',lab:'c201',why:'Mỗi mã trạng thái nói rõ chuyện gì đã xảy ra. Học đọc chúng là kỹ năng chính khi kiểm tra API bằng tay.',do:[['Mở **Create user**, Send: **201 Created**, response có `id` mới và header `Location`. Gửi lại lần nữa: **409 Conflict** vì email đã tồn tại.'],['Vào Body, xóa field `email` rồi Send: **422 Unprocessable Entity**, response liệt kê field sai. JSON đúng cú pháp nhưng sai quy tắc dữ liệu.'],['Thử làm hỏng JSON (xóa một dấu ngoặc): **400 Bad Request**. Đây là lỗi cú pháp, khác với 422.'],['Mở **Update user** (PATCH, `id = 2`): chỉ gửi field cần sửa. **Replace user** (PUT) thì phải gửi đủ toàn bộ field.'],['Mở **Delete user** (`id = 6`), Send: **204 No Content**, không có body. Gửi lại: **404** vì đã xóa. Xem dữ liệu thật ở tab **Endpoint và dữ liệu**.']],res:'Bạn tự gây ra và nhận biết được 201, 400, 401, 404, 409, 415, 422, 204.',btn:['Mở Create user',()=>openApiReq('create')]},
+{t:'Viết test bằng pm.test',lab:'test',why:'Test để Postman tự kiểm tra thay bạn, khỏi phải đọc response bằng mắt mỗi lần.',do:[['Mở request bất kỳ, vào **Scripts** → **Post-response**.'],['Ở cột **Snippets** bên phải bấm **Status code is 200**: script được chèn sẵn.'],['Bấm **Send**, xuống khung Response chọn tab **Test Results**: dòng **PASS**.'],['Cố tình sửa số 200 thành 404, Send lại: dòng **FAIL** kèm lý do `expected … to have status code 404`.'],['Thử thêm snippet **Response time is below 500ms** và **Response body: JSON value check**.']],res:'Tab Test Results hiện số test pass/fail. Runner (bài 10) cộng dồn kết quả này cho cả collection.'},
+{t:'Chuyển môi trường Local và Staging',lab:'env2',why:'Đây là lợi ích thực tế nhất của Environment: kiểm tra cùng một bộ request trên nhiều server.',do:[['Chọn **Local**, mở **List users**, đăng nhập lại nếu token trống, Send. Mở tab **Headers** của response: `X-Server: local-dev`.'],['Chọn **Staging** ở góc phải trên. Staging có biến `baseUrl` riêng và chưa có `token`, nên cần chạy **Login** một lần trên Staging để lấy token riêng.'],['Gửi lại cùng request: `X-Server: staging`.']],res:'Cùng request, đổi dropdown là gọi sang server khác. Token của hai môi trường độc lập với nhau.'},
+{t:'Import Swagger/OpenAPI',lab:'import',why:'Bạn đã có Swagger nên không cần dựng tay. Import biến spec thành cả collection.',do:[['Vào tab **Endpoint và dữ liệu**, kéo xuống mục **OpenAPI JSON**, bấm **Mở hộp Import** (hộp đã điền sẵn spec). Thực tế bạn sẽ lấy file `swagger.json` hoặc `openapi.json` từ API của mình rồi dán/chọn file ở đây.'],['Bấm **Import**: một collection mới xuất hiện ở cột trái, chia thư mục theo `tags`, mỗi endpoint thành một request.'],['Kiểm tra: URL dùng `{{baseUrl}}`, đường dẫn `{id}` đã đổi thành `:id`, body mẫu được sinh từ schema, endpoint có `security` được gắn Bearer `{{token}}` ở cấp collection.'],['Chọn môi trường **Local**, chạy **Login** lấy token rồi thử các request vừa import.']],res:'Có ngay collection đầy đủ mà không gõ tay. Postman thật cũng làm đúng như vậy với nút Import.',btn:['Mở hộp Import',()=>{switchView('postman');openImport()}]},
+{t:'Chạy cả collection bằng Runner',lab:'run',why:'Chạy một lèo toàn bộ request để kiểm tra hồi quy thay vì bấm Send từng cái.',do:[['Ở thanh dưới cùng bấm **Runner** (hoặc menu `⋯` của collection → **Run collection**).'],['Bỏ tick request nào không muốn chạy. Thứ tự chạy theo thứ tự trong collection.'],['Bấm **Run**: bảng kết quả hiện status, thời gian và số test pass/fail của từng request, kèm tổng kết.']],res:'Thứ tự quan trọng: Login phải đứng trước các request cần token, nếu không chúng sẽ trả 401.',btn:['Mở Runner',()=>{switchView('postman');if(S.cols[0])openRunner(S.cols[0])}]},
+{t:'Debug: Console và tab Luồng request',lab:null,why:'Khi request fail, việc đầu tiên là xem request thật sự đã gửi đi như thế nào, không phải cái bạn nghĩ đã gửi.',do:[['Bấm **Console** ở thanh dưới cùng, mỗi lần Send thêm một dòng. Bấm mở dòng đó để xem **Request Headers, Request Body, Response Headers, Response Body** sau khi đã thay biến.'],['Chuyển qua tab **Luồng request** để xem từng bước: thay biến, gắn header/auth/body, đi qua mạng, Router, Auth, Parse body, Validate, Handler. Bấm từng bước ở danh sách bên trái hoặc dùng **Chạy tự động**.'],['Gặp lỗi thì đọc đúng thứ tự: có phải lỗi mạng (ENOTFOUND, ECONNREFUSED)? Biến có màu đỏ không? Mã 4xx nằm ở bước nào của luồng?']],res:'Mỗi lỗi chỉ ra bước cụ thể: 401 dừng ở Auth, 415 và 400 dừng ở Parse body, 422 dừng ở Validate, 404 dừng ở Router hoặc Handler.'}
+];
+function renderGuide(){
+  const v=$('#view-guide');v.innerHTML='';const page=el('div',{class:'page'});v.append(page);
+  page.append(el('h2',{style:'margin-top:0'},'Hướng dẫn thực hành từng bước'),el('div',{class:'dim'},'Làm theo thứ tự từ trên xuống. Mỗi bài có nút mở sẵn request tương ứng, những bài có bài lab sẽ tự đánh dấu hoàn thành.'));
+  GUIDE.forEach((g,i)=>{
+    const done=g.lab&&S.flags[g.lab];
+    const d=el('details',{class:'card',style:'padding:10px 14px'},el('summary',{},el('b',{},(i)+'. '+g.t),g.lab?el('span',{class:'badge '+(done?'acc':''),style:'margin-left:8px'},done?'Đã hoàn thành':'Chưa xong'):null));
+    if(i<=1)d.open=true;
+    d.append(el('div',{class:'dim',style:'margin:8px 0',html:'<b>Vì sao:</b> '+fmtG(g.why)}));
+    d.append(el('ol',{style:'padding-left:20px;margin:6px 0'},g.do.map(s=>el('li',{style:'margin:5px 0',html:fmtG(s[0])}))));
+    d.append(el('div',{style:'margin:8px 0',html:'<b>Kết quả mong đợi:</b> '+fmtG(g.res)}));
+    if(g.btn)d.append(el('button',{class:'btn pri sm',onclick:g.btn[1]},g.btn[0]));
+    page.append(d);
+  });
+}
+
+/* ---------- khởi tạo ---------- */
+function switchView(n){if(n!=='flow')stopPlay();S.view=n;$$('.view').forEach(x=>x.classList.toggle('on',x.id==='view-'+n));$$('.top nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===n));if(n==='guide')renderGuide();if(n==='server')renderServer();if(n==='flow')renderFlow();if(n==='labs')renderLabs()}
+$$('.top nav button').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.v)));
+$('#themeBtn').addEventListener('click',()=>{const d=document.documentElement;const dark=d.dataset.theme==='dark';d.dataset.theme=dark?'light':'dark';$('#themeBtn').textContent=dark?'Chế độ tối':'Chế độ sáng'});
+$('#newTab').addEventListener('click',()=>newDraft());
+$('#envSel').addEventListener('change',e=>setEnv(e.target.value));
+$('#eyeBtn').addEventListener('click',toggleVarPop);
+$('#btnConsole').addEventListener('click',()=>{S.console=!S.console;renderConsole()});
+$('#btnRunner').addEventListener('click',()=>{if(S.cols[0])openRunner(S.cols[0]);else toast('Chưa có collection')});
+document.addEventListener('keydown',e=>{
+  if(S.view!=='postman')return;
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){const r=activeReq();if(r){e.preventDefault();doSend(r)}}
+  else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){const r=activeReq();if(r){e.preventDefault();saveReq(r)}}
+  else if(e.ctrlKey&&e.altKey&&e.key.toLowerCase()==='c'){e.preventDefault();S.console=!S.console;renderConsole()}
+});
+/* ---------- chú thích khi trỏ chuột lâu ---------- */
+const TIPS=[
+['.top nav button',/^Postman/,'Giao diện mô phỏng Postman: nơi bạn gửi request, xem response, viết script.'],
+['.top nav button',/^Hướng dẫn/,'Các bài thực hành từng bước, có nút mở sẵn request tương ứng.'],
+['.top nav button',/^Endpoint/,'Danh sách endpoint của máy chủ giả, dữ liệu đang lưu trên server và file OpenAPI để thử Import.'],
+['.top nav button',/^Luồng/,'Xem từng bước của request vừa gửi: thay biến, đi qua mạng, server xử lý, trả response, chạy test.'],
+['.top nav button',/^Bài lab/,'Các nhiệm vụ tự động tính hoàn thành theo những gì bạn làm trong Postman.'],
+['.top nav button',/^Tra cứu/,'Bảng tra nhanh: method, mã trạng thái, biến, header, lệnh pm.*, lỗi thường gặp.'],
+['#themeBtn',/./,'Đổi qua lại giao diện sáng và tối.'],
+['#rail .rb',/^Collections/,'Collections: nơi cất các request đã lưu, chia thư mục để dễ tìm.'],
+['#rail .rb',/^Environments/,'Environments: các bộ biến theo môi trường (Local, Staging…) để đổi server mà không sửa request.'],
+['#rail .rb',/^History/,'History: mọi request đã gửi, kể cả request chưa lưu. Lỡ đóng tab thì vào đây lấy lại.'],
+['#newTab',/./,'Mở một request trống (chưa thuộc collection nào cho tới khi bạn Save).'],
+['#envSel',/./,'Chọn Environment đang dùng. Các biến {{...}} trong request sẽ lấy giá trị từ môi trường này. Chọn No Environment thì biến Environment không có giá trị.'],
+['#eyeBtn',/./,'Quick look: xem nhanh mọi biến đang có hiệu lực (Environment, Collection, Globals) và giá trị của chúng.'],
+['#btnConsole',/./,'Console (Ctrl+Alt+C): xem request THẬT sự đã gửi sau khi thay biến, kèm header ẩn và console.log từ script. Dùng khi debug.'],
+['#btnRunner',/./,'Runner: chạy lần lượt nhiều request trong collection và tổng hợp kết quả test.'],
+['#side .sh .btn',/^Import$/,'Import: nhập file OpenAPI/Swagger hoặc Postman Collection để tự sinh collection.'],
+['#side .sh .btn',/^\+$/,'Tạo mới (collection hoặc environment tùy mục đang mở).'],
+['#side .sh .btn',/^Clear$/,'Xóa toàn bộ lịch sử request.'],
+['#side .filt',/./,'Lọc request theo tên hoặc URL.'],
+['#side .tr .dots',/./,'Mở menu: thêm request, thêm thư mục, đổi tên, xóa… (cũng bấm chuột phải vào dòng đó được).'],
+['#side .tr .btn',/^Set active$/,'Dùng môi trường này cho mọi request.'],
+['#side .tr .badge',/^Active$/,'Môi trường đang được dùng.'],
+['.tb .x',/./,'Đóng tab. Request chưa Save sẽ mất.'],
+['.rname',/./,'Tên request, bấm vào để đổi.'],
+['.crumb .btn',/^Save$/,'Lưu request vào collection (Ctrl+S). Chưa lưu thì tắt tab là mất.'],
+['.crumb .btn',/^Run$/,'Chạy lần lượt các request trong collection này bằng Runner.'],
+['.crumb .btn',/^Export$/,'Tải collection về thành file JSON (chuẩn Postman v2.1), dùng để lưu vào Git hoặc gửi người khác.'],
+['.crumb .btn',/^Set as active$/,'Dùng môi trường này cho mọi request.'],
+['.crumb .btn',/^Delete$/,'Xóa môi trường này.'],
+['.msel',/./,'Method (phương thức HTTP): GET đọc dữ liệu, POST tạo mới, PUT thay toàn bộ, PATCH sửa một phần, DELETE xóa.'],
+['.urlin',/./,'Địa chỉ gửi request. Dùng {{ten_bien}} để lấy biến: màu cam là biến có giá trị, đỏ gạch chân là biến chưa có. Dùng :id cho path variable.'],
+['.sendbtn',/./,'Gửi request tới server (Ctrl+Enter). Kết quả hiện ở khung Response bên dưới.'],
+['#subtabs button',/^Docs/,'Ghi chú mô tả request này dành cho bạn hoặc đồng đội. Không ảnh hưởng request.'],
+['#subtabs button',/^Params/,'Query Params: các tham số sau dấu ? trên URL (lọc, phân trang). Bảng này và thanh URL là một, sửa bên nào bên kia đổi theo. Có thêm Path Variables nếu URL có :id.'],
+['#subtabs button',/^Authorization/,'Cách xác thực: Bearer Token, Basic Auth, API Key… Inherit auth from parent = dùng cách đã đặt ở collection.'],
+['#subtabs button',/^Headers/,'Header gửi kèm request. Số trong ngoặc gồm cả header Postman tự thêm; bấm "hidden" để xem chúng.'],
+['#subtabs button',/^Body/,'Nội dung gửi lên server (với POST, PUT, PATCH). Chấm xanh nghiên là request có body.'],
+['#subtabs button',/^Scripts/,'Viết code JavaScript: Pre-request chạy trước khi gửi, Post-response chạy sau khi có response (dùng để test và lưu token). Chấm xanh là đã có script.'],
+['#subtabs button',/^Settings/,'Cài đặt riêng cho request: timeout, header no-cache, header Postman-Token.'],
+['#sub .linkbtn',/Bulk Edit/,'Chuyển sang sửa toàn bộ dưới dạng văn bản, mỗi dòng key:value. Tiện khi dán nhiều cặp cùng lúc.'],
+['#sub .linkbtn',/Key-Value Edit/,'Quay lại dạng bảng.'],
+['#sub .linkbtn',/hidden/,'Hiện/ẩn các header Postman tự thêm (User-Agent, Host, Content-Type…).'],
+['#sub .linkbtn',/^Beautify$/,'Canh lại JSON cho thẳng hàng, dễ đọc. Báo lỗi nếu JSON chưa hợp lệ.'],
+['#sub .radios label',/^none/,'Request không có body (hay dùng với GET, DELETE).'],
+['#sub .radios label',/^form-data/,'Body dạng form, hỗ trợ upload file. Content-Type: multipart/form-data.'],
+['#sub .radios label',/^x-www-form-urlencoded/,'Body dạng form HTML thường, chỉ text. Content-Type: application/x-www-form-urlencoded.'],
+['#sub .radios label',/^raw/,'Body tự gõ (JSON, text, XML…). Với REST API thường chọn raw + JSON.'],
+['#sub .radios select',/./,'Kiểu nội dung của body raw. Chọn JSON thì Postman tự gắn Content-Type: application/json. Chọn Text mà gửi JSON sẽ bị server từ chối (415).'],
+['#sub .radios label',/^Pre-request/,'Script chạy TRƯỚC khi gửi: tạo dữ liệu động, đặt biến.'],
+['#sub .radios label',/^Post-response/,'Script chạy SAU khi có response: viết test (pm.test), lưu token vào biến.'],
+['#sub .snip button',/./,'Bấm để chèn đoạn code mẫu này vào ô script.'],
+['#sub th',/^Key$|^Variable$/,'Tên tham số/header/biến.'],
+['#sub th',/^Value$/,'Giá trị. Có thể dùng {{biến}}.'],
+['#sub th',/^Description$/,'Ghi chú cho chính bạn, không gửi lên server.'],
+['.main th',/^Initial value$/,'Giá trị được chia sẻ khi export hoặc share. Đừng để token hay mật khẩu ở đây.'],
+['.main th',/^Current value$/,'Giá trị đang dùng thật sự, chỉ nằm trên máy bạn. Script ghi biến sẽ ghi vào cột này.'],
+['.main th',/^Variable$/,'Tên biến, dùng trong request dưới dạng {{tên}}.'],
+['.kv .xbtn',/./,'Xóa dòng này.'],
+['.kv input[type=checkbox]',/./,'Bật/tắt dòng này mà không phải xóa.'],
+['.rhead .t',/^Body/,'Nội dung server trả về.'],
+['.rhead .t',/^Cookies/,'Cookie server gửi qua header Set-Cookie.'],
+['.rhead .t',/^Headers/,'Header trong response (Content-Type, X-Total-Count, Location…).'],
+['.rhead .t',/^Test Results/,'Kết quả các pm.test trong script Post-response: PASS hay FAIL kèm lý do.'],
+['.vtabs button',/^Pretty/,'JSON đã canh lề và tô màu, dễ đọc nhất.'],
+['.vtabs button',/^Raw/,'Nguyên văn server trả về, không chỉnh sửa.'],
+['.vtabs button',/^Preview/,'Hiển thị như trang web (hữu ích khi response là HTML).'],
+['.stat span',/ms$/,'Thời gian từ lúc gửi đến khi nhận xong. Rê chuột lên để xem phân rã DNS, TCP, TLS, chờ server.'],
+['.pm-console .ch .btn',/^Clear$/,'Xóa nội dung Console.'],
+['.pm-console .ch .btn',/^×$/,'Đóng Console.'],
+['.mh .btn',/^×$/,'Đóng hộp thoại.'],
+['.mf .btn',/^Cancel$/,'Hủy, không làm gì.'],
+['.mf .btn',/^Run$/,'Bắt đầu chạy các request đã tick, theo thứ tự từ trên xuống.'],
+['.mf .btn',/^Import$/,'Nhập nội dung đang trong ô thành một collection mới.'],
+['.mf .btn',/^Save$/,'Lưu request vào collection đã chọn.'],
+['.modal input[type=file]',/./,'Chọn file .json (OpenAPI/Swagger hoặc Postman Collection) từ máy bạn.'],
+['.modal label',/^Delay/,'Thời gian nghỉ giữa hai request (ms).'],
+['.menu button',/^Add request/,'Thêm request mới vào mục này.'],
+['.menu button',/^Add folder/,'Thêm thư mục con để nhóm request.'],
+['.menu button',/^Run collection/,'Chạy cả collection bằng Runner.'],
+['.menu button',/^Edit/,'Mở trang cấu hình collection: Authorization và Variables.'],
+['.menu button',/^Export/,'Tải collection về thành file JSON.'],
+['.menu button',/^Duplicate/,'Nhân bản request này.'],
+['.menu button',/^Rename/,'Đổi tên.'],
+['.menu button',/^Delete/,'Xóa mục này (không hoàn tác được).'],
+['#view-flow .btn',/^⏮/,'Quay về bước đầu tiên.'],
+['#view-flow .btn',/Lùi/,'Quay lại bước trước.'],
+['#view-flow .btn',/Chạy tự động/,'Tự động chuyển qua từng bước để bạn xem luồng chạy.'],
+['#view-flow .btn',/Dừng/,'Tạm dừng ở bước hiện tại.'],
+['#view-flow .btn',/^Tiếp/,'Đi tới bước tiếp theo.'],
+['#view-flow select',/./,'Tốc độ khi chạy tự động.'],
+['#view-flow .steps button',/./,'Bấm để nhảy tới bước này và xem chi tiết bên phải.'],
+['#view-flow .chip',/./,'Mỗi ô là một nơi request đi qua. Ô cam là bước đang xem, ô nét đứt đỏ là nơi bị lỗi, ô mờ là bước không chạy.'],
+['#view-server .btn',/^Thêm vào/,'Thêm endpoint này thành request trong My Collection, đã điền sẵn URL, body mẫu và auth.'],
+['#view-server .btn',/^Đã có/,'Endpoint này đã nằm trong My Collection.'],
+['#view-server .btn',/^Mở trong Postman/,'Thêm vào collection (nếu chưa có) và mở ngay trong Postman.'],
+['#view-server .btn',/^Reset dữ liệu/,'Đưa user và token trên server về trạng thái ban đầu.'],
+['#view-server .btn',/^Sao chép/,'Sao chép file OpenAPI để dán vào hộp Import.'],
+['#view-server .btn',/^Mở hộp Import/,'Chuyển sang Postman và mở hộp Import, đã điền sẵn file OpenAPI của server này.'],
+['#view-server summary',/./,'Bấm để mở/đóng chi tiết.'],
+['#view-labs .btn',/./,'Xóa tiến độ các bài lab để làm lại từ đầu.'],
+['#view-guide summary',/./,'Bấm để mở/đóng bài này.'],
+['#view-guide .btn',/./,'Mở sẵn đúng request hoặc hộp thoại cần cho bài này trong tab Postman.'],
+['#view-guide .badge',/./,'Trạng thái bài lab tương ứng, tự cập nhật khi bạn làm xong.']
+];
+function applyTips(){
+  TIPS.forEach(([sel,re,tip])=>{
+    document.querySelectorAll(sel).forEach(n=>{
+      if(n.getAttribute('title'))return;
+      const t=(n.textContent||'').trim();
+      if(re.test(t)||(n.tagName==='SELECT'||n.tagName==='INPUT')&&re.source==='.')n.setAttribute('title',tip);
+    });
+  });
+}
+let tipT=null;
+new MutationObserver(()=>{if(tipT)return;tipT=setTimeout(()=>{tipT=null;applyTips()},0)}).observe(document.body,{childList:true,subtree:true});
+seed();renderRef();renderAll();openTab('request',S.cols[0].items[0].id);applyTips();
+</script>
+</body>
+</html>
+
+</body></html>

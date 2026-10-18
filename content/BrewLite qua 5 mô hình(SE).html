@@ -1,0 +1,1119 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>BrewLite qua 5 mô hình</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<script>
+/* Mặc định giao diện SÁNG; chỉ theo khung xem khi người xem chọn rõ */
+(function(){var r=document.documentElement;r.setAttribute('data-vl-theme','light');
+function sync(){var t=r.getAttribute('data-theme');if(t==='dark'||t==='light')r.setAttribute('data-vl-theme',t);}
+sync();try{new MutationObserver(sync).observe(r,{attributes:true,attributeFilter:['data-theme']});}catch(e){}})();
+</script>
+<style>
+:root{color-scheme:light}
+:root[data-vl-theme="dark"]{color-scheme:dark}
+body{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px;margin:0}
+.pg-head{max-width:1180px;margin:0 auto 10px;display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.pg-head h1{margin:0 0 4px;font-size:20px;text-wrap:balance}
+.pg-head p{margin:0;font-size:14px;color:var(--vl-muted);max-width:68ch}
+.pg-tabs{max-width:1180px;margin:0 auto 10px;display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;border-bottom:1px solid var(--vl-line)}
+.pg-tab{font:inherit;font-size:14px;font-weight:600;padding:8px 14px;border:1px solid var(--vl-line);border-bottom:none;border-radius:8px 8px 0 0;background:var(--vl-panel);color:var(--vl-muted);cursor:pointer;white-space:nowrap}
+.pg-tab.on{background:var(--vl-bg);color:var(--vl-accent);border-color:var(--vl-accent);box-shadow:inset 0 3px 0 var(--vl-accent)}
+.pg-panel{max-width:1180px;margin:0 auto}
+.ev-hint{font-size:13px;color:var(--vl-muted);margin-bottom:8px}
+.ev-btns{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.ev-b{text-align:left;border-color:#d92d20;color:var(--vl-fg)}
+.ev-b:hover{background:rgba(217,45,32,.08)}
+.ev-log{font-size:12.5px;margin-bottom:8px;color:var(--vl-fg)}
+.pc-i{display:flex;gap:8px;font-size:13px;padding:3px 0;color:var(--vl-muted)}
+.pc-i .pc-ic{flex:0 0 18px;font-weight:700}
+.pc-i.on{color:var(--vl-fg);font-weight:600}
+.pc-i.ok.on .pc-ic{color:#0a8f5b}.pc-i.no.on .pc-ic{color:#d92d20}
+.cmp{padding:4px 0}.cmp h2{margin:4px 0 8px;font-size:18px}.cmp p{max-width:72ch;font-size:14px}
+.tw{overflow-x:auto}.tw table{border-collapse:collapse;min-width:620px;width:100%;font-size:13.5px}
+.tw th,.tw td{border:1px solid var(--vl-line);padding:8px 10px;text-align:left;vertical-align:top}
+.tw th{background:var(--vl-panel)}
+.cmp-note{background:var(--vl-panel);border:1px solid var(--vl-line);border-radius:8px;padding:10px 12px}
+.vl-side>.vl-card{min-width:0}
+</style>
+<script>
+/* ============================================================================
+   VLab — khung dùng chung cho mọi trang mô phỏng bài học IT/AI
+   ----------------------------------------------------------------------------
+   Dán TOÀN BỘ file này vào thẻ <script> của trang HTML xuất ra.
+   Không phụ thuộc thư viện ngoài. Chạy được offline.
+
+   Cung cấp sẵn:
+     - Chủ đề sáng/tối tự theo hệ thống + nút đổi
+     - 4 bảng màu (có 1 bảng thân thiện với người mù màu)
+     - Zoom bằng con lăn, kéo để di chuyển, nút đặt lại khung nhìn
+     - Thanh trượt tham số
+     - Bộ chạy: Chạy / Tạm dừng / Bước tiếp / Làm lại + thanh tốc độ
+     - Ô nhập công thức (parser an toàn, KHÔNG dùng eval)
+     - Khung mã giả tiếng Việt có tô sáng dòng đang chạy
+     - Ô "Đang xảy ra gì?" và ô "Vì sao?"
+
+   API chính:  const app = VLab.create({...});   xem phần cuối file.
+   ========================================================================== */
+(function (global) {
+  'use strict';
+
+  const VLab = {};
+
+  /* ==========================================================================
+     1. BẢNG MÀU
+     ========================================================================== */
+  const PALETTES = {
+    'Mặc định':      ['#2563eb', '#dc2626', '#059669', '#d97706', '#7c3aed', '#0891b2'],
+    'Dịu mắt':       ['#4f6d7a', '#c07a5c', '#6a8d73', '#a4789a', '#8c7851', '#5a7d9a'],
+    'Tương phản cao':['#0040ff', '#ff0040', '#00a000', '#ff8000', '#8000ff', '#00a0a0'],
+    'Thân thiện mù màu': ['#0072B2', '#E69F00', '#009E73', '#CC79A7', '#56B4E9', '#D55E00']
+  };
+  let paletteName = 'Mặc định';
+
+  /* ==========================================================================
+     2. CSS — nhúng một lần
+     ========================================================================== */
+  const CSS = `
+  :root{
+    --vl-bg:#ffffff; --vl-panel:#f6f7f9; --vl-fg:#14181d; --vl-muted:#5d6670;
+    --vl-line:#d9dde3; --vl-accent:#2563eb; --vl-grid:#e8ebef; --vl-axis:#9aa3ad;
+    --vl-hl:#fff3bf; --vl-hl-fg:#5c4600;
+  }
+  :root[data-vl-theme="dark"]{
+    --vl-bg:#13161a; --vl-panel:#1b1f25; --vl-fg:#e8ecf1; --vl-muted:#9aa5b1;
+    --vl-line:#2b323b; --vl-accent:#5b9dff; --vl-grid:#22272e; --vl-axis:#5d6670;
+    --vl-hl:#3a3414; --vl-hl-fg:#ffe79a;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-vl-theme="light"]){
+      --vl-bg:#13161a; --vl-panel:#1b1f25; --vl-fg:#e8ecf1; --vl-muted:#9aa5b1;
+      --vl-line:#2b323b; --vl-accent:#5b9dff; --vl-grid:#22272e; --vl-axis:#5d6670;
+      --vl-hl:#3a3414; --vl-hl-fg:#ffe79a;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--vl-bg);color:var(--vl-fg);
+    font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+  .vl-app{max-width:1180px;margin:0 auto;padding:16px;}
+  .vl-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+  .vl-title{font-size:18px;font-weight:650;margin:0;flex:1 1 220px;}
+  .vl-head-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .vl-main{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start;}
+  @media (max-width:860px){ .vl-main{grid-template-columns:1fr;} }
+  .vl-stage-wrap{position:relative;border:1px solid var(--vl-line);border-radius:10px;
+    overflow:hidden;background:var(--vl-panel);}
+  .vl-stage{display:block;width:100%;height:auto;touch-action:none;cursor:grab;}
+  .vl-stage.dragging{cursor:grabbing;}
+  .vl-status{padding:10px 12px;border-top:1px solid var(--vl-line);background:var(--vl-bg);
+    font-size:14px;min-height:42px;color:var(--vl-fg);}
+  .vl-status b{color:var(--vl-accent);}
+  .vl-side{display:flex;flex-direction:column;gap:12px;min-width:0;}
+  .vl-card{border:1px solid var(--vl-line);border-radius:10px;background:var(--vl-panel);padding:12px;}
+  .vl-card h3{margin:0 0 8px;font-size:13px;font-weight:650;text-transform:uppercase;
+    letter-spacing:.04em;color:var(--vl-muted);}
+  .vl-row{margin-bottom:12px;}
+  .vl-row:last-child{margin-bottom:0;}
+  .vl-lab{display:flex;justify-content:space-between;gap:8px;font-size:13px;margin-bottom:4px;}
+  .vl-lab span:last-child{font-variant-numeric:tabular-nums;color:var(--vl-accent);font-weight:600;}
+  input[type=range]{width:100%;accent-color:var(--vl-accent);margin:0;}
+  .vl-btn{font:inherit;font-size:13px;padding:6px 11px;border-radius:7px;cursor:pointer;
+    border:1px solid var(--vl-line);background:var(--vl-bg);color:var(--vl-fg);}
+  .vl-btn:hover{border-color:var(--vl-accent);}
+  .vl-btn.primary{background:var(--vl-accent);border-color:var(--vl-accent);color:#fff;}
+  .vl-btns{display:flex;gap:6px;flex-wrap:wrap;}
+  select,input[type=text]{font:inherit;font-size:13px;padding:6px 8px;border-radius:7px;
+    border:1px solid var(--vl-line);background:var(--vl-bg);color:var(--vl-fg);width:100%;}
+  .vl-head-tools select{width:auto;}
+  .vl-err{color:#dc2626;font-size:12px;margin-top:4px;min-height:16px;}
+  :root[data-vl-theme="dark"] .vl-err{color:#ff8080;}
+  .vl-code{margin:0;font:12.5px/1.6 ui-monospace,"Cascadia Code",Consolas,monospace;
+    counter-reset:vlline;max-height:260px;overflow:auto;}
+  .vl-code div{padding:1px 6px;border-radius:4px;white-space:pre-wrap;color:var(--vl-muted);}
+  .vl-code div.on{background:var(--vl-hl);color:var(--vl-hl-fg);font-weight:600;}
+  .vl-why{font-size:13.5px;color:var(--vl-fg);}
+  .vl-why p{margin:0 0 8px;} .vl-why p:last-child{margin:0;}
+  .vl-hint{font-size:12px;color:var(--vl-muted);margin-top:6px;}
+  `;
+
+  function injectCSS() {
+    if (document.getElementById('vl-css')) return;
+    const s = document.createElement('style');
+    s.id = 'vl-css';
+    s.textContent = CSS;
+    document.head.appendChild(s);
+  }
+
+  /* ==========================================================================
+     3. PARSER CÔNG THỨC — an toàn, không dùng eval()
+     Hỗ trợ: + - * / ^ ( ) , số, biến, hàm dựng sẵn, hằng pi/e
+     Dùng:  const f = VLab.compile('x^2 + 3*x', ['x']);  f({x:2}) -> 10
+     ========================================================================== */
+  const FUNCS = {
+    sin: Math.sin, cos: Math.cos, tan: Math.tan,
+    asin: Math.asin, acos: Math.acos, atan: Math.atan,
+    sinh: Math.sinh, cosh: Math.cosh, tanh: Math.tanh,
+    exp: Math.exp, sqrt: Math.sqrt, abs: Math.abs,
+    log: Math.log, ln: Math.log, log10: Math.log10, log2: Math.log2,
+    floor: Math.floor, ceil: Math.ceil, round: Math.round, sign: Math.sign,
+    min: Math.min, max: Math.max, pow: Math.pow, atan2: Math.atan2,
+    relu: function (v) { return v > 0 ? v : 0; },
+    sigmoid: function (v) { return 1 / (1 + Math.exp(-v)); }
+  };
+  const CONSTS = { pi: Math.PI, e: Math.E };
+
+  function tokenize(src) {
+    const out = [];
+    let i = 0;
+    while (i < src.length) {
+      const c = src[i];
+      if (c === ' ' || c === '\t' || c === '\n') { i++; continue; }
+      if (/[0-9.]/.test(c)) {
+        let j = i;
+        while (j < src.length && /[0-9.]/.test(src[j])) j++;
+        const num = parseFloat(src.slice(i, j));
+        if (isNaN(num)) throw new Error('Số không hợp lệ: ' + src.slice(i, j));
+        out.push({ t: 'num', v: num });
+        i = j; continue;
+      }
+      if (/[A-Za-z_]/.test(c)) {
+        let j = i;
+        while (j < src.length && /[A-Za-z0-9_]/.test(src[j])) j++;
+        out.push({ t: 'name', v: src.slice(i, j) });
+        i = j; continue;
+      }
+      if ('+-*/^(),'.indexOf(c) >= 0) { out.push({ t: c }); i++; continue; }
+      throw new Error('Ký tự lạ: "' + c + '"');
+    }
+    return out;
+  }
+
+  // Chuyển sang hậu tố bằng thuật toán sân ga (shunting-yard)
+  function toRPN(tokens) {
+    // Dấu trừ đứng trước (u-) nằm giữa */ và ^, nên -x^2 = -(x^2)
+    const prec = { '+': 1, '-': 1, '*': 2, '/': 2, 'u-': 2.5, '^': 3 };
+    const right = { '^': true, 'u-': true };
+    const out = [], ops = [];
+    let prev = null;
+    for (let k = 0; k < tokens.length; k++) {
+      const tk = tokens[k];
+      if (tk.t === 'num') { out.push(tk); }
+      else if (tk.t === 'name') {
+        if (tokens[k + 1] && tokens[k + 1].t === '(') ops.push({ t: 'fn', v: tk.v, argc: 1 });
+        else out.push(tk);
+      }
+      else if (tk.t === ',') {
+        while (ops.length && ops[ops.length - 1].t !== '(') out.push(ops.pop());
+        if (!ops.length) throw new Error('Dấu phẩy đặt sai chỗ');
+        for (let m = ops.length - 2; m >= 0; m--) {
+          if (ops[m].t === 'fn') { ops[m].argc++; break; }
+          if (ops[m].t === '(') break;
+        }
+      }
+      else if (tk.t === '(') { ops.push(tk); }
+      else if (tk.t === ')') {
+        while (ops.length && ops[ops.length - 1].t !== '(') out.push(ops.pop());
+        if (!ops.length) throw new Error('Thiếu dấu mở ngoặc');
+        ops.pop();
+        if (ops.length && ops[ops.length - 1].t === 'fn') out.push(ops.pop());
+      }
+      else {
+        let op = tk.t;
+        const unary = (op === '-' || op === '+') &&
+          (prev === null || prev.t === '(' || prev.t === ',' ||
+            '+-*/^'.indexOf(prev.t) >= 0);
+        if (unary) {
+          // dấu đứng trước toán hạng: không đẩy toán tử nào ra, chỉ xếp vào chồng
+          if (op === '+') { prev = tk; continue; }
+          ops.push({ t: 'u-' }); prev = tk; continue;
+        }
+        while (ops.length) {
+          const top = ops[ops.length - 1];
+          const topOp = top.t === 'fn' ? null : top.t;
+          if (topOp && topOp !== '(' &&
+            (prec[topOp] > prec[op] || (prec[topOp] === prec[op] && !right[op]))) {
+            out.push(ops.pop());
+          } else break;
+        }
+        ops.push({ t: op });
+      }
+      prev = tk;
+    }
+    while (ops.length) {
+      const top = ops.pop();
+      if (top.t === '(') throw new Error('Thiếu dấu đóng ngoặc');
+      out.push(top);
+    }
+    return out;
+  }
+
+  /**
+   * Biên dịch một biểu thức thành hàm.
+   * @param {string} src  ví dụ 'x^2 + 3*x'
+   * @param {string[]} vars  tên các biến được phép, ví dụ ['x'] hoặc ['x','y']
+   * @returns {function(Object): number}
+   */
+  VLab.compile = function (src, vars) {
+    vars = vars || ['x'];
+    const rpn = toRPN(tokenize(String(src)));
+    // Kiểm tra ngay lúc biên dịch: tên lạ, và biểu thức thiếu/thừa toán hạng
+    let depth = 0;
+    for (const tk of rpn) {
+      if (tk.t === 'name' && vars.indexOf(tk.v) < 0 && !(tk.v in CONSTS))
+        throw new Error('Không hiểu "' + tk.v + '"');
+      if (tk.t === 'fn' && !(tk.v in FUNCS))
+        throw new Error('Không có hàm "' + tk.v + '"');
+      if (tk.t === 'num' || tk.t === 'name') depth += 1;
+      else if (tk.t === 'u-') depth += 0;
+      else if (tk.t === 'fn') depth += 1 - tk.argc;
+      else depth -= 1;
+      if (depth < 1) throw new Error('Biểu thức thiếu toán hạng');
+    }
+    if (depth !== 1) throw new Error('Biểu thức chưa hoàn chỉnh');
+    return function (scope) {
+      const st = [];
+      for (const tk of rpn) {
+        if (tk.t === 'num') st.push(tk.v);
+        else if (tk.t === 'name') st.push(tk.v in CONSTS ? CONSTS[tk.v] : (scope[tk.v] || 0));
+        else if (tk.t === 'u-') st.push(-st.pop());
+        else if (tk.t === 'fn') {
+          const args = st.splice(st.length - tk.argc, tk.argc);
+          st.push(FUNCS[tk.v].apply(null, args));
+        } else {
+          const b = st.pop(), a = st.pop();
+          st.push(tk.t === '+' ? a + b : tk.t === '-' ? a - b :
+            tk.t === '*' ? a * b : tk.t === '/' ? a / b : Math.pow(a, b));
+        }
+      }
+      return st.pop();
+    };
+  };
+
+  /** Đạo hàm số (dùng khi không có công thức đạo hàm) */
+  VLab.deriv = function (f, scope, varName, h) {
+    h = h || 1e-5;
+    const s1 = Object.assign({}, scope), s2 = Object.assign({}, scope);
+    s1[varName] = scope[varName] + h;
+    s2[varName] = scope[varName] - h;
+    return (f(s1) - f(s2)) / (2 * h);
+  };
+
+  /* ==========================================================================
+     4. KHUNG NHÌN 2D — zoom bằng con lăn, kéo để di chuyển
+     ========================================================================== */
+  function makeView2D(canvas, opts, onChange) {
+    opts = opts || {};
+    const home = {
+      cx: opts.cx || 0,                  // toạ độ thế giới ở giữa khung
+      cy: opts.cy || 0,
+      scale: opts.scale || 40            // số pixel cho 1 đơn vị thế giới
+    };
+    const v = { cx: home.cx, cy: home.cy, scale: home.scale };
+
+    function toScreen(x, y) {
+      return [canvas.clientWidth / 2 + (x - v.cx) * v.scale,
+              canvas.clientHeight / 2 - (y - v.cy) * v.scale];
+    }
+    function toWorld(px, py) {
+      return [(px - canvas.clientWidth / 2) / v.scale + v.cx,
+              -(py - canvas.clientHeight / 2) / v.scale + v.cy];
+    }
+
+    // Bài có thể gán v.onPointerDown / onPointerMove / onPointerUp để tự xử lý
+    // (ví dụ kéo một nút của đồ thị). onPointerDown trả về true thì khung nhìn
+    // không kéo theo. Toạ độ truyền vào là pixel trong canvas.
+    let drag = null, grabbed = false;
+    function local(e) {
+      const r = canvas.getBoundingClientRect();
+      return [e.clientX - r.left, e.clientY - r.top];
+    }
+    canvas.addEventListener('pointerdown', function (e) {
+      canvas.setPointerCapture(e.pointerId);
+      if (v.onPointerDown) {
+        const p = local(e);
+        if (v.onPointerDown(p[0], p[1], e)) { grabbed = true; return; }
+      }
+      drag = { x: e.clientX, y: e.clientY, cx: v.cx, cy: v.cy };
+      canvas.classList.add('dragging');
+    });
+    canvas.addEventListener('pointermove', function (e) {
+      if (grabbed) {
+        if (v.onPointerMove) { const p = local(e); v.onPointerMove(p[0], p[1], e); }
+        return;
+      }
+      if (!drag) return;
+      v.cx = drag.cx - (e.clientX - drag.x) / v.scale;
+      v.cy = drag.cy + (e.clientY - drag.y) / v.scale;
+      onChange();
+    });
+    function endDrag() {
+      if (grabbed && v.onPointerUp) v.onPointerUp();
+      grabbed = false;
+      drag = null;
+      canvas.classList.remove('dragging');
+    }
+    canvas.addEventListener('pointerup', endDrag);
+    canvas.addEventListener('pointercancel', endDrag);
+
+    canvas.addEventListener('wheel', function (e) {
+      e.preventDefault();
+      const r = canvas.getBoundingClientRect();
+      const [wx, wy] = toWorld(e.clientX - r.left, e.clientY - r.top);
+      const k = Math.exp(-e.deltaY * 0.0015);
+      v.scale = Math.max(2, Math.min(4000, v.scale * k));
+      // giữ nguyên điểm dưới con trỏ
+      const [nx, ny] = toWorld(e.clientX - r.left, e.clientY - r.top);
+      v.cx += wx - nx; v.cy += wy - ny;
+      onChange();
+    }, { passive: false });
+
+    // pinch 2 ngón trên cảm ứng
+    let pinch = null;
+    canvas.addEventListener('touchmove', function (e) {
+      if (e.touches.length !== 2) { pinch = null; return; }
+      e.preventDefault();
+      const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX,
+                           e.touches[0].clientY - e.touches[1].clientY);
+      if (pinch) { v.scale = Math.max(2, Math.min(4000, v.scale * d / pinch)); onChange(); }
+      pinch = d;
+    }, { passive: false });
+    canvas.addEventListener('touchend', function () { pinch = null; });
+
+    v.toScreen = toScreen;
+    v.toWorld = toWorld;
+    v.reset = function () { v.cx = home.cx; v.cy = home.cy; v.scale = home.scale; onChange(); };
+    v.setHome = function (o) { Object.assign(home, o); v.reset(); };
+
+    /** Vẽ lưới + trục. Gọi đầu tiên trong hàm vẽ của bài. */
+    v.drawGrid = function (ctx) {
+      const W = canvas.clientWidth, H = canvas.clientHeight;
+      const cs = getComputedStyle(document.documentElement);
+      const grid = cs.getPropertyValue('--vl-grid').trim();
+      const axis = cs.getPropertyValue('--vl-axis').trim();
+      // bước lưới "đẹp": 1, 2, 5, 10...
+      let step = Math.pow(10, Math.floor(Math.log10(80 / v.scale)));
+      const n = 80 / (step * v.scale);
+      if (n > 5) step *= 5; else if (n > 2) step *= 2;
+      const [x0, y1] = toWorld(0, 0), [x1, y0] = toWorld(W, H);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = grid;
+      ctx.beginPath();
+      for (let x = Math.ceil(x0 / step) * step; x <= x1; x += step) {
+        const px = Math.round(toScreen(x, 0)[0]) + 0.5;
+        ctx.moveTo(px, 0); ctx.lineTo(px, H);
+      }
+      for (let y = Math.ceil(y0 / step) * step; y <= y1; y += step) {
+        const py = Math.round(toScreen(0, y)[1]) + 0.5;
+        ctx.moveTo(0, py); ctx.lineTo(W, py);
+      }
+      ctx.stroke();
+      // trục
+      ctx.strokeStyle = axis; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      const oy = Math.round(toScreen(0, 0)[1]) + 0.5;
+      const ox = Math.round(toScreen(0, 0)[0]) + 0.5;
+      ctx.moveTo(0, oy); ctx.lineTo(W, oy);
+      ctx.moveTo(ox, 0); ctx.lineTo(ox, H);
+      ctx.stroke();
+      // nhãn số
+      ctx.fillStyle = axis;
+      ctx.font = '11px system-ui,sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      const lbl = (t) => Math.abs(t) < 1e-9 ? '0' :
+        (Math.abs(t) < 1e-4 || Math.abs(t) >= 1e5 ? t.toExponential(1) :
+          parseFloat(t.toPrecision(4)).toString());
+      for (let x = Math.ceil(x0 / step) * step; x <= x1; x += step) {
+        if (Math.abs(x) < step / 2) continue;
+        ctx.fillText(lbl(x), toScreen(x, 0)[0], Math.min(H - 14, Math.max(2, oy + 3)));
+      }
+      ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      for (let y = Math.ceil(y0 / step) * step; y <= y1; y += step) {
+        if (Math.abs(y) < step / 2) continue;
+        ctx.fillText(lbl(y), Math.max(24, Math.min(W - 2, ox - 5)), toScreen(0, y)[1]);
+      }
+    };
+    return v;
+  }
+
+  /* ==========================================================================
+     5. TẠO ỨNG DỤNG
+     ========================================================================== */
+  /**
+   * @param {Object} cfg
+   *   title    {string}  tiêu đề trang
+   *   why      {string}  nội dung ô "Vì sao?" (HTML đơn giản)
+   *   stage    {'2d'|'none'}  '2d' tạo sẵn canvas + zoom/pan; 'none' để bài tự dựng (3D)
+   *   view     {Object}  {cx, cy, scale} khung nhìn ban đầu (chỉ với stage '2d')
+   *   height   {number}  chiều cao sân khấu, mặc định 460
+   *   func     {Object}  {label, value, vars} hiện ô nhập công thức
+   *   params   {Array}   [{id, label, min, max, step, value, fixed}]
+   *   player   {boolean} hiện bộ Chạy/Bước/Làm lại
+   *   code     {string[]} các dòng mã giả tiếng Việt
+   *   onDraw   {function(ctx, app)}  vẽ lại (chỉ với stage '2d')
+   *   onStep   {function(app): boolean}  chạy một bước; trả về false khi kết thúc
+   *   onReset  {function(app)}  đặt lại trạng thái bài
+   *   onParam  {function(id, value, app)}  khi một tham số đổi
+   */
+  VLab.create = function (cfg) {
+    injectCSS();
+    cfg = cfg || {};
+    const app = {};
+    const root = document.createElement('div');
+    root.className = 'vl-app';
+    document.body.appendChild(root);
+
+    /* --- đầu trang --- */
+    const head = document.createElement('div');
+    head.className = 'vl-head';
+    head.innerHTML =
+      '<h1 class="vl-title"></h1><div class="vl-head-tools">' +
+      '<select class="vl-pal" title="Bảng màu"></select>' +
+      '<button class="vl-btn vl-theme">Sáng/Tối</button>' +
+      '<button class="vl-btn vl-home">Đặt lại khung nhìn</button></div>';
+    head.querySelector('.vl-title').textContent = cfg.title || 'Mô phỏng';
+    root.appendChild(head);
+
+    const palSel = head.querySelector('.vl-pal');
+    Object.keys(PALETTES).forEach(function (n) {
+      const o = document.createElement('option');
+      o.value = n; o.textContent = n; palSel.appendChild(o);
+    });
+    palSel.value = paletteName;
+    palSel.addEventListener('change', function () {
+      paletteName = palSel.value; app.redraw();
+    });
+    head.querySelector('.vl-theme').addEventListener('click', function () {
+      const cur = document.documentElement.getAttribute('data-vl-theme');
+      const sysDark = global.matchMedia &&
+        global.matchMedia('(prefers-color-scheme: dark)').matches;
+      const now = cur || (sysDark ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-vl-theme', now === 'dark' ? 'light' : 'dark');
+      app.redraw();
+    });
+
+    /* --- bố cục chính --- */
+    const main = document.createElement('div');
+    main.className = 'vl-main';
+    root.appendChild(main);
+
+    const stageWrap = document.createElement('div');
+    stageWrap.className = 'vl-stage-wrap';
+    main.appendChild(stageWrap);
+
+    const side = document.createElement('div');
+    side.className = 'vl-side';
+    main.appendChild(side);
+
+    /* --- sân khấu --- */
+    const stageMode = cfg.stage || '2d';
+    const stageH = cfg.height || 460;
+    let canvas = null, ctx = null;
+    app.stageEl = stageWrap;
+
+    if (stageMode === '2d') {
+      canvas = document.createElement('canvas');
+      canvas.className = 'vl-stage';
+      canvas.style.height = stageH + 'px';
+      stageWrap.appendChild(canvas);
+      ctx = canvas.getContext('2d');
+      app.canvas = canvas; app.ctx = ctx;
+    } else {
+      const host = document.createElement('div');
+      host.className = 'vl-stage';
+      host.style.height = stageH + 'px';
+      stageWrap.appendChild(host);
+      app.host = host;
+    }
+
+    const statusEl = document.createElement('div');
+    statusEl.className = 'vl-status';
+    statusEl.innerHTML = '<span class="vl-muted">Sẵn sàng.</span>';
+    stageWrap.appendChild(statusEl);
+
+    /* --- khung nhìn --- */
+    if (stageMode === '2d') {
+      app.view = makeView2D(canvas, cfg.view, function () { app.redraw(); });
+    }
+    head.querySelector('.vl-home').addEventListener('click', function () {
+      if (app.view) app.view.reset();
+      else if (app.onHome) app.onHome();
+    });
+
+    /* --- ô nhập công thức --- */
+    app.f = null;
+    if (cfg.func) {
+      const card = document.createElement('div');
+      card.className = 'vl-card';
+      card.innerHTML = '<h3>Công thức</h3>' +
+        '<div class="vl-lab"><span></span></div>' +
+        '<input type="text" class="vl-fn">' +
+        '<div class="vl-err"></div>' +
+        '<div class="vl-hint">Dùng được: + - * / ^ ( ) và sin, cos, exp, ln, sqrt, abs, tanh, relu, sigmoid, pi, e</div>';
+      card.querySelector('.vl-lab span').textContent =
+        cfg.func.label || ('Hàm theo ' + (cfg.func.vars || ['x']).join(', '));
+      const inp = card.querySelector('.vl-fn');
+      const err = card.querySelector('.vl-err');
+      inp.value = cfg.func.value || 'x^2';
+      function recompile() {
+        try {
+          app.f = VLab.compile(inp.value, cfg.func.vars || ['x']);
+          app.fSource = inp.value;
+          err.textContent = '';
+          if (cfg.onReset) cfg.onReset(app);
+          app.redraw();
+        } catch (e) {
+          err.textContent = 'Lỗi: ' + e.message;
+        }
+      }
+      inp.addEventListener('change', recompile);
+      inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') recompile(); });
+      side.appendChild(card);
+      try {
+        app.f = VLab.compile(inp.value, cfg.func.vars || ['x']);
+        app.fSource = inp.value;
+      } catch (e) { err.textContent = 'Lỗi: ' + e.message; }
+    }
+
+    /* --- thanh trượt tham số --- */
+    const paramVals = {};
+    if (cfg.params && cfg.params.length) {
+      const card = document.createElement('div');
+      card.className = 'vl-card';
+      card.innerHTML = '<h3>Tham số</h3>';
+      cfg.params.forEach(function (p) {
+        paramVals[p.id] = p.value;
+        const row = document.createElement('div');
+        row.className = 'vl-row';
+        row.innerHTML = '<div class="vl-lab"><span></span><span class="vl-val"></span></div>' +
+          '<input type="range">';
+        row.querySelector('.vl-lab span').textContent = p.label;
+        const val = row.querySelector('.vl-val');
+        const r = row.querySelector('input');
+        r.min = p.min; r.max = p.max; r.step = p.step; r.value = p.value;
+        const fmt = function (v) {
+          return p.fixed != null ? Number(v).toFixed(p.fixed) : String(v);
+        };
+        val.textContent = fmt(p.value);
+        r.addEventListener('input', function () {
+          paramVals[p.id] = parseFloat(r.value);
+          val.textContent = fmt(r.value);
+          if (cfg.onParam) cfg.onParam(p.id, paramVals[p.id], app);
+          app.redraw();
+        });
+        card.appendChild(row);
+      });
+      side.appendChild(card);
+    }
+    app.param = function (id) { return paramVals[id]; };
+    app.params = paramVals;
+
+    /* --- bộ chạy --- */
+    app.running = false;
+    app.stepCount = 0;
+    if (cfg.player) {
+      const card = document.createElement('div');
+      card.className = 'vl-card';
+      card.innerHTML = '<h3>Chạy mô phỏng</h3>' +
+        '<div class="vl-btns"><button class="vl-btn primary vl-play">▶ Chạy</button>' +
+        '<button class="vl-btn vl-step">Bước tiếp</button>' +
+        '<button class="vl-btn vl-again">Làm lại</button></div>' +
+        '<div class="vl-row" style="margin-top:12px">' +
+        '<div class="vl-lab"><span>Tốc độ (bước/giây)</span><span class="vl-spd">8</span></div>' +
+        '<input type="range" class="vl-speed" min="1" max="60" step="1" value="8"></div>';
+      side.appendChild(card);
+      const btnPlay = card.querySelector('.vl-play');
+      const spdEl = card.querySelector('.vl-spd');
+      const spdIn = card.querySelector('.vl-speed');
+      spdIn.addEventListener('input', function () { spdEl.textContent = spdIn.value; });
+
+      let timer = null;
+      function oneStep() {
+        const alive = cfg.onStep ? cfg.onStep(app) : false;
+        app.stepCount++;
+        app.redraw();
+        if (alive === false) app.pause();
+      }
+      app.play = function () {
+        if (app.running) return;
+        app.running = true;
+        btnPlay.textContent = '❚❚ Tạm dừng';
+        const tick = function () {
+          if (!app.running) return;
+          oneStep();
+          timer = setTimeout(tick, 1000 / parseFloat(spdIn.value));
+        };
+        tick();
+      };
+      app.pause = function () {
+        app.running = false;
+        btnPlay.textContent = '▶ Chạy';
+        if (timer) { clearTimeout(timer); timer = null; }
+      };
+      btnPlay.addEventListener('click', function () {
+        app.running ? app.pause() : app.play();
+      });
+      card.querySelector('.vl-step').addEventListener('click', function () {
+        app.pause(); oneStep();
+      });
+      card.querySelector('.vl-again').addEventListener('click', function () {
+        app.pause();
+        app.stepCount = 0;
+        if (cfg.onReset) cfg.onReset(app);
+        app.highlight(-1);
+        app.redraw();
+      });
+    }
+
+    /* --- mã giả --- */
+    let codeLines = [];
+    if (cfg.code && cfg.code.length) {
+      const card = document.createElement('div');
+      card.className = 'vl-card';
+      card.innerHTML = '<h3>Thuật toán</h3><div class="vl-code"></div>';
+      const box = card.querySelector('.vl-code');
+      cfg.code.forEach(function (line) {
+        const d = document.createElement('div');
+        d.textContent = line;
+        box.appendChild(d);
+        codeLines.push(d);
+      });
+      side.appendChild(card);
+    }
+    /** Tô sáng dòng mã giả đang chạy (-1 để bỏ tô sáng) */
+    app.highlight = function (i) {
+      codeLines.forEach(function (d, k) { d.classList.toggle('on', k === i); });
+    };
+
+    /* --- ô "Vì sao?" --- */
+    if (cfg.why) {
+      const card = document.createElement('div');
+      card.className = 'vl-card';
+      card.innerHTML = '<h3>Vì sao?</h3><div class="vl-why"></div>';
+      card.querySelector('.vl-why').innerHTML = cfg.why;
+      side.appendChild(card);
+    }
+
+    /* --- API phụ --- */
+    /** Cập nhật ô "Đang xảy ra gì?" dưới sân khấu */
+    app.status = function (html) { statusEl.innerHTML = html; };
+    /** Lấy màu thứ i của bảng màu đang chọn */
+    app.color = function (i) {
+      const p = PALETTES[paletteName];
+      return p[((i % p.length) + p.length) % p.length];
+    };
+    /** Lấy giá trị một biến CSS của chủ đề, ví dụ app.css('--vl-fg') */
+    app.css = function (name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    };
+
+    /* --- vòng vẽ --- */
+    let pending = false;
+    app.redraw = function () {
+      if (pending) return;
+      pending = true;
+      requestAnimationFrame(function () {
+        pending = false;
+        if (stageMode === '2d') {
+          const dpr = global.devicePixelRatio || 1;
+          const w = canvas.clientWidth, h = canvas.clientHeight;
+          if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+            canvas.width = Math.round(w * dpr);
+            canvas.height = Math.round(h * dpr);
+          }
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          ctx.clearRect(0, 0, w, h);
+          if (cfg.onDraw) cfg.onDraw(ctx, app);
+        } else if (cfg.onDraw) {
+          cfg.onDraw(null, app);
+        }
+      });
+    };
+
+    global.addEventListener('resize', function () { app.redraw(); });
+    if (global.matchMedia) {
+      global.matchMedia('(prefers-color-scheme: dark)')
+        .addEventListener('change', function () { app.redraw(); });
+    }
+
+    if (cfg.onReset) cfg.onReset(app);
+    app.redraw();
+    return app;
+  };
+
+  /* ==========================================================================
+     6. TIỆN ÍCH VẼ (canvas 2D)
+     ========================================================================== */
+  /** Vẽ đường cong y = f(x) trong toạ độ thế giới */
+  VLab.plotFunction = function (ctx, view, f, color, width) {
+    const W = ctx.canvas.clientWidth;
+    ctx.strokeStyle = color; ctx.lineWidth = width || 2;
+    ctx.beginPath();
+    let started = false;
+    for (let px = 0; px <= W; px++) {
+      const x = view.toWorld(px, 0)[0];
+      const y = f(x);
+      if (!isFinite(y)) { started = false; continue; }
+      const [sx, sy] = view.toScreen(x, y);
+      if (sy < -1e4 || sy > 1e4) { started = false; continue; }
+      if (started) ctx.lineTo(sx, sy); else { ctx.moveTo(sx, sy); started = true; }
+    }
+    ctx.stroke();
+  };
+
+  /** Vẽ một chấm tròn tại toạ độ thế giới */
+  VLab.dot = function (ctx, view, x, y, color, r) {
+    const [sx, sy] = view.toScreen(x, y);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(sx, sy, r || 5, 0, Math.PI * 2);
+    ctx.fill();
+  };
+
+  /** Vẽ mũi tên từ (x1,y1) đến (x2,y2) trong toạ độ thế giới */
+  VLab.arrow = function (ctx, view, x1, y1, x2, y2, color, width) {
+    const [a, b] = view.toScreen(x1, y1);
+    const [c, d] = view.toScreen(x2, y2);
+    const ang = Math.atan2(d - b, c - a);
+    const len = 9;
+    ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width || 2;
+    ctx.beginPath(); ctx.moveTo(a, b); ctx.lineTo(c, d); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(c, d);
+    ctx.lineTo(c - len * Math.cos(ang - 0.4), d - len * Math.sin(ang - 0.4));
+    ctx.lineTo(c - len * Math.cos(ang + 0.4), d - len * Math.sin(ang + 0.4));
+    ctx.closePath(); ctx.fill();
+  };
+
+  /** Viết chữ tại toạ độ màn hình */
+  VLab.label = function (ctx, px, py, text, color, align) {
+    ctx.fillStyle = color;
+    ctx.font = '12px system-ui,sans-serif';
+    ctx.textAlign = align || 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, px, py);
+  };
+
+  VLab.palettes = PALETTES;
+  global.VLab = VLab;
+
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* ===== ENGINE: mô phỏng 5 mô hình (số liệu minh hoạ, đơn vị: tuần) ===== */
+var FEATS=['Tài khoản','Tra cứu menu','Giỏ hàng','Đặt hàng','Thanh toán','Theo dõi đơn'];
+function r1(n){return Math.round(n*100)/100;}
+function fmt(n){return (Math.round(n*100)/100).toString().replace('.',',');}
+function layout(segs){var t=0;segs.forEach(function(s){s.start=t;t+=s.len;});return t;}
+function segAt(segs,t){for(var i=0;i<segs.length;i++){if(t>=segs[i].start&&t<segs[i].start+segs[i].len-1e-9)return segs[i];}return segs[segs.length-1];}
+function insertAt(segs,t,piece){ /* chèn piece vào tuần t, tách đoạn đang chạy làm hai */
+  layout(segs);var s=segAt(segs,t),i=segs.indexOf(s),off=Math.min(Math.max(t-s.start,0),s.len);
+  var out=[];
+  if(off<=1e-9){segs.splice(i,0,piece);}
+  else if(off>=s.len-1e-9){segs.splice(i+1,0,piece);}
+  else{var b=Object.assign({},s);s.len=off;b.len=b.len-off;b.cont=true;segs.splice(i+1,0,piece,b);}
+  layout(segs);return piece;}
+function mk(name,len,kind,node,o){return Object.assign({name:name,len:len,kind:kind,node:node},o||{});}
+var WF_COEF={1:.25,2:.5,3:1,4:1.5,5:2};
+function wfCost(t){var p=t<2?1:t<4?2:t<9?3:t<11?4:5;return r1(1.5*WF_COEF[p]);}
+function phOf(s){return s.ph||s.node;}
+
+/* ---------- định nghĩa mô hình ---------- */
+var MODELS={};
+MODELS.wf={name:'Thác nước',nodes:['Bắt đầu','Yêu cầu','Thiết kế','Lập trình','Kiểm thử','Triển khai','Kết thúc'],
+ plan:12,
+ base:function(){return [mk('Yêu cầu',2,'phase',1,{ph:1}),mk('Thiết kế',2,'phase',2,{ph:2}),mk('Lập trình',5,'phase',3,{ph:3}),mk('Kiểm thử',2,'phase',4,{ph:4}),mk('Triển khai',1,'phase',5,{ph:5})];},
+ pros:[{id:'kh',t:'Kế hoạch & mốc rõ ràng, dễ ước lượng 12 tuần',base:1},{id:'td',t:'Tài liệu đầy đủ sau mỗi giai đoạn (dễ bàn giao)',base:1},{id:'qt',t:'Quản lý dễ: mỗi pha có đầu ra kiểm duyệt được',base:1}],
+ cons:[{id:'doi',t:'Đổi yêu cầu muộn → chi phí tăng vọt'},{id:'muon',t:'Lỗi thiết kế chỉ lộ ở giai đoạn kiểm thử'},{id:'khach',t:'Khách chỉ thấy sản phẩm ở cuối → hiểu sai muộn'},{id:'ep',t:'Trễ thì kiểm thử bị ép → chất lượng giảm'}],
+ events:[{id:'doi',lab:'Khách đòi đổi chức năng',hint:'Ví dụ: đổi cách thanh toán'},{id:'tk',lab:'Lỗi thiết kế lộ ra',hint:'CSDL thiếu bảng Topping'},{id:'hieu',lab:'Khách thấy bản chạy: "không phải cái tôi cần"'},{id:'han',lab:'Sếp rút ngắn deadline'}]};
+MODELS.inc={name:'Phát triển tăng dần',nodes:['Bắt đầu','Chọn nhóm tính năng','Thiết kế + Lập trình','Kiểm thử','Khách xem demo','Còn tính năng?','Phát hành bản cuối','Kết thúc'],
+ plan:12,
+ base:function(){var a=[];for(var i=0;i<6;i++){a.push(mk('F'+(i+1)+' '+FEATS[i],2,'inc',2,{inc:i,mix:[[1,.1],[2,.45],[3,.25],[4,.1],[i<5?5:6,.1]]}));}return a;},
+ pros:[{id:'sm',t:'Khách xem bản chạy sau mỗi 2 tuần → hiểu sai bị bắt sớm',base:1},{id:'re',t:'Đổi yêu cầu rẻ (chỉ sửa phần đang làm)'},{id:'sm2',t:'Lỗi phát hiện ngay trong đợt vừa làm'},{id:'cp',t:'Thiếu thời gian → cắt tính năng, không cắt chất lượng'}],
+ cons:[{id:'tl',t:'Quy trình "vô hình": quản lý đòi tài liệu mỗi đợt, tốn thêm thời gian'},{id:'sd',t:'Cấu trúc code xuống cấp nếu không dành thời gian refactor'}],
+ events:[{id:'doi',lab:'Khách đòi đổi chức năng',hint:'Đang làm đợt hiện tại'},{id:'loi',lab:'Có lỗi trong đợt đang làm'},{id:'tl',lab:'Sếp đòi tài liệu đầy đủ từng đợt'},{id:'rf',lab:'Bỏ refactor cho kịp hạn'},{id:'han',lab:'Sếp rút ngắn deadline'}]};
+MODELS.re={name:'Tích hợp & cấu hình (tái sử dụng)',nodes:['Bắt đầu','Đặc tả yêu cầu','Tìm & đánh giá thành phần','Cấu hình / tích hợp','Kiểm thử','Triển khai','Kết thúc'],
+ plan:8,
+ base:function(){return [mk('Yêu cầu',1.5,'phase',1,{ph:1}),mk('Tìm thành phần (VNPay, Auth, Maps)',1.5,'phase',2,{ph:2}),mk('Cấu hình + nối API',2,'phase',3,{ph:3}),mk('Tích hợp',2,'phase',3,{ph:3}),mk('Kiểm thử',0.7,'phase',4,{ph:4}),mk('Triển khai',0.3,'phase',5,{ph:5})];},
+ pros:[{id:'nh',t:'Nhanh: 8 tuần thay vì 12 (không tự viết thanh toán/đăng nhập)',base:1},{id:'rr',t:'Rẻ & ít rủi ro: thành phần đã được nhiều nơi dùng thử',base:1},{id:'nho',t:'Thêm nhu cầu nhỏ chỉ cần chỉnh cấu hình'}],
+ cons:[{id:'th',t:'Phải thoả hiệp yêu cầu cho khớp thành phần có sẵn'},{id:'kk',t:'Mất kiểm soát tiến hoá: nhà cung cấp đổi API → mình phải sửa'},{id:'ng',t:'Nhà cung cấp ngừng hỗ trợ → phải thay thế'},{id:'hd',t:'Lỗi nằm trong "hộp đen", chờ nhà cung cấp'}],
+ events:[{id:'nho',lab:'Khách xin chỉnh nhỏ (đổi phí giao hàng)'},{id:'lon',lab:'Khách đòi tính năng cổng thanh toán không hỗ trợ'},{id:'api',lab:'Nhà cung cấp đổi API'},{id:'loi',lab:'Lỗi nằm trong thư viện bên thứ ba'},{id:'ng',lab:'Nhà cung cấp ngừng hỗ trợ'}]};
+MODELS.sc={name:'Scrum',nodes:['Bắt đầu','Product Backlog','Sprint Planning','Phát triển + Daily Scrum','Sprint Review','Retrospective','Còn backlog?','Phát hành'],
+ plan:12,
+ base:null,
+ pros:[{id:'tn',t:'Sprint cố định 2 tuần: đổi yêu cầu chỉ ảnh hưởng sprint kế tiếp'},{id:'mb',t:'Minh bạch: burndown chart cho thấy tiến độ thật mỗi ngày',base:1},{id:'ct',t:'Review + Retro mỗi sprint → cải tiến liên tục',base:1}],
+ cons:[{id:'pv',t:'Chèn việc giữa sprint → phá timebox, mất mục tiêu sprint'},{id:'po',t:'Thiếu Product Owner → đội không có hướng, sprint hụt'},{id:'nl',t:'Đội nhỏ (2 người): mất 1 người, velocity giảm một nửa'}],
+ events:[{id:'doi',lab:'Khách đòi đổi chức năng'},{id:'chen',lab:'Sếp chèn việc gấp giữa sprint'},{id:'po',lab:'Product Owner vắng 1 sprint'},{id:'nl',lab:'1/2 thành viên nghỉ'}]};
+MODELS.xp={name:'XP (Extreme Programming)',nodes:['Bắt đầu','Planning game (user story)','Test-first + lập trình cặp','CI + refactor','Release nhỏ cho khách','Còn story?','Kết thúc'],
+ plan:12,
+ base:function(){var a=[];for(var i=0;i<6;i++){a.push(mk('Story '+(i+1)+' '+FEATS[i],2,'inc',2,{inc:i,mix:[[1,.1],[2,.5],[3,.25],[4,.05],[i<5?5:6,.1]]}));}return a;},
+ pros:[{id:'ts',t:'Test viết trước + CI → lỗi hồi quy bị bắt gần như ngay',base:1},{id:'sach',t:'Refactor liên tục → code luôn sạch, dễ đổi',base:1},{id:'re',t:'Đổi story rẻ vì đã có bộ test bảo vệ'}],
+ cons:[{id:'ov',t:'Cần khách hàng có mặt thường xuyên (on-site customer) — khó thực tế'},{id:'kl',t:'Đòi kỷ luật cao: bỏ test/pair để kịp hạn → nợ kỹ thuật bùng nổ'}],
+ events:[{id:'doi',lab:'Khách đổi story'},{id:'reg',lab:'Sửa code làm hỏng chức năng cũ'},{id:'vang',lab:'Khách không có mặt, đội đoán yêu cầu'},{id:'han',lab:'Ép tiến độ: bỏ test/pair'}]};
+
+function alarm(list,seg,kind,id,title,text,tOverride){list.push({seg:seg,t:tOverride,kind:kind,id:id,title:title,text:text});}
+
+/* ---------- mô phỏng chung cho wf/inc/re/xp ---------- */
+function simulate(mid,events){
+ var M=MODELS[mid];if(mid==='sc')return simScrum(events);
+ var segs=M.base(),al=[],marks=[],risk=10,evs=events.slice().sort(function(a,b){return a.t-b.t;});
+ layout(segs);
+ evs.forEach(function(e){
+  marks.push({t:e.t,id:e.id});
+  var tt=Math.min(e.t,layout(segs)-0.01),cur=segAt(segs,tt),p;
+  if(mid==='wf'){
+   if(e.id==='doi'){var c=r1(1.5*WF_COEF[phOf(cur)]);p=insertAt(segs,tt,mk('Làm lại: sửa yêu cầu',c,'rework',1,{ph:phOf(cur)}));risk+=10;
+     alarm(al,p,'bad','doi','BÁO ĐỘNG: đổi yêu cầu ở tuần '+fmt(e.t),'Đang ở pha "'+cur.name+'" nên phải quay lại sửa Yêu cầu → Thiết kế → Code đã viết. Tốn '+fmt(c)+' tuần (đổi ở pha Yêu cầu chỉ tốn '+fmt(r1(1.5*.25))+', ở Triển khai tốn '+fmt(r1(1.5*2))+').');}
+   if(e.id==='tk'){var ks=segs.filter(function(s){return s.ph===4;})[0];var d=Math.max(ks?ks.start:9,e.t);p=insertAt(segs,d,mk('Làm lại: sửa thiết kế + code',3,'rework',2,{ph:4}));risk+=15;
+     alarm(al,p,'bad','muon','BÁO ĐỘNG: lỗi thiết kế chỉ lộ ở giai đoạn Kiểm thử','Lỗi được gây ra từ tuần '+fmt(e.t)+' nhưng đến tuần '+fmt(d)+' mới ai đó phát hiện, sau khi toàn bộ code đã xây trên thiết kế sai → làm lại 3 tuần.');}
+   if(e.id==='hieu'){var ps=segs.filter(function(s){return s.ph===5;})[0];var d2=Math.max(ps?ps.start:11,e.t);p=insertAt(segs,d2,mk('Làm lại: khách không chấp nhận',3.5,'rework',1,{ph:5}));risk+=20;
+     alarm(al,p,'bad','khach','BÁO ĐỘNG: khách chỉ thấy sản phẩm ở tuần '+fmt(d2),'Suốt '+fmt(d2)+' tuần khách chỉ có tài liệu, chưa được dùng thử. Hiểu sai lộ ra khi đã xong gần hết → làm lại 3,5 tuần.');}
+   if(e.id==='han'){var kt=segs.filter(function(s){return s.ph===4&&s.kind==='phase';})[0];if(kt){kt.len=Math.max(0.5,kt.len-1.5);layout(segs);}risk+=35;
+     alarm(al,kt||segs[0],'bad','ep','BÁO ĐỘNG: deadline bị rút, kiểm thử bị cắt còn 0,5 tuần','Thác nước không có chỗ co giãn nào khác, nên phần cuối (kiểm thử) bị ép. Giao đúng hạn nhưng nguy cơ lỗi lọt ra production tăng mạnh.');}
+  }
+  if(mid==='inc'||mid==='xp'){
+   var xp=mid==='xp',cs=cur.kind==='inc'?cur:segs.filter(function(s){return s.kind==='inc';}).pop();var endT=cs.start+cs.len;
+   if(e.id==='doi'){var cc=xp?0.3:0.5;p=insertAt(segs,tt,mk(xp?'Đổi story (test bảo vệ)':'Sửa theo phản hồi',cc,'rework',2,{inc:cs.inc}));
+     alarm(al,p,'good','re','TỐT: đổi yêu cầu ở tuần '+fmt(e.t)+' chỉ tốn '+fmt(cc)+' tuần','Chỉ phần đang làm bị ảnh hưởng, các tính năng sau chưa bắt đầu nên đổi gần như miễn phí. Thác nước cùng thời điểm tốn '+fmt(wfCost(e.t))+' tuần.');}
+   if(e.id==='loi'||e.id==='reg'){var f=xp?0.2:0.5;var dt=xp?tt:endT;p=insertAt(segs,dt,mk(xp?'CI báo đỏ → sửa ngay':'Sửa lỗi sau demo',f,'rework',3,{inc:cs.inc}));
+     alarm(al,p,'good',xp?'ts':'sm2','TỐT: lỗi bị bắt ngay trong '+(xp?'vài phút (CI chạy test)':'đợt vừa làm'),xp?'Bộ test tự động chạy mỗi lần commit nên hồi quy lộ ngay, sửa '+fmt(f)+' tuần.':'Lỗi lộ ở buổi demo cuối đợt (tuần '+fmt(endT)+'), sửa '+fmt(f)+' tuần. Thác nước phải đợi tới kiểm thử mới thấy.');}
+   if(e.id==='tl'){var n=0;segs.filter(function(s){return s.kind==='inc'&&s.start>=tt-0.01;}).forEach(function(s){n++;});var tot=0;for(var k=segs.length-1;k>=0;k--){var s=segs[k];if(s.kind==='inc'&&s.start+s.len>tt&&!s.cont){tot+=0.4;var pp=mk('Viết tài liệu',0.4,'doc',2,{inc:s.inc});var idx=segs.indexOf(s);var nx=idx+1;while(nx<segs.length&&segs[nx].cont)nx++;segs.splice(nx,0,pp);}}layout(segs);risk+=5;
+     alarm(al,segs.filter(function(s){return s.kind==='doc';})[0]||cur,'bad','tl','BÁO ĐỘNG: quy trình "vô hình" → phải thêm tài liệu','Mô hình tăng dần không tạo tài liệu mỗi giai đoạn như thác nước, quản lý muốn thấy giấy tờ → mỗi đợt thêm 0,4 tuần, tổng '+fmt(r1(tot))+' tuần.');}
+   if(e.id==='rf'||(xp&&e.id==='han')){ var j=0,first=null;
+     if(xp){segs.filter(function(s){return s.kind==='inc'&&s.start>=tt-0.01&&!s.cont;}).forEach(function(s){s.len=Math.max(1.2,s.len-0.4);});layout(segs);
+       var last=segs[segs.length-1];p=insertAt(segs,layout(segs),mk('Lỗi hồi quy dồn lại',2.5,'debt',3,{inc:5}));risk+=40;
+       alarm(al,p,'bad','kl','BÁO ĐỘNG: bỏ test/pair → tưởng nhanh hơn, cuối kỳ nổ lỗi','Từ tuần '+fmt(e.t)+' mỗi story nhanh hơn 0,4 tuần, nhưng không còn test bảo vệ nên lỗi dồn lại và phải trả 2,5 tuần ở cuối.');}
+     else{ segs.filter(function(s){return s.kind==='inc'&&s.start>=tt-0.01&&!s.cont;}).slice(1).forEach(function(s){ j++; var dd=mk('Nợ kỹ thuật (code rối)',r1(0.3*j),'debt',2,{inc:s.inc});var idx=segs.indexOf(s);var nx=idx+1;while(nx<segs.length&&segs[nx].cont)nx++;segs.splice(nx,0,dd);if(!first)first=dd;});layout(segs);risk+=25;
+       alarm(al,first||cur,'bad','sd','BÁO ĐỘNG: không refactor → mỗi đợt sau chậm dần','Code rối làm các đợt sau tốn thêm '+fmt(0.3)+', '+fmt(0.6)+', '+fmt(0.9)+'… tuần: lãi suất của nợ kỹ thuật tăng dần.');}}
+   if(e.id==='vang'){p=insertAt(segs,endT,mk('Làm lại: đoán sai yêu cầu',1.5,'rework',1,{inc:cs.inc}));risk+=15;
+     alarm(al,p,'bad','ov','BÁO ĐỘNG: không có khách on-site → đội phải đoán','XP cần khách ngồi cạnh đội để trả lời ngay. Khách vắng, story bị hiểu sai, tới lúc release nhỏ mới phát hiện → làm lại 1,5 tuần.');}
+   if(e.id==='han'&&!xp){var rm=segs.filter(function(s){return s.inc===5;});rm.forEach(function(s){segs.splice(segs.indexOf(s),1);});layout(segs);
+     alarm(al,segs[segs.length-1],'good','cp','TỐT: cắt F6 "Theo dõi đơn", chất lượng 5 tính năng còn lại giữ nguyên','Tăng dần cho phép bỏ bớt phần ưu tiên thấp và giao sớm đúng hạn; thác nước chỉ có cách cắt kiểm thử.',e.t);}
+  }
+  if(mid==='re'){
+   if(e.id==='nho'){p=insertAt(segs,tt,mk('Chỉnh cấu hình',0.3,'rework',3,{}));alarm(al,p,'good','nho','TỐT: chỉnh nhỏ chỉ tốn 0,3 tuần','Chỉ đổi tham số cấu hình của thành phần có sẵn, không viết lại code.');}
+   if(e.id==='lon'){p=insertAt(segs,tt,mk('Tự viết bù / thoả hiệp yêu cầu',2,'rework',1,{}));risk+=15;alarm(al,p,'bad','th','BÁO ĐỘNG: yêu cầu vượt quá khả năng thành phần','Thành phần có sẵn không hỗ trợ → hoặc tự viết thêm (+2 tuần, mất lợi thế nhanh) hoặc thoả hiệp bỏ yêu cầu đó.');}
+   if(e.id==='api'){p=insertAt(segs,tt,mk('Sửa theo API mới',2,'rework',3,{}));risk+=15;alarm(al,p,'bad','kk','BÁO ĐỘNG: nhà cung cấp đổi API, mình không kiểm soát được','Phải thích nghi theo lịch của người khác: +2 tuần sửa tích hợp.');}
+   if(e.id==='loi'){p=insertAt(segs,tt,mk('Chờ nhà cung cấp vá lỗi',1.2,'rework',4,{}));risk+=10;alarm(al,p,'bad','hd','BÁO ĐỘNG: lỗi trong "hộp đen" của bên thứ ba','Không có mã nguồn để tự sửa → chờ và đẩy qua email, mất 1,2 tuần.');}
+   if(e.id==='ng'){p=insertAt(segs,tt,mk('Thay thế thành phần',3.5,'rework',2,{}));risk+=30;alarm(al,p,'bad','ng','BÁO ĐỘNG: nhà cung cấp ngừng hỗ trợ','Phải tìm thành phần khác và tích hợp lại: +3,5 tuần, rủi ro cao.');}
+  }
+ });
+ var total=layout(segs),rw=0;segs.forEach(function(s){if(s.kind!=='phase'&&s.kind!=='inc')rw+=s.len;});
+ var dropped=segs.filter(function(s){return s.inc===5;}).length?0:(mid==='inc'?1:0);
+ return {mid:mid,segs:segs,alarms:al,marks:marks,total:r1(total),plan:M.plan,extra:r1(rw),risk:Math.min(100,risk),drop:dropped};
+}
+
+/* ---------- Scrum ---------- */
+function simScrum(events){
+ var M=MODELS.sc,per=48,vel=8,rem=per,segs=[],al=[],marks=[],risk=10,s=0,cap=vel,burn=[{t:0,v:per}],evs=events.slice().sort(function(a,b){return a.t-b.t;});
+ evs.forEach(function(e){marks.push({t:e.t,id:e.id});});
+ function evAt(k,id){return evs.filter(function(e){return e.id===id&&Math.floor(e.t/2)===k;});}
+ function evBefore(k,id){return evs.filter(function(e){return e.id===id&&Math.floor(e.t/2)<k;});}
+ var pend=[];
+ while(rem>0&&s<14){
+  var c=vel,note='',goal=true,badId=null;
+  if(evBefore(s,'nl').length)c=4;
+  if(evAt(s,'nl').length&&false)c=vel;
+  evAt(s,'po').forEach(function(){c=Math.min(c,c/2);goal=false;badId='po';});
+  evAt(s,'chen').forEach(function(){c=Math.max(0,c-3);goal=false;badId='pv';});
+  var done=Math.min(rem,c);rem=r1(rem-done);
+  var sg=mk('Sprint '+(s+1),2,'sprint',3,{done:done,goal:goal,spr:s});segs.push(sg);
+  burn.push({t:(s+1)*2,v:rem});
+  evAt(s,'po').forEach(function(e){alarm(al,sg,'bad','po','BÁO ĐỘNG: Product Owner vắng ở Sprint '+(s+1),'Không ai sắp xếp ưu tiên / trả lời câu hỏi, đội chỉ làm được '+fmt(done)+'/8 điểm. Sprint Goal không đạt.',e.t);risk+=15;});
+  evAt(s,'chen').forEach(function(e){alarm(al,sg,'bad','pv','BÁO ĐỘNG: chèn việc giữa Sprint '+(s+1),'Scrum quy định không đổi scope trong sprint. Chèn 3 điểm việc gấp → chỉ còn '+fmt(done)+'/8 điểm dành cho Sprint Goal, mục tiêu sprint thất bại.',e.t);risk+=15;});
+  evAt(s,'doi').forEach(function(e){alarm(al,sg,'good','tn','TỐT: đổi yêu cầu ở tuần '+fmt(e.t)+' không phá Sprint '+(s+1),'Sprint đang chạy không bị đụng. Product Owner xếp lại Backlog, đến Sprint Planning kế tiếp (tuần '+fmt((s+1)*2)+') đội mới nhận yêu cầu mới. Chi phí ≈ 0 điểm.',e.t);});
+  evAt(s,'nl').forEach(function(e){alarm(al,sg,'bad','nl','BÁO ĐỘNG: mất 1/2 nhân lực từ Sprint '+(s+2),'Velocity giảm từ 8 xuống 4 điểm/sprint. Burndown chart phản ánh ngay sự thật (minh bạch) nhưng đội 2 người không có dự phòng.',e.t);risk+=25;});
+  s++;
+ }
+ var layoutT=layout(segs);
+ return {mid:'sc',segs:segs,alarms:al,marks:marks,total:r1(layoutT),plan:12,extra:r1(Math.max(0,layoutT-12)),risk:Math.min(100,risk),burn:burn,per:per};
+}
+function totalOf(r){return r.total;}
+function alarmT(a){return a.t!=null?a.t:(a.seg?a.seg.start:0);}
+/* ===== VẼ: sơ đồ hoạt động + Gantt + biểu đồ + banner báo động ===== */
+var CODE={
+ wf:{lines:['1. Chốt TOÀN BỘ yêu cầu BrewLite (tuần 0-2)','2. Thiết kế BFD / ERD / API (tuần 2-4)','3. Lập trình NestJS + Next.js (tuần 4-9)','4. Kiểm thử toàn hệ thống (tuần 9-11)','5. Triển khai cho khách (tuần 11-12)','! Đổi yêu cầu / lỗi muộn → QUAY LẠI pha trước'],cm:[-1,0,1,2,3,4,-1]},
+ inc:{lines:['1. Chọn nhóm tính năng ưu tiên (F1→F6)','2. Thiết kế + lập trình nhóm đó','3. Kiểm thử nhóm vừa làm','4. Khách xem demo, cho phản hồi','5. Còn tính năng? → lặp; hết → phát hành','! Phản hồi / lỗi → sửa ngay trong đợt'],cm:[-1,0,1,2,3,4,4,-1]},
+ re:{lines:['1. Đặc tả yêu cầu (chỉ những gì thành phần đáp ứng)','2. Tìm & đánh giá thành phần (VNPay, Auth, Maps)','3. Cấu hình + nối API vào NestJS / Next.js','4. Kiểm thử tích hợp','5. Triển khai','! Thành phần đổi / không khớp → sửa, thay thế'],cm:[-1,0,1,2,3,4,-1]},
+ sc:{lines:['1. Product Owner xếp thứ tự Product Backlog','2. Sprint Planning: chọn việc cho 2 tuần','3. Phát triển + Daily Scrum mỗi ngày','4. Sprint Review với khách','5. Retrospective: cải tiến cách làm','6. Còn backlog? → sprint mới; hết → phát hành','! Chèn việc / PO vắng / thiếu người → Sprint Goal hụt'],cm:[-1,0,1,2,3,4,5,5]},
+ xp:{lines:['1. Planning game: viết user story với khách','2. Test-first + lập trình cặp','3. CI chạy test, refactor liên tục','4. Release nhỏ cho khách xem','5. Còn story? → lặp; hết → xong','! Khách vắng / bỏ kỷ luật → làm lại, nợ kỹ thuật'],cm:[-1,0,1,2,3,4,4]}
+};
+var SPR_MIX=[[2,.1],[3,.7],[4,.1],[5,.1]];
+function mixNode(mix,f){var a=0;for(var i=0;i<mix.length;i++){a+=mix[i][1];if(f<=a+1e-9)return mix[i][0];}return mix[mix.length-1][0];}
+function activeInfo(r,cur){
+ if(cur>=r.total-1e-6)return {node:MODELS[r.mid].nodes.length-1,bad:false,seg:null,done:true};
+ var s=segAt(r.segs,cur),f=(cur-s.start)/s.len,bad=false,node=s.node;
+ if(s.kind==='rework'||s.kind==='debt'||s.kind==='doc'||(s.kind==='sprint'&&!s.goal))bad=true;
+ if(s.kind==='inc')node=mixNode(s.mix,f);
+ if(s.kind==='sprint')node=mixNode(s.spr===0&&f<.08?[[1,1]]:SPR_MIX,f);
+ return {node:node,bad:bad,seg:s,done:false};
+}
+function wrap(ctx,text,maxW){var words=text.split(' '),lines=[],line='';words.forEach(function(w){var t=line?line+' '+w:w;if(ctx.measureText(t).width>maxW&&line){lines.push(line);line=w;}else line=t;});if(line)lines.push(line);return lines;}
+function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function hatch(ctx,x,y,w,h,col,bg){ctx.save();rr(ctx,x,y,w,h,3);ctx.clip();ctx.fillStyle=bg;ctx.fillRect(x,y,w,h);ctx.strokeStyle=col;ctx.lineWidth=2;for(var i=-h;i<w+h;i+=7){ctx.beginPath();ctx.moveTo(x+i,y+h);ctx.lineTo(x+i+h,y);ctx.stroke();}ctx.restore();ctx.strokeStyle=col;ctx.lineWidth=1.5;rr(ctx,x,y,w,h,3);ctx.stroke();}
+function pcol(app){return {fg:app.css('--vl-fg')||'#14181d',mu:app.css('--vl-muted')||'#5d6670',ln:app.css('--vl-line')||'#d9dde3',bg:app.css('--vl-bg')||'#fff',pn:app.css('--vl-panel')||'#f6f7f9',ac:app.css('--vl-accent')||'#2563eb',bad:'#d92d20',good:'#0a8f5b',warn:'#c26d00'};}
+
+function drawAll(ctx,app,st){
+ var W=app.canvas.clientWidth,H=app.canvas.clientHeight;if(W<50)return;
+ var M=MODELS[st.mid],r=st.r,c=pcol(app),cur=st.cur,info=activeInfo(r,cur),pad=14;
+ ctx.textBaseline='middle';
+ /* A. sơ đồ hoạt động */
+ ctx.font='600 12px system-ui,sans-serif';ctx.fillStyle=c.mu;ctx.textAlign='left';ctx.fillText('SƠ ĐỒ HOẠT ĐỘNG — cách BrewLite được phát triển',pad,14);
+ var bw=W<520?92:112,bh=34,gx=W<520?16:22,gy=26,per=Math.max(2,Math.floor((W-2*pad+gx)/(bw+gx))),n=M.nodes.length,pos=[],y0=48;
+ for(var i=0;i<n;i++){var row=Math.floor(i/per),col=i%per,rowN=Math.min(per,n-row*per);var totalW=rowN*bw+(rowN-1)*gx;var x0=(W-totalW)/2;pos.push({x:x0+col*(bw+gx),y:y0+row*(bh+gy),row:row});}
+ var rows=Math.ceil(n/per),dEnd=y0+rows*(bh+gy)-gy;
+ /* mũi tên nối */
+ ctx.lineWidth=1.5;ctx.strokeStyle=c.mu;ctx.fillStyle=c.mu;
+ for(var i=0;i<n-1;i++){var a=pos[i],b=pos[i+1];ctx.beginPath();
+  if(a.row===b.row){ctx.moveTo(a.x+bw,a.y+bh/2);ctx.lineTo(b.x-1,b.y+bh/2);ctx.stroke();ctx.beginPath();ctx.moveTo(b.x-1,b.y+bh/2);ctx.lineTo(b.x-7,b.y+bh/2-4);ctx.lineTo(b.x-7,b.y+bh/2+4);ctx.fill();}
+  else{var my=a.y+bh+gy/2;ctx.moveTo(a.x+bw/2,a.y+bh);ctx.lineTo(a.x+bw/2,my);ctx.lineTo(b.x+bw/2,my);ctx.lineTo(b.x+bw/2,b.y-1);ctx.stroke();ctx.beginPath();ctx.moveTo(b.x+bw/2,b.y-1);ctx.lineTo(b.x+bw/2-4,b.y-7);ctx.lineTo(b.x+bw/2+4,b.y-7);ctx.fill();}}
+ /* mũi tên quay lại (làm lại) */
+ if(info.bad&&info.seg&&(info.seg.kind==='rework')&&(st.mid==='wf'||st.mid==='re')){
+  var from=info.seg.ph||null;
+  if(from!=null&&from>info.node){var pa=pos[from],pb=pos[info.node];ctx.strokeStyle=c.bad;ctx.fillStyle=c.bad;ctx.setLineDash([5,4]);ctx.lineWidth=2;ctx.beginPath();var ya=Math.min(pa.y,pb.y)-10;ctx.moveTo(pa.x+bw/2,pa.y);ctx.lineTo(pa.x+bw/2,ya);ctx.lineTo(pb.x+bw/2,ya);ctx.lineTo(pb.x+bw/2,pb.y-1);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.moveTo(pb.x+bw/2,pb.y-1);ctx.lineTo(pb.x+bw/2-4,pb.y-8);ctx.lineTo(pb.x+bw/2+4,pb.y-8);ctx.fill();ctx.font='700 11px system-ui,sans-serif';ctx.textAlign='center';ctx.fillText('↩ QUAY LẠI',(pa.x+pb.x)/2+bw/2,ya-7);}
+ }
+ /* các nút */
+ for(var i=0;i<n;i++){var p=pos[i],act=(i===info.node),dec=/\?$/.test(M.nodes[i]),term=(i===0||i===n-1);
+  var fill=act?(info.bad?c.bad:c.ac):c.pn,stroke=act?(info.bad?c.bad:c.ac):c.ln,tx=act?'#fff':c.fg;
+  ctx.fillStyle=fill;ctx.strokeStyle=stroke;ctx.lineWidth=act?2.5:1.2;
+  if(dec){ctx.beginPath();ctx.moveTo(p.x+bw/2,p.y-3);ctx.lineTo(p.x+bw,p.y+bh/2);ctx.lineTo(p.x+bw/2,p.y+bh+3);ctx.lineTo(p.x,p.y+bh/2);ctx.closePath();ctx.fill();ctx.stroke();}
+  else{rr(ctx,p.x,p.y,bw,bh,term?bh/2:7);ctx.fill();ctx.stroke();}
+  ctx.fillStyle=tx;ctx.font=(act?'700 ':'500 ')+'11px system-ui,sans-serif';ctx.textAlign='center';
+  var ls=wrap(ctx,M.nodes[i],bw-(dec?36:10));if(ls.length>2)ls=[ls[0],ls[1]+'…'];
+  ls.forEach(function(t,k){ctx.fillText(t,p.x+bw/2,p.y+bh/2+(k-(ls.length-1)/2)*12);});}
+ { var di=-1;for(var i=0;i<n;i++)if(/\?$/.test(M.nodes[i]))di=i;if(di>=0){ctx.fillStyle=c.mu;ctx.font='11px system-ui,sans-serif';ctx.textAlign='center';ctx.fillText('Có → quay lại đầu vòng lặp · Không → tiếp',W/2,dEnd+14);dEnd+=14;}}
+ /* B. Gantt */
+ var gy0=dEnd+22,axisMax=Math.max(14,Math.ceil(r.total+0.5)),gx0=pad,gw=W-2*pad,sx=function(t){return gx0+gw*t/axisMax;},gh=34;
+ ctx.fillStyle=c.mu;ctx.font='600 12px system-ui,sans-serif';ctx.textAlign='left';ctx.fillText('DÒNG THỜI GIAN (tuần) — vạch xanh: hạn '+r.plan+' tuần theo kế hoạch',pad,gy0-8);
+ ctx.fillStyle=c.pn;rr(ctx,gx0,gy0+14,gw,gh,4);ctx.fill();
+ r.segs.forEach(function(s,k){var x=sx(s.start),w=Math.max(1,sx(s.start+s.len)-x-1),y=gy0+14;
+  if(s.kind==='rework'||s.kind==='debt'||s.kind==='doc'||(s.kind==='sprint'&&!s.goal)){hatch(ctx,x,y,w,gh,s.kind==='doc'?c.warn:c.bad,c.bg);}
+  else{ctx.fillStyle=app.color(s.kind==='sprint'||s.kind==='inc'?(s.inc!=null?s.inc:s.spr)%2*2:s.node-1);ctx.globalAlpha=(s.start+s.len<=cur+1e-9)?1:(s.start<cur?0.85:0.45);rr(ctx,x,y,w,gh,3);ctx.fill();ctx.globalAlpha=1;}
+  if(w>26){ctx.fillStyle=(s.kind==='phase'||s.kind==='inc'||s.kind==='sprint')&&s.goal!==false?'#fff':c.fg;ctx.font='600 10.5px system-ui,sans-serif';ctx.textAlign='center';var nm=s.name,mx=w-4;while(nm.length>2&&ctx.measureText(nm).width>mx)nm=nm.slice(0,-2);if(nm!==s.name)nm=nm.replace(/\s*$/,'')+'…';ctx.fillText(nm,x+w/2,y+gh/2);}
+ });
+ ctx.strokeStyle=c.axis||c.ln;ctx.fillStyle=c.mu;ctx.font='10.5px system-ui,sans-serif';ctx.textAlign='center';ctx.lineWidth=1;
+ for(var t=0;t<=axisMax;t+=2){ctx.beginPath();ctx.moveTo(sx(t),gy0+14+gh);ctx.lineTo(sx(t),gy0+14+gh+4);ctx.stroke();ctx.fillText(t,sx(t),gy0+14+gh+13);}
+ ctx.strokeStyle=c.good;ctx.lineWidth=2;ctx.setLineDash([4,3]);ctx.beginPath();ctx.moveTo(sx(r.plan),gy0+8);ctx.lineTo(sx(r.plan),gy0+14+gh+3);ctx.stroke();ctx.setLineDash([]);
+ st.r.marks.forEach(function(m,k){var x=sx(Math.min(m.t,axisMax));ctx.fillStyle=c.warn;ctx.beginPath();ctx.moveTo(x,gy0+14);ctx.lineTo(x-5,gy0+3);ctx.lineTo(x+5,gy0+3);ctx.closePath();ctx.fill();ctx.fillStyle=c.fg;ctx.font='700 10px system-ui,sans-serif';ctx.textAlign='center';ctx.fillText(String(k+1),x,gy0-3);});
+ ctx.strokeStyle=c.fg;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(sx(cur),gy0+8);ctx.lineTo(sx(cur),gy0+14+gh+3);ctx.stroke();
+ /* C. biểu đồ phụ */
+ var cy0=gy0+14+gh+46,ch=70;
+ if(r.burn){
+  ctx.fillStyle=c.mu;ctx.font='600 12px system-ui,sans-serif';ctx.textAlign='left';ctx.fillText('BURNDOWN — điểm còn lại ('+r.per+' điểm = 6 tính năng × 8)',pad,cy0-6);
+  var by=function(v){return cy0+ch-ch*v/r.per;};
+  ctx.strokeStyle=c.ln;ctx.lineWidth=1;ctx.strokeRect(gx0,cy0,gw,ch);
+  ctx.setLineDash([4,3]);ctx.strokeStyle=c.mu;ctx.beginPath();ctx.moveTo(sx(0),by(r.per));ctx.lineTo(sx(12),by(0));ctx.stroke();ctx.setLineDash([]);
+  ctx.strokeStyle=c.ac;ctx.lineWidth=2.5;ctx.beginPath();var first=true,lastv=r.per;
+  for(var i=0;i<r.burn.length;i++){var b=r.burn[i];if(b.t>cur+1e-9){var pb=r.burn[i-1];if(pb){var f=(cur-pb.t)/(b.t-pb.t);var v=pb.v+(b.v-pb.v)*f;ctx.lineTo(sx(cur),by(v));lastv=v;}break;}
+   if(first){ctx.moveTo(sx(b.t),by(b.v));first=false;}else ctx.lineTo(sx(b.t),by(b.v));lastv=b.v;}
+  ctx.stroke();ctx.fillStyle=c.ac;ctx.font='700 11px system-ui,sans-serif';ctx.textAlign='left';ctx.fillText('còn '+fmt(Math.round(lastv*10)/10)+' điểm',Math.min(sx(cur)+6,W-92),Math.max(cy0+10,Math.min(by(lastv)-8,cy0+ch-8)));
+  ctx.fillStyle=c.mu;ctx.textAlign='right';ctx.fillText('--- đường lý tưởng',gx0+gw-6,cy0+10);
+ } else {
+  ctx.fillStyle=c.mu;ctx.font='600 12px system-ui,sans-serif';ctx.textAlign='left';ctx.fillText('ĐỒNG HỒ RỦI RO & LỆCH KẾ HOẠCH',pad,cy0-6);
+  var shown=Math.min(1,cur/Math.max(r.total,1));var riskNow=10+(r.risk-10)*(cur>=r.total?1:Math.min(1,cur/Math.max(r.total,1)));
+  var rv=riskNow;(function(){var rr0=10;r.alarms.forEach(function(a){});})();
+  var bw2=gw-150;ctx.fillStyle=c.pn;rr(ctx,gx0,cy0+4,bw2,16,8);ctx.fill();
+  var rk=0;r.alarms.forEach(function(a){if(alarmT(a)<=cur+1e-9&&a.kind==='bad')rk+=(r.risk-10)/Math.max(1,r.alarms.filter(function(x){return x.kind==='bad';}).length);});rk+=10;
+  var col=rk>=50?c.bad:rk>=25?c.warn:c.good;ctx.fillStyle=col;rr(ctx,gx0,cy0+4,Math.max(12,bw2*Math.min(rk,100)/100),16,8);ctx.fill();
+  ctx.fillStyle=c.fg;ctx.font='700 12px system-ui,sans-serif';ctx.textAlign='left';ctx.fillText(Math.round(rk)+'/100 '+(rk>=50?'(CAO)':rk>=25?'(TRUNG BÌNH)':'(THẤP)'),gx0+bw2+8,cy0+12);
+  var late=r.total-r.plan;ctx.font='13px system-ui,sans-serif';ctx.fillStyle=late>0.05?c.bad:late<-0.05?c.good:c.fg;
+  ctx.fillText('Hoàn thành dự kiến: '+fmt(r.total)+' tuần ('+(late>0.05?'trễ +'+fmt(r1(late)):late<-0.05?'sớm '+fmt(r1(-late)):'đúng hạn')+' so với '+r.plan+' tuần) · công làm lại: '+fmt(r.extra)+' tuần',gx0,cy0+38);
+  ctx.fillStyle=c.mu;ctx.font='11px system-ui,sans-serif';ctx.fillText('(số liệu minh hoạ theo mô hình đơn giản, không phải đo thực tế)',gx0,cy0+56);
+ }
+ /* D. banner báo động */
+ var past=r.alarms.filter(function(a){return alarmT(a)<=cur+1e-9;}).sort(function(a,b){return alarmT(a)-alarmT(b);}),last=past[past.length-1];
+ var by0=cy0+ch+16,bh2=H-by0-8;
+ if(last){var bad=last.kind==='bad',col=bad?c.bad:c.good,fresh=cur-alarmT(last)<1.2;
+  ctx.fillStyle=bad?'rgba(217,45,32,0.10)':'rgba(10,143,91,0.10)';rr(ctx,pad,by0,W-2*pad,bh2,8);ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=fresh?3.5:1.5;rr(ctx,pad,by0,W-2*pad,bh2,8);ctx.stroke();
+  ctx.fillStyle=col;ctx.font='700 13px system-ui,sans-serif';ctx.textAlign='left';var tl=wrap(ctx,(bad?'⚠ ':'✔ ')+last.title,W-2*pad-20);tl.slice(0,2).forEach(function(t,k){ctx.fillText(t,pad+10,by0+14+k*16);});
+  ctx.fillStyle=c.fg;ctx.font='12px system-ui,sans-serif';var bl=wrap(ctx,last.text,W-2*pad-20),yy=by0+14+Math.min(tl.length,2)*16+6,maxL=Math.floor((by0+bh2-yy)/15);bl.slice(0,Math.max(1,maxL)).forEach(function(t,k){ctx.fillText(t,pad+10,yy+k*15);});
+ } else {
+  ctx.fillStyle=c.pn;rr(ctx,pad,by0,W-2*pad,bh2,8);ctx.fill();ctx.strokeStyle=c.ln;ctx.lineWidth=1;rr(ctx,pad,by0,W-2*pad,bh2,8);ctx.stroke();
+  ctx.fillStyle=c.mu;ctx.font='13px system-ui,sans-serif';ctx.textAlign='left';var hl=wrap(ctx,r.alarms.length?'Bấm ▶ Chạy để xem tiến trình. Báo động sẽ hiện ở đây khi tới tuần xảy ra sự kiện.':'Chưa có sự kiện nào: mô hình đang chạy đúng kế hoạch. Bấm ▶ Chạy để xem ưu điểm, rồi thử các nút sự kiện bên phải.',W-2*pad-20);hl.slice(0,4).forEach(function(t,k){ctx.fillText(t,pad+10,by0+18+k*17);});
+ }
+}
+/* ===== GIAO DIỆN: tab + ứng dụng cho từng mô hình ===== */
+var WHY={
+ wf:'<p><b>Vấn đề:</b> làm phần mềm lớn mà không có kế hoạch thì rối. <b>Giải pháp:</b> chia thành các pha nối tiếp, xong pha này mới sang pha sau, mỗi pha có tài liệu đầu ra.</p><p><b>Cái giá:</b> mỗi pha "đóng băng" quyết định của pha trước. Muốn sửa phải quay ngược lại — càng về cuối càng đắt (hệ số 0,25 → 2,0 trong mô phỏng).</p><p><b>Hợp khi:</b> yêu cầu rõ và ổn định (hệ thống nhúng, hợp đồng cố định).</p>',
+ inc:'<p><b>Vấn đề:</b> thác nước để khách chờ 12 tuần mới thấy sản phẩm. <b>Giải pháp:</b> xen kẽ đặc tả–phát triển–kiểm thử, giao từng phần cho khách xem (BrewLite: F1…F6, mỗi phần 2 tuần).</p><p><b>Cái giá:</b> tiến độ khó thấy qua tài liệu; không refactor thì cấu trúc code xuống cấp dần.</p>',
+ re:'<p><b>Vấn đề:</b> tự viết mọi thứ (thanh toán, đăng nhập) vừa lâu vừa nhiều lỗi. <b>Giải pháp:</b> dùng thành phần sẵn có (VNPay, thư viện Auth…), chỉ cấu hình và nối lại.</p><p><b>Cái giá:</b> bạn không sở hữu thành phần đó: yêu cầu phải thoả hiệp và phụ thuộc lịch của nhà cung cấp.</p>',
+ sc:'<p><b>Vấn đề:</b> yêu cầu thay đổi liên tục nhưng vẫn cần nhịp giao hàng đều. <b>Giải pháp:</b> chia thành sprint cố định 2 tuần; trong sprint thì khoá scope, giữa các sprint thì Product Owner được đổi ưu tiên thoải mái.</p><p><b>Cái giá:</b> phụ thuộc vào vai trò (PO phải có mặt) và kỷ luật timebox; đội quá nhỏ thì mất 1 người là sụp velocity.</p>',
+ xp:'<p><b>Vấn đề:</b> đổi yêu cầu nhanh mà vẫn giữ chất lượng code. <b>Giải pháp:</b> test viết trước, lập trình cặp, CI, refactor liên tục, release nhỏ — các thực hành kỹ thuật làm cho "đổi" trở nên rẻ.</p><p><b>Cái giá:</b> cần khách ngồi cùng đội và kỷ luật rất cao; bỏ một thực hành là cả hệ nghiêng.</p>'
+};
+var ORDER=['wf','inc','re','sc','xp'];
+var SHORT={wf:'Thác nước',inc:'Tăng dần',re:'Tích hợp & cấu hình',sc:'Scrum',xp:'XP'};
+var apps={};
+
+function buildTab(mid,panel){
+ var M=MODELS[mid],st={mid:mid,events:[],cur:0,r:null,lit:null};
+ function recompute(){st.r=simulate(mid,st.events);}
+ recompute();
+ var H=(window.innerWidth<700)?660:560;
+ var app=VLab.create({title:M.name,stage:'2d',height:H,
+  params:[{id:'tw',label:'Tuần xảy ra sự kiện (Week of event)',min:0,max:11.5,step:0.5,value:8,fixed:1}],
+  player:true,code:CODE[mid].lines,why:WHY[mid],
+  onReset:function(a){st.cur=0;a.highlight&&a.highlight(-1);update(a);},
+  onStep:function(a){st.cur=Math.min(st.r.total,st.cur+0.25);update(a);return st.cur<st.r.total-1e-6;},
+  onDraw:function(ctx,a){drawAll(ctx,a,st);}
+ });
+ var root=app.stageEl.closest('.vl-app');root.querySelector('.vl-head').style.display='none';
+ root.style.padding='0';panel.appendChild(root);
+ var side=root.querySelector('.vl-side');
+ /* thẻ sự kiện */
+ var ev=document.createElement('div');ev.className='vl-card';
+ ev.innerHTML='<h3>Sự kiện thực tế (bấm để thử)</h3><div class="ev-hint">① Bấm ▶ Chạy, <b>không bấm gì</b> → xem ưu điểm. ② Chỉnh thanh <b>"Tuần xảy ra sự kiện"</b> rồi bấm nút bên dưới → xem nhược điểm lộ ra.</div><div class="ev-btns"></div><div class="ev-log"></div><button class="vl-btn ev-clear">Xóa hết sự kiện</button>';
+ var btns=ev.querySelector('.ev-btns');
+ M.events.forEach(function(e){var b=document.createElement('button');b.className='vl-btn ev-b';b.textContent=e.lab;if(e.hint)b.title=e.hint;
+  b.addEventListener('click',function(){if(st.events.length>=6)return;st.events.push({id:e.id,t:app.param('tw')});recompute();st.cur=0;logUpdate();app.pause();app.highlight(-1);update(app);app.play();});btns.appendChild(b);});
+ ev.querySelector('.ev-clear').addEventListener('click',function(){st.events=[];recompute();st.cur=0;app.pause();logUpdate();update(app);app.redraw();});
+ side.insertBefore(ev,side.firstChild);
+ function logUpdate(){var L=ev.querySelector('.ev-log');L.innerHTML='';st.events.forEach(function(e,i){var d=document.createElement('div');var lab=M.events.filter(function(x){return x.id===e.id;})[0].lab;d.textContent=(i+1)+'. Tuần '+fmt(e.t)+': '+lab;L.appendChild(d);});}
+ /* thẻ ưu/nhược */
+ var pc=document.createElement('div');pc.className='vl-card';pc.innerHTML='<h3>Ưu điểm đã chứng minh</h3><div class="pc-pros"></div><h3 style="margin-top:12px">Nhược điểm đã lộ ra</h3><div class="pc-cons"></div><div class="vl-hint pc-sum"></div>';
+ side.insertBefore(pc,ev.nextSibling);
+ function update(a){
+  if(!pc)return;
+  var cur=st.cur,r=st.r,done=cur>=r.total-1e-6,hit={};
+  r.alarms.forEach(function(x){if(alarmT(x)<=cur+1e-9)hit[x.id]=x.kind;});
+  var key=Object.keys(hit).sort().join(',')+(done?'|d':'');
+  if(key!==st.lit){st.lit=key;
+   var P=pc.querySelector('.pc-pros'),C=pc.querySelector('.pc-cons');P.innerHTML='';C.innerHTML='';var np=0,nc=0;
+   M.pros.forEach(function(p){var on=(p.base&&done)||hit[p.id]==='good';if(on)np++;add(P,on,'✔','○',p.t,'ok');});
+   M.cons.forEach(function(p){var on=hit[p.id]==='bad';if(on)nc++;add(C,on,'✖','○',p.t,'no');});
+   pc.querySelector('.pc-sum').textContent='Ưu: '+np+'/'+M.pros.length+' · Nhược lộ ra: '+nc+'/'+M.cons.length+' (○ = chưa lộ — thử thêm sự kiện)';}
+  var info=activeInfo(r,cur);var li=info.bad?CODE[mid].lines.length-1:CODE[mid].cm[info.node];a.highlight(li==null?-1:li);
+  a.status('<b>Tuần '+fmt(cur)+'</b> / '+fmt(r.total)+' · hoạt động: <b>'+M.nodes[info.node]+'</b>'+(info.bad?' <b style="color:#d92d20">⚠ đang làm lại / bị gián đoạn</b>':'')+(done?' · <b>Xong</b>':''));
+ }
+ function add(box,on,iy,io,txt,cls){var d=document.createElement('div');d.className='pc-i '+cls+(on?' on':'');d.innerHTML='<span class="pc-ic">'+(on?iy:io)+'</span><span></span>';d.lastChild.textContent=txt;box.appendChild(d);}
+ update(app);
+ app.model=st;apps[mid]=app;return app;
+}
+function buildCompare(panel){
+ panel.innerHTML='<div class="cmp"><h2>Chọn mô hình nào cho BrewLite?</h2><p>Không có mô hình "tốt nhất" — chỉ có mô hình hợp với <b>loại rủi ro</b> của dự án. Hãy nhìn mỗi hàng như một câu hỏi: yêu cầu có ổn định không? khách có tham gia được không? đội có đủ người không?</p><div class="tw"><table><thead><tr><th>Mô hình</th><th>Mạnh nhất khi</th><th>Yếu nhất khi</th><th>Sự kiện làm lộ yếu điểm</th></tr></thead><tbody>'+
+ '<tr><td>Thác nước</td><td>Yêu cầu rõ, ổn định; cần tài liệu & mốc kiểm duyệt</td><td>Yêu cầu thay đổi; khách cần thấy sớm</td><td>Đổi chức năng muộn; lỗi thiết kế lộ ở kiểm thử</td></tr>'+
+ '<tr><td>Tăng dần</td><td>Khách muốn thấy kết quả sớm, yêu cầu chưa chắc</td><td>Tổ chức đòi tài liệu; không dành thời gian refactor</td><td>Đòi tài liệu từng đợt; bỏ refactor</td></tr>'+
+ '<tr><td>Tích hợp & cấu hình</td><td>Cần nhanh/rẻ, chức năng phổ biến (thanh toán, đăng nhập)</td><td>Yêu cầu đặc thù; phụ thuộc nhà cung cấp</td><td>Nhà cung cấp đổi API / ngừng hỗ trợ</td></tr>'+
+ '<tr><td>Scrum</td><td>Yêu cầu thay đổi liên tục, có Product Owner, đội ổn định</td><td>Thiếu PO; đội quá nhỏ; hay chèn việc giữa sprint</td><td>Chèn việc gấp; PO vắng; mất thành viên</td></tr>'+
+ '<tr><td>XP</td><td>Cần chất lượng code cao khi đổi liên tục</td><td>Khách không ngồi cùng đội; thiếu kỷ luật</td><td>Khách vắng; ép tiến độ bỏ test/pair</td></tr>'+
+ '</tbody></table></div><p class="cmp-note">Đồ án BrewLite (đội nhỏ, yêu cầu có thể đổi theo phản hồi) thường chọn <b>Scrum</b> kết hợp vài thực hành XP (test, CI) và dùng <b>thành phần có sẵn</b> cho thanh toán/đăng nhập — tức là trộn các mô hình, vì mỗi cái vá chỗ yếu của cái kia.</p></div>';
+}
+/* ===== KHỞI TẠO TRANG ===== */
+(function(){
+ var hdr=document.createElement('div');hdr.className='pg-head';
+ hdr.innerHTML='<div><h1>Quy trình phát triển BrewLite</h1><p>Mỗi tab là một mô hình. Cho nó chạy trơn tru để thấy <b>ưu điểm</b>; bấm sự kiện thực tế để làm <b>nhược điểm</b> lộ ra và nghe báo động.</p></div><button class="vl-btn pg-theme" type="button">Sáng / Tối</button>';
+ document.body.appendChild(hdr);
+ hdr.querySelector('.pg-theme').addEventListener('click',function(){var r=document.documentElement,cur=r.getAttribute('data-vl-theme')||'light';r.setAttribute('data-vl-theme',cur==='dark'?'light':'dark');Object.keys(apps).forEach(function(k){apps[k].redraw();});});
+ var bar=document.createElement('div');bar.className='pg-tabs';bar.setAttribute('role','tablist');document.body.appendChild(bar);
+ var panels={};
+ var ids=ORDER.concat(['cmp']);
+ ids.forEach(function(id){var b=document.createElement('button');b.type='button';b.className='pg-tab';b.setAttribute('role','tab');b.textContent=id==='cmp'?'So sánh & chọn':SHORT[id];b.dataset.id=id;bar.appendChild(b);
+  var p=document.createElement('div');p.className='pg-panel';p.hidden=true;document.body.appendChild(p);panels[id]=p;});
+ ORDER.forEach(function(id){buildTab(id,panels[id]);});
+ buildCompare(panels.cmp);
+ function show(id){Object.keys(panels).forEach(function(k){panels[k].hidden=(k!==id);});[].forEach.call(bar.children,function(b){var on=b.dataset.id===id;b.classList.toggle('on',on);b.setAttribute('aria-selected',on);});
+  Object.keys(apps).forEach(function(k){if(k!==id&&apps[k].running)apps[k].pause();});if(apps[id])apps[id].redraw();try{history.replaceState(null,'','#'+id);}catch(e){}}
+ bar.addEventListener('click',function(e){var b=e.target.closest('.pg-tab');if(b)show(b.dataset.id);});
+ var h=(location.hash||'').replace('#','');show(ids.indexOf(h)>=0?h:'wf');
+})();
+
+</script>
+
+</body></html>

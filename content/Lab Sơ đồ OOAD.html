@@ -1,0 +1,2475 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Lab Sơ đồ OOAD</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Lexend:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --paper:#F2F5FA; --panel:#FFFFFF; --ink:#0F1B2D; --mute:#5B6B82; --line:#D5DCE8; --line2:#E7ECF4;
+  --accent:#2750D8; --accent-soft:#E6ECFD;
+  --static:#0B8A7A; --static-soft:#DDF3EF;
+  --dyn:#B93F0C; --dyn-soft:#FFEADD; --signal:#FF6A1F;
+  --draw:#1D2A3E;
+  --f-body:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-head:'Lexend','Be Vietnam Pro',system-ui,sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 15px/1.6 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 56px}
+.wrap{max-width:1180px;margin:0 auto}
+button{font:inherit;color:inherit;cursor:pointer}
+h1,h2,h3{font-family:var(--f-head);margin:0;text-wrap:balance;line-height:1.25}
+.top{display:flex;flex-direction:column;gap:4px;margin-bottom:18px}
+.top h1{font-size:clamp(24px,4.4vw,34px);font-weight:700;letter-spacing:-.01em}
+.top h1 span{color:var(--accent)}
+.top p{margin:0;color:var(--mute);max-width:62ch}
+
+/* chọn ví dụ */
+.exs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:16px}
+.ex{background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;text-align:left;display:flex;flex-direction:column;gap:2px;transition:border-color .15s,box-shadow .15s}
+.ex b{font-family:var(--f-head);font-size:15px;font-weight:600}
+.ex span{font-size:12.5px;color:var(--mute);line-height:1.45}
+.ex:hover{border-color:#aebbd6}
+.ex[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.ex[aria-pressed=true] b{color:var(--accent)}
+.ex i{font-style:normal;font-family:var(--f-mono);font-size:11px;color:var(--mute);letter-spacing:.04em;text-transform:uppercase}
+
+/* tab */
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 10px;margin-bottom:6px;scrollbar-width:thin}
+.tab{flex:0 0 auto;background:var(--panel);border:1.5px solid var(--line);border-radius:10px;padding:8px 12px 8px 10px;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.tab .n{font-family:var(--f-mono);font-size:12px;color:var(--mute)}
+.tab .nm{font-weight:600;font-size:14px}
+.tab .dot{width:8px;height:8px;border-radius:50%;background:var(--static)}
+.tab.d .dot{background:var(--signal)}
+.tab[aria-selected=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.tab[aria-selected=true] .n{color:#aab6cc}
+.tab:hover:not([aria-selected=true]){border-color:#aebbd6}
+
+/* nội dung */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-top:14px}
+.card h2{font-size:18px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.card h2 small{font-family:var(--f-mono);font-weight:500;font-size:11px;color:var(--mute);letter-spacing:.06em;text-transform:uppercase}
+.head{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
+.head h2.big{font-size:clamp(22px,3.4vw,28px);font-weight:700;margin:0}
+.chip{font-family:var(--f-mono);font-size:11.5px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;padding:3px 10px;border-radius:99px;border:1px solid}
+.chip.s{background:var(--static-soft);color:#066B5E;border-color:#A8DDD4}
+.chip.d{background:var(--dyn-soft);color:var(--dyn);border-color:#F4BFA1}
+.src{font-size:12.5px;color:var(--mute)}
+.lead{font-size:16.5px;margin:10px 0 0;max-width:72ch}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:14px}
+.mini{background:var(--paper);border-radius:10px;padding:12px 14px}
+.mini h3{font-size:12px;font-family:var(--f-mono);font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin-bottom:4px}
+.mini p{margin:0;font-size:14.5px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line2);vertical-align:top}
+th{background:var(--paper);font-weight:600;font-size:12.5px;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.k{font-weight:600;white-space:nowrap;color:var(--accent);width:1%}
+td code,.mono{font-family:var(--f-mono);font-size:12.5px}
+
+/* ký hiệu */
+.syms{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.sym{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;align-items:center;border:1px solid var(--line2);border-radius:10px;padding:10px 12px;background:#FCFDFF}
+.sym .g{background:var(--paper);border-radius:8px;display:grid;place-items:center;padding:6px 2px}
+.sym b{display:block;font-size:14px;font-weight:600;line-height:1.35}
+.sym p{margin:2px 0 0;font-size:13px;color:var(--mute);line-height:1.5}
+.gsvg{width:88px;height:48px;display:block}
+
+/* bàn vẽ */
+.lab-bar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.seg{display:inline-flex;background:var(--paper);border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:6px 14px;border-radius:8px;font-weight:600;font-size:13.5px;color:var(--mute)}
+.seg button[aria-pressed=true]{background:var(--panel);color:var(--ink);box-shadow:0 1px 3px rgba(15,27,45,.14)}
+.seg.f button[aria-pressed=true]{color:var(--dyn)}
+.btn{border:1.5px solid var(--line);background:var(--panel);border-radius:9px;padding:6px 13px;font-weight:600;font-size:13.5px;display:inline-flex;align-items:center;gap:6px}
+.btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.pri:hover:not(:disabled){background:#1d3fb5;color:#fff}
+.btn.fire{background:var(--signal);border-color:var(--signal);color:#fff}
+.btn.fire:hover:not(:disabled){background:#e85a10;color:#fff}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.stage{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.stepbox{display:flex;gap:12px;align-items:flex-start;background:var(--accent-soft);border-radius:10px;padding:10px 14px;min-height:62px}
+.stepbox .no{font-family:var(--f-head);font-weight:700;font-size:22px;color:var(--accent);line-height:1.1;min-width:2ch}
+.stepbox b{display:block;font-size:14.5px}
+.stepbox p{margin:0;font-size:13.5px;color:#2B3A55;line-height:1.5}
+.dots{display:flex;gap:6px;flex-wrap:wrap}
+.dots button{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--line);background:var(--panel);font-family:var(--f-mono);font-size:12px;font-weight:500}
+.dots button[aria-current=true]{background:var(--accent);border-color:var(--accent);color:#fff}
+.dots button.done{border-color:var(--accent);color:var(--accent)}
+.dots button[aria-current=true].done{color:#fff}
+.fig{margin:0;border:1px solid var(--line);border-radius:12px;background:
+  linear-gradient(var(--line2) 1px,transparent 1px) 0 0/24px 24px,linear-gradient(90deg,var(--line2) 1px,transparent 1px) 0 0/24px 24px,#fff;overflow-x:auto}
+.fig svg{display:block;margin:0 auto;min-width:760px;width:100%;height:auto}
+.flowbox{background:var(--dyn-soft);border-radius:10px;padding:10px 14px}
+.flowbox .row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips button{border:1.5px solid #F0C3A6;background:#fff;border-radius:99px;padding:4px 12px;font-size:13px;font-weight:600;color:var(--dyn)}
+.chips button[aria-pressed=true]{background:var(--dyn);border-color:var(--dyn);color:#fff}
+.log{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:3px;max-height:210px;overflow:auto;counter-reset:l}
+.log li{font-size:13.5px;display:flex;gap:8px;padding:3px 8px;border-radius:6px;color:#8a5a40;counter-increment:l}
+.log li::before{content:counter(l);font-family:var(--f-mono);font-size:11.5px;min-width:2ch;color:#c58a68;padding-top:2px}
+.log li.now{background:#fff;color:var(--ink);font-weight:600;box-shadow:inset 3px 0 0 var(--signal)}
+.log li.now::before{color:var(--signal)}
+.log:empty::after{content:'—';color:#c58a68;padding:3px 8px}
+.sel select{font:inherit;border:1.5px solid var(--line);border-radius:9px;padding:5px 8px;background:#fff}
+.legend2{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--mute);margin-top:2px}
+.legend2 i{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:-1px;margin-right:5px}
+
+/* SVG */
+.sh{fill:var(--panel);stroke:var(--draw);stroke-width:1.6}
+.sh.soft{fill:var(--paper)}
+.sh.bnd{fill:var(--panel)}
+.sh.dashed{stroke-dasharray:6 4;fill:var(--paper)}
+.ln{fill:none;stroke:var(--draw);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.ln.dash{stroke-dasharray:6 4}
+.ln.thin{stroke-width:1}
+.dc{fill:none;stroke:var(--draw);stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round}
+.dc.fill{fill:var(--draw)}
+.dc.hollow{fill:var(--panel)}
+.fillc{fill:var(--draw)}
+.tx{font:500 14px var(--f-body);fill:var(--ink)}
+.tx.sm{font-size:12.5px}
+.tx.b{font-weight:700}
+.tx.mute{fill:var(--mute)}
+.tx.it{font-style:italic}
+.tx.ul{text-decoration:underline}
+.tx.hl{paint-order:stroke;stroke:var(--panel);stroke-width:4px;stroke-linejoin:round}
+.lane-bg{fill:var(--panel);stroke:var(--line)}
+.lane-hd{fill:var(--accent-soft);stroke:var(--line)}
+.lln{stroke:#8A98AF;stroke-dasharray:5 4;stroke-width:1.2}
+.actb{fill:var(--panel);stroke:var(--draw);stroke-width:1.4}
+.tr{fill:none;stroke:var(--signal);stroke-width:3.2;opacity:0;stroke-linecap:round;stroke-linejoin:round}
+.pulse{fill:var(--signal);stroke:#fff;stroke-width:2}
+.hid{opacity:0;pointer-events:none}
+.el{transition:opacity .25s}
+.new .sh,.new .ln:not(.lln),.new .dc,.new .actb{stroke:var(--accent)}
+.new .fillc,.new .dc.fill{fill:var(--accent)}
+.new .tx{fill:var(--accent)}
+.playing .nd,.playing .bar{opacity:.34}
+.playing .ed{opacity:.26}
+.playing .nd.seen,.playing .nd.cur,.playing .bar.seen,.playing .bar.cur{opacity:1}
+.playing .ed.on{opacity:1}
+.nd.seen .sh,.bar.seen .actb{stroke:#E39566}
+.nd.cur .sh{stroke:var(--signal);stroke-width:2.8;filter:drop-shadow(0 0 7px rgba(255,106,31,.65))}
+.nd.cur .fillc,.nd.seen .fillc{fill:var(--signal)}
+.nd.seen .fillc{fill:#E39566}
+.nd.cur .tx{fill:#7A2B05}
+.bar.cur .actb{stroke:var(--signal);stroke-width:2.4}
+.ed.on .ln,.ed.on .dc{stroke:#E39566}
+.ed.on .dc.fill{fill:#E39566}
+.ed.on .tr{opacity:.4}
+.ed.fire .tr{opacity:1}
+.ed.fire .ln,.ed.fire .dc{stroke:var(--signal)}
+.ed.fire .dc.fill{fill:var(--signal)}
+
+@media (max-width:640px){
+  .exs{grid-template-columns:1fr}
+  .card{padding:16px 14px}
+  .sym{grid-template-columns:88px minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){
+  .el,.nd{transition:none}
+}
+/* ghép với khung VLab */
+html body{background:var(--paper);color:var(--ink);font:400 15px/1.6 var(--f-body);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 56px}
+html body .vl-app{max-width:none;padding:0;margin-top:14px}
+html body .vl-head{display:none}
+html body .vl-main{grid-template-columns:minmax(0,1fr) 320px}
+@media (max-width:860px){html body .vl-main{grid-template-columns:minmax(0,1fr)}}
+html body .vl-stage-wrap{background:var(--panel);border-color:var(--line)}
+html body .vl-card{background:var(--panel);border-color:var(--line)}
+html body .vl-status{background:var(--panel);border-top-color:var(--line);color:var(--ink);min-height:64px;font-size:14px}
+html body .vl-status b{color:var(--accent)}
+.svghost{position:relative;overflow:hidden;touch-action:none;
+  background:linear-gradient(var(--line2) 1px,transparent 1px) 0 0/24px 24px,linear-gradient(90deg,var(--line2) 1px,transparent 1px) 0 0/24px 24px,var(--panel)}
+.svghost svg{display:block;width:100%;height:100%}
+.tb{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--panel)}
+.card h2:first-child{margin-top:0}
+.card + .card{margin-top:14px}
+#botSec h2{font-size:18px;margin-bottom:10px}
+#labhost .vl-title{display:none}
+html body .vl-code{max-height:300px}
+html body .vl-code div.on{background:var(--dyn-soft);color:var(--dyn)}
+html body .vl-card h3{font-family:var(--f-mono)}
+:root[data-vl-theme="dark"]{
+  --paper:#0E131B; --panel:#161D28; --ink:#E8ECF1; --mute:#9AA5B1; --line:#2B3442; --line2:#1D2530;
+  --accent:#6C93FF; --accent-soft:#1E2B52; --static:#3FC1AE; --static-soft:#12332F; --dyn:#FF9A63; --dyn-soft:#3A2415; --draw:#C9D3E3;
+  color-scheme:dark;
+}
+</style>
+<script>
+/* ============================================================================
+   VLab — khung dùng chung cho mọi trang mô phỏng bài học IT/AI
+   ----------------------------------------------------------------------------
+   Dán TOÀN BỘ file này vào thẻ <script> của trang HTML xuất ra.
+   Không phụ thuộc thư viện ngoài. Chạy được offline.
+
+   Cung cấp sẵn:
+     - Chủ đề sáng/tối tự theo hệ thống + nút đổi
+     - 4 bảng màu (có 1 bảng thân thiện với người mù màu)
+     - Zoom bằng con lăn, kéo để di chuyển, nút đặt lại khung nhìn
+     - Thanh trượt tham số
+     - Bộ chạy: Chạy / Tạm dừng / Bước tiếp / Làm lại + thanh tốc độ
+     - Ô nhập công thức (parser an toàn, KHÔNG dùng eval)
+     - Khung mã giả tiếng Việt có tô sáng dòng đang chạy
+     - Ô "Đang xảy ra gì?" và ô "Vì sao?"
+
+   API chính:  const app = VLab.create({...});   xem phần cuối file.
+   ========================================================================== */
+(function (global) {
+  'use strict';
+
+  const VLab = {};
+
+  /* ==========================================================================
+     1. BẢNG MÀU
+     ========================================================================== */
+  const PALETTES = {
+    'Mặc định':      ['#2563eb', '#dc2626', '#059669', '#d97706', '#7c3aed', '#0891b2'],
+    'Dịu mắt':       ['#4f6d7a', '#c07a5c', '#6a8d73', '#a4789a', '#8c7851', '#5a7d9a'],
+    'Tương phản cao':['#0040ff', '#ff0040', '#00a000', '#ff8000', '#8000ff', '#00a0a0'],
+    'Thân thiện mù màu': ['#0072B2', '#E69F00', '#009E73', '#CC79A7', '#56B4E9', '#D55E00']
+  };
+  let paletteName = 'Mặc định';
+
+  /* ==========================================================================
+     2. CSS — nhúng một lần
+     ========================================================================== */
+  const CSS = `
+  :root{
+    --vl-bg:#ffffff; --vl-panel:#f6f7f9; --vl-fg:#14181d; --vl-muted:#5d6670;
+    --vl-line:#d9dde3; --vl-accent:#2563eb; --vl-grid:#e8ebef; --vl-axis:#9aa3ad;
+    --vl-hl:#fff3bf; --vl-hl-fg:#5c4600;
+  }
+  :root[data-vl-theme="dark"]{
+    --vl-bg:#13161a; --vl-panel:#1b1f25; --vl-fg:#e8ecf1; --vl-muted:#9aa5b1;
+    --vl-line:#2b323b; --vl-accent:#5b9dff; --vl-grid:#22272e; --vl-axis:#5d6670;
+    --vl-hl:#3a3414; --vl-hl-fg:#ffe79a;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-vl-theme="light"]){
+      --vl-bg:#13161a; --vl-panel:#1b1f25; --vl-fg:#e8ecf1; --vl-muted:#9aa5b1;
+      --vl-line:#2b323b; --vl-accent:#5b9dff; --vl-grid:#22272e; --vl-axis:#5d6670;
+      --vl-hl:#3a3414; --vl-hl-fg:#ffe79a;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--vl-bg);color:var(--vl-fg);
+    font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+  .vl-app{max-width:1180px;margin:0 auto;padding:16px;}
+  .vl-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+  .vl-title{font-size:18px;font-weight:650;margin:0;flex:1 1 220px;}
+  .vl-head-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .vl-main{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start;}
+  @media (max-width:860px){ .vl-main{grid-template-columns:1fr;} }
+  .vl-stage-wrap{position:relative;border:1px solid var(--vl-line);border-radius:10px;
+    overflow:hidden;background:var(--vl-panel);}
+  .vl-stage{display:block;width:100%;height:auto;touch-action:none;cursor:grab;}
+  .vl-stage.dragging{cursor:grabbing;}
+  .vl-status{padding:10px 12px;border-top:1px solid var(--vl-line);background:var(--vl-bg);
+    font-size:14px;min-height:42px;color:var(--vl-fg);}
+  .vl-status b{color:var(--vl-accent);}
+  .vl-side{display:flex;flex-direction:column;gap:12px;min-width:0;}
+  .vl-card{border:1px solid var(--vl-line);border-radius:10px;background:var(--vl-panel);padding:12px;}
+  .vl-card h3{margin:0 0 8px;font-size:13px;font-weight:650;text-transform:uppercase;
+    letter-spacing:.04em;color:var(--vl-muted);}
+  .vl-row{margin-bottom:12px;}
+  .vl-row:last-child{margin-bottom:0;}
+  .vl-lab{display:flex;justify-content:space-between;gap:8px;font-size:13px;margin-bottom:4px;}
+  .vl-lab span:last-child{font-variant-numeric:tabular-nums;color:var(--vl-accent);font-weight:600;}
+  input[type=range]{width:100%;accent-color:var(--vl-accent);margin:0;}
+  .vl-btn{font:inherit;font-size:13px;padding:6px 11px;border-radius:7px;cursor:pointer;
+    border:1px solid var(--vl-line);background:var(--vl-bg);color:var(--vl-fg);}
+  .vl-btn:hover{border-color:var(--vl-accent);}
+  .vl-btn.primary{background:var(--vl-accent);border-color:var(--vl-accent);color:#fff;}
+  .vl-btns{display:flex;gap:6px;flex-wrap:wrap;}
+  select,input[type=text]{font:inherit;font-size:13px;padding:6px 8px;border-radius:7px;
+    border:1px solid var(--vl-line);background:var(--vl-bg);color:var(--vl-fg);width:100%;}
+  .vl-head-tools select{width:auto;}
+  .vl-err{color:#dc2626;font-size:12px;margin-top:4px;min-height:16px;}
+  :root[data-vl-theme="dark"] .vl-err{color:#ff8080;}
+  .vl-code{margin:0;font:12.5px/1.6 ui-monospace,"Cascadia Code",Consolas,monospace;
+    counter-reset:vlline;max-height:260px;overflow:auto;}
+  .vl-code div{padding:1px 6px;border-radius:4px;white-space:pre-wrap;color:var(--vl-muted);}
+  .vl-code div.on{background:var(--vl-hl);color:var(--vl-hl-fg);font-weight:600;}
+  .vl-why{font-size:13.5px;color:var(--vl-fg);}
+  .vl-why p{margin:0 0 8px;} .vl-why p:last-child{margin:0;}
+  .vl-hint{font-size:12px;color:var(--vl-muted);margin-top:6px;}
+  `;
+
+  function injectCSS() {
+    if (document.getElementById('vl-css')) return;
+    const s = document.createElement('style');
+    s.id = 'vl-css';
+    s.textContent = CSS;
+    document.head.appendChild(s);
+  }
+
+  /* ==========================================================================
+     3. PARSER CÔNG THỨC — an toàn, không dùng eval()
+     Hỗ trợ: + - * / ^ ( ) , số, biến, hàm dựng sẵn, hằng pi/e
+     Dùng:  const f = VLab.compile('x^2 + 3*x', ['x']);  f({x:2}) -> 10
+     ========================================================================== */
+  const FUNCS = {
+    sin: Math.sin, cos: Math.cos, tan: Math.tan,
+    asin: Math.asin, acos: Math.acos, atan: Math.atan,
+    sinh: Math.sinh, cosh: Math.cosh, tanh: Math.tanh,
+    exp: Math.exp, sqrt: Math.sqrt, abs: Math.abs,
+    log: Math.log, ln: Math.log, log10: Math.log10, log2: Math.log2,
+    floor: Math.floor, ceil: Math.ceil, round: Math.round, sign: Math.sign,
+    min: Math.min, max: Math.max, pow: Math.pow, atan2: Math.atan2,
+    relu: function (v) { return v > 0 ? v : 0; },
+    sigmoid: function (v) { return 1 / (1 + Math.exp(-v)); }
+  };
+  const CONSTS = { pi: Math.PI, e: Math.E };
+
+  function tokenize(src) {
+    const out = [];
+    let i = 0;
+    while (i < src.length) {
+      const c = src[i];
+      if (c === ' ' || c === '\t' || c === '\n') { i++; continue; }
+      if (/[0-9.]/.test(c)) {
+        let j = i;
+        while (j < src.length && /[0-9.]/.test(src[j])) j++;
+        const num = parseFloat(src.slice(i, j));
+        if (isNaN(num)) throw new Error('Số không hợp lệ: ' + src.slice(i, j));
+        out.push({ t: 'num', v: num });
+        i = j; continue;
+      }
+      if (/[A-Za-z_]/.test(c)) {
+        let j = i;
+        while (j < src.length && /[A-Za-z0-9_]/.test(src[j])) j++;
+        out.push({ t: 'name', v: src.slice(i, j) });
+        i = j; continue;
+      }
+      if ('+-*/^(),'.indexOf(c) >= 0) { out.push({ t: c }); i++; continue; }
+      throw new Error('Ký tự lạ: "' + c + '"');
+    }
+    return out;
+  }
+
+  // Chuyển sang hậu tố bằng thuật toán sân ga (shunting-yard)
+  function toRPN(tokens) {
+    // Dấu trừ đứng trước (u-) nằm giữa */ và ^, nên -x^2 = -(x^2)
+    const prec = { '+': 1, '-': 1, '*': 2, '/': 2, 'u-': 2.5, '^': 3 };
+    const right = { '^': true, 'u-': true };
+    const out = [], ops = [];
+    let prev = null;
+    for (let k = 0; k < tokens.length; k++) {
+      const tk = tokens[k];
+      if (tk.t === 'num') { out.push(tk); }
+      else if (tk.t === 'name') {
+        if (tokens[k + 1] && tokens[k + 1].t === '(') ops.push({ t: 'fn', v: tk.v, argc: 1 });
+        else out.push(tk);
+      }
+      else if (tk.t === ',') {
+        while (ops.length && ops[ops.length - 1].t !== '(') out.push(ops.pop());
+        if (!ops.length) throw new Error('Dấu phẩy đặt sai chỗ');
+        for (let m = ops.length - 2; m >= 0; m--) {
+          if (ops[m].t === 'fn') { ops[m].argc++; break; }
+          if (ops[m].t === '(') break;
+        }
+      }
+      else if (tk.t === '(') { ops.push(tk); }
+      else if (tk.t === ')') {
+        while (ops.length && ops[ops.length - 1].t !== '(') out.push(ops.pop());
+        if (!ops.length) throw new Error('Thiếu dấu mở ngoặc');
+        ops.pop();
+        if (ops.length && ops[ops.length - 1].t === 'fn') out.push(ops.pop());
+      }
+      else {
+        let op = tk.t;
+        const unary = (op === '-' || op === '+') &&
+          (prev === null || prev.t === '(' || prev.t === ',' ||
+            '+-*/^'.indexOf(prev.t) >= 0);
+        if (unary) {
+          // dấu đứng trước toán hạng: không đẩy toán tử nào ra, chỉ xếp vào chồng
+          if (op === '+') { prev = tk; continue; }
+          ops.push({ t: 'u-' }); prev = tk; continue;
+        }
+        while (ops.length) {
+          const top = ops[ops.length - 1];
+          const topOp = top.t === 'fn' ? null : top.t;
+          if (topOp && topOp !== '(' &&
+            (prec[topOp] > prec[op] || (prec[topOp] === prec[op] && !right[op]))) {
+            out.push(ops.pop());
+          } else break;
+        }
+        ops.push({ t: op });
+      }
+      prev = tk;
+    }
+    while (ops.length) {
+      const top = ops.pop();
+      if (top.t === '(') throw new Error('Thiếu dấu đóng ngoặc');
+      out.push(top);
+    }
+    return out;
+  }
+
+  /**
+   * Biên dịch một biểu thức thành hàm.
+   * @param {string} src  ví dụ 'x^2 + 3*x'
+   * @param {string[]} vars  tên các biến được phép, ví dụ ['x'] hoặc ['x','y']
+   * @returns {function(Object): number}
+   */
+  VLab.compile = function (src, vars) {
+    vars = vars || ['x'];
+    const rpn = toRPN(tokenize(String(src)));
+    // Kiểm tra ngay lúc biên dịch: tên lạ, và biểu thức thiếu/thừa toán hạng
+    let depth = 0;
+    for (const tk of rpn) {
+      if (tk.t === 'name' && vars.indexOf(tk.v) < 0 && !(tk.v in CONSTS))
+        throw new Error('Không hiểu "' + tk.v + '"');
+      if (tk.t === 'fn' && !(tk.v in FUNCS))
+        throw new Error('Không có hàm "' + tk.v + '"');
+      if (tk.t === 'num' || tk.t === 'name') depth += 1;
+      else if (tk.t === 'u-') depth += 0;
+      else if (tk.t === 'fn') depth += 1 - tk.argc;
+      else depth -= 1;
+      if (depth < 1) throw new Error('Biểu thức thiếu toán hạng');
+    }
+    if (depth !== 1) throw new Error('Biểu thức chưa hoàn chỉnh');
+    return function (scope) {
+      const st = [];
+      for (const tk of rpn) {
+        if (tk.t === 'num') st.push(tk.v);
+        else if (tk.t === 'name') st.push(tk.v in CONSTS ? CONSTS[tk.v] : (scope[tk.v] || 0));
+        else if (tk.t === 'u-') st.push(-st.pop());
+        else if (tk.t === 'fn') {
+          const args = st.splice(st.length - tk.argc, tk.argc);
+          st.push(FUNCS[tk.v].apply(null, args));
+        } else {
+          const b = st.pop(), a = st.pop();
+          st.push(tk.t === '+' ? a + b : tk.t === '-' ? a - b :
+            tk.t === '*' ? a * b : tk.t === '/' ? a / b : Math.pow(a, b));
+        }
+      }
+      return st.pop();
+    };
+  };
+
+  /** Đạo hàm số (dùng khi không có công thức đạo hàm) */
+  VLab.deriv = function (f, scope, varName, h) {
+    h = h || 1e-5;
+    const s1 = Object.assign({}, scope), s2 = Object.assign({}, scope);
+    s1[varName] = scope[varName] + h;
+    s2[varName] = scope[varName] - h;
+    return (f(s1) - f(s2)) / (2 * h);
+  };
+
+  /* ==========================================================================
+     4. KHUNG NHÌN 2D — zoom bằng con lăn, kéo để di chuyển
+     ========================================================================== */
+  function makeView2D(canvas, opts, onChange) {
+    opts = opts || {};
+    const home = {
+      cx: opts.cx || 0,                  // toạ độ thế giới ở giữa khung
+      cy: opts.cy || 0,
+      scale: opts.scale || 40            // số pixel cho 1 đơn vị thế giới
+    };
+    const v = { cx: home.cx, cy: home.cy, scale: home.scale };
+
+    function toScreen(x, y) {
+      return [canvas.clientWidth / 2 + (x - v.cx) * v.scale,
+              canvas.clientHeight / 2 - (y - v.cy) * v.scale];
+    }
+    function toWorld(px, py) {
+      return [(px - canvas.clientWidth / 2) / v.scale + v.cx,
+              -(py - canvas.clientHeight / 2) / v.scale + v.cy];
+    }
+
+    // Bài có thể gán v.onPointerDown / onPointerMove / onPointerUp để tự xử lý
+    // (ví dụ kéo một nút của đồ thị). onPointerDown trả về true thì khung nhìn
+    // không kéo theo. Toạ độ truyền vào là pixel trong canvas.
+    let drag = null, grabbed = false;
+    function local(e) {
+      const r = canvas.getBoundingClientRect();
+      return [e.clientX - r.left, e.clientY - r.top];
+    }
+    canvas.addEventListener('pointerdown', function (e) {
+      canvas.setPointerCapture(e.pointerId);
+      if (v.onPointerDown) {
+        const p = local(e);
+        if (v.onPointerDown(p[0], p[1], e)) { grabbed = true; return; }
+      }
+      drag = { x: e.clientX, y: e.clientY, cx: v.cx, cy: v.cy };
+      canvas.classList.add('dragging');
+    });
+    canvas.addEventListener('pointermove', function (e) {
+      if (grabbed) {
+        if (v.onPointerMove) { const p = local(e); v.onPointerMove(p[0], p[1], e); }
+        return;
+      }
+      if (!drag) return;
+      v.cx = drag.cx - (e.clientX - drag.x) / v.scale;
+      v.cy = drag.cy + (e.clientY - drag.y) / v.scale;
+      onChange();
+    });
+    function endDrag() {
+      if (grabbed && v.onPointerUp) v.onPointerUp();
+      grabbed = false;
+      drag = null;
+      canvas.classList.remove('dragging');
+    }
+    canvas.addEventListener('pointerup', endDrag);
+    canvas.addEventListener('pointercancel', endDrag);
+
+    canvas.addEventListener('wheel', function (e) {
+      e.preventDefault();
+      const r = canvas.getBoundingClientRect();
+      const [wx, wy] = toWorld(e.clientX - r.left, e.clientY - r.top);
+      const k = Math.exp(-e.deltaY * 0.0015);
+      v.scale = Math.max(2, Math.min(4000, v.scale * k));
+      // giữ nguyên điểm dưới con trỏ
+      const [nx, ny] = toWorld(e.clientX - r.left, e.clientY - r.top);
+      v.cx += wx - nx; v.cy += wy - ny;
+      onChange();
+    }, { passive: false });
+
+    // pinch 2 ngón trên cảm ứng
+    let pinch = null;
+    canvas.addEventListener('touchmove', function (e) {
+      if (e.touches.length !== 2) { pinch = null; return; }
+      e.preventDefault();
+      const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX,
+                           e.touches[0].clientY - e.touches[1].clientY);
+      if (pinch) { v.scale = Math.max(2, Math.min(4000, v.scale * d / pinch)); onChange(); }
+      pinch = d;
+    }, { passive: false });
+    canvas.addEventListener('touchend', function () { pinch = null; });
+
+    v.toScreen = toScreen;
+    v.toWorld = toWorld;
+    v.reset = function () { v.cx = home.cx; v.cy = home.cy; v.scale = home.scale; onChange(); };
+    v.setHome = function (o) { Object.assign(home, o); v.reset(); };
+
+    /** Vẽ lưới + trục. Gọi đầu tiên trong hàm vẽ của bài. */
+    v.drawGrid = function (ctx) {
+      const W = canvas.clientWidth, H = canvas.clientHeight;
+      const cs = getComputedStyle(document.documentElement);
+      const grid = cs.getPropertyValue('--vl-grid').trim();
+      const axis = cs.getPropertyValue('--vl-axis').trim();
+      // bước lưới "đẹp": 1, 2, 5, 10...
+      let step = Math.pow(10, Math.floor(Math.log10(80 / v.scale)));
+      const n = 80 / (step * v.scale);
+      if (n > 5) step *= 5; else if (n > 2) step *= 2;
+      const [x0, y1] = toWorld(0, 0), [x1, y0] = toWorld(W, H);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = grid;
+      ctx.beginPath();
+      for (let x = Math.ceil(x0 / step) * step; x <= x1; x += step) {
+        const px = Math.round(toScreen(x, 0)[0]) + 0.5;
+        ctx.moveTo(px, 0); ctx.lineTo(px, H);
+      }
+      for (let y = Math.ceil(y0 / step) * step; y <= y1; y += step) {
+        const py = Math.round(toScreen(0, y)[1]) + 0.5;
+        ctx.moveTo(0, py); ctx.lineTo(W, py);
+      }
+      ctx.stroke();
+      // trục
+      ctx.strokeStyle = axis; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      const oy = Math.round(toScreen(0, 0)[1]) + 0.5;
+      const ox = Math.round(toScreen(0, 0)[0]) + 0.5;
+      ctx.moveTo(0, oy); ctx.lineTo(W, oy);
+      ctx.moveTo(ox, 0); ctx.lineTo(ox, H);
+      ctx.stroke();
+      // nhãn số
+      ctx.fillStyle = axis;
+      ctx.font = '11px system-ui,sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      const lbl = (t) => Math.abs(t) < 1e-9 ? '0' :
+        (Math.abs(t) < 1e-4 || Math.abs(t) >= 1e5 ? t.toExponential(1) :
+          parseFloat(t.toPrecision(4)).toString());
+      for (let x = Math.ceil(x0 / step) * step; x <= x1; x += step) {
+        if (Math.abs(x) < step / 2) continue;
+        ctx.fillText(lbl(x), toScreen(x, 0)[0], Math.min(H - 14, Math.max(2, oy + 3)));
+      }
+      ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      for (let y = Math.ceil(y0 / step) * step; y <= y1; y += step) {
+        if (Math.abs(y) < step / 2) continue;
+        ctx.fillText(lbl(y), Math.max(24, Math.min(W - 2, ox - 5)), toScreen(0, y)[1]);
+      }
+    };
+    return v;
+  }
+
+  /* ==========================================================================
+     5. TẠO ỨNG DỤNG
+     ========================================================================== */
+  /**
+   * @param {Object} cfg
+   *   title    {string}  tiêu đề trang
+   *   why      {string}  nội dung ô "Vì sao?" (HTML đơn giản)
+   *   stage    {'2d'|'none'}  '2d' tạo sẵn canvas + zoom/pan; 'none' để bài tự dựng (3D)
+   *   view     {Object}  {cx, cy, scale} khung nhìn ban đầu (chỉ với stage '2d')
+   *   height   {number}  chiều cao sân khấu, mặc định 460
+   *   func     {Object}  {label, value, vars} hiện ô nhập công thức
+   *   params   {Array}   [{id, label, min, max, step, value, fixed}]
+   *   player   {boolean} hiện bộ Chạy/Bước/Làm lại
+   *   code     {string[]} các dòng mã giả tiếng Việt
+   *   onDraw   {function(ctx, app)}  vẽ lại (chỉ với stage '2d')
+   *   onStep   {function(app): boolean}  chạy một bước; trả về false khi kết thúc
+   *   onReset  {function(app)}  đặt lại trạng thái bài
+   *   onParam  {function(id, value, app)}  khi một tham số đổi
+   */
+  VLab.create = function (cfg) {
+    injectCSS();
+    cfg = cfg || {};
+    const app = {};
+    const root = document.createElement('div');
+    root.className = 'vl-app';
+    document.body.appendChild(root);
+
+    /* --- đầu trang --- */
+    const head = document.createElement('div');
+    head.className = 'vl-head';
+    head.innerHTML =
+      '<h1 class="vl-title"></h1><div class="vl-head-tools">' +
+      '<select class="vl-pal" title="Bảng màu"></select>' +
+      '<button class="vl-btn vl-theme">Sáng/Tối</button>' +
+      '<button class="vl-btn vl-home">Đặt lại khung nhìn</button></div>';
+    head.querySelector('.vl-title').textContent = cfg.title || 'Mô phỏng';
+    root.appendChild(head);
+
+    const palSel = head.querySelector('.vl-pal');
+    Object.keys(PALETTES).forEach(function (n) {
+      const o = document.createElement('option');
+      o.value = n; o.textContent = n; palSel.appendChild(o);
+    });
+    palSel.value = paletteName;
+    palSel.addEventListener('change', function () {
+      paletteName = palSel.value; app.redraw();
+    });
+    head.querySelector('.vl-theme').addEventListener('click', function () {
+      const cur = document.documentElement.getAttribute('data-vl-theme');
+      const sysDark = global.matchMedia &&
+        global.matchMedia('(prefers-color-scheme: dark)').matches;
+      const now = cur || (sysDark ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-vl-theme', now === 'dark' ? 'light' : 'dark');
+      app.redraw();
+    });
+
+    /* --- bố cục chính --- */
+    const main = document.createElement('div');
+    main.className = 'vl-main';
+    root.appendChild(main);
+
+    const stageWrap = document.createElement('div');
+    stageWrap.className = 'vl-stage-wrap';
+    main.appendChild(stageWrap);
+
+    const side = document.createElement('div');
+    side.className = 'vl-side';
+    main.appendChild(side);
+
+    /* --- sân khấu --- */
+    const stageMode = cfg.stage || '2d';
+    const stageH = cfg.height || 460;
+    let canvas = null, ctx = null;
+    app.stageEl = stageWrap;
+
+    if (stageMode === '2d') {
+      canvas = document.createElement('canvas');
+      canvas.className = 'vl-stage';
+      canvas.style.height = stageH + 'px';
+      stageWrap.appendChild(canvas);
+      ctx = canvas.getContext('2d');
+      app.canvas = canvas; app.ctx = ctx;
+    } else {
+      const host = document.createElement('div');
+      host.className = 'vl-stage';
+      host.style.height = stageH + 'px';
+      stageWrap.appendChild(host);
+      app.host = host;
+    }
+
+    const statusEl = document.createElement('div');
+    statusEl.className = 'vl-status';
+    statusEl.innerHTML = '<span class="vl-muted">Sẵn sàng.</span>';
+    stageWrap.appendChild(statusEl);
+
+    /* --- khung nhìn --- */
+    if (stageMode === '2d') {
+      app.view = makeView2D(canvas, cfg.view, function () { app.redraw(); });
+    }
+    head.querySelector('.vl-home').addEventListener('click', function () {
+      if (app.view) app.view.reset();
+      else if (app.onHome) app.onHome();
+    });
+
+    /* --- ô nhập công thức --- */
+    app.f = null;
+    if (cfg.func) {
+      const card = document.createElement('div');
+      card.className = 'vl-card';
+      card.innerHTML = '<h3>Công thức</h3>' +
+        '<div class="vl-lab"><span></span></div>' +
+        '<input type="text" class="vl-fn">' +
+        '<div class="vl-err"></div>' +
+        '<div class="vl-hint">Dùng được: + - * / ^ ( ) và sin, cos, exp, ln, sqrt, abs, tanh, relu, sigmoid, pi, e</div>';
+      card.querySelector('.vl-lab span').textContent =
+        cfg.func.label || ('Hàm theo ' + (cfg.func.vars || ['x']).join(', '));
+      const inp = card.querySelector('.vl-fn');
+      const err = card.querySelector('.vl-err');
+      inp.value = cfg.func.value || 'x^2';
+      function recompile() {
+        try {
+          app.f = VLab.compile(inp.value, cfg.func.vars || ['x']);
+          app.fSource = inp.value;
+          err.textContent = '';
+          if (cfg.onReset) cfg.onReset(app);
+          app.redraw();
+        } catch (e) {
+          err.textContent = 'Lỗi: ' + e.message;
+        }
+      }
+      inp.addEventListener('change', recompile);
+      inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') recompile(); });
+      side.appendChild(card);
+      try {
+        app.f = VLab.compile(inp.value, cfg.func.vars || ['x']);
+        app.fSource = inp.value;
+      } catch (e) { err.textContent = 'Lỗi: ' + e.message; }
+    }
+
+    /* --- thanh trượt tham số --- */
+    const paramVals = {};
+    if (cfg.params && cfg.params.length) {
+      const card = document.createElement('div');
+      card.className = 'vl-card';
+      card.innerHTML = '<h3>Tham số</h3>';
+      cfg.params.forEach(function (p) {
+        paramVals[p.id] = p.value;
+        const row = document.createElement('div');
+        row.className = 'vl-row';
+        row.innerHTML = '<div class="vl-lab"><span></span><span class="vl-val"></span></div>' +
+          '<input type="range">';
+        row.querySelector('.vl-lab span').textContent = p.label;
+        const val = row.querySelector('.vl-val');
+        const r = row.querySelector('input');
+        r.min = p.min; r.max = p.max; r.step = p.step; r.value = p.value;
+        const fmt = function (v) {
+          return p.fixed != null ? Number(v).toFixed(p.fixed) : String(v);
+        };
+        val.textContent = fmt(p.value);
+        r.addEventListener('input', function () {
+          paramVals[p.id] = parseFloat(r.value);
+          val.textContent = fmt(r.value);
+          if (cfg.onParam) cfg.onParam(p.id, paramVals[p.id], app);
+          app.redraw();
+        });
+        card.appendChild(row);
+      });
+      side.appendChild(card);
+    }
+    app.param = function (id) { return paramVals[id]; };
+    app.params = paramVals;
+
+    /* --- bộ chạy --- */
+    app.running = false;
+    app.stepCount = 0;
+    if (cfg.player) {
+      const card = document.createElement('div');
+      card.className = 'vl-card';
+      card.innerHTML = '<h3>Chạy mô phỏng</h3>' +
+        '<div class="vl-btns"><button class="vl-btn primary vl-play">▶ Chạy</button>' +
+        '<button class="vl-btn vl-step">Bước tiếp</button>' +
+        '<button class="vl-btn vl-again">Làm lại</button></div>' +
+        '<div class="vl-row" style="margin-top:12px">' +
+        '<div class="vl-lab"><span>Tốc độ (bước/giây)</span><span class="vl-spd">8</span></div>' +
+        '<input type="range" class="vl-speed" min="1" max="60" step="1" value="8"></div>';
+      side.appendChild(card);
+      const btnPlay = card.querySelector('.vl-play');
+      const spdEl = card.querySelector('.vl-spd');
+      const spdIn = card.querySelector('.vl-speed');
+      spdIn.addEventListener('input', function () { spdEl.textContent = spdIn.value; });
+
+      let timer = null;
+      function oneStep() {
+        const alive = cfg.onStep ? cfg.onStep(app) : false;
+        app.stepCount++;
+        app.redraw();
+        if (alive === false) app.pause();
+      }
+      app.play = function () {
+        if (app.running) return;
+        app.running = true;
+        btnPlay.textContent = '❚❚ Tạm dừng';
+        const tick = function () {
+          if (!app.running) return;
+          oneStep();
+          timer = setTimeout(tick, 1000 / parseFloat(spdIn.value));
+        };
+        tick();
+      };
+      app.pause = function () {
+        app.running = false;
+        btnPlay.textContent = '▶ Chạy';
+        if (timer) { clearTimeout(timer); timer = null; }
+      };
+      btnPlay.addEventListener('click', function () {
+        app.running ? app.pause() : app.play();
+      });
+      card.querySelector('.vl-step').addEventListener('click', function () {
+        app.pause(); oneStep();
+      });
+      card.querySelector('.vl-again').addEventListener('click', function () {
+        app.pause();
+        app.stepCount = 0;
+        if (cfg.onReset) cfg.onReset(app);
+        app.highlight(-1);
+        app.redraw();
+      });
+    }
+
+    /* --- mã giả --- */
+    let codeLines = [];
+    if (cfg.code && cfg.code.length) {
+      const card = document.createElement('div');
+      card.className = 'vl-card';
+      card.innerHTML = '<h3>Thuật toán</h3><div class="vl-code"></div>';
+      const box = card.querySelector('.vl-code');
+      cfg.code.forEach(function (line) {
+        const d = document.createElement('div');
+        d.textContent = line;
+        box.appendChild(d);
+        codeLines.push(d);
+      });
+      side.appendChild(card);
+    }
+    /** Tô sáng dòng mã giả đang chạy (-1 để bỏ tô sáng) */
+    app.highlight = function (i) {
+      codeLines.forEach(function (d, k) { d.classList.toggle('on', k === i); });
+    };
+
+    /* --- ô "Vì sao?" --- */
+    if (cfg.why) {
+      const card = document.createElement('div');
+      card.className = 'vl-card';
+      card.innerHTML = '<h3>Vì sao?</h3><div class="vl-why"></div>';
+      card.querySelector('.vl-why').innerHTML = cfg.why;
+      side.appendChild(card);
+    }
+
+    /* --- API phụ --- */
+    /** Cập nhật ô "Đang xảy ra gì?" dưới sân khấu */
+    app.status = function (html) { statusEl.innerHTML = html; };
+    /** Lấy màu thứ i của bảng màu đang chọn */
+    app.color = function (i) {
+      const p = PALETTES[paletteName];
+      return p[((i % p.length) + p.length) % p.length];
+    };
+    /** Lấy giá trị một biến CSS của chủ đề, ví dụ app.css('--vl-fg') */
+    app.css = function (name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    };
+
+    /* --- vòng vẽ --- */
+    let pending = false;
+    app.redraw = function () {
+      if (pending) return;
+      pending = true;
+      requestAnimationFrame(function () {
+        pending = false;
+        if (stageMode === '2d') {
+          const dpr = global.devicePixelRatio || 1;
+          const w = canvas.clientWidth, h = canvas.clientHeight;
+          if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+            canvas.width = Math.round(w * dpr);
+            canvas.height = Math.round(h * dpr);
+          }
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          ctx.clearRect(0, 0, w, h);
+          if (cfg.onDraw) cfg.onDraw(ctx, app);
+        } else if (cfg.onDraw) {
+          cfg.onDraw(null, app);
+        }
+      });
+    };
+
+    global.addEventListener('resize', function () { app.redraw(); });
+    if (global.matchMedia) {
+      global.matchMedia('(prefers-color-scheme: dark)')
+        .addEventListener('change', function () { app.redraw(); });
+    }
+
+    if (cfg.onReset) cfg.onReset(app);
+    app.redraw();
+    return app;
+  };
+
+  /* ==========================================================================
+     6. TIỆN ÍCH VẼ (canvas 2D)
+     ========================================================================== */
+  /** Vẽ đường cong y = f(x) trong toạ độ thế giới */
+  VLab.plotFunction = function (ctx, view, f, color, width) {
+    const W = ctx.canvas.clientWidth;
+    ctx.strokeStyle = color; ctx.lineWidth = width || 2;
+    ctx.beginPath();
+    let started = false;
+    for (let px = 0; px <= W; px++) {
+      const x = view.toWorld(px, 0)[0];
+      const y = f(x);
+      if (!isFinite(y)) { started = false; continue; }
+      const [sx, sy] = view.toScreen(x, y);
+      if (sy < -1e4 || sy > 1e4) { started = false; continue; }
+      if (started) ctx.lineTo(sx, sy); else { ctx.moveTo(sx, sy); started = true; }
+    }
+    ctx.stroke();
+  };
+
+  /** Vẽ một chấm tròn tại toạ độ thế giới */
+  VLab.dot = function (ctx, view, x, y, color, r) {
+    const [sx, sy] = view.toScreen(x, y);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(sx, sy, r || 5, 0, Math.PI * 2);
+    ctx.fill();
+  };
+
+  /** Vẽ mũi tên từ (x1,y1) đến (x2,y2) trong toạ độ thế giới */
+  VLab.arrow = function (ctx, view, x1, y1, x2, y2, color, width) {
+    const [a, b] = view.toScreen(x1, y1);
+    const [c, d] = view.toScreen(x2, y2);
+    const ang = Math.atan2(d - b, c - a);
+    const len = 9;
+    ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width || 2;
+    ctx.beginPath(); ctx.moveTo(a, b); ctx.lineTo(c, d); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(c, d);
+    ctx.lineTo(c - len * Math.cos(ang - 0.4), d - len * Math.sin(ang - 0.4));
+    ctx.lineTo(c - len * Math.cos(ang + 0.4), d - len * Math.sin(ang + 0.4));
+    ctx.closePath(); ctx.fill();
+  };
+
+  /** Viết chữ tại toạ độ màn hình */
+  VLab.label = function (ctx, px, py, text, color, align) {
+    ctx.fillStyle = color;
+    ctx.font = '12px system-ui,sans-serif';
+    ctx.textAlign = align || 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, px, py);
+  };
+
+  VLab.palettes = PALETTES;
+  global.VLab = VLab;
+
+})(typeof window !== 'undefined' ? window : globalThis);
+</script><script>
+/* ============ ENGINE: bộ vẽ SVG cho 9 loại sơ đồ ============ */
+const ENG = (function () {
+  'use strict';
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const f1 = n => Math.round(n * 10) / 10;
+  const pt = p => f1(p[0]) + ',' + f1(p[1]);
+  const L1 = t => String(t == null ? '' : t).replace(/\n/g, ' ');
+
+  /* ---------- hình học ---------- */
+  function anchor(n, tx, ty) {
+    const dx = tx - n.cx, dy = ty - n.cy;
+    if (!dx && !dy) return [n.cx, n.cy];
+    const a = n.w / 2, b = n.h / 2;
+    let k;
+    if (n.shape === 'ellipse') k = 1 / Math.sqrt(dx * dx / (a * a) + dy * dy / (b * b));
+    else if (n.shape === 'diamond') k = 1 / (Math.abs(dx) / a + Math.abs(dy) / b);
+    else k = Math.min(dx ? a / Math.abs(dx) : Infinity, dy ? b / Math.abs(dy) : Infinity);
+    return [n.cx + dx * k, n.cy + dy * k];
+  }
+  function route(nf, nt, via, o) {
+    via = via || o && o.via || [];
+    o = o || {};
+    const c1 = via.length ? via[0] : (o.p1 || [nt.cx, nt.cy]);
+    const c2 = via.length ? via[via.length - 1] : (o.p0 || [nf.cx, nf.cy]);
+    const p0 = o.p0 || anchor(nf, c1[0], c1[1]);
+    const p1 = o.p1 || anchor(nt, c2[0], c2[1]);
+    return [p0].concat(via, [p1]);
+  }
+  function polyAt(p, fr) {
+    let tot = 0; const seg = [];
+    for (let i = 1; i < p.length; i++) { const l = Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); seg.push(l); tot += l; }
+    let t = tot * fr;
+    for (let i = 0; i < seg.length; i++) {
+      if (t <= seg[i] || i === seg.length - 1) {
+        const k = seg[i] ? t / seg[i] : 0;
+        return { x: p[i][0] + (p[i + 1][0] - p[i][0]) * k, y: p[i][1] + (p[i + 1][1] - p[i][1]) * k, a: Math.atan2(p[i + 1][1] - p[i][1], p[i + 1][0] - p[i][0]) };
+      }
+      t -= seg[i];
+    }
+    return { x: p[0][0], y: p[0][1], a: 0 };
+  }
+
+  /* ---------- đầu mũi tên / ký hiệu đầu đường ---------- */
+  function deco(type, x, y, ang) {
+    const c = Math.cos(ang), s = Math.sin(ang);
+    const P = (u, v) => [x + u * c - v * s, y + u * s + v * c];
+    const T = pt([x, y]);
+    switch (type) {
+      case 'open': return `<path class="dc" d="M${pt(P(-11, -5.5))} L${T} L${pt(P(-11, 5.5))}"/>`;
+      case 'filled': return `<path class="dc fill" d="M${T} L${pt(P(-12, -5.5))} L${pt(P(-12, 5.5))} Z"/>`;
+      case 'tri': return `<path class="dc hollow" d="M${T} L${pt(P(-15, -8))} L${pt(P(-15, 8))} Z"/>`;
+      case 'dia': return `<path class="dc hollow" d="M${T} L${pt(P(-10, -6))} L${pt(P(-20, 0))} L${pt(P(-10, 6))} Z"/>`;
+      case 'fdia': return `<path class="dc fill" d="M${T} L${pt(P(-10, -6))} L${pt(P(-20, 0))} L${pt(P(-10, 6))} Z"/>`;
+    }
+    return '';
+  }
+
+  /* ---------- văn bản ---------- */
+  function txt(x, y, s, o) {
+    o = o || {};
+    const lines = String(s).split('\n'), lh = o.lh || 14;
+    const y0 = o.mid ? y - (lines.length - 1) * lh / 2 : y;
+    const cls = 'tx' + (o.cls ? ' ' + o.cls : '');
+    return `<text class="${cls}" x="${f1(x)}" y="${f1(y0)}" text-anchor="${o.a || 'middle'}"${o.mid ? ' dominant-baseline="central"' : ''}>` +
+      lines.map((l, i) => `<tspan x="${f1(x)}" dy="${i ? lh : 0}">${esc(l)}</tspan>`).join('') + '</text>';
+  }
+  function grp(cls, s, node, lab, inner) {
+    return `<g class="${cls} el" data-s="${s}"${node ? ` data-node="${node}"` : ''}${lab ? ` data-l="${esc(lab)}"` : ''}>${inner}</g>`;
+  }
+
+  /* ---------- đường nối chung ---------- */
+  function normal(a) {
+    let nx = Math.sin(a), ny = -Math.cos(a);
+    if (ny > 0.2) { nx = -nx; ny = -ny; }
+    return [nx, ny];
+  }
+  function edgeSVG(o) {
+    const p = o.pts, n = p.length;
+    const d = 'M' + p.map(pt).join(' L');
+    let b = `<path class="ln${o.dash ? ' dash' : ''}" d="${d}"/>`;
+    if (o.end) b += deco(o.end, p[n - 1][0], p[n - 1][1], Math.atan2(p[n - 1][1] - p[n - 2][1], p[n - 1][0] - p[n - 2][0]));
+    if (o.start) b += deco(o.start, p[0][0], p[0][1], Math.atan2(p[0][1] - p[1][1], p[0][0] - p[1][0]));
+    if (o.label) {
+      const lines = String(o.label).split('\n').length;
+      let x, y, an = 'middle';
+      if (o.lx != null) { x = o.lx; y = o.ly; an = o.la || 'middle'; }
+      else {
+        const m = polyAt(p, .5), nn = normal(m.a);
+        an = nn[0] > .4 ? 'start' : nn[0] < -.4 ? 'end' : 'middle';
+        x = m.x + nn[0] * (an === 'middle' ? 0 : 9) + (o.lp ? o.lp[0] : 0);
+        y = m.y + nn[1] * (an === 'middle' ? 11 : 0) + (o.lp ? o.lp[1] : 0);
+        if (an === 'middle' && nn[1] < 0) y -= (lines - 1) * 13;
+      }
+      b += txt(x, y, o.label, { cls: 'sm hl' + (o.lcls ? ' ' + o.lcls : ''), a: an, mid: true, lh: 13 });
+    }
+    const endLab = (q0, q1, text) => {
+      const dx = q1[0] - q0[0], dy = q1[1] - q0[1], L = Math.hypot(dx, dy) || 1;
+      const ux = dx / L, uy = dy / L;
+      let nx = -uy, ny = ux; if (ny > 0.3 || (Math.abs(ny) <= 0.3 && nx < 0)) { nx = -nx; ny = -ny; }
+      const x = q0[0] + ux * 22 + nx * 12, y = q0[1] + uy * 22 + ny * 12;
+      return txt(x, y, text, { cls: 'sm hl', mid: true });
+    };
+    if (o.m1) b += endLab(p[0], p[1], o.m1);
+    if (o.m2) b += endLab(p[n - 1], p[n - 2], o.m2);
+    if (o.id) b += `<path class="tr" d="${o.traceD || d}"/>`;
+    return `<g class="ed el" data-s="${o.s || 1}"${o.id ? ` data-eid="${o.id}"` : ''}${o.lab ? ` data-l="${esc(o.lab)}"` : ''}>${b}</g>`;
+  }
+
+  function actorSVG(x, y, label) {
+    return `<g class="stk"><circle class="sh" cx="${x}" cy="${y - 22}" r="8"/>` +
+      `<path class="ln" d="M${x},${y - 14} V${y + 8} M${x - 14},${y - 6} H${x + 14} M${x},${y + 8} L${x - 12},${y + 26} M${x},${y + 8} L${x + 12},${y + 26}"/></g>` +
+      txt(x, y + 43, label, { lh: 13, cls: 'b' });
+  }
+  const box = (cx, cy, w, h, shape) => ({ cx, cy, w, h, shape: shape || 'rect' });
+
+  const R = {};
+
+  /* ===== 1. USE CASE ===== */
+  R.uc = function (d) {
+    const N = {}, S = {}, LB = {};
+    d.actors.forEach(a => { N[a.id] = box(a.x, a.y - 2, 36, 58); S[a.id] = a.s || 1; LB[a.id] = L1(a.label); });
+    d.ucs.forEach(u => { u.w = u.w || 150; u.h = u.h || 50; N[u.id] = box(u.x, u.y, u.w, u.h, 'ellipse'); S[u.id] = u.s || 2; LB[u.id] = L1(u.label); });
+    let o = '';
+    const B = d.boundary;
+    o += grp('bd', 1, null, 'ranh giới hệ thống', `<rect class="sh bnd" x="${B.x}" y="${B.y}" width="${B.w}" height="${B.h}" rx="8"/>` + txt(B.x + 14, B.y + 22, B.title, { cls: 'b', a: 'start' }));
+    d.edges.forEach(e => {
+      const nf = N[e.f], nt = N[e.t];
+      const pts = route(nf, nt, e.via);
+      const k = e.kind || 'assoc';
+      const base = { pts, s: e.s || Math.max(S[e.f], S[e.t]), lab: LB[e.f] + ' → ' + LB[e.t] };
+      if (k === 'assoc') o += edgeSVG(Object.assign(base, { lab: LB[e.f] + ' — ' + LB[e.t] }));
+      if (k === 'include') o += edgeSVG(Object.assign(base, { dash: 1, end: 'open', label: e.nolabel?null:'«include»', lp: e.lp, lab: '«include» ' + base.lab }));
+      if (k === 'extend') o += edgeSVG(Object.assign(base, { dash: 1, end: 'open', label: e.nolabel?null:'«extend»', lp: e.lp, lab: '«extend» ' + base.lab }));
+      if (k === 'gen') o += edgeSVG(Object.assign(base, { end: 'tri', lab: 'tổng quát hoá ' + base.lab }));
+    });
+    d.actors.forEach(a => { o += grp('nd', a.s || 1, a.id, a.label, actorSVG(a.x, a.y, a.label)); });
+    d.ucs.forEach(u => { o += grp('nd', u.s || 2, u.id, L1(u.label), `<ellipse class="sh" cx="${u.x}" cy="${u.y}" rx="${u.w / 2}" ry="${u.h / 2}"/>` + txt(u.x, u.y, u.label, { mid: true })); });
+    return { svg: o, w: 900, h: d.h };
+  };
+
+  /* ===== 2. ACTIVITY ===== */
+  R.act = function (d) {
+    const N = {}, S = {}, LB = {};
+    d.nodes.forEach(n => {
+      const t = n.type;
+      if (t === 'start') { n.w = n.h = 18; n.shape = 'ellipse'; }
+      else if (t === 'end') { n.w = n.h = 26; n.shape = 'ellipse'; }
+      else if (t === 'dec') { n.w = n.w || 46; n.h = n.h || 46; n.shape = 'diamond'; }
+      else if (t === 'bar') { n.shape = 'rect'; }
+      else { n.w = n.w || 146; n.h = n.h || 44; n.shape = 'rect'; }
+      N[n.id] = box(n.x, n.y, n.w, n.h, n.shape); S[n.id] = n.s || 2; LB[n.id] = n.label ? L1(n.label) : ({ start: 'điểm bắt đầu', end: 'điểm kết thúc', dec: 'điểm rẽ nhánh', bar: 'thanh fork/join' }[t] || n.id);
+    });
+    let o = '';
+    (d.lanes || []).forEach(l => {
+      o += grp('lane', 1, null, 'swimlane ' + l.name,
+        `<rect class="lane-bg" x="${l.x}" y="10" width="${l.w}" height="${d.h - 20}"/>` +
+        `<rect class="lane-hd" x="${l.x}" y="10" width="${l.w}" height="28"/>` +
+        txt(l.x + l.w / 2, 24, l.name, { cls: 'b', mid: true }));
+    });
+    d.edges.forEach(e => {
+      const pts = route(N[e.f], N[e.t], e.via, { p0: e.p0, p1: e.p1 });
+      o += edgeSVG({ pts, id: e.id, s: e.s || Math.max(S[e.f], S[e.t]), end: 'open', label: e.label, lp: e.lp, lcls: 'b', lab: LB[e.f] + ' → ' + LB[e.t] });
+    });
+    d.nodes.forEach(n => {
+      let inner = '';
+      if (n.type === 'start') inner = `<circle class="fillc" cx="${n.x}" cy="${n.y}" r="9"/>`;
+      else if (n.type === 'end') inner = `<circle class="sh" cx="${n.x}" cy="${n.y}" r="12"/><circle class="fillc" cx="${n.x}" cy="${n.y}" r="7"/>`;
+      else if (n.type === 'dec') inner = `<path class="sh" d="M${n.x},${n.y - n.h / 2} L${n.x + n.w / 2},${n.y} L${n.x},${n.y + n.h / 2} L${n.x - n.w / 2},${n.y} Z"/>`;
+      else if (n.type === 'bar') inner = `<rect class="fillc" x="${n.x - n.w / 2}" y="${n.y - n.h / 2}" width="${n.w}" height="${n.h}" rx="2"/>`;
+      else inner = `<rect class="sh" x="${n.x - n.w / 2}" y="${n.y - n.h / 2}" width="${n.w}" height="${n.h}" rx="15"/>` + txt(n.x, n.y, n.label, { mid: true });
+      o += grp('nd', n.s || 2, n.id, LB[n.id], inner);
+    });
+    return { svg: o, w: 900, h: d.h };
+  };
+
+  /* ===== 3. SEQUENCE ===== */
+  R.seq = function (d) {
+    const W = 900, n = d.parts.length, P = {};
+    const left = d.left || 80, right = W - (d.right || 80);
+    d.parts.forEach((p, i) => { p.x = n > 1 ? left + (right - left) * i / (n - 1) : W / 2; P[p.id] = p; p.hw = p.kind === 'actor' ? 0 : Math.max(96, Math.min(146, String(p.label).length * 7.4 + 22)); });
+    const top = 14; let y = d.y0 || 132; const Y = {};
+    d.msgs.forEach(m => { Y[m.id] = y; y += m.kind === 'self' ? 58 : 42; });
+    const yEnd = y, H = yEnd + 24;
+    const ls = p => p.created ? Y[p.created] + 18 : (p.kind === 'actor' ? top + 84 : (p.stereo ? top + 56 : top + 52));
+    let o = '';
+    d.parts.forEach(p => {
+      let inner = '';
+      if (p.kind === 'actor') inner = actorSVG(p.x, top + 34, p.label);
+      else {
+        const yy = p.created ? Y[p.created] - 18 : (p.stereo && !p.created ? top + 10 : top + 16), hh = p.created ? 36 : (p.stereo ? 46 : 36);
+        inner = `<rect class="sh" x="${f1(p.x - p.hw / 2)}" y="${yy}" width="${p.hw}" height="${hh}" rx="3"/>`;
+        if (p.stereo && !p.created) inner += txt(p.x, yy + 12, '«' + p.stereo + '»', { cls: 'sm mute', mid: true }) + txt(p.x, yy + 31, p.label, { cls: 'ul', mid: true });
+        else inner += txt(p.x, yy + hh / 2, p.label, { cls: 'ul', mid: true });
+      }
+      const ps = p.s || 2;
+      o += grp('nd', ps, p.id, L1(p.label), inner);
+      const y2 = p.destroy ? Y[p.destroy] : yEnd - 6;
+      let ll = `<line class="lln" x1="${f1(p.x)}" y1="${ls(p)}" x2="${f1(p.x)}" y2="${y2}"/>`;
+      if (p.destroy) ll += `<path class="ln x" d="M${p.x - 8},${y2 - 8} L${p.x + 8},${y2 + 8} M${p.x + 8},${y2 - 8} L${p.x - 8},${y2 + 8}"/>`;
+      o += grp('ll', ps, null, '', ll);
+    });
+    const bars = [];
+    d.msgs.forEach(m => {
+      if (m.kind === 'ret' || m.kind === 'destroy') return;
+      const y1 = Y[m.id]; let y2;
+      const r = d.msgs.find(q => q.kind === 'ret' && q.ref === m.id);
+      if (m.end) y2 = Y[m.end]; else if (r) y2 = Y[r.id]; else y2 = y1 + (m.kind === 'self' ? 28 : 22);
+      bars.push(m.kind === 'create' ? { p: m.t, y1: y1 + 18, y2: y1 + 36, s: m.s || 3 } : { p: m.t, y1: y1 - 3, y2: y2 + 4, s: m.s || 3 });
+    });
+    bars.forEach((b, i) => { let dp = 0; for (let j = 0; j < i; j++) { const c = bars[j]; if (c.p === b.p && c.y1 <= b.y1 + 4 && c.y2 >= b.y1 + 4) dp++; } b.dp = dp; });
+    bars.forEach(b => {
+      const x = P[b.p].x - 5 + b.dp * 6;
+      o += grp('bar', b.s, b.p, '', `<rect class="actb" x="${f1(x)}" y="${f1(b.y1)}" width="10" height="${f1(b.y2 - b.y1)}"/>`);
+    });
+    const edges = {}, order = [];
+    d.msgs.forEach(m => {
+      const yy = Y[m.id], F = P[m.f], T = P[m.t], k = m.kind || 'sync';
+      let pts, mx, lab = L1(m.label);
+      if (k === 'self') {
+        const x1 = F.x + 5;
+        pts = [[x1, yy], [x1 + 38, yy], [x1 + 38, yy + 26], [x1 + 3, yy + 26]];
+        o += edgeSVG({ pts, id: m.id, s: m.s || 3, end: 'filled', label: m.label, lx: x1 + 46, ly: yy + 13, la: 'start', lab });
+      } else {
+        const dir = Math.sign(T.x - F.x) || 1;
+        const x1 = F.x + dir * 5, x2 = T.x - dir * (k === 'create' ? T.hw / 2 : 5);
+        pts = [[x1, yy], [x2, yy]]; mx = (x1 + x2) / 2;
+        o += edgeSVG({ pts, id: m.id, s: m.s || 3, end: (k === 'sync' || k === 'destroy') ? 'filled' : 'open', dash: k === 'ret' || k === 'create', label: m.label, lx: mx, ly: yy - 9, lcls: k === 'ret' ? 'it' : '', lab });
+        if (m.guard) o += grp('gd', m.gs || 5, null, 'điều kiện ' + m.guard, txt(mx, yy + 14, m.guard, { cls: 'sm b gdt', mid: true }));
+      }
+      edges[m.id] = { from: m.f, to: m.t }; order.push([m.id]);
+    });
+    return { svg: o, w: W, h: H, edges, scen: [{ n: 'Kịch bản chính', steps: order }] };
+  };
+
+  /* ===== 4. COLLABORATION ===== */
+  R.col = function (d) {
+    const N = {}, LB = {}; const OBJ = {};
+    d.objs.forEach(ob => { OBJ[ob.id] = ob; ob.w = ob.w || (ob.actor ? 36 : 124); ob.h = ob.h || (ob.actor ? 58 : 38); N[ob.id] = box(ob.x, ob.actor ? ob.y - 2 : ob.y, ob.w, ob.h); LB[ob.id] = L1(ob.label); });
+    let o = '';
+    const LK = [];
+    d.links.forEach(l => {
+      const pts = route(N[l.f], N[l.t], l.via);
+      LK.push({ f: l.f, t: l.t, pts });
+      o += edgeSVG({ pts, s: l.s || 2, lab: 'liên kết ' + LB[l.f] + ' — ' + LB[l.t] });
+    });
+    d.objs.forEach(ob => {
+      const inner = ob.actor ? actorSVG(ob.x, ob.y, ob.label)
+        : `<rect class="sh" x="${ob.x - ob.w / 2}" y="${ob.y - ob.h / 2}" width="${ob.w}" height="${ob.h}" rx="3"/>` + txt(ob.x, ob.y, ob.label, { cls: 'ul', mid: true });
+      o += grp('nd', ob.s || 1, ob.id, LB[ob.id], inner);
+    });
+    const key = (a, b) => [a, b].sort().join('|');
+    const cnt = {}, idx = {};
+    d.msgs.forEach(m => { const k = key(m.f, m.t); cnt[k] = (cnt[k] || 0) + 1; });
+    const edges = {}, order = [];
+    d.msgs.forEach(m => {
+      const k = key(m.f, m.t); idx[k] = (idx[k] || 0);
+      const i = idx[k]++, c = cnt[k];
+      const lk = LK.find(l => (l.f === m.f && l.t === m.t) || (l.f === m.t && l.t === m.f));
+      const A = lk.pts[0], B = lk.pts[lk.pts.length - 1];
+      const L = Math.hypot(B[0] - A[0], B[1] - A[1]) || 1, ux = (B[0] - A[0]) / L, uy = (B[1] - A[1]) / L;
+      const nx = -uy, ny = ux, off = (i - (c - 1) / 2) * 26;
+      const fwd = lk.f === m.f;
+      const P0 = [(fwd ? A[0] : B[0]) + nx * off, (fwd ? A[1] : B[1]) + ny * off];
+      const P1 = [(fwd ? B[0] : A[0]) + nx * off, (fwd ? B[1] : A[1]) + ny * off];
+      const M = [(P0[0] + P1[0]) / 2, (P0[1] + P1[1]) / 2];
+      const len = Math.min(54, L * .4), vx = (P1[0] - P0[0]) / L, vy = (P1[1] - P0[1]) / L;
+      const a1 = [M[0] - vx * len / 2, M[1] - vy * len / 2], a2 = [M[0] + vx * len / 2, M[1] + vy * len / 2];
+      let side = off > .5 ? 1 : off < -.5 ? -1 : (ny > 0 ? -1 : 1);
+      if (Math.abs(ny) < .3 && Math.abs(off) <= .5) side = 1;
+      const lnx = nx * side, lny = ny * side;
+      const an = lnx > .4 ? 'start' : lnx < -.4 ? 'end' : 'middle';
+      const lx = M[0] + lnx * (an === 'middle' ? 0 : 18), ly = M[1] + lny * (an === 'middle' ? 16 : 0);
+      const traceD = `M${pt(P0)} L${pt(P1)}`;
+      o += edgeSVG({ pts: [a1, a2], id: m.id, s: m.s || 3, end: 'filled', label: m.label, lx, ly, la: an, traceD, lab: L1(m.label) });
+      edges[m.id] = { from: m.f, to: m.t }; order.push([m.id]);
+    });
+    return { svg: o, w: 900, h: d.h, edges, scen: [{ n: 'Kịch bản chính', steps: order }] };
+  };
+
+  /* ===== 5. CLASS ===== */
+  R.cls = function (d) {
+    const N = {}, S = {}, LB = {};
+    d.classes.forEach(c => {
+      c.attrs = c.attrs || []; c.ops = c.ops || [];
+      c.hh = 28 + (c.stereo ? 13 : 0); c.ah = Math.max(1, c.attrs.length) * 17 + 8; c.oh = Math.max(1, c.ops.length) * 17 + 8; c.h = c.hh + c.ah + c.oh;
+      N[c.id] = box(c.x + c.w / 2, c.y + c.h / 2, c.w, c.h); S[c.id] = c.s || 1; LB[c.id] = c.name;
+    });
+    const kindS = { assoc: 3, agg: 4, comp: 4, ac: 4, gen: 5, dep: 6 };
+    const G = {}; let lines = '';
+    d.rels.forEach(r => {
+      const k = r.kind || 'assoc';
+      let pts;
+      if (k === 'ac') { const m = G[r.rel].mid; pts = [anchor(N[r.f], m[0], m[1]), m]; }
+      else pts = route(N[r.f], N[r.t], r.via);
+      const mid = polyAt(pts, .5); G[r.id || (r.f + r.t)] = { pts, mid: [mid.x, mid.y] };
+      const s = r.s || Math.max(kindS[k], S[r.f], r.t ? S[r.t] : 1);
+      const o = { pts, s, label: r.label, lp: r.lp, m1: r.m1, m2: r.m2, lab: LB[r.f] + (k === 'gen' ? ' kế thừa ' : ' — ') + LB[r.t || ''] };
+      if (k === 'agg') o.start = 'dia';
+      if (k === 'comp') o.start = 'fdia';
+      if (k === 'gen') o.end = 'tri';
+      if (k === 'dep') { o.dash = 1; o.end = 'open'; }
+      if (k === 'ac') { o.dash = 1; o.lab = 'lớp kết hợp ' + LB[r.f]; }
+      if (r.nav) o.end = 'open';
+      lines += edgeSVG(o);
+    });
+    let o = lines;
+    d.classes.forEach(c => {
+      const nameY = c.y + (c.stereo ? 13 + 14 : 14);
+      let b = `<rect class="sh" x="${c.x}" y="${c.y}" width="${c.w}" height="${f1(c.h)}"/>` +
+        `<line class="ln thin" x1="${c.x}" y1="${c.y + c.hh}" x2="${c.x + c.w}" y2="${c.y + c.hh}"/>` +
+        `<line class="ln thin" x1="${c.x}" y1="${c.y + c.hh + c.ah}" x2="${c.x + c.w}" y2="${c.y + c.hh + c.ah}"/>`;
+      if (c.stereo) b += txt(c.x + c.w / 2, c.y + 12, '«' + c.stereo + '»', { cls: 'sm mute', mid: true });
+      b += txt(c.x + c.w / 2, nameY, c.name, { cls: 'b' + (c.abs ? ' it' : ''), mid: true });
+      o += grp('nd', c.s || 1, c.id, c.name, b);
+      const rows = (arr, top) => arr.map((t, i) => txt(c.x + 8, top + 4 + i * 17 + 8.5, t, { cls: 'sm', a: 'start', mid: true })).join('');
+      if (c.attrs.length) o += grp('at', c.as || 2, null, 'thuộc tính của ' + c.name, rows(c.attrs, c.y + c.hh));
+      if (c.ops.length) o += grp('at', c.os || 6, null, 'phương thức của ' + c.name, rows(c.ops, c.y + c.hh + c.ah));
+    });
+    return { svg: o, w: 900, h: d.h };
+  };
+
+  /* ===== 6. OBJECT ===== */
+  R.obj = function (d) {
+    const N = {}, LB = {};
+    d.objs.forEach(ob => {
+      ob.attrs = ob.attrs || []; ob.hh = 30; ob.h = ob.hh + (ob.attrs.length ? ob.attrs.length * 17 + 10 : 0);
+      N[ob.id] = box(ob.x + ob.w / 2, ob.y + ob.h / 2, ob.w, ob.h); LB[ob.id] = ob.label;
+    });
+    let o = '';
+    d.links.forEach(l => {
+      const pts = route(N[l.f], N[l.t], l.via);
+      o += edgeSVG({ pts, s: l.s || 4, label: l.label, lp: l.lp, lab: 'liên kết ' + LB[l.f] + ' — ' + LB[l.t] });
+    });
+    d.objs.forEach(ob => {
+      let b = `<rect class="sh" x="${ob.x}" y="${ob.y}" width="${ob.w}" height="${f1(ob.h)}"/>`;
+      if (ob.attrs.length) b += `<line class="ln thin" x1="${ob.x}" y1="${ob.y + ob.hh}" x2="${ob.x + ob.w}" y2="${ob.y + ob.hh}"/>`;
+      b += txt(ob.x + ob.w / 2, ob.y + ob.hh / 2, ob.label, { cls: 'b ul', mid: true });
+      o += grp('nd', ob.s || 2, ob.id, ob.label, b);
+      if (ob.attrs.length) o += grp('at', ob.as || 3, null, 'giá trị của ' + ob.label, ob.attrs.map((t, i) => txt(ob.x + 9, ob.y + ob.hh + 5 + i * 17 + 8.5, t, { cls: 'sm', a: 'start', mid: true })).join(''));
+    });
+    return { svg: o, w: 900, h: d.h };
+  };
+
+  /* ===== 7. STATE ===== */
+  R.st = function (d) {
+    const N = {}, LB = {};
+    d.nodes.forEach(n => {
+      if (n.type === 'start') { n.w = n.h = 18; n.shape = 'ellipse'; }
+      else if (n.type === 'end') { n.w = n.h = 26; n.shape = 'ellipse'; }
+      else { n.w = n.w || 132; n.h = n.h || (n.body ? 34 + n.body.length * 15 : 44); n.shape = 'rect'; }
+      N[n.id] = box(n.x, n.y, n.w, n.h, n.shape); LB[n.id] = n.label ? L1(n.label) : (n.type === 'start' ? 'trạng thái đầu' : 'trạng thái cuối');
+    });
+    let o = '';
+    d.nodes.filter(n => n.type === 'super').forEach(n => {
+      o += grp('nd', n.s || 3, n.id, LB[n.id], `<rect class="sh soft dashed" x="${n.x - n.w / 2}" y="${n.y - n.h / 2}" width="${n.w}" height="${n.h}" rx="14"/>` + txt(n.x - n.w / 2 + 14, n.y - n.h / 2 + 16, n.label, { cls: 'b', a: 'start', mid: true }));
+    });
+    const S = {}; d.nodes.forEach(n => S[n.id] = n.s || 2);
+    const edges = {};
+    d.edges.forEach(e => {
+      const pts = route(N[e.f], N[e.t], e.via, { p0: e.p0, p1: e.p1 });
+      o += edgeSVG({ pts, id: e.id, s: e.s || Math.max(S[e.f], S[e.t], 4), end: 'filled', label: e.label, lp: e.lp, lx: e.lx, ly: e.ly, la: e.la, lab: LB[e.f] + ' → ' + LB[e.t] + (e.label ? ' (' + L1(e.label) + ')' : '') });
+      edges[e.id] = { from: e.f, to: e.t };
+    });
+    d.nodes.filter(n => n.type !== 'super').forEach(n => {
+      let inner;
+      if (n.type === 'start') inner = `<circle class="fillc" cx="${n.x}" cy="${n.y}" r="9"/>`;
+      else if (n.type === 'end') inner = `<circle class="sh" cx="${n.x}" cy="${n.y}" r="12"/><circle class="fillc" cx="${n.x}" cy="${n.y}" r="7"/>`;
+      else {
+        inner = `<rect class="sh" x="${n.x - n.w / 2}" y="${n.y - n.h / 2}" width="${n.w}" height="${n.h}" rx="14"/>`;
+        if (n.body) {
+          inner += `<line class="ln thin" x1="${n.x - n.w / 2}" y1="${n.y - n.h / 2 + 26}" x2="${n.x + n.w / 2}" y2="${n.y - n.h / 2 + 26}"/>` + txt(n.x, n.y - n.h / 2 + 13, n.label, { cls: 'b', mid: true });
+          inner += n.body.map((t, i) => txt(n.x - n.w / 2 + 10, n.y - n.h / 2 + 26 + 11 + i * 15, t, { cls: 'sm', a: 'start', mid: true })).join('');
+        } else inner += txt(n.x, n.y, n.label, { cls: 'b', mid: true });
+      }
+      o += grp('nd', n.s || 2, n.id, LB[n.id], inner);
+    });
+    return { svg: o, w: 900, h: d.h, edges, persist: true, start: d.startNode, scen: d.scen };
+  };
+
+  /* ===== 8. COMPONENT ===== */
+  R.cmp = function (d) {
+    const N = {}, LB = {};
+    d.comps.forEach(c => { N[c.id] = box(c.x, c.y, c.w || 160, c.h || 70); c.w = c.w || 160; c.h = c.h || 70; LB[c.id] = L1(c.label); });
+    let o = '';
+    (d.deps || []).forEach(e => {
+      const pts = route(N[e.f], N[e.t], e.via);
+      o += edgeSVG({ pts, s: e.s || 5, dash: 1, end: 'open', label: e.label, lp: e.lp, lab: 'phụ thuộc ' + LB[e.f] + ' → ' + LB[e.t] });
+    });
+    (d.links || []).forEach(l => {
+      const A = anchor(N[l.prov], N[l.cons].cx, N[l.cons].cy), B = anchor(N[l.cons], N[l.prov].cx, N[l.prov].cy);
+      const Lg = Math.hypot(B[0] - A[0], B[1] - A[1]) || 1, ux = (B[0] - A[0]) / Lg, uy = (B[1] - A[1]) / Lg;
+      const M = [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2], bc = [M[0] - ux * 3, M[1] - uy * 3];
+      const nx = -uy, ny = ux;
+      const p1 = [bc[0] + nx * 12, bc[1] + ny * 12], p2 = [bc[0] - nx * 12, bc[1] - ny * 12];
+      let ln = `<path class="ln" d="M${pt(A)} L${pt([bc[0] - ux * 7, bc[1] - uy * 7])}"/>` +
+        `<path class="ln" d="M${pt(B)} L${pt([bc[0] + ux * 12, bc[1] + uy * 12])}"/>` +
+        `<circle class="sh" cx="${f1(bc[0])}" cy="${f1(bc[1])}" r="7"/>` +
+        `<path class="ln" d="M${pt(p1)} A12,12 0 0 0 ${pt(p2)}"/>`;
+      let lnx = nx, lny = ny; if (lny > .3 || (Math.abs(lny) <= .3 && lnx < 0)) { lnx = -lnx; lny = -lny; }
+      const an = lnx > .4 ? 'start' : 'middle';
+      ln += txt(bc[0] + lnx * (an === 'start' ? 17 : 0), bc[1] + lny * (an === 'start' ? 0 : 20), l.label, { cls: 'sm hl b', a: an, mid: true });
+      o += grp('ed', l.s || 4, null, 'giao diện ' + l.label, ln);
+    });
+    d.comps.forEach(c => {
+      const x = c.x - c.w / 2, y = c.y - c.h / 2;
+      let b = `<rect class="sh" x="${x}" y="${y}" width="${c.w}" height="${c.h}" rx="4"/>` +
+        `<rect class="sh" x="${x + c.w - 30}" y="${y + 8}" width="20" height="14" rx="1.5"/><rect class="sh" x="${x + c.w - 34}" y="${y + 11}" width="8" height="3.5" rx="1"/><rect class="sh" x="${x + c.w - 34}" y="${y + 16}" width="8" height="3.5" rx="1"/>`;
+      b += txt(c.x, y + 17, '«component»', { cls: 'sm mute', mid: true });
+      b += txt(c.x, c.y + 8, c.label, { cls: 'b', mid: true });
+      if (c.sub) b += txt(c.x, c.y + c.h / 2 - 12, c.sub, { cls: 'sm mute', mid: true });
+      o += grp('nd', c.s || 2, c.id, LB[c.id], b);
+    });
+    return { svg: o, w: 900, h: d.h };
+  };
+
+  /* ===== 9. DEPLOYMENT ===== */
+  R.dep = function (d) {
+    const N = {}, LB = {}, D = 14;
+    d.nodes.forEach(n => { N[n.id] = box(n.x + (n.w - D) / 2, n.y + D + (n.h - D) / 2, n.w - D, n.h - D); LB[n.id] = L1(n.label); });
+    let o = '';
+    (d.conns || []).forEach(e => {
+      const pts = route(N[e.f], N[e.t], e.via);
+      o += edgeSVG({ pts, s: e.s || 3, label: e.label, lp: e.lp, lab: 'kết nối ' + LB[e.f] + ' — ' + LB[e.t], dash: e.dash, end: e.end });
+    });
+    d.nodes.forEach(n => {
+      const fw = n.w - D, fh = n.h - D;
+      let b = `<path class="sh soft" d="M${n.x},${n.y + D} L${n.x + D},${n.y} L${n.x + n.w},${n.y} L${n.x + n.w - D},${n.y + D} Z"/>` +
+        `<path class="sh soft" d="M${n.x + fw},${n.y + D} L${n.x + n.w},${n.y} L${n.x + n.w},${n.y + fh} L${n.x + fw},${n.y + n.h} Z"/>` +
+        `<rect class="sh" x="${n.x}" y="${n.y + D}" width="${fw}" height="${fh}"/>`;
+      b += txt(n.x + fw / 2, n.y + D + 14, '«' + n.stereo + '»', { cls: 'sm mute', mid: true }) + txt(n.x + fw / 2, n.y + D + 31, n.label, { cls: 'b', mid: true });
+      o += grp('nd', n.s || 2, n.id, LB[n.id], b);
+      (n.arts || []).forEach((a, i) => {
+        const aw = fw - 28, ax = n.x + 14, ay = n.y + D + 46 + i * 40;
+        const ab = `<path class="sh" d="M${ax},${ay} H${ax + aw - 10} L${ax + aw},${ay + 10} V${ay + 30} H${ax} Z"/><path class="ln thin" d="M${ax + aw - 10},${ay} V${ay + 10} H${ax + aw}"/>` +
+          txt(ax + aw / 2 - 2, ay + 17, a.label, { cls: 'sm', mid: true });
+        o += grp('art', a.s || 4, null, 'artifact ' + a.label, ab);
+      });
+    });
+    return { svg: o, w: 900, h: d.h };
+  };
+
+  /* ---------- glyph nhỏ cho phần Ký hiệu ---------- */
+  const G = {
+    svg: (inner, w) => `<svg class="gsvg" viewBox="0 0 ${w || 84} 44" role="img" aria-hidden="true">${inner}</svg>`,
+    ln: (a, b, c, e, dash) => `<path class="ln${dash ? ' dash' : ''}" d="M${a},${b} L${c},${e}"/>`,
+    t: (x, y, s, o) => txt(x, y, s, Object.assign({ cls: 'sm', mid: true }, o || {})),
+    deco, actor: (x, y) => `<g class="stk"><circle class="sh" cx="${x}" cy="${y - 13}" r="5.5"/><path class="ln" d="M${x},${y - 7.5} V${y + 6} M${x - 9},${y - 3} H${x + 9} M${x},${y + 6} L${x - 8},${y + 17} M${x},${y + 6} L${x + 8},${y + 17}"/></g>`
+  };
+
+  return { R, G, txt, deco, esc };
+})();
+/* chuẩn hóa số bước (data-s) để mỗi sơ đồ vẽ đúng thứ tự dạy */
+const NORM = {
+  uc(d) { d.actors.forEach(a => a.s = 1); d.ucs.forEach(u => { u.s = u.s || 2; });
+    d.edges.forEach(e => { e.s = { assoc: 3, include: 4, extend: 5, gen: 5 }[e.kind || 'assoc']; }); return d; },
+  act(d) { const S = {}; d.nodes.forEach(n => { n.s = n.type === 'dec' ? 4 : n.type === 'bar' ? 5 : 2; S[n.id] = n.s; });
+    d.edges.forEach(e => { e.s = Math.max(3, S[e.f], S[e.t]); }); return d; },
+  seq(d) { d.parts.forEach(p => { p.s = p.kind === 'actor' ? 1 : (p.created ? 5 : 2); });
+    d.msgs.forEach(m => { const k = m.kind || 'sync'; m.s = k === 'ret' ? 4 : (k === 'create' || k === 'destroy' || k === 'self') ? 5 : 3; m.gs = 5; }); return d; },
+  col(d) { d.objs.forEach(o => o.s = 1); d.links.forEach(l => l.s = 2);
+    d.msgs.forEach(m => { m.s = /^\d+\.\d/.test(m.label) ? 4 : 3; }); return d; },
+  st(d) { const sup = {}; d.nodes.forEach(n => { n.s = (n.type === 'start' || n.type === 'end') ? 1 : n.type === 'super' ? 4 : 2; if (n.type === 'super') sup[n.id] = 1; });
+    d.edges.forEach(e => { e.s = (sup[e.f] || sup[e.t]) ? 4 : 3; }); return d; },
+  cmp(d) { d.comps.forEach(c => c.s = 1); (d.links || []).forEach(l => l.s = 2); (d.deps || []).forEach(e => e.s = 3); return d; },
+  dep(d) { d.nodes.forEach(n => { n.s = 1; (n.arts || []).forEach(a => a.s = 2); }); d.conns.forEach(c => c.s = 3); return d; }
+};
+/* ============ NỘI DUNG: khái niệm · ký hiệu · các bước vẽ ============ */
+const GL = (function () {
+  const G = ENG.G, T = (x, y, s, o) => G.t(x, y, s, o);
+  const S = (...a) => G.svg(a.join(''));
+  const L = (a, b, c, d, dash) => G.ln(a, b, c, d, dash);
+  const D = (t, x, y, ang) => ENG.deco(t, x, y, ang || 0);
+  const box = (x, y, w, h, r, c) => `<rect class="sh${c ? ' ' + c : ''}" x="${x}" y="${y}" width="${w}" height="${h}" rx="${r || 0}"/>`;
+  const lbl = (x, y, s) => T(x, y, s, { cls: 'sm mute' });
+  return { G, T, S, L, D, box, lbl };
+})();
+const { S: gS, T: gT, L: gL, D: gD, box: gB, lbl: gLb, G: gG } = GL;
+
+const DIAGRAMS = [
+  /* ------------------------------------------------------------ 1 */
+  {
+    id: 'uc', name: 'Use Case', tag: 's', src: 'Chương 4 · Mô hình hóa yêu cầu',
+    lead: 'Sơ đồ Use Case cho biết hệ thống làm được gì cho ai. Nó trả lời hai câu hỏi duy nhất: ai tương tác với hệ thống (tác nhân) và họ muốn đạt mục tiêu gì (use case).',
+    why: 'Yêu cầu của khách hàng thường là một đống câu chữ lộn xộn. Use case ép bạn đổi nó thành danh sách mục tiêu có chủ thể rõ ràng, nên cả nhóm và khách hàng nhìn vào là đồng ý được phạm vi dự án ngay từ đầu.',
+    when: 'Bước đầu tiên của phân tích. Mọi sơ đồ phía sau (activity, sequence, class…) đều bám theo danh sách use case này.',
+    pitfall: 'Use case là một mục tiêu trọn vẹn của tác nhân (“Đặt vé”), không phải một nút bấm (“Bấm nút Lưu”). Slide chương 4 vẽ generalization bằng nhãn «extend», nhưng chuẩn UML dùng mũi tên tam giác rỗng như bên dưới.',
+    symbols: [
+      { g: gS(gG.actor(42, 24)), n: 'Tác nhân (Actor)', d: 'Người hoặc hệ thống bên ngoài tương tác với hệ thống. Đặt tên bằng vai trò, không phải tên người.' },
+      { g: gS(`<ellipse class="sh" cx="42" cy="22" rx="34" ry="15"/>`, gT(42, 22, 'Đặt vé', { mid: true })), n: 'Use case', d: 'Một mục tiêu có giá trị mà tác nhân đạt được. Tên = động từ + danh từ.' },
+      { g: gS(gB(8, 4, 68, 36, 4, 'bnd'), gT(42, 14, 'Hệ thống', { cls: 'sm b', mid: true })), n: 'Ranh giới hệ thống', d: 'Hình chữ nhật bao các use case. Tác nhân luôn nằm bên ngoài.' },
+      { g: gS(gL(8, 22, 76, 22)), n: 'Liên kết (Association)', d: 'Đường thẳng nối tác nhân với use case mà họ tham gia.' },
+      { g: gS(gL(8, 28, 70, 28, 1), gD('open', 78, 28, 0), gT(42, 14, '«include»', { cls: 'sm', mid: true })), n: '«include»', d: 'Use case gốc luôn gọi use case con. Mũi tên chỉ về use case được dùng chung.' },
+      { g: gS(gL(8, 28, 70, 28, 1), gD('open', 78, 28, 0), gT(42, 14, '«extend»', { cls: 'sm', mid: true })), n: '«extend»', d: 'Use case phụ chỉ xảy ra khi có điều kiện. Mũi tên chỉ từ use case phụ về use case gốc.' },
+      { g: gS(gL(8, 22, 62, 22), gD('tri', 78, 22, 0)), n: 'Tổng quát hóa', d: 'Tác nhân hoặc use case con kế thừa cái chung của cha. Tam giác rỗng chỉ vào cha.' }
+    ],
+    steps: [
+      { t: 'Vẽ ranh giới và tác nhân', d: 'Tự hỏi: ai dùng hệ thống, ai nhận kết quả, hệ thống nào bên ngoài kết nối vào? Mỗi câu trả lời là một tác nhân đứng ngoài khung.' },
+      { t: 'Tìm use case chính', d: 'Với từng tác nhân hỏi: họ muốn đạt được gì? Mỗi mục tiêu là một hình elip, đặt tên động từ + danh từ.' },
+      { t: 'Nối tác nhân với use case', d: 'Vẽ đường liên kết. Tác nhân nào không nối được với use case nào là thừa; use case nào không có ai nối là thiếu tác nhân.' },
+      { t: 'Tách «include»', d: 'Tìm bước mà nhiều use case đều bắt buộc phải làm (ví dụ xác thực). Tách riêng để khỏi viết lặp lại, và chỉ mũi tên đứt nét về use case dùng chung.' },
+      { t: 'Thêm «extend»', d: 'Tìm hành vi chỉ xảy ra khi gặp điều kiện đặc biệt. Đây là tùy chọn, use case gốc vẫn chạy trọn vẹn nếu thiếu nó.' },
+      { t: 'Viết đặc tả cho từng use case', d: 'Hình vẽ chỉ là mục lục. Nội dung thật nằm ở bảng đặc tả: tác nhân, tiền điều kiện, luồng chính, luồng thay thế, hậu điều kiện.' }
+    ]
+  },
+  /* ------------------------------------------------------------ 2 */
+  {
+    id: 'act', name: 'Activity', tag: 'd', src: 'Chương 4 · Mô hình hóa yêu cầu (có bổ sung)',
+    lead: 'Sơ đồ Activity mô tả luồng công việc từng bước của một quy trình: ai làm gì, rẽ nhánh ở đâu, việc nào chạy song song.',
+    why: 'Bảng đặc tả chữ rất dễ bỏ sót nhánh “nếu không thì”. Khi vẽ thành luồng có mũi tên, mỗi điểm rẽ nhánh buộc phải có hai lối ra, nên lỗ hổng nghiệp vụ lộ ra ngay.',
+    when: 'Ngay sau Use Case: lấy một use case phức tạp và vẽ chi tiết luồng chính cùng các luồng thay thế của nó.',
+    pitfall: 'Điểm rẽ nhánh (decision) có một lối vào và nhiều lối ra có điều kiện. Fork/join là chạy song song thật sự, đừng dùng chúng để thay cho rẽ nhánh.',
+    symbols: [
+      { g: gS(`<circle class="fillc" cx="42" cy="22" r="9"/>`), n: 'Điểm bắt đầu', d: 'Chấm đen đặc. Mỗi sơ đồ chỉ có một điểm bắt đầu.' },
+      { g: gS(`<circle class="sh" cx="42" cy="22" r="12"/><circle class="fillc" cx="42" cy="22" r="7"/>`), n: 'Điểm kết thúc', d: 'Chấm đen có vòng ngoài. Có thể có nhiều điểm kết thúc cho các kết cục khác nhau.' },
+      { g: gS(gB(8, 8, 68, 28, 12), gT(42, 22, 'Hành động', { mid: true })), n: 'Hành động (Action)', d: 'Một bước việc. Tên bắt đầu bằng động từ.' },
+      { g: gS(`<path class="sh" d="M42,4 L64,22 L42,40 L20,22 Z"/>`, gT(74, 9, '[có]', { cls: 'sm' })), n: 'Rẽ nhánh (Decision)', d: 'Hình thoi. Mỗi lối ra mang điều kiện canh gác (guard) trong ngoặc vuông.' },
+      { g: gS(`<rect class="fillc" x="8" y="19" width="68" height="6" rx="2"/>`), n: 'Fork / Join', d: 'Thanh dày. Fork tách một luồng thành nhiều luồng song song; join chờ tất cả luồng về đủ rồi mới đi tiếp.' },
+      { g: gS(gL(8, 22, 64, 22), gD('open', 78, 22, 0)), n: 'Luồng điều khiển', d: 'Mũi tên nối hai nút, chỉ thứ tự thực hiện.' },
+      { g: gS(`<rect class="lane-bg" x="6" y="3" width="34" height="38"/><rect class="lane-hd" x="6" y="3" width="34" height="11"/><rect class="lane-bg" x="40" y="3" width="38" height="38"/><rect class="lane-hd" x="40" y="3" width="38" height="11"/>`), n: 'Làn bơi (Swimlane)', d: 'Chia sơ đồ thành các cột theo người hoặc bộ phận chịu trách nhiệm.' }
+    ],
+    steps: [
+      { t: 'Chia làn theo người chịu trách nhiệm', d: 'Mỗi tác nhân hoặc bộ phận là một cột. Việc đặt vào cột nào sẽ cho biết ai chịu trách nhiệm việc đó.' },
+      { t: 'Đặt điểm đầu, điểm cuối và các hành động', d: 'Liệt kê các việc theo thứ tự kể lại của luồng chính, mỗi việc là một hình bo tròn nằm đúng làn.' },
+      { t: 'Nối bằng luồng điều khiển', d: 'Dùng mũi tên nối các hành động từ điểm đầu tới điểm cuối. Luồng chính phải đi liền mạch không đứt đoạn.' },
+      { t: 'Thêm điểm rẽ nhánh', d: 'Ở mỗi chỗ có kiểm tra (thẻ hợp lệ? còn hàng?), thêm hình thoi và hai lối ra có điều kiện. Luồng thay thế thường kết thúc sớm.' },
+      { t: 'Thêm fork / join cho việc song song', d: 'Hai việc độc lập có thể xảy ra cùng lúc thì tách bằng fork và gộp lại bằng join trước khi đi tiếp.' },
+      { t: 'Rà soát', d: 'Mọi hành động có đường vào và đường ra? Mọi nhánh đều đi tới một điểm kết thúc? Đếm fork phải bằng đếm join.' }
+    ]
+  },
+  /* ------------------------------------------------------------ 3 */
+  {
+    id: 'seq', name: 'Sequence', tag: 'd', src: 'Chương 4 · Mô hình hóa yêu cầu',
+    lead: 'Sơ đồ Sequence cho thấy các đối tượng gửi thông điệp cho nhau theo thứ tự thời gian, trong một kịch bản cụ thể của một use case.',
+    why: 'Activity cho biết việc gì xảy ra, còn Sequence cho biết đối tượng nào gọi đối tượng nào. Từ các mũi tên này, bạn rút ra được lớp nào cần có và lớp đó cần phương thức gì.',
+    when: 'Sau Activity: mỗi kịch bản (luồng chính, luồng lỗi) của một use case vẽ thành một sơ đồ sequence.',
+    pitfall: 'Trục dọc là thời gian (trên xuống dưới), trục ngang chỉ là chỗ xếp đối tượng, vị trí trái phải không mang ý nghĩa. Mũi tên đi tới đối tượng nào thì đối tượng đó phải có phương thức tên đó.',
+    symbols: [
+      { g: gS(gG.actor(42, 24)), n: 'Tác nhân', d: 'Bên khởi đầu kịch bản, đứng ngoài cùng bên trái.' },
+      { g: gS(gB(10, 6, 64, 20, 3), gT(42, 16, ':Sách', { cls: 'sm ul', mid: true }), gL(42, 26, 42, 42, 1)), n: 'Đối tượng + lifeline', d: 'Hộp tên “:Lớp” có gạch chân, bên dưới là đường đứt nét biểu diễn sự tồn tại của đối tượng theo thời gian.' },
+      { g: gS(gL(42, 2, 42, 42, 1), `<rect class="actb" x="37" y="10" width="10" height="26"/>`), n: 'Activation bar', d: 'Hình chữ nhật hẹp trên lifeline: lúc đối tượng đang xử lý.' },
+      { g: gS(gL(8, 22, 66, 22), gD('filled', 78, 22, 0), gT(42, 12, 'tạoPhiếu()', { cls: 'sm' })), n: 'Thông điệp đồng bộ', d: 'Mũi tên liền, đầu đặc. Người gửi chờ xử lý xong mới đi tiếp.' },
+      { g: gS(gL(78, 22, 14, 22, 1), gD('open', 8, 22, Math.PI), gT(42, 12, 'true', { cls: 'sm it' })), n: 'Thông điệp trả về', d: 'Mũi tên đứt nét, đầu hở, quay về người gọi kèm kết quả.' },
+      { g: gS(gL(8, 22, 66, 22, 1), gD('open', 78, 22, 0), gT(42, 12, '«create»', { cls: 'sm' })), n: 'Tạo đối tượng', d: 'Mũi tên đứt nét chỉ thẳng vào hộp đối tượng mới, hộp nằm thấp hơn các hộp khác.' },
+      { g: gS(`<path class="ln x" d="M30,12 L54,36 M54,12 L30,36"/>`), n: 'Hủy đối tượng', d: 'Dấu X ở cuối lifeline: đối tượng chấm dứt tồn tại.' },
+      { g: gS(gT(42, 22, '[còn rảnh]', { cls: 'sm b' })), n: 'Điều kiện [guard]', d: 'Chỉ gửi thông điệp khi biểu thức trong ngoặc vuông đúng.' }
+    ],
+    steps: [
+      { t: 'Xác định tác nhân khởi đầu', d: 'Ai bắt đầu kịch bản? Đặt tác nhân ở ngoài cùng bên trái.' },
+      { t: 'Thêm các đối tượng và lifeline', d: 'Từ kịch bản, liệt kê các đối tượng tham gia. Xếp theo thứ tự gặp: màn hình (boundary), bộ điều khiển (control), dữ liệu (entity).' },
+      { t: 'Vẽ thông điệp theo thời gian', d: 'Đi từ trên xuống: mỗi hành động trong kịch bản là một mũi tên từ người gọi tới người nhận, tên mũi tên là phương thức.' },
+      { t: 'Vẽ thông điệp trả về', d: 'Với mỗi lời gọi có kết quả, kéo mũi tên đứt nét ngược lại. Phần nằm giữa hai mũi tên chính là activation bar.' },
+      { t: 'Tạo, hủy đối tượng và điều kiện', d: 'Đối tượng sinh ra giữa chừng thì hộp của nó nằm thấp xuống. Thông điệp có điều kiện thì gắn guard.' },
+      { t: 'Rà soát', d: 'Mỗi mũi tên đã có phương thức tương ứng ở lớp nhận chưa? Mọi lời gọi đã được trả về chưa?' }
+    ]
+  },
+  /* ------------------------------------------------------------ 4 */
+  {
+    id: 'col', name: 'Collaboration', tag: 'd', src: 'Chương 4–5 (có bổ sung)',
+    lead: 'Sơ đồ Collaboration (Communication) cũng mô tả các đối tượng gửi thông điệp cho nhau, nhưng nhấn mạnh ai liên kết với ai, còn thứ tự được biểu diễn bằng số.',
+    why: 'Sequence phô bày thời gian rất rõ, còn Collaboration phô bày cấu trúc: đối tượng nào phải có đường nối trực tiếp với đối tượng nào. Đường nối đó về sau trở thành quan hệ trong class diagram.',
+    when: 'Cùng lúc với Sequence: vẽ để kiểm tra lại cùng một kịch bản dưới góc nhìn cấu trúc.',
+    pitfall: 'Hai sơ đồ này nội dung tương đương, có thể đổi qua lại. Collaboration không có trục thời gian nên bắt buộc phải đánh số: 2.1 là lời gọi con nằm trong lời gọi 2.',
+    symbols: [
+      { g: gS(gB(10, 11, 64, 22, 3), gT(42, 22, ':Sách', { cls: 'sm ul', mid: true })), n: 'Đối tượng', d: 'Hộp có tên “:Lớp” gạch chân, không có lifeline.' },
+      { g: gS(gL(8, 22, 76, 22)), n: 'Liên kết (Link)', d: 'Đường nối hai đối tượng có thể trao đổi thông điệp.' },
+      { g: gS(gL(14, 30, 70, 30), gD('filled', 76, 30, 0), gT(42, 18, '1: tạoPhiếu()', { cls: 'sm' })), n: 'Thông điệp có số', d: 'Mũi tên nhỏ đặt cạnh liên kết, nhãn gồm số thứ tự và tên phương thức.' },
+      { g: gS(gT(42, 22, '2.1: cònHạn()', { cls: 'sm b' })), n: 'Đánh số lồng', d: '2.1 là thông điệp phát sinh trong lúc xử lý thông điệp 2.' }
+    ],
+    steps: [
+      { t: 'Đặt các đối tượng lên mặt phẳng', d: 'Lấy đúng tập đối tượng đã dùng trong sequence và xếp sao cho đối tượng hay trao đổi nằm gần nhau.' },
+      { t: 'Vẽ liên kết giữa các đối tượng', d: 'Hai đối tượng nào có thông điệp đi qua thì phải có một đường liên kết nối chúng.' },
+      { t: 'Gắn thông điệp và số thứ tự', d: 'Chép lại các thông điệp từ sequence, đặt cạnh liên kết tương ứng, đánh số 1, 2, 3 theo thứ tự thời gian.' },
+      { t: 'Đánh số lồng cho lời gọi con', d: 'Lời gọi phát sinh bên trong một lời gọi khác thì đánh 2.1, 2.2… để giữ đúng thứ bậc.' },
+      { t: 'Rà soát', d: 'Có thông điệp nào đi giữa hai đối tượng chưa có liên kết không? Số thứ tự có khớp với sơ đồ sequence?' }
+    ]
+  },
+  /* ------------------------------------------------------------ 5 */
+  {
+    id: 'cls', name: 'Class', tag: 's', src: 'Chương 5 · Phân tích',
+    lead: 'Sơ đồ Class (lớp) mô tả cấu trúc tĩnh của hệ thống: có những loại đối tượng nào, mỗi loại lưu gì, làm được gì, và chúng nối với nhau ra sao.',
+    why: 'Mã nguồn hướng đối tượng chính là các lớp. Vẽ class diagram trước giúp bạn chốt dữ liệu và quan hệ trước khi gõ một dòng code nào, tránh sửa cấu trúc khi đã code nửa chừng.',
+    when: 'Sau khi đã có sequence/collaboration: các đối tượng trong đó chính là các lớp ứng viên, các thông điệp là phương thức của lớp nhận.',
+    pitfall: 'Aggregation (hình thoi rỗng): bộ phận sống độc lập khi toàn thể mất đi. Composition (hình thoi đặc): bộ phận mất theo toàn thể. Generalization: “là một loại của”, mũi tên tam giác rỗng chỉ về cha.',
+    symbols: [
+      { g: gS(gB(10, 3, 64, 38), gL(10, 14, 74, 14), gL(10, 27, 74, 27), gT(42, 9, 'Sách', { cls: 'sm b', mid: true }), gT(14, 20.5, '- tieuDe', { cls: 'sm', a: 'start', mid: true }), gT(14, 34, '+ muon()', { cls: 'sm', a: 'start', mid: true })), n: 'Lớp (Class)', d: 'Hộp 3 ngăn: tên lớp, thuộc tính, phương thức.' },
+      { g: gS(gT(42, 14, '+ công khai', { cls: 'sm' }), gT(42, 28, '- riêng tư  # bảo vệ', { cls: 'sm' })), n: 'Tầm nhìn', d: '+ public, - private, # protected. Thuộc tính thường để private.' },
+      { g: gS(gL(8, 22, 76, 22), gT(14, 13, '1', { cls: 'sm b' }), gT(70, 13, '0..*', { cls: 'sm b' })), n: 'Liên kết + bội số', d: 'Số đối tượng ở mỗi đầu: 1, 0..1, 0..*, 1..*.' },
+      { g: gS(gL(26, 22, 76, 22), gD('dia', 26, 22, Math.PI)), n: 'Aggregation', d: 'Thoi rỗng ở phía toàn thể. “Có” nhưng bộ phận vẫn sống riêng.' },
+      { g: gS(gL(26, 22, 76, 22), gD('fdia', 26, 22, Math.PI)), n: 'Composition', d: 'Thoi đặc ở phía toàn thể. Bộ phận chết theo toàn thể.' },
+      { g: gS(gL(8, 22, 62, 22), gD('tri', 78, 22, 0)), n: 'Generalization', d: 'Lớp con kế thừa lớp cha. Tam giác rỗng chỉ vào cha.' },
+      { g: gS(gL(8, 22, 70, 22, 1), gD('open', 78, 22, 0)), n: 'Dependency', d: 'Mũi tên đứt nét: lớp này tạm dùng lớp kia (tham số, biến cục bộ).' },
+      { g: gS(gB(10, 6, 64, 32), gT(42, 14, '«interface»', { cls: 'sm mute', mid: true }), gT(42, 28, 'IPay', { cls: 'sm b it', mid: true })), n: 'Interface / lớp trừu tượng', d: 'Interface có nhãn «interface»; lớp trừu tượng có tên in nghiêng.' }
+    ],
+    steps: [
+      { t: 'Tìm lớp ứng viên', d: 'Gạch chân danh từ trong yêu cầu, và gom các đối tượng đã xuất hiện trong sequence. Loại bớt danh từ trùng nghĩa hoặc chỉ là thuộc tính.' },
+      { t: 'Điền thuộc tính', d: 'Mỗi lớp cần nhớ những thông tin gì? Ghi ngăn thứ hai kèm kiểu dữ liệu và tầm nhìn.' },
+      { t: 'Nối quan hệ liên kết', d: 'Hai lớp có biết nhau không? Vẽ đường nối, ghi tên quan hệ và bội số ở hai đầu.' },
+      { t: 'Xác định toàn thể – bộ phận', d: 'Lớp nào “gồm có” lớp nào? Bộ phận sống độc lập thì dùng aggregation, mất theo toàn thể thì dùng composition.' },
+      { t: 'Tìm kế thừa', d: 'Các lớp có chung thuộc tính hoặc hành vi thì rút phần chung lên lớp cha, nối bằng tam giác rỗng.' },
+      { t: 'Điền phương thức và phụ thuộc', d: 'Lấy tên thông điệp trong sequence làm phương thức của lớp nhận. Thêm dependency cho các lớp chỉ dùng tạm.' }
+    ]
+  },
+  /* ------------------------------------------------------------ 6 */
+  {
+    id: 'obj', name: 'Object', tag: 's', src: 'Chương 5 · Phân tích (có bổ sung)',
+    lead: 'Sơ đồ Object là một “bức ảnh chụp nhanh” của class diagram tại một thời điểm: những đối tượng cụ thể nào đang tồn tại và mang giá trị gì.',
+    why: 'Class diagram trừu tượng, khó nhìn ra sai sót. Điền dữ liệu thật vào rồi thử xem mô hình có diễn tả được tình huống đó không, đó là cách kiểm tra mô hình rẻ nhất.',
+    when: 'Sau Class: chọn một tình huống điển hình và dựng lại bằng đối tượng thật để kiểm chứng bội số và quan hệ.',
+    pitfall: 'Tên đối tượng có dạng tênĐốiTượng:TênLớp và được gạch chân. Mỗi liên kết trong object diagram là một thể hiện cụ thể của quan hệ ở class diagram, không còn bội số.',
+    symbols: [
+      { g: gS(gB(8, 5, 68, 34), gL(8, 17, 76, 17), gT(42, 11, 'a1:Sách', { cls: 'sm b ul', mid: true }), gT(13, 28, 'tieuDe = "CSDL"', { cls: 'sm', a: 'start', mid: true })), n: 'Đối tượng', d: 'Hộp 2 ngăn: tên:Lớp (gạch chân) và các giá trị thuộc tính tại thời điểm đó.' },
+      { g: gS(gT(42, 22, 'a1:Sách', { cls: 'sm b ul' })), n: 'Quy ước đặt tên', d: 'Có thể rút gọn thành “:Sách” khi tên cụ thể không quan trọng.' },
+      { g: gS(gL(8, 22, 76, 22)), n: 'Liên kết (Link)', d: 'Đường nối hai đối tượng. Là một thể hiện của quan hệ ở class diagram.' }
+    ],
+    steps: [
+      { t: 'Chọn một tình huống cụ thể', d: 'Ví dụ “độc giả An đang mượn 2 cuốn sách”. Chọn tình huống có đủ các lớp muốn kiểm tra.' },
+      { t: 'Tạo đối tượng từ các lớp', d: 'Mỗi nhân vật trong tình huống là một đối tượng, ghi tên dạng tên:Lớp và gạch chân.' },
+      { t: 'Điền giá trị thuộc tính', d: 'Dùng dữ liệu thật, đúng kiểu đã khai báo ở class. Chỗ nào không điền được là dấu hiệu thiếu thuộc tính.' },
+      { t: 'Nối liên kết', d: 'Vẽ các đường liên kết đúng như tình huống. Nếu tình huống cần liên kết mà class không có quan hệ tương ứng thì class diagram đang thiếu.' }
+    ]
+  },
+  /* ------------------------------------------------------------ 7 */
+  {
+    id: 'st', name: 'State', tag: 'd', src: 'Chương 5 · Phân tích',
+    lead: 'Sơ đồ State (Statechart) mô tả vòng đời của một đối tượng: các trạng thái nó có thể ở và sự kiện nào làm nó chuyển từ trạng thái này sang trạng thái khác.',
+    why: 'Một số đối tượng cư xử khác nhau tùy trạng thái (sách “đang mượn” thì không thể cho mượn tiếp). Vẽ máy trạng thái giúp bạn tìm ra các quy tắc chuyển trạng thái trước khi chúng biến thành một mớ if–else.',
+    when: 'Chỉ vẽ cho các lớp có vòng đời phức tạp như đơn hàng, vé, tài khoản, thẻ. Vẽ sau class diagram.',
+    pitfall: 'Một trạng thái là một khoảng thời gian đối tượng chờ ở đó (danh từ hoặc tính từ), còn sự kiện là một khoảnh khắc (động từ). Sơ đồ phải có đúng một trạng thái đầu.',
+    symbols: [
+      { g: gS(`<circle class="fillc" cx="42" cy="22" r="9"/>`), n: 'Trạng thái đầu', d: 'Chấm đen, điểm bắt đầu vòng đời khi đối tượng được tạo.' },
+      { g: gS(gB(8, 7, 68, 30, 12), gT(42, 22, 'Đang mượn', { cls: 'b', mid: true })), n: 'Trạng thái', d: 'Hình chữ nhật bo góc. Có thể kèm hành vi nội bộ như entry / do / exit.' },
+      { g: gS(gL(8, 22, 66, 22), gD('filled', 78, 22, 0), gT(42, 12, 'sự kiện [đk] / hđ', { cls: 'sm' })), n: 'Chuyển trạng thái', d: 'Nhãn dạng sự kiện [điều kiện] / hành động. Cả ba phần đều không bắt buộc.' },
+      { g: gS(`<circle class="sh" cx="42" cy="22" r="12"/><circle class="fillc" cx="42" cy="22" r="7"/>`), n: 'Trạng thái cuối', d: 'Vòng tròn đôi, vòng đời chấm dứt.' },
+      { g: gS(gB(6, 4, 72, 36, 10, 'dashed'), gT(24, 12, 'Hoạt động', { cls: 'sm b' }), gB(26, 19, 26, 16, 5), gB(56, 19, 18, 16, 5)), n: 'Trạng thái lồng (superstate)', d: 'Khung bao nhiều trạng thái con có chung một chuyển trạng thái, vẽ một lần cho cả nhóm.' },
+      { g: gS(gT(42, 12, 'entry / ghiNgày()', { cls: 'sm' }), gT(42, 28, 'exit / dọn()', { cls: 'sm' })), n: 'Hành vi nội bộ', d: 'entry chạy khi vào trạng thái, exit chạy khi rời, do chạy suốt thời gian ở đó.' }
+    ],
+    steps: [
+      { t: 'Đặt trạng thái đầu và cuối', d: 'Đối tượng sinh ra ở đâu và kết thúc ở đâu? Slide không cho xóa hẳn đối tượng, nên “cuối” thường là Hủy, Thanh lý hoặc Hết hạn.' },
+      { t: 'Liệt kê các trạng thái', d: 'Hỏi: có những giai đoạn nào mà cách cư xử khác nhau? Mỗi giai đoạn là một trạng thái.' },
+      { t: 'Nối bằng chuyển trạng thái', d: 'Với mỗi trạng thái hỏi: sự kiện nào làm nó thay đổi, đi về đâu? Ghi sự kiện, điều kiện và hành động lên mũi tên.' },
+      { t: 'Gom trạng thái lồng (nếu có)', d: 'Khi nhiều trạng thái cùng rời đi bởi một sự kiện (ví dụ “Hủy”), gom chúng vào một superstate để vẽ mũi tên một lần.' },
+      { t: 'Rà soát', d: 'Mỗi trạng thái có đường vào và đường ra? Có trạng thái nào “mắc kẹt” mà không phải trạng thái cuối?' }
+    ]
+  },
+  /* ------------------------------------------------------------ 8 */
+  {
+    id: 'cmp', name: 'Component', tag: 's', src: 'Bổ sung · tiếp nối kiến trúc phân tầng ở Chương 6',
+    lead: 'Sơ đồ Component chia hệ thống thành các khối phần mềm có thể thay thế được, mỗi khối công bố ra ngoài những giao diện (interface) mà nó cung cấp và cần dùng.',
+    why: 'Khi hệ thống lớn, nhìn từng lớp rất rối. Gom lớp thành khối và chỉ để lộ giao diện giúp nhiều người làm song song, và đổi ruột một khối mà không phá khối khác.',
+    when: 'Giai đoạn thiết kế: biến các tầng (giao diện, nghiệp vụ, dữ liệu) trong kiến trúc 3 lớp thành các component cụ thể.',
+    pitfall: 'Component không phải một lớp đơn lẻ mà là gói gồm nhiều lớp. Kẹo (lollipop) là giao diện cung cấp, hình ổ cắm là giao diện cần dùng; khớp kẹo vào ổ cắm là hai component đang nói chuyện với nhau.',
+    symbols: [
+      { g: gS(gB(10, 6, 56, 32, 3), gB(60, 11, 14, 8, 1), gB(60, 24, 14, 8, 1), gT(36, 22, 'Mượn Trả', { cls: 'sm b', mid: true })), n: 'Component', d: 'Hộp có biểu tượng hai ngăn nhỏ ở góc, thường kèm nhãn «component».' },
+      { g: gS(gL(8, 22, 54, 22), `<circle class="sh" cx="60" cy="22" r="7"/>`, gT(30, 12, 'IMượn', { cls: 'sm' })), n: 'Giao diện cung cấp', d: 'Hình kẹo que: khối này đưa ra cho bên ngoài dùng.' },
+      { g: gS(gL(8, 22, 54, 22), `<path class="ln" d="M60,12 A12,12 0 0 0 60,32"/>`, gT(30, 12, 'IMượn', { cls: 'sm' })), n: 'Giao diện yêu cầu', d: 'Hình ổ cắm: khối này cần dùng giao diện của khối khác.' },
+      { g: gS(gL(8, 22, 38, 22), `<circle class="sh" cx="42" cy="22" r="6"/>`, `<path class="ln" d="M42,12 A10,10 0 0 0 42,32"/>`, gL(46, 22, 76, 22)), n: 'Ball-and-socket', d: 'Kẹo cắm vào ổ: kết nối hai component qua giao diện chung.' },
+      { g: gS(gL(8, 22, 70, 22, 1), gD('open', 78, 22, 0)), n: 'Phụ thuộc', d: 'Mũi tên đứt nét: component này dùng component kia.' }
+    ],
+    steps: [
+      { t: 'Gom lớp thành component', d: 'Nhìn các tầng của kiến trúc (giao diện, nghiệp vụ, dữ liệu) và các nhóm lớp hay thay đổi cùng nhau. Mỗi nhóm là một component.' },
+      { t: 'Xác định giao diện cung cấp và cần dùng', d: 'Khối nào cung cấp dịch vụ gì cho khối khác? Đặt kẹo ở bên cung cấp, ổ cắm ở bên dùng, gắn tên giao diện.' },
+      { t: 'Vẽ các phụ thuộc còn lại', d: 'Những mối quan hệ không qua giao diện (gọi nền, thông báo bất đồng bộ) vẽ bằng mũi tên đứt nét.' },
+      { t: 'Rà soát', d: 'Mỗi ổ cắm đã có kẹo khớp chưa? Có vòng phụ thuộc giữa hai component không (nếu có thì nên tách bớt)?' }
+    ]
+  },
+  /* ------------------------------------------------------------ 9 */
+  {
+    id: 'dep', name: 'Deployment', tag: 's', src: 'Bổ sung · tiếp nối kiến trúc 3 tầng ở Chương 6',
+    lead: 'Sơ đồ Deployment cho biết phần mềm chạy ở máy nào: các nút phần cứng (node), phần mềm đóng gói (artifact) đặt trên đó, và đường truyền giữa các nút.',
+    why: 'Một thiết kế đẹp vẫn thất bại nếu không ai biết đặt nó ở đâu. Sơ đồ này nối thiết kế với thế giới thật: máy chủ nào, mạng nào, giao thức nào, và là nền tảng để tính tải và bảo mật.',
+    when: 'Bước cuối của thiết kế, sau Component: gán từng component đã đóng gói lên các node thực tế.',
+    pitfall: 'Node là nơi chạy (máy, trình duyệt, container); artifact là thứ được chạy (file .jar, .war, CSDL). Đường nối giữa hai node phải ghi giao thức (HTTPS, JDBC, TCP…).',
+    symbols: [
+      { g: gS(`<path class="sh soft" d="M8,14 L14,6 L76,6 L70,14 Z"/><path class="sh soft" d="M70,14 L76,6 L76,34 L70,40 Z"/>`, gB(8, 14, 62, 26), gT(39, 27, 'Server', { cls: 'sm b', mid: true })), n: 'Node', d: 'Hình hộp 3D. Có thể thêm nhãn «device» (thiết bị) hoặc «execution environment» (môi trường chạy).' },
+      { g: gS(`<path class="sh" d="M24,6 H52 L60,14 V38 H24 Z"/><path class="ln thin" d="M52,6 V14 H60"/>`, gT(42, 28, '.jar', { cls: 'sm', mid: true })), n: 'Artifact', d: 'Tệp thực thi hoặc dữ liệu đặt trên node: file .jar, .war, .exe, cơ sở dữ liệu.' },
+      { g: gS(gL(8, 22, 76, 22), gT(42, 12, 'HTTPS', { cls: 'sm b' })), n: 'Đường truyền', d: 'Đường liền nối hai node, nhãn là giao thức hoặc loại kết nối.' },
+      { g: gS(gT(42, 22, '«device»', { cls: 'sm mute' })), n: 'Stereotype', d: 'Nhãn nhỏ cho biết loại node: thiết bị, máy chủ, môi trường chạy.' }
+    ],
+    steps: [
+      { t: 'Liệt kê các node', d: 'Phần mềm chạy trên những thiết bị nào? Máy khách, máy chủ ứng dụng, máy chủ CSDL, hệ thống bên ngoài.' },
+      { t: 'Đặt artifact lên node', d: 'Với mỗi component đã đóng gói thành file, đặt vào node nơi nó được cài đặt.' },
+      { t: 'Nối các node bằng đường truyền', d: 'Hai node nào nói chuyện với nhau thì nối lại, ghi giao thức (HTTPS, JDBC, VPN…) lên đường nối.' },
+      { t: 'Rà soát', d: 'Mỗi component đã nằm trên đúng một node? Có node nào nối ra ngoài mạng mà chưa có biện pháp bảo vệ?' }
+    ]
+  }
+];
+const EX_LIB = {
+  id: 'lib', name: 'Quản lý thư viện', blurb: 'Mượn và trả sách tại quầy thủ thư, có kiểm tra thẻ và hạn mức.',
+  uc: NORM.uc({
+    h: 466, boundary: { x: 150, y: 16, w: 600, h: 434, title: 'Hệ thống Quản lý Thư viện' },
+    actors: [{ id: 'dg', x: 70, y: 160, label: 'Độc giả' }, { id: 'tt', x: 830, y: 190, label: 'Thủ thư' }, { id: 'ncc', x: 830, y: 390, label: 'Nhà cung cấp' }],
+    ucs: [
+      { id: 'tracuu', x: 270, y: 90, label: 'Tra cứu sách' }, { id: 'dangky', x: 270, y: 210, label: 'Đăng ký\nthành viên' },
+      { id: 'kiemtra', x: 450, y: 150, label: 'Kiểm tra thẻ' }, { id: 'tuchoi', x: 450, y: 55, label: 'Từ chối\nmượn sách' },
+      { id: 'muon', x: 630, y: 110, label: 'Xử lý\nmượn sách' }, { id: 'tra', x: 630, y: 230, label: 'Xử lý\ntrả sách' }, { id: 'mua', x: 630, y: 370, label: 'Đặt mua sách' }
+    ],
+    edges: [
+      { f: 'dg', t: 'tracuu' }, { f: 'dg', t: 'dangky' }, { f: 'tt', t: 'muon' }, { f: 'tt', t: 'tra' }, { f: 'tt', t: 'mua' }, { f: 'ncc', t: 'mua' },
+      { f: 'muon', t: 'kiemtra', kind: 'include' }, { f: 'tuchoi', t: 'muon', kind: 'extend' }
+    ]
+  }),
+  act: NORM.act({
+    h: 720,
+    lanes: [{ x: 10, w: 190, name: 'Độc giả' }, { x: 200, w: 330, name: 'Thủ thư' }, { x: 530, w: 360, name: 'Hệ thống' }],
+    nodes: [
+      { id: 'st', type: 'start', label: 'Bắt đầu mượn sách', x: 105, y: 76 }, { id: 'a1', type: 'act', x: 105, y: 140, label: 'Đưa thẻ\nvà sách' },
+      { id: 'a2', type: 'act', x: 365, y: 140, label: 'Quét thẻ\nđộc giả' }, { id: 'a3', type: 'act', x: 710, y: 140, label: 'Tra thẻ\ntrong hệ thống' },
+      { id: 'd1', type: 'dec', label: 'Thẻ còn hạn?', x: 710, y: 240 }, { id: 'a8', type: 'act', x: 365, y: 240, label: 'Báo thẻ\nhết hạn' },
+      { id: 'd2', type: 'dec', label: 'Đang mượn dưới 3 sách?', x: 710, y: 330 }, { id: 'a9', type: 'act', x: 365, y: 330, label: 'Báo vượt\nhạn mức' },
+      { id: 'enN', type: 'end', label: 'Kết thúc: bị từ chối', x: 105, y: 285 },
+      { id: 'b1', type: 'bar', label: 'Fork: đóng dấu ‖ ghi phiếu', x: 540, y: 400, w: 400, h: 6 }, { id: 'a6', type: 'act', x: 365, y: 480, label: 'Đóng dấu\nngày hẹn trả' }, { id: 'a5', type: 'act', x: 710, y: 480, label: 'Ghi phiếu\nmượn' },
+      { id: 'b2', type: 'bar', label: 'Join', x: 540, y: 550, w: 400, h: 6 }, { id: 'a7', type: 'act', x: 365, y: 610, label: 'Trao sách\ncho độc giả' },
+      { id: 'a10', type: 'act', x: 105, y: 610, label: 'Nhận sách' }, { id: 'enY', type: 'end', label: 'Kết thúc: mượn xong', x: 105, y: 675 }
+    ],
+    edges: [
+      { id: 'e1', f: 'st', t: 'a1' }, { id: 'e2', f: 'a1', t: 'a2' }, { id: 'e3', f: 'a2', t: 'a3' }, { id: 'e4', f: 'a3', t: 'd1' },
+      { id: 'e5', f: 'd1', t: 'd2', label: '[còn hạn]' }, { id: 'e6', f: 'd1', t: 'a8', label: '[hết hạn]' },
+      { id: 'e7', f: 'd2', t: 'b1', label: '[< 3 sách]', p0: [710, 353], p1: [710, 397] }, { id: 'e8', f: 'd2', t: 'a9', label: '[≥ 3 sách]' },
+      { id: 'e9', f: 'b1', t: 'a6', p0: [365, 403], p1: [365, 458] }, { id: 'e10', f: 'b1', t: 'a5', p0: [710, 403], p1: [710, 458] },
+      { id: 'e11', f: 'a6', t: 'b2', p0: [365, 502], p1: [365, 547] }, { id: 'e12', f: 'a5', t: 'b2', p0: [710, 502], p1: [710, 547] },
+      { id: 'e13', f: 'b2', t: 'a7', p0: [365, 553], p1: [365, 588] }, { id: 'e14', f: 'a7', t: 'a10' }, { id: 'e15', f: 'a10', t: 'enY' },
+      { id: 'e16', f: 'a8', t: 'enN' }, { id: 'e17', f: 'a9', t: 'enN' }
+    ],
+    scen: [
+      { n: 'Mượn thành công', steps: [['e1'], ['e2'], ['e3'], ['e4'], ['e5'], ['e7'], ['e9', 'e10'], ['e11', 'e12'], ['e13'], ['e14'], ['e15']] },
+      { n: 'Thẻ hết hạn', steps: [['e1'], ['e2'], ['e3'], ['e4'], ['e6'], ['e16']] },
+      { n: 'Đã mượn đủ 3 sách', steps: [['e1'], ['e2'], ['e3'], ['e4'], ['e5'], ['e8'], ['e17']] }
+    ]
+  }),
+  seq: NORM.seq({
+    parts: [
+      { id: 'tg', kind: 'actor', label: 'Thủ thư' }, { id: 'ui', label: ':MànHìnhMượn', stereo: 'boundary' }, { id: 'ct', label: ':QuảnLýMượn', stereo: 'control' },
+      { id: 'th', label: ':ThẻĐộcGiả', stereo: 'entity' }, { id: 'sa', label: ':Sách', stereo: 'entity' }, { id: 'pm', label: ':PhiếuMượn', created: 'm7' }
+    ],
+    msgs: [
+      { id: 'm1', f: 'tg', t: 'ui', label: 'quétThẻ(mãThẻ)' }, { id: 'm2', f: 'ui', t: 'ct', label: 'kiểmTraThẻ(mãThẻ)' },
+      { id: 'm3', f: 'ct', t: 'th', label: 'cònHạn()' }, { id: 'm3r', f: 'th', t: 'ct', label: 'true', kind: 'ret', ref: 'm3' }, { id: 'm2r', f: 'ct', t: 'ui', label: 'thẻHợpLệ', kind: 'ret', ref: 'm2' },
+      { id: 'm4', f: 'tg', t: 'ui', label: 'nhậpSách(mãSách)' }, { id: 'm5', f: 'ui', t: 'ct', label: 'mượnSách(mãSách)' },
+      { id: 'm6', f: 'ct', t: 'sa', label: 'đangRảnh()' }, { id: 'm6r', f: 'sa', t: 'ct', label: 'true', kind: 'ret', ref: 'm6' },
+      { id: 'm7', f: 'ct', t: 'pm', label: 'tạoPhiếu()', kind: 'create', guard: '[sách đang rảnh]' }, { id: 'm8', f: 'ct', t: 'sa', label: 'đặtTrạngThái(đãMượn)' },
+      { id: 'm5r', f: 'ct', t: 'ui', label: 'thànhCông', kind: 'ret', ref: 'm5' }, { id: 'm4r', f: 'ui', t: 'tg', label: 'inPhiếuMượn', kind: 'ret', ref: 'm4' }
+    ]
+  }),
+  col: NORM.col({
+    h: 440,
+    objs: [
+      { id: 'tg', actor: 1, x: 70, y: 240, label: 'Thủ thư' }, { id: 'ui', x: 290, y: 240, label: ':MànHìnhMượn' }, { id: 'ct', x: 520, y: 240, label: ':QuảnLýMượn' },
+      { id: 'th', x: 520, y: 80, label: ':ThẻĐộcGiả' }, { id: 'sa', x: 770, y: 170, label: ':Sách' }, { id: 'pm', x: 770, y: 340, label: ':PhiếuMượn' }
+    ],
+    links: [{ f: 'tg', t: 'ui' }, { f: 'ui', t: 'ct' }, { f: 'ct', t: 'th' }, { f: 'ct', t: 'sa' }, { f: 'ct', t: 'pm' }],
+    msgs: [
+      { id: 'c1', f: 'tg', t: 'ui', label: '1: quétThẻ()' }, { id: 'c2', f: 'ui', t: 'ct', label: '2: kiểmTraThẻ()' }, { id: 'c21', f: 'ct', t: 'th', label: '2.1: cònHạn()' },
+      { id: 'c3', f: 'ui', t: 'ct', label: '3: mượnSách()' }, { id: 'c31', f: 'ct', t: 'sa', label: '3.1: đangRảnh()' }, { id: 'c32', f: 'ct', t: 'pm', label: '3.2: tạoPhiếu()' }, { id: 'c33', f: 'ct', t: 'sa', label: '3.3: đặtTrạngThái()' }
+    ]
+  }),
+  cls: {
+    h: 720,
+    classes: [
+      { id: 'ng', name: 'Người', abs: 1, x: 340, y: 20, w: 220, attrs: ['- hoTen: String', '- ngaySinh: Date'], ops: ['+ xemThongTin()'] },
+      { id: 'tt', name: 'ThủThư', x: 40, y: 190, w: 200, attrs: ['- maNV: String'], ops: ['+ lapPhieuMuon()'] },
+      { id: 'dg', name: 'ĐộcGiả', x: 660, y: 190, w: 210, attrs: ['- maThe: String', '- hanThe: Date'], ops: ['+ conHan(): bool', '+ soSachDangMuon(): int'] },
+      { id: 'pm', name: 'PhiếuMượn', x: 330, y: 360, w: 220, attrs: ['- ngayMuon: Date', '- hanTra: Date'], ops: ['+ giaHan()'] },
+      { id: 'ct', name: 'ChiTiếtMượn', x: 330, y: 540, w: 220, attrs: ['- ngayTra: Date'], ops: ['+ traSach()'] },
+      { id: 'sa', name: 'Sách', x: 660, y: 540, w: 200, attrs: ['- maSach: String', '- tieuDe: String', '- tinhTrang: String'], ops: ['+ choMuon()'] },
+      { id: 'tv', name: 'ThưViện', x: 40, y: 540, w: 200, attrs: ['- ten: String'], ops: ['+ themSach()'] }
+    ],
+    rels: [
+      { f: 'tt', t: 'ng', kind: 'gen' }, { f: 'dg', t: 'ng', kind: 'gen' },
+      { f: 'dg', t: 'pm', label: 'mượn', m1: '1', m2: '0..*' }, { f: 'tt', t: 'pm', label: 'lập', m1: '1', m2: '0..*' },
+      { f: 'pm', t: 'ct', kind: 'comp', m2: '1..*' }, { f: 'ct', t: 'sa', m1: '0..*', m2: '1' },
+      { f: 'tv', t: 'sa', kind: 'agg', via: [[140, 680], [760, 680]], m1: '1', m2: '0..*' },
+      { f: 'dg', t: 'sa', kind: 'dep', via: [[800, 345], [800, 510]], label: '«use»' }
+    ]
+  },
+  obj: {
+    h: 570,
+    objs: [
+      { id: 'dg', x: 60, y: 60, w: 210, label: 'an:ĐộcGiả', attrs: ['maThe = "DG001"', 'hanThe = 31/12/2026'] },
+      { id: 'tt', x: 640, y: 60, w: 200, label: 'hoa:ThủThư', attrs: ['maNV = "NV007"'] },
+      { id: 'pm', x: 340, y: 190, w: 230, label: 'pm101:PhiếuMượn', attrs: ['ngayMuon = 17/10/2026', 'hanTra = 31/10/2026'] },
+      { id: 'c1', x: 130, y: 350, w: 210, label: 'ct1:ChiTiếtMượn', attrs: ['ngayTra = null'] },
+      { id: 'c2', x: 570, y: 350, w: 210, label: 'ct2:ChiTiếtMượn', attrs: ['ngayTra = null'] },
+      { id: 's1', x: 130, y: 470, w: 210, label: 'sa01:Sách', attrs: ['tieuDe = "Cấu trúc dữ liệu"', 'tinhTrang = "đang mượn"'] },
+      { id: 's2', x: 570, y: 470, w: 210, label: 'sa02:Sách', attrs: ['tieuDe = "Cơ sở dữ liệu"', 'tinhTrang = "đang mượn"'] }
+    ],
+    links: [
+      { f: 'dg', t: 'pm', label: 'mượn' }, { f: 'tt', t: 'pm', label: 'lập' }, { f: 'pm', t: 'c1' }, { f: 'pm', t: 'c2' }, { f: 'c1', t: 's1' }, { f: 'c2', t: 's2' }
+    ]
+  },
+  st: NORM.st({
+    h: 400, startNode: 'b0',
+    nodes: [
+      { id: 'b0', type: 'start', label: 'Sách mới nhập', x: 50, y: 140 },
+      { id: 'cs', type: 'state', x: 210, y: 140, w: 120, label: 'Có sẵn' },
+      { id: 'dm', type: 'state', x: 520, y: 140, w: 150, label: 'Đang mượn', body: ['entry / ghiHạnTrả()'] },
+      { id: 'qh', type: 'state', x: 520, y: 330, w: 120, label: 'Quá hạn' },
+      { id: 'dt', type: 'state', x: 365, y: 45, w: 130, label: 'Đã đặt giữ' },
+      { id: 'fn', type: 'end', label: 'Hết vòng đời (mất)', x: 740, y: 330 }
+    ],
+    edges: [
+      { id: 't0', f: 'b0', t: 'cs' },
+      { id: 't1', f: 'cs', t: 'dm', p0: [270, 128], p1: [445, 128], label: 'mượn()\n[thẻ hợp lệ]', lx: 358, ly: 104 },
+      { id: 't2', f: 'dm', t: 'cs', p0: [445, 156], p1: [270, 156], label: 'trả()', lx: 358, ly: 172 },
+      { id: 't3', f: 'dm', t: 'qh', p0: [520, 165], p1: [520, 308], label: 'quá hạn trả', lx: 532, ly: 238, la: 'start' },
+      { id: 't4', f: 'qh', t: 'cs', p0: [470, 320], p1: [240, 162], label: 'trả() /\ntínhPhạt()', lx: 340, ly: 275, la: 'end' },
+      { id: 't5', f: 'cs', t: 'dt', label: 'đặtTrước()', lx: 255, ly: 80, la: 'end' },
+      { id: 't6', f: 'dt', t: 'dm', label: 'đến lượt mượn', lx: 470, ly: 70, la: 'start' },
+      { id: 't7', f: 'qh', t: 'fn', label: 'báo mất', lx: 650, ly: 318 }
+    ],
+    scen: [
+      { n: 'Mượn – trả đúng hạn', steps: [['t0'], ['t1'], ['t2']] },
+      { n: 'Trả trễ bị phạt', steps: [['t0'], ['t1'], ['t3'], ['t4']] },
+      { n: 'Đặt giữ rồi mượn', steps: [['t0'], ['t5'], ['t6'], ['t2']] },
+      { n: 'Mất sách', steps: [['t0'], ['t1'], ['t3'], ['t7']] }
+    ]
+  }),
+  cmp: NORM.cmp({
+    h: 380,
+    comps: [
+      { id: 'ui', x: 130, y: 180, w: 170, label: 'GiaoDiệnThủThư' }, { id: 'mt', x: 450, y: 100, w: 170, label: 'QuảnLýMượnTrả' },
+      { id: 'sa', x: 450, y: 270, w: 170, label: 'QuảnLýSách' }, { id: 'dl', x: 770, y: 185, w: 170, label: 'TruyCậpDữLiệu' }
+    ],
+    links: [
+      { prov: 'mt', cons: 'ui', label: 'IMượnTrả' }, { prov: 'sa', cons: 'ui', label: 'ITraCứuSách' },
+      { prov: 'dl', cons: 'mt', label: 'IDữLiệu' }, { prov: 'dl', cons: 'sa', label: 'IDữLiệu' }
+    ],
+    deps: [{ f: 'mt', t: 'sa', label: '«use»' }]
+  }),
+  dep: NORM.dep({
+    h: 470,
+    nodes: [
+      { id: 'pc', x: 20, y: 50, w: 230, h: 160, stereo: 'device', label: 'PC Thủ thư', arts: [{ label: 'ThuThuUI.jar' }] },
+      { id: 'kiosk', x: 20, y: 280, w: 230, h: 160, stereo: 'device', label: 'Máy tra cứu', arts: [{ label: 'TraCuu.jar' }] },
+      { id: 'app', x: 340, y: 50, w: 230, h: 200, stereo: 'server', label: 'Máy chủ ứng dụng', arts: [{ label: 'MuonTra.jar' }, { label: 'QuanLySach.jar' }] },
+      { id: 'db', x: 660, y: 50, w: 220, h: 160, stereo: 'server', label: 'Máy chủ CSDL', arts: [{ label: 'thuvien.db' }] }
+    ],
+    conns: [
+      { f: 'pc', t: 'app', label: 'HTTPS' }, { f: 'kiosk', t: 'app', label: 'HTTPS', via: [[300, 350], [300, 220]] },
+      { f: 'app', t: 'db', label: 'JDBC / TCP' }
+    ]
+  }),
+  spec: {
+    uc: {
+      title: 'Đặc tả use case: Xử lý mượn sách',
+      rows: [
+        ['Tác nhân', 'Thủ thư (chính); Độc giả (gián tiếp, đưa thẻ và sách)'],
+        ['Mô tả', 'Thủ thư ghi nhận việc độc giả mượn sách tại quầy.'],
+        ['Tiền điều kiện', 'Thủ thư đã đăng nhập. Độc giả có thẻ thư viện.'],
+        ['Luồng chính', '1. Thủ thư quét thẻ độc giả.\n2. Hệ thống thực hiện use case Kiểm tra thẻ.\n3. Thủ thư nhập mã từng cuốn sách.\n4. Hệ thống tạo phiếu mượn, đặt hạn trả và đổi tình trạng sách.\n5. Hệ thống in phiếu mượn.'],
+        ['Luồng thay thế', '2a. Thẻ hết hạn hoặc độc giả đã mượn đủ 3 sách: thực hiện Từ chối mượn sách, kết thúc.\n3a. Sách đang được mượn: báo lỗi, thủ thư nhập cuốn khác.'],
+        ['Hậu điều kiện', 'Có một phiếu mượn mới. Sách mượn chuyển sang trạng thái “đang mượn”.']
+      ]
+    },
+    cls: { head: ['Lớp', 'Vai trò trong hệ thống'], rows: [
+      ['Người', 'Lớp cha trừu tượng giữ thông tin chung của thủ thư và độc giả.'],
+      ['ThủThư, ĐộcGiả', 'Hai loại người dùng, kế thừa từ Người.'],
+      ['PhiếuMượn, ChiTiếtMượn', 'Một phiếu gồm nhiều dòng chi tiết. Xóa phiếu thì xóa luôn chi tiết (composition).'],
+      ['Sách, ThưViện', 'Thư viện có nhiều sách, nhưng sách vẫn tồn tại độc lập khi đổi chủ quản (aggregation).']
+    ] },
+    st: { head: ['Sự kiện', 'Từ trạng thái', 'Điều kiện', 'Đến trạng thái', 'Hành động'], rows: [
+      ['mượn()', 'Có sẵn', 'thẻ hợp lệ', 'Đang mượn', 'ghiHạnTrả()'],
+      ['trả()', 'Đang mượn', '—', 'Có sẵn', '—'],
+      ['quá hạn trả', 'Đang mượn', 'hôm nay > hạn trả', 'Quá hạn', '—'],
+      ['trả()', 'Quá hạn', '—', 'Có sẵn', 'tínhPhạt()'],
+      ['đặtTrước()', 'Có sẵn', '—', 'Đã đặt giữ', 'ghiNgườiĐặt()']
+    ] }
+  }
+};
+const EX_ATM = {
+  id: 'atm', name: 'Máy ATM rút tiền', blurb: 'Khách hàng đưa thẻ, nhập PIN và rút tiền; ngân hàng xác thực và trừ tài khoản.',
+  uc: NORM.uc({
+    h: 430, boundary: { x: 150, y: 16, w: 600, h: 400, title: 'Hệ thống ATM' },
+    actors: [{ id: 'kh', x: 70, y: 190, label: 'Khách hàng' }, { id: 'nh', x: 830, y: 150, label: 'Ngân hàng' }, { id: 'nv', x: 830, y: 340, label: 'Nhân viên\nbảo trì' }],
+    ucs: [
+      { id: 'rut', x: 260, y: 90, label: 'Rút tiền' }, { id: 'sodu', x: 260, y: 200, label: 'Xem số dư' }, { id: 'chuyen', x: 260, y: 310, label: 'Chuyển khoản' },
+      { id: 'xt', x: 450, y: 200, label: 'Xác thực PIN' }, { id: 'khoa', x: 635, y: 150, label: 'Khóa thẻ' }, { id: 'nap', x: 635, y: 340, label: 'Nạp tiền vào máy' }
+    ],
+    edges: [
+      { f: 'kh', t: 'rut' }, { f: 'kh', t: 'sodu' }, { f: 'kh', t: 'chuyen' }, { f: 'nh', t: 'khoa' }, { f: 'nv', t: 'nap' },
+      { f: 'rut', t: 'xt', kind: 'include' }, { f: 'sodu', t: 'xt', kind: 'include', nolabel: 1 }, { f: 'chuyen', t: 'xt', kind: 'include', nolabel: 1 },
+      { f: 'khoa', t: 'xt', kind: 'extend' }
+    ]
+  }),
+  act: NORM.act({
+    h: 880,
+    lanes: [{ x: 10, w: 220, name: 'Khách hàng' }, { x: 230, w: 340, name: 'Máy ATM' }, { x: 570, w: 320, name: 'Ngân hàng' }],
+    nodes: [
+      { id: 'st', type: 'start', label: 'Bắt đầu giao dịch', x: 120, y: 76 }, { id: 'a1', type: 'act', x: 120, y: 140, label: 'Đưa thẻ' }, { id: 'a2', type: 'act', x: 400, y: 140, label: 'Đọc thẻ,\nyêu cầu PIN' },
+      { id: 'a3', type: 'act', x: 120, y: 215, label: 'Nhập PIN' }, { id: 'a4', type: 'act', x: 730, y: 215, label: 'Xác thực PIN' },
+      { id: 'd1', type: 'dec', label: 'PIN đúng?', x: 730, y: 295 }, { id: 'a5', type: 'act', x: 400, y: 295, label: 'Báo sai PIN,\ntrả thẻ' }, { id: 'enN1', type: 'end', label: 'Kết thúc: sai PIN', x: 120, y: 295 },
+      { id: 'a6', type: 'act', x: 120, y: 388, label: 'Nhập số tiền' }, { id: 'a7', type: 'act', x: 730, y: 430, label: 'Kiểm tra số dư' },
+      { id: 'd2', type: 'dec', label: 'Đủ số dư?', x: 730, y: 500 }, { id: 'a8', type: 'act', x: 400, y: 500, label: 'Báo không\nđủ tiền' }, { id: 'enN2', type: 'end', label: 'Kết thúc: không đủ tiền', x: 120, y: 500 },
+      { id: 'b1', type: 'bar', label: 'Fork: nhả tiền ‖ trừ tiền', x: 565, y: 570, w: 400, h: 6 }, { id: 'a9', type: 'act', x: 400, y: 640, label: 'Nhả tiền mặt' }, { id: 'a10', type: 'act', x: 730, y: 640, label: 'Trừ tiền\ntài khoản' },
+      { id: 'b2', type: 'bar', label: 'Join', x: 565, y: 710, w: 400, h: 6 }, { id: 'a11', type: 'act', x: 400, y: 770, label: 'In biên lai,\ntrả thẻ' }, { id: 'a12', type: 'act', x: 120, y: 770, label: 'Nhận tiền,\nbiên lai, thẻ' }, { id: 'enY', type: 'end', label: 'Kết thúc: rút xong', x: 120, y: 835 }
+    ],
+    edges: [
+      { id: 'e1', f: 'st', t: 'a1' }, { id: 'e2', f: 'a1', t: 'a2' }, { id: 'e3', f: 'a2', t: 'a3' }, { id: 'e4', f: 'a3', t: 'a4' }, { id: 'e5', f: 'a4', t: 'd1' },
+      { id: 'e6', f: 'd1', t: 'a5', label: '[PIN sai]' }, { id: 'e7', f: 'd1', t: 'a6', label: '[PIN đúng]', via: [[730, 340], [120, 340]] },
+      { id: 'e8', f: 'a5', t: 'enN1' }, { id: 'e9', f: 'a6', t: 'a7' }, { id: 'e10', f: 'a7', t: 'd2' },
+      { id: 'e11', f: 'd2', t: 'a8', label: '[thiếu tiền]' }, { id: 'e12', f: 'd2', t: 'b1', label: '[đủ tiền]', p0: [730, 523], p1: [730, 567] },
+      { id: 'e13', f: 'b1', t: 'a9', p0: [400, 573], p1: [400, 618] }, { id: 'e14', f: 'b1', t: 'a10', p0: [730, 573], p1: [730, 618] },
+      { id: 'e15', f: 'a9', t: 'b2', p0: [400, 662], p1: [400, 707] }, { id: 'e16', f: 'a10', t: 'b2', p0: [730, 662], p1: [730, 707] },
+      { id: 'e17', f: 'b2', t: 'a11', p0: [400, 713], p1: [400, 748] }, { id: 'e18', f: 'a11', t: 'a12' }, { id: 'e19', f: 'a12', t: 'enY' }, { id: 'e20', f: 'a8', t: 'enN2' }
+    ],
+    scen: [
+      { n: 'Rút tiền thành công', steps: [['e1'], ['e2'], ['e3'], ['e4'], ['e5'], ['e7'], ['e9'], ['e10'], ['e12'], ['e13', 'e14'], ['e15', 'e16'], ['e17'], ['e18'], ['e19']] },
+      { n: 'Nhập sai PIN', steps: [['e1'], ['e2'], ['e3'], ['e4'], ['e5'], ['e6'], ['e8']] },
+      { n: 'Tài khoản không đủ tiền', steps: [['e1'], ['e2'], ['e3'], ['e4'], ['e5'], ['e7'], ['e9'], ['e10'], ['e11'], ['e20']] }
+    ]
+  }),
+  seq: NORM.seq({
+    parts: [
+      { id: 'kh', kind: 'actor', label: 'Khách hàng' }, { id: 'ui', label: ':MànHìnhATM', stereo: 'boundary' }, { id: 'ct', label: ':ĐiềuKhiểnGiaoDịch', stereo: 'control' },
+      { id: 'tk', label: ':TàiKhoản', stereo: 'entity' }, { id: 'gd', label: ':GiaoDịch', created: 'm7' }
+    ],
+    msgs: [
+      { id: 'm1', f: 'kh', t: 'ui', label: 'nhậpPIN(pin)' }, { id: 'm2', f: 'ui', t: 'ct', label: 'xácThựcPIN(pin)' },
+      { id: 'm3', f: 'ct', t: 'tk', label: 'kiểmTraPIN(pin)' }, { id: 'm3r', f: 'tk', t: 'ct', label: 'hợpLệ', kind: 'ret', ref: 'm3' }, { id: 'm2r', f: 'ct', t: 'ui', label: 'chophépGiaoDịch', kind: 'ret', ref: 'm2' },
+      { id: 'm4', f: 'kh', t: 'ui', label: 'nhậpSốTiền(n)' }, { id: 'm5', f: 'ui', t: 'ct', label: 'rútTiền(n)' },
+      { id: 'm6', f: 'ct', t: 'tk', label: 'đủSốDư(n)' }, { id: 'm6r', f: 'tk', t: 'ct', label: 'true', kind: 'ret', ref: 'm6' },
+      { id: 'm7', f: 'ct', t: 'gd', label: 'tạoGiaoDịch(n)', kind: 'create', guard: '[đủ số dư]' },
+      { id: 'm8', f: 'ct', t: 'tk', label: 'trừTiền(n)' }, { id: 'm9', f: 'ct', t: 'ct', label: 'điềuKhiểnNhảTiền()', kind: 'self' },
+      { id: 'm5r', f: 'ct', t: 'ui', label: 'xongGiaoDịch', kind: 'ret', ref: 'm5' }, { id: 'm4r', f: 'ui', t: 'kh', label: 'tiền + biênLai', kind: 'ret', ref: 'm4' }
+    ]
+  }),
+  col: NORM.col({
+    h: 440,
+    objs: [
+      { id: 'kh', actor: 1, x: 70, y: 240, label: 'Khách hàng' }, { id: 'ui', x: 280, y: 240, label: ':MànHìnhATM' }, { id: 'ct', x: 510, y: 240, label: ':ĐiềuKhiển' },
+      { id: 'tk', x: 770, y: 110, label: ':TàiKhoản' }, { id: 'gd', x: 770, y: 370, label: ':GiaoDịch' }
+    ],
+    links: [{ f: 'kh', t: 'ui' }, { f: 'ui', t: 'ct' }, { f: 'ct', t: 'tk' }, { f: 'ct', t: 'gd' }],
+    msgs: [
+      { id: 'c1', f: 'kh', t: 'ui', label: '1: nhậpSốTiền()' }, { id: 'c2', f: 'ui', t: 'ct', label: '2: rútTiền()' },
+      { id: 'c21', f: 'ct', t: 'tk', label: '2.1: đủSốDư()' }, { id: 'c22', f: 'ct', t: 'gd', label: '2.2: tạoGiaoDịch()' }, { id: 'c23', f: 'ct', t: 'tk', label: '2.3: trừTiền()' }
+    ]
+  }),
+  cls: {
+    h: 600,
+    classes: [
+      { id: 'kh', name: 'KháchHàng', x: 40, y: 20, w: 200, attrs: ['- hoTen: String', '- soCCCD: String'], ops: ['+ xemSoDu()'] },
+      { id: 'the', name: 'ThẻATM', x: 360, y: 20, w: 220, attrs: ['- soThe: String', '- pinHash: String', '- hanDung: Date'], ops: ['+ kiemTraPIN()'] },
+      { id: 'nh', name: 'NgânHàng', x: 660, y: 20, w: 200, attrs: ['- tenNH: String'], ops: ['+ xacThuc()'] },
+      { id: 'tk', name: 'TàiKhoản', abs: 1, x: 300, y: 250, w: 240, attrs: ['# soTK: String', '# soDu: long'], ops: ['+ rutTien(n)', '+ guiTien(n)'] },
+      { id: 'gd', name: 'GiaoDịch', x: 640, y: 250, w: 220, attrs: ['- maGD: String', '- soTien: long', '- thoiGian: Date'], ops: ['+ inBienLai()'] },
+      { id: 'tt', name: 'TKThanhToán', x: 60, y: 470, w: 230, attrs: ['- hanMucThau: long'], ops: ['+ rutTien(n)'] },
+      { id: 'tiet', name: 'TKTiếtKiệm', x: 340, y: 470, w: 230, attrs: ['- laiSuat: double'], ops: ['+ tinhLai()'] }
+    ],
+    rels: [
+      { f: 'kh', t: 'the', label: 'sở hữu', m1: '1', m2: '0..*' }, { f: 'the', t: 'tk', label: 'truy cập', m1: '0..*', m2: '1' },
+      { f: 'nh', t: 'tk', kind: 'agg', m1: '1', m2: '0..*' }, { f: 'tk', t: 'gd', kind: 'comp', m2: '0..*' },
+      { f: 'tt', t: 'tk', kind: 'gen' }, { f: 'tiet', t: 'tk', kind: 'gen' }, { f: 'the', t: 'nh', kind: 'dep', label: '«xác thực»' }
+    ]
+  },
+  obj: {
+    h: 400,
+    objs: [
+      { id: 'kh', x: 60, y: 60, w: 200, label: 'minh:KháchHàng', attrs: ['hoTen = "Lê Minh"'] },
+      { id: 'the', x: 350, y: 60, w: 230, label: 't1:ThẻATM', attrs: ['soThe = "9704…01"', 'hanDung = 12/2029'] },
+      { id: 'nh', x: 660, y: 60, w: 200, label: 'b:NgânHàng', attrs: ['tenNH = "SGU Bank"'] },
+      { id: 'tk', x: 350, y: 230, w: 230, label: 'tk01:TKThanhToán', attrs: ['soDu = 5.000.000', 'hanMucThau = 0'] },
+      { id: 'gd', x: 660, y: 240, w: 210, label: 'gd1:GiaoDịch', attrs: ['soTien = 2.000.000', 'thoiGian = 17/10 09:30'] }
+    ],
+    links: [{ f: 'kh', t: 'the', label: 'sở hữu' }, { f: 'the', t: 'tk', label: 'truy cập' }, { f: 'nh', t: 'tk', label: 'quản lý' }, { f: 'tk', t: 'gd', label: 'phát sinh' }]
+  },
+  st: NORM.st({
+    h: 430, startNode: 'b0',
+    nodes: [
+      { id: 'b0', type: 'start', label: 'Thẻ mới phát hành', x: 50, y: 210 },
+      { id: 'in', type: 'state', x: 180, y: 210, w: 130, label: 'Chưa kích hoạt' },
+      { id: 'hd', type: 'super', x: 520, y: 210, w: 400, h: 170, label: 'Đang hoạt động' },
+      { id: 'sn', type: 'state', x: 410, y: 215, w: 110, label: 'Sẵn sàng' },
+      { id: 'gdn', type: 'state', x: 630, y: 215, w: 130, label: 'Đang giao dịch' },
+      { id: 'lk', type: 'state', x: 520, y: 380, w: 200, label: 'Tạm khóa' },
+      { id: 'fn', type: 'end', label: 'Thẻ bị hủy', x: 800, y: 210 }
+    ],
+    edges: [
+      { id: 't0', f: 'b0', t: 'in' },
+      { id: 't1', f: 'in', t: 'sn', label: 'kíchHoạt()', lx: 285, ly: 197 },
+      { id: 't2', f: 'sn', t: 'gdn', p0: [465, 203], p1: [565, 203], label: 'PIN đúng', lx: 515, ly: 190 },
+      { id: 't3', f: 'gdn', t: 'sn', p0: [565, 227], p1: [465, 227], label: 'trả thẻ', lx: 515, ly: 243 },
+      { id: 't4', f: 'hd', t: 'lk', p0: [450, 295], p1: [450, 358], label: 'sai PIN 3 lần', lx: 440, ly: 328, la: 'end' },
+      { id: 't5', f: 'lk', t: 'hd', p0: [590, 358], p1: [590, 295], label: 'mở khóa', lx: 600, ly: 328, la: 'start' },
+      { id: 't6', f: 'hd', t: 'fn', p0: [720, 210], p1: [787, 210], label: 'hủy thẻ', lx: 754, ly: 194 }
+    ],
+    scen: [
+      { n: 'Dùng thẻ bình thường', steps: [['t0'], ['t1'], ['t2'], ['t3']] },
+      { n: 'Nhập sai PIN 3 lần', steps: [['t0'], ['t1'], ['t4'], ['t5']] },
+      { n: 'Hủy thẻ', steps: [['t0'], ['t1'], ['t6']] }
+    ]
+  }),
+  cmp: NORM.cmp({
+    h: 440,
+    comps: [
+      { id: 'ui', x: 130, y: 190, w: 170, label: 'GiaoDiệnATM' }, { id: 'hw', x: 130, y: 360, w: 170, label: 'ĐiềuKhiểnThiếtBị' },
+      { id: 'gd', x: 440, y: 190, w: 170, label: 'XửLýGiaoDịch' }, { id: 'ngh', x: 760, y: 190, w: 170, label: 'CổngNgânHàng' }
+    ],
+    links: [{ prov: 'gd', cons: 'ui', label: 'IGiaoDịch' }, { prov: 'ngh', cons: 'gd', label: 'IThanhToán' }],
+    deps: [{ f: 'ui', t: 'hw', label: '«use»' }]
+  }),
+  dep: NORM.dep({
+    h: 480,
+    nodes: [
+      { id: 'atm', x: 20, y: 50, w: 230, h: 200, stereo: 'device', label: 'Máy ATM', arts: [{ label: 'ATM-UI.exe' }, { label: 'CardReader.drv' }] },
+      { id: 'sw', x: 340, y: 50, w: 230, h: 160, stereo: 'server', label: 'Switch thanh toán', arts: [{ label: 'TxnRouter.jar' }] },
+      { id: 'core', x: 660, y: 50, w: 220, h: 200, stereo: 'server', label: 'Core Banking', arts: [{ label: 'CoreApp.jar' }, { label: 'accounts.db' }] },
+      { id: 'mt', x: 340, y: 300, w: 230, h: 150, stereo: 'device', label: 'Máy bảo trì', arts: [{ label: 'Maintenance.app' }] }
+    ],
+    conns: [
+      { f: 'atm', t: 'sw', label: 'TCP/IP (TLS)' }, { f: 'sw', t: 'core', label: 'ISO 8583' },
+      { f: 'mt', t: 'atm', label: 'VPN', via: [[130, 375]] }
+    ]
+  }),
+  spec: {
+    uc: {
+      title: 'Đặc tả use case: Rút tiền',
+      rows: [
+        ['Tác nhân', 'Khách hàng (chính); Ngân hàng (hỗ trợ)'],
+        ['Mô tả', 'Khách hàng rút tiền mặt từ tài khoản qua máy ATM.'],
+        ['Tiền điều kiện', 'Thẻ còn hiệu lực. Máy còn đủ tiền mặt.'],
+        ['Luồng chính', '1. Khách hàng đưa thẻ.\n2. Hệ thống thực hiện use case Xác thực PIN.\n3. Khách hàng nhập số tiền cần rút.\n4. Hệ thống hỏi ngân hàng số dư và thấy đủ tiền.\n5. Hệ thống trừ tiền, nhả tiền mặt, in biên lai và trả thẻ.'],
+        ['Luồng thay thế', '2a. Nhập sai PIN: báo lỗi; sai 3 lần thì thực hiện Khóa thẻ.\n4a. Số dư không đủ: báo lỗi, kết thúc.'],
+        ['Hậu điều kiện', 'Số dư tài khoản giảm đúng số tiền rút. Có một giao dịch được ghi lại.']
+      ]
+    },
+    cls: { head: ['Lớp', 'Vai trò trong hệ thống'], rows: [
+      ['TàiKhoản (trừu tượng)', 'Giữ số dư và thao tác chung; hai loại tài khoản kế thừa và làm riêng phần của mình.'],
+      ['TKThanhToán, TKTiếtKiệm', 'Thanh toán cho phép thấu chi; tiết kiệm có lãi suất.'],
+      ['GiaoDịch', 'Thuộc về một tài khoản; xóa tài khoản thì xóa lịch sử giao dịch (composition).'],
+      ['NgânHàng', 'Quản lý nhiều tài khoản nhưng tài khoản vẫn có thể chuyển nhượng (aggregation).']
+    ] },
+    st: { head: ['Sự kiện', 'Từ trạng thái', 'Điều kiện', 'Đến trạng thái', 'Hành động'], rows: [
+      ['kíchHoạt()', 'Chưa kích hoạt', '—', 'Sẵn sàng', 'ghiNgàyKíchHoạt()'],
+      ['PIN đúng', 'Sẵn sàng', 'PIN khớp', 'Đang giao dịch', 'mởPhiên()'],
+      ['trả thẻ', 'Đang giao dịch', '—', 'Sẵn sàng', 'đóngPhiên()'],
+      ['sai PIN 3 lần', 'Đang hoạt động (cả nhóm)', 'lần sai = 3', 'Tạm khóa', 'giữThẻ()'],
+      ['hủy thẻ', 'Đang hoạt động (cả nhóm)', '—', 'trạng thái cuối', 'vôHiệuHóa()']
+    ] }
+  }
+};
+const EX_BUS = {
+  id: 'bus', name: 'Đặt vé xe khách', blurb: 'Hành khách tìm chuyến, chọn ghế, thanh toán online và nhận vé điện tử (cùng chủ đề đồ án nhóm).',
+  uc: NORM.uc({
+    h: 430, boundary: { x: 150, y: 16, w: 600, h: 400, title: 'Hệ thống Đặt vé xe khách' },
+    actors: [{ id: 'hk', x: 70, y: 190, label: 'Hành khách' }, { id: 'nv', x: 830, y: 80, label: 'Nhân viên\nnhà xe' }, { id: 'cg', x: 830, y: 300, label: 'Cổng\nthanh toán' }],
+    ucs: [
+      { id: 'tim', x: 260, y: 80, label: 'Tìm chuyến xe' }, { id: 'dat', x: 260, y: 190, label: 'Đặt vé' }, { id: 'huy', x: 260, y: 310, label: 'Hủy vé' },
+      { id: 'ghe', x: 450, y: 110, label: 'Chọn ghế' }, { id: 'mgg', x: 450, y: 290, label: 'Áp mã\ngiảm giá' },
+      { id: 'tt', x: 635, y: 200, label: 'Thanh toán\nonline' }, { id: 'qlc', x: 635, y: 80, label: 'Quản lý\nchuyến xe' }
+    ],
+    edges: [
+      { f: 'hk', t: 'tim' }, { f: 'hk', t: 'dat' }, { f: 'hk', t: 'huy' }, { f: 'nv', t: 'qlc' }, { f: 'cg', t: 'tt' },
+      { f: 'dat', t: 'ghe', kind: 'include' }, { f: 'dat', t: 'tt', kind: 'include', lp: [0, 10] }, { f: 'mgg', t: 'dat', kind: 'extend' }
+    ]
+  }),
+  act: NORM.act({
+    h: 790,
+    lanes: [{ x: 10, w: 190, name: 'Hành khách' }, { x: 200, w: 420, name: 'Hệ thống' }, { x: 620, w: 270, name: 'Cổng thanh toán' }],
+    nodes: [
+      { id: 'st', type: 'start', label: 'Bắt đầu đặt vé', x: 105, y: 76 }, { id: 'a1', type: 'act', x: 105, y: 140, label: 'Chọn chuyến,\nsố ghế' }, { id: 'a2', type: 'act', x: 410, y: 140, label: 'Kiểm tra\nghế trống' },
+      { id: 'd1', type: 'dec', label: 'Còn ghế?', x: 350, y: 225 }, { id: 'a3', type: 'act', x: 540, y: 225, label: 'Báo hết chỗ' }, { id: 'enN1', type: 'end', label: 'Kết thúc: hết chỗ', x: 540, y: 290 },
+      { id: 'a4', type: 'act', x: 350, y: 300, label: 'Giữ ghế\n10 phút' }, { id: 'a5', type: 'act', x: 105, y: 300, label: 'Chọn cách\nthanh toán' },
+      { id: 'a6', type: 'act', x: 755, y: 370, label: 'Xử lý\nthanh toán' }, { id: 'd2', type: 'dec', label: 'Thanh toán thành công?', x: 755, y: 450 },
+      { id: 'a7', type: 'act', x: 540, y: 450, label: 'Nhả ghế,\nbáo lỗi' }, { id: 'enN2', type: 'end', label: 'Kết thúc: thanh toán lỗi', x: 350, y: 450 },
+      { id: 'b1', type: 'bar', label: 'Fork: xuất vé ‖ gửi tin', x: 430, y: 530, w: 340, h: 6 }, { id: 'a8', type: 'act', x: 330, y: 600, label: 'Xuất vé\nđiện tử' }, { id: 'a9', type: 'act', x: 520, y: 600, label: 'Gửi SMS/Email\nxác nhận' },
+      { id: 'b2', type: 'bar', label: 'Join', x: 430, y: 670, w: 340, h: 6 }, { id: 'a10', type: 'act', x: 105, y: 670, label: 'Nhận vé' }, { id: 'enY', type: 'end', label: 'Kết thúc: đã có vé', x: 105, y: 735 }
+    ],
+    edges: [
+      { id: 'e1', f: 'st', t: 'a1' }, { id: 'e2', f: 'a1', t: 'a2' }, { id: 'e3', f: 'a2', t: 'd1' },
+      { id: 'e4', f: 'd1', t: 'a3', label: '[hết chỗ]' }, { id: 'e5', f: 'd1', t: 'a4', label: '[còn ghế]' }, { id: 'e6', f: 'a3', t: 'enN1' },
+      { id: 'e7', f: 'a4', t: 'a5' }, { id: 'e8', f: 'a5', t: 'a6', via: [[105, 370]] }, { id: 'e9', f: 'a6', t: 'd2' },
+      { id: 'e10', f: 'd2', t: 'a7', label: '[thất bại]' }, { id: 'e11', f: 'd2', t: 'b1', label: '[thành công]', p0: [755, 473], via: [[755, 530]], p1: [600, 530] },
+      { id: 'e12', f: 'b1', t: 'a8', p0: [330, 533], p1: [330, 578] }, { id: 'e13', f: 'b1', t: 'a9', p0: [520, 533], p1: [520, 578] },
+      { id: 'e14', f: 'a8', t: 'b2', p0: [330, 622], p1: [330, 667] }, { id: 'e15', f: 'a9', t: 'b2', p0: [520, 622], p1: [520, 667] },
+      { id: 'e16', f: 'b2', t: 'a10', p0: [262, 670], p1: [178, 670] }, { id: 'e17', f: 'a10', t: 'enY' }, { id: 'e18', f: 'a7', t: 'enN2' }
+    ],
+    scen: [
+      { n: 'Đặt vé thành công', steps: [['e1'], ['e2'], ['e3'], ['e5'], ['e7'], ['e8'], ['e9'], ['e11'], ['e12', 'e13'], ['e14', 'e15'], ['e16'], ['e17']] },
+      { n: 'Hết chỗ', steps: [['e1'], ['e2'], ['e3'], ['e4'], ['e6']] },
+      { n: 'Thanh toán thất bại', steps: [['e1'], ['e2'], ['e3'], ['e5'], ['e7'], ['e8'], ['e9'], ['e10'], ['e18']] }
+    ]
+  }),
+  seq: NORM.seq({
+    parts: [
+      { id: 'hk', kind: 'actor', label: 'Hành khách' }, { id: 'ui', label: ':MànHìnhĐặtVé', stereo: 'boundary' }, { id: 'ct', label: ':QuảnLýĐặtVé', stereo: 'control' },
+      { id: 'cx', label: ':ChuyếnXe', stereo: 'entity' }, { id: 'cg', label: ':CổngThanhToán', stereo: 'entity' }, { id: 've', label: ':Vé', created: 'm7' }
+    ],
+    msgs: [
+      { id: 'm1', f: 'hk', t: 'ui', label: 'chọnGhế(mãChuyến, ghế)' }, { id: 'm2', f: 'ui', t: 'ct', label: 'đặtVé(mãChuyến, ghế)' },
+      { id: 'm3', f: 'ct', t: 'cx', label: 'ghếTrống(ghế)' }, { id: 'm3r', f: 'cx', t: 'ct', label: 'true', kind: 'ret', ref: 'm3' },
+      { id: 'm4', f: 'ct', t: 'cx', label: 'giữGhế(ghế, 10 phút)' },
+      { id: 'm5', f: 'ct', t: 'cg', label: 'thanhToán(số tiền)' }, { id: 'm5r', f: 'cg', t: 'ct', label: 'thànhCông', kind: 'ret', ref: 'm5' },
+      { id: 'm7', f: 'ct', t: 've', label: 'tạoVé()', kind: 'create', guard: '[thanh toán thành công]' },
+      { id: 'm2r', f: 'ct', t: 'ui', label: 'mãVé', kind: 'ret', ref: 'm2' }, { id: 'm1r', f: 'ui', t: 'hk', label: 'hiểnThịVé', kind: 'ret', ref: 'm1' }
+    ]
+  }),
+  col: NORM.col({
+    h: 460,
+    objs: [
+      { id: 'hk', actor: 1, x: 70, y: 240, label: 'Hành khách' }, { id: 'ui', x: 280, y: 240, label: ':MànHìnhĐặtVé' }, { id: 'ct', x: 500, y: 240, label: ':QuảnLýĐặtVé' },
+      { id: 'cx', x: 760, y: 100, label: ':ChuyếnXe' }, { id: 'cg', x: 770, y: 240, label: ':CổngThanhToán' }, { id: 've', x: 760, y: 390, label: ':Vé' }
+    ],
+    links: [{ f: 'hk', t: 'ui' }, { f: 'ui', t: 'ct' }, { f: 'ct', t: 'cx' }, { f: 'ct', t: 'cg' }, { f: 'ct', t: 've' }],
+    msgs: [
+      { id: 'c1', f: 'hk', t: 'ui', label: '1: chọnGhế()' }, { id: 'c2', f: 'ui', t: 'ct', label: '2: đặtVé()' }, { id: 'c21', f: 'ct', t: 'cx', label: '2.1: ghếTrống()' },
+      { id: 'c22', f: 'ct', t: 'cx', label: '2.2: giữGhế()' }, { id: 'c23', f: 'ct', t: 'cg', label: '2.3: thanhToán()' }, { id: 'c24', f: 'ct', t: 've', label: '2.4: tạoVé()' }
+    ]
+  }),
+  cls: {
+    h: 780,
+    classes: [
+      { id: 'nd', name: 'NgườiDùng', abs: 1, x: 60, y: 20, w: 200, attrs: ['# hoTen: String', '# sdt: String'], ops: ['+ dangNhap()'] },
+      { id: 'tu', name: 'Tuyến', x: 640, y: 20, w: 220, attrs: ['- diemDi: String', '- diemDen: String'], ops: ['+ layChuyen()'] },
+      { id: 'kh', name: 'KháchHàng', x: 20, y: 200, w: 180, attrs: ['- maKH: String'], ops: ['+ datVe()'] },
+      { id: 'nv', name: 'NhânViên', x: 240, y: 200, w: 180, attrs: ['- maNV: String'], ops: ['+ banVeHo()'] },
+      { id: 'cx', name: 'ChuyếnXe', x: 640, y: 200, w: 220, attrs: ['- gioDi: DateTime', '- giaCoBan: long', '- soGhe: int'], ops: ['+ ghesTrong(): int'] },
+      { id: 've', name: 'Vé', x: 290, y: 420, w: 220, attrs: ['- maVe: String', '- soGhe: String', '- giaVe: long', '- trangThai: String'], ops: ['+ huy()'] },
+      { id: 'ghe', name: 'Ghế', x: 700, y: 420, w: 180, attrs: ['- soGhe: String', '- dangGiu: bool'], ops: ['+ giu()'] },
+      { id: 'tt', name: 'ThanhToán', x: 290, y: 640, w: 220, attrs: ['- soTien: long', '- phuongThuc: String'], ops: ['+ xacNhan()'] },
+      { id: 'cg', name: 'CổngThanhToán', stereo: 'interface', x: 640, y: 640, w: 220, attrs: [], ops: ['+ thanhToan(soTien)'] }
+    ],
+    rels: [
+      { f: 'kh', t: 'nd', kind: 'gen' }, { f: 'nv', t: 'nd', kind: 'gen' },
+      { f: 'kh', t: 've', label: 'đặt', m1: '1', m2: '0..*' }, { f: 'nv', t: 've', label: 'bán hộ', m1: '1', m2: '0..*' },
+      { f: 'tu', t: 'cx', kind: 'agg', m1: '1', m2: '1..*' }, { f: 've', t: 'cx', label: 'thuộc', m1: '0..*', m2: '1' },
+      { f: 'cx', t: 'ghe', kind: 'comp', m2: '1..*' }, { f: 've', t: 'ghe', label: 'giữ', m1: '0..1', m2: '1' },
+      { f: 've', t: 'tt', label: 'thanh toán', m1: '1', m2: '0..1' }, { f: 'tt', t: 'cg', kind: 'dep', label: '«use»' }
+    ]
+  },
+  obj: {
+    h: 500,
+    objs: [
+      { id: 'tu', x: 640, y: 40, w: 220, label: 'tuyen1:Tuyến', attrs: ['diemDi = "TP.HCM"', 'diemDen = "Đà Lạt"'] },
+      { id: 'kh', x: 40, y: 210, w: 210, label: 'an:KháchHàng', attrs: ['maKH = "KH205"', 'hoTen = "Trần An"'] },
+      { id: 've', x: 340, y: 210, w: 230, label: 'v1:Vé', attrs: ['soGhe = "A12"', 'giaVe = 250.000', 'trangThai = "đã thanh toán"'] },
+      { id: 'cx', x: 650, y: 215, w: 220, label: 'c1:ChuyếnXe', attrs: ['gioDi = 18/10 07:30', 'giaCoBan = 250.000'] },
+      { id: 'tt', x: 340, y: 390, w: 230, label: 'tt1:ThanhToán', attrs: ['soTien = 250.000', 'phuongThuc = "ví MoMo"'] }
+    ],
+    links: [{ f: 'kh', t: 've', label: 'đặt' }, { f: 've', t: 'cx', label: 'thuộc' }, { f: 'cx', t: 'tu', label: 'chạy tuyến' }, { f: 've', t: 'tt', label: 'thanh toán' }]
+  },
+  st: NORM.st({
+    h: 390, startNode: 'b0',
+    nodes: [
+      { id: 'b0', type: 'start', label: 'Vé mới tạo', x: 50, y: 140 },
+      { id: 'gi', type: 'state', x: 220, y: 140, w: 150, label: 'Đang giữ chỗ', body: ['entry / giữGhế()'] },
+      { id: 'tt', type: 'state', x: 480, y: 140, w: 140, label: 'Đã thanh toán' },
+      { id: 'xe', type: 'state', x: 740, y: 140, w: 120, label: 'Đã lên xe' },
+      { id: 'hh', type: 'state', x: 220, y: 320, w: 150, label: 'Hết hạn giữ chỗ' },
+      { id: 'hy', type: 'state', x: 480, y: 320, w: 120, label: 'Đã hủy' },
+      { id: 'f1', type: 'end', label: 'Vé hết hạn giữ', x: 60, y: 320 }, { id: 'f2', type: 'end', label: 'Vé kết thúc', x: 740, y: 320 }
+    ],
+    edges: [
+      { id: 't0', f: 'b0', t: 'gi' },
+      { id: 't1', f: 'gi', t: 'tt', p0: [295, 140], p1: [410, 140], label: 'thanh toán\nthành công', lx: 352, ly: 114 },
+      { id: 't2', f: 'tt', t: 'xe', p0: [550, 140], p1: [680, 140], label: 'soát vé', lx: 615, ly: 126 },
+      { id: 't3', f: 'gi', t: 'hh', p0: [220, 165], p1: [220, 298], label: 'quá 10 phút', lx: 232, ly: 232, la: 'start' },
+      { id: 't4', f: 'tt', t: 'hy', p0: [480, 162], p1: [480, 298], label: 'hủyVé()\n[còn > 4 giờ]', lx: 492, ly: 232, la: 'start' },
+      { id: 't5', f: 'xe', t: 'f2', p0: [740, 162], p1: [740, 307], label: 'kết thúc\nchuyến', lx: 752, ly: 235, la: 'start' },
+      { id: 't6', f: 'hh', t: 'f1', p0: [145, 320], p1: [72, 320], label: 'nhả ghế', lx: 108, ly: 306 },
+      { id: 't7', f: 'hy', t: 'f2', p0: [540, 320], p1: [727, 320], label: 'hoàn tiền', lx: 633, ly: 306 }
+    ],
+    scen: [
+      { n: 'Đi xe bình thường', steps: [['t0'], ['t1'], ['t2'], ['t5']] },
+      { n: 'Không thanh toán kịp', steps: [['t0'], ['t3'], ['t6']] },
+      { n: 'Hủy vé trước giờ đi', steps: [['t0'], ['t1'], ['t4'], ['t7']] }
+    ]
+  }),
+  cmp: NORM.cmp({
+    h: 440,
+    comps: [
+      { id: 'web', x: 130, y: 190, w: 170, label: 'WebĐặtVé' }, { id: 'dat', x: 440, y: 190, w: 170, label: 'ĐặtVéService' },
+      { id: 'cx', x: 760, y: 90, w: 170, label: 'QuảnLýChuyến' }, { id: 'pay', x: 760, y: 290, w: 170, label: 'ThanhToánService' },
+      { id: 'sms', x: 440, y: 360, w: 170, label: 'ThôngBáoSMS' }
+    ],
+    links: [{ prov: 'dat', cons: 'web', label: 'IĐặtVé' }, { prov: 'cx', cons: 'dat', label: 'IChuyếnXe' }, { prov: 'pay', cons: 'dat', label: 'IThanhToán' }],
+    deps: [{ f: 'dat', t: 'sms', label: '«notify»' }]
+  }),
+  dep: NORM.dep({
+    h: 470,
+    nodes: [
+      { id: 'cl', x: 20, y: 60, w: 230, h: 150, stereo: 'device', label: 'Điện thoại / Trình duyệt', arts: [{ label: 'Web / Mobile App' }] },
+      { id: 'web', x: 340, y: 60, w: 230, h: 200, stereo: 'server', label: 'Máy chủ web', arts: [{ label: 'DatVe.war' }, { label: 'QuanLyChuyen.war' }] },
+      { id: 'db', x: 660, y: 60, w: 220, h: 150, stereo: 'server', label: 'Máy chủ CSDL', arts: [{ label: 'datve.sql' }] },
+      { id: 'ext', x: 340, y: 310, w: 230, h: 130, stereo: 'external', label: 'Cổng thanh toán', arts: [{ label: 'Payment API' }] }
+    ],
+    conns: [{ f: 'cl', t: 'web', label: 'HTTPS' }, { f: 'web', t: 'db', label: 'JDBC' }, { f: 'web', t: 'ext', label: 'REST / TLS' }]
+  }),
+  spec: {
+    uc: {
+      title: 'Đặc tả use case: Đặt vé',
+      rows: [
+        ['Tác nhân', 'Hành khách (chính); Cổng thanh toán (hỗ trợ)'],
+        ['Mô tả', 'Hành khách chọn chuyến, chọn ghế và thanh toán để nhận vé điện tử.'],
+        ['Tiền điều kiện', 'Hành khách đã chọn được một chuyến còn ghế.'],
+        ['Luồng chính', '1. Hành khách chọn chuyến và bấm Đặt vé.\n2. Hệ thống thực hiện use case Chọn ghế.\n3. Hệ thống giữ ghế trong 10 phút.\n4. Hệ thống thực hiện use case Thanh toán online.\n5. Hệ thống tạo vé và gửi mã vé qua SMS/Email.'],
+        ['Luồng thay thế', '3a. Ghế vừa bị người khác đặt: quay lại bước chọn ghế.\n4a. Thanh toán thất bại hoặc quá 10 phút: nhả ghế, kết thúc.\nMở rộng: Áp mã giảm giá trước bước thanh toán.'],
+        ['Hậu điều kiện', 'Có một vé hợp lệ gắn với chuyến và ghế đã chọn.']
+      ]
+    },
+    cls: { head: ['Lớp', 'Vai trò trong hệ thống'], rows: [
+      ['NgườiDùng (trừu tượng)', 'Thông tin chung của khách hàng và nhân viên nhà xe.'],
+      ['Tuyến, ChuyếnXe', 'Một tuyến có nhiều chuyến; chuyến vẫn tồn tại nếu đổi tuyến quản lý (aggregation).'],
+      ['ChuyếnXe, Ghế', 'Ghế chỉ có nghĩa trong một chuyến, hủy chuyến thì ghế mất theo (composition).'],
+      ['CổngThanhToán (interface)', 'Giao diện bên ngoài; ThanhToán chỉ phụ thuộc vào nó, không biết cài đặt cụ thể.']
+    ] },
+    st: { head: ['Sự kiện', 'Từ trạng thái', 'Điều kiện', 'Đến trạng thái', 'Hành động'], rows: [
+      ['thanh toán thành công', 'Đang giữ chỗ', '—', 'Đã thanh toán', 'phátHànhVé()'],
+      ['quá 10 phút', 'Đang giữ chỗ', 'chưa thanh toán', 'Hết hạn giữ chỗ', 'nhảGhế()'],
+      ['hủyVé()', 'Đã thanh toán', 'còn hơn 4 giờ trước giờ đi', 'Đã hủy', 'hoànTiền()'],
+      ['soát vé', 'Đã thanh toán', 'đúng chuyến, đúng ghế', 'Đã lên xe', '—']
+    ] }
+  }
+};
+</script><script>
+(function () {
+  'use strict';
+  document.documentElement.setAttribute('data-vl-theme', 'light'); // mặc định sáng
+  const NS = 'http://www.w3.org/2000/svg';
+  const EXS = { lib: EX_LIB, atm: EX_ATM, bus: EX_BUS };
+  const SIMPL = {
+    seq: 'Lab chỉ vẽ kịch bản chính. Sơ đồ thật có thể thêm khung alt/opt/loop cho các nhánh rẽ và vòng lặp.',
+    act: 'Lab gom thông báo lỗi vào một hành động và dùng hai điểm kết thúc cho dễ đọc; bạn có thể tách nhỏ hơn.',
+    st: 'Lab chỉ vẽ các sự kiện chính, chưa vẽ đầy đủ hành vi do / exit và lịch sử trạng thái.'
+  };
+  const ST = { ex: 'lib', tab: 'uc', mode: 'draw', step: 1, scen: 0, idx: 0 };
+  let cur = null, svg = null, fx = null, ready = false, token = 0;
+  let vb = null, home = null;
+  const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const esc = ENG.esc;
+  const $ = s => document.querySelector(s);
+  const nl = s => esc(s).replace(/\n/g, '<br>');
+
+  /* ---------- khung trang ---------- */
+  document.body.insertAdjacentHTML('afterbegin',
+    '<div class="wrap">' +
+    '<header class="top"><h1>Lab sơ đồ <span>OOAD</span></h1>' +
+    '<p>Chín sơ đồ UML theo thứ tự làm việc thực tế. Mỗi sơ đồ có khái niệm, ký hiệu, cách vẽ từng bước và một ví dụ để bạn tự chạy.</p></header>' +
+    '<div class="exs" id="exs"></div>' +
+    '<nav class="tabs" id="tabs" role="tablist" aria-label="Các sơ đồ"></nav>' +
+    '<section id="topSec"></section><div id="labhost"></div><section id="symSec"></section><section id="botSec"></section></div>');
+
+  /* ---------- VLab ---------- */
+  const app = VLab.create({
+    title: 'Lab sơ đồ', why: ' ', stage: 'none', height: 520,
+    params: [{ id: 'buoc', label: 'Bước vẽ (drawing step)', min: 1, max: 6, step: 1, value: 6 }],
+    player: true,
+    code: Array.from({ length: 18 }, () => ' '),
+    onReset: function () { if (ready) resetExternal(); },
+    onParam: function (id, v) { if (ready && id === 'buoc') scrub(v); },
+    onStep: function () { return ready ? stepOnce() : false; },
+    onDraw: function (c, a) { document.documentElement.style.setProperty('--signal', a.color(3)); }
+  });
+  const root = app.stageEl.closest('.vl-app');
+  $('#labhost').appendChild(root);
+  const host = app.host;
+  const q = s => root.querySelector(s);
+  const titleEl = q('.vl-title'), whyEl = q('.vl-why'), speedIn = q('.vl-speed'), speedLb = q('.vl-spd');
+  const cards = Array.from(root.querySelectorAll('.vl-card'));
+  const cardBy = t => cards.find(c => c.querySelector('h3').textContent === t);
+  const pcard = cardBy('Tham số'), slider = pcard.querySelector('input'), sliderVal = pcard.querySelector('.vl-val');
+  const ccard = cardBy('Thuật toán'), codeDivs = Array.from(ccard.querySelectorAll('.vl-code > div'));
+  ccard.querySelector('h3').textContent = 'Các bước';
+  speedIn.value = 1; speedLb.textContent = '1';
+
+  /* thanh chế độ + kịch bản, đặt phía trên sân khấu */
+  const tb = document.createElement('div');
+  tb.className = 'tb';
+  tb.innerHTML = '<div class="seg f" id="modeSeg"><button data-m="draw">Vẽ từng bước</button><button data-m="flow">Chạy luồng</button></div><div class="chips" id="chips"></div>';
+  app.stageEl.insertBefore(tb, host);
+  const modeSeg = tb.querySelector('#modeSeg'), chips = tb.querySelector('#chips');
+  host.classList.add('svghost');
+
+  function speedMs() { return 1000 / parseFloat(speedIn.value || 1); }
+  function setSlider(v) { slider.value = v; sliderVal.textContent = String(v); }
+  function setLines(arr) {
+    codeDivs.forEach((d, i) => { d.style.display = i < arr.length ? '' : 'none'; d.textContent = arr[i] || ''; d.classList.remove('on'); });
+  }
+
+  /* ---------- chọn ví dụ + tab ---------- */
+  function buildPickers() {
+    $('#exs').innerHTML = Object.keys(EXS).map((k, i) =>
+      `<button class="ex" data-ex="${k}" aria-pressed="${k === ST.ex}"><i>Ví dụ ${i + 1}</i><b>${esc(EXS[k].name)}</b><span>${esc(EXS[k].blurb)}</span></button>`).join('');
+    $('#tabs').innerHTML = DIAGRAMS.map((d, i) =>
+      `<button class="tab ${d.tag}" role="tab" data-tab="${d.id}" aria-selected="${d.id === ST.tab}"><span class="n">${i + 1}</span><span class="nm">${d.name}</span><span class="dot" title="${d.tag === 's' ? 'Sơ đồ tĩnh' : 'Sơ đồ động'}"></span></button>`).join('');
+  }
+  $('#exs').addEventListener('click', e => { const b = e.target.closest('.ex'); if (!b) return; ST.ex = b.dataset.ex; sync(); render(); });
+  $('#tabs').addEventListener('click', e => { const b = e.target.closest('.tab'); if (!b) return; ST.tab = b.dataset.tab; ST.mode = 'draw'; ST.scen = 0; sync(); render(); });
+  function sync() {
+    document.querySelectorAll('.ex').forEach(b => b.setAttribute('aria-pressed', b.dataset.ex === ST.ex));
+    document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === ST.tab));
+  }
+
+  /* ---------- phần chữ quanh sân khấu ---------- */
+  function msgTable(data, kind) {
+    const lab = {}; (data.parts || data.objs).forEach(p => lab[p.id] = p.label.replace(/\n/g, ' '));
+    const rows = data.msgs.map((m, i) => {
+      const k = m.kind || 'sync';
+      const t = { ret: 'trả về', create: 'tạo đối tượng', self: 'gọi chính nó', sync: 'đồng bộ', async: 'bất đồng bộ', destroy: 'hủy' }[k];
+      return `<tr><td class="mono">${kind === 'col' ? esc(m.label.split(':')[0]) : i + 1}</td><td>${esc(lab[m.f])}</td><td>${esc(lab[m.t])}</td><td class="mono">${esc(kind === 'col' ? m.label.replace(/^[\d.]+:\s*/, '') : m.label)}</td><td>${kind === 'col' ? '' : t}</td></tr>`;
+    }).join('');
+    return `<table><thead><tr><th>#</th><th>Từ</th><th>Đến</th><th>Thông điệp</th><th>Loại</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+  function renderText() {
+    const d = cur.d;
+    const idx = DIAGRAMS.indexOf(d) + 1;
+    const sym = d.symbols.map(s => `<div class="sym"><div class="g">${s.g}</div><div><b>${esc(s.n)}</b><p>${esc(s.d)}</p></div></div>`).join('');
+    $('#topSec').innerHTML =
+      `<div class="card"><div class="head"><h2 class="big">${idx}. ${d.name}</h2><span class="chip ${d.tag}">${d.tag === 's' ? 'Sơ đồ tĩnh' : 'Sơ đồ động'}</span><span class="src">${esc(d.src)}</span></div>` +
+      `<p class="lead">${esc(d.lead)}</p>` +
+      `<div class="cols"><div class="mini"><h3>${d.tag === 's' ? 'Tĩnh nghĩa là' : 'Động nghĩa là'}</h3><p>${d.tag === 's' ? 'Mô tả cấu trúc tại một thời điểm, không có trục thời gian.' : 'Mô tả hành vi diễn ra theo thời gian, có trước có sau.'}</p></div>` +
+      `<div class="mini"><h3>Dùng lúc nào</h3><p>${esc(d.when)}</p></div><div class="mini"><h3>Dễ nhầm</h3><p>${esc(d.pitfall)}</p></div></div></div>`;
+    $('#symSec').innerHTML = `<div class="card"><h2>Ký hiệu <small>định nghĩa và cách vẽ</small></h2><div class="syms">${sym}</div></div>`;
+    const sp = cur.ex.spec; let bot = '';
+    if (ST.tab === 'uc') bot = `<h2>${esc(sp.uc.title)}</h2><div class="tbl-wrap"><table><tbody>${sp.uc.rows.map(r => `<tr><td class="k">${esc(r[0])}</td><td>${nl(r[1])}</td></tr>`).join('')}</tbody></table></div>`;
+    else if (ST.tab === 'cls' || ST.tab === 'st') {
+      const t = sp[ST.tab];
+      bot = `<h2>${ST.tab === 'cls' ? 'Danh sách lớp chính' : 'Bảng chuyển trạng thái'}</h2><div class="tbl-wrap"><table><thead><tr>${t.head.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${t.rows.map(r => `<tr>${r.map((c, i) => `<td${i === 0 ? ' class="k"' : ''}>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    } else if (ST.tab === 'seq' || ST.tab === 'col') bot = `<h2>Danh sách thông điệp</h2><div class="tbl-wrap">${msgTable(cur.data, ST.tab)}</div>`;
+    $('#botSec').innerHTML = bot ? `<div class="card">${bot}</div>` : '';
+  }
+
+  /* ---------- vẽ sơ đồ ---------- */
+  function render() {
+    stopAll();
+    const d = DIAGRAMS.find(x => x.id === ST.tab), ex = EXS[ST.ex], data = ex[ST.tab];
+    const r = ENG.R[ST.tab](data);
+    let edges = r.edges, scen = r.scen;
+    if (ST.tab === 'act') { edges = {}; data.edges.forEach(e => edges[e.id] = { from: e.f, to: e.t }); scen = data.scen; }
+    cur = { d, ex, data, r, edges, scen, N: d.steps.length, dyn: d.tag === 'd' && !!scen };
+    host.innerHTML = `<svg xmlns="${NS}" viewBox="0 0 ${r.w} ${r.h}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Sơ đồ ${d.name} của ví dụ ${esc(ex.name)}">${r.svg}<g class="fx"></g></svg>`;
+    svg = host.querySelector('svg'); fx = svg.querySelector('.fx');
+    home = { x: 0, y: 0, w: r.w, h: r.h }; vb = Object.assign({}, home);
+    fitHost();
+    titleEl.textContent = `${d.name} · ${ex.name}`;
+    whyEl.innerHTML = `<p><b>Vì sao cần sơ đồ này?</b> ${esc(d.why)}</p>` + (SIMPL[ST.tab] ? `<p class="vl-hint">Đơn giản hóa so với thực tế: ${esc(SIMPL[ST.tab])}</p>` : '');
+    slider.min = 1; slider.max = cur.N;
+    modeSeg.style.display = tb.style.display = cur.dyn ? '' : 'none';
+    ST.scen = 0; ST.idx = 0; ST.step = cur.N;
+    renderText();
+    setMode(cur.dyn ? ST.mode : 'draw', true);
+    ready = true;
+  }
+  function fitHost() {
+    if (!svg) return;
+    const w = host.clientWidth || 700;
+    host.style.height = Math.round(Math.min(860, Math.max(300, w * cur.r.h / cur.r.w))) + 'px';
+  }
+  window.addEventListener('resize', fitHost);
+
+  function stepText(n) { const s = cur.d.steps[n - 1]; return `<b>Bước ${n}/${cur.N} · ${esc(s.t)}</b><br>${esc(s.d)}`; }
+  function summary() {
+    const nd = svg.querySelectorAll('.nd').length, ed = svg.querySelectorAll('.ed').length;
+    return `<b>Sơ đồ ${cur.d.name} đã vẽ xong</b> trong ${cur.N} bước: ${nd} phần tử chính và ${ed} đường nối hoặc thông điệp.`;
+  }
+  function applyStep(n) {
+    ST.step = n;
+    const part = n < cur.N;
+    svg.querySelectorAll('.el').forEach(el => {
+      const s = +el.dataset.s;
+      el.classList.toggle('hid', part && s > n);
+      el.classList.toggle('new', part && s === n);
+    });
+  }
+
+  /* ---------- chế độ ---------- */
+  function drawLines() { return cur.d.steps.map((s, i) => `${i + 1}. ${s.t}`); }
+  function nodeLabel(id) { const el = svg.querySelector(`[data-node="${id}"]`); return el ? (el.dataset.l || id) : id; }
+  function edgeText(eid) { const g = svg.querySelector(`[data-eid="${eid}"]`), t = g && g.querySelector('text'); return t ? t.textContent.replace(/\s+/g, ' ').trim() : ''; }
+  function groupText(grp) {
+    return grp.map(eid => { const e = cur.edges[eid], t = edgeText(eid); return nodeLabel(e.from) + ' → ' + nodeLabel(e.to) + (t ? ' : ' + t : ''); }).join('  ‖  ');
+  }
+  function flowLines() { return cur.scen[ST.scen].steps.map(g => groupText(g)); }
+  function buildChips() {
+    chips.innerHTML = cur.scen.map((s, i) => `<button data-i="${i}" aria-pressed="${i === ST.scen}">${esc(s.n)}</button>`).join('');
+    chips.style.display = ST.mode === 'flow' ? '' : 'none';
+  }
+  function setMode(m, quiet) {
+    app.pause(); clearFlow(); ST.mode = m;
+    modeSeg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === m));
+    applyStep(cur.N); setSlider(cur.N);
+    if (cur.dyn) buildChips();
+    if (m === 'flow') {
+      setLines(flowLines());
+      const sc = cur.scen[ST.scen], f = cur.edges[sc.steps[0][0]];
+      app.status(`<b>Kịch bản: ${esc(sc.n)}</b> · ${sc.steps.length} bước. Tín hiệu xuất phát tại <b>${esc(nodeLabel(f.from))}</b>.`);
+    } else {
+      setLines(drawLines());
+      app.status(summary());
+    }
+  }
+  modeSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (b && ready) setMode(b.dataset.m); });
+  chips.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; ST.scen = +b.dataset.i; setMode('flow'); });
+
+  /* ---------- bộ chạy ---------- */
+  function scrub(v) {
+    app.pause();
+    if (ST.mode === 'flow') { clearFlow(); ST.mode = 'draw'; modeSeg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === 'draw')); chips.style.display = 'none'; setLines(drawLines()); }
+    applyStep(v); app.highlight(v - 1);
+    app.status(v >= cur.N ? summary() : stepText(v));
+  }
+  function resetExternal() {
+    clearFlow();
+    if (ST.mode === 'flow') {
+      applyStep(cur.N); setSlider(cur.N); setLines(flowLines());
+      const sc = cur.scen[ST.scen];
+      app.status(`<b>Đã đặt lại.</b> Kịch bản: ${esc(sc.n)}, ${sc.steps.length} bước.`);
+    } else {
+      applyStep(1); setSlider(1); app.highlight(0); app.status(stepText(1));
+    }
+  }
+  function stepOnce() {
+    if (ST.mode === 'flow') return stepFlow();
+    if (ST.step >= cur.N) ST.step = 0;
+    const n = ST.step + 1;
+    applyStep(n); setSlider(n); app.highlight(n - 1);
+    app.status(n >= cur.N ? summary() : stepText(n));
+    return n < cur.N;
+  }
+
+  /* ---------- luồng hoạt động (như tín hiệu chạy trong mạng nơ-ron) ---------- */
+  function clearFlow() {
+    token++;
+    if (!svg) return;
+    svg.classList.remove('playing');
+    svg.querySelectorAll('.seen,.cur,.on,.fire').forEach(e => e.classList.remove('seen', 'cur', 'on', 'fire'));
+    svg.querySelectorAll('.tr').forEach(t => { t.style.strokeDasharray = ''; t.style.strokeDashoffset = ''; });
+    fx.innerHTML = '';
+    ST.idx = 0;
+    app.highlight(-1);
+  }
+  function stopAll() { try { app.pause(); } catch (e) { } clearFlow(); }
+  function setCur(ids) {
+    svg.querySelectorAll('.cur').forEach(e => { e.classList.remove('cur'); e.classList.add('seen'); });
+    ids.forEach(id => svg.querySelectorAll(`[data-node="${id}"]`).forEach(e => { e.classList.remove('seen'); e.classList.add('cur'); }));
+  }
+  function fire(eid, dur, tk) {
+    const g = svg.querySelector(`[data-eid="${eid}"]`); if (!g) return;
+    g.classList.add('on', 'fire');
+    const tr = g.querySelector('.tr'); if (!tr) return;
+    const len = tr.getTotalLength();
+    tr.style.strokeDasharray = len + ' ' + len; tr.style.strokeDashoffset = len;
+    if (!dur) { tr.style.strokeDashoffset = 0; g.classList.remove('fire'); return; }
+    const c = document.createElementNS(NS, 'circle');
+    c.setAttribute('r', 7); c.setAttribute('class', 'pulse'); fx.appendChild(c);
+    const t0 = performance.now();
+    (function frame(now) {
+      if (tk !== token) { c.remove(); return; }
+      const k = Math.min(1, (now - t0) / dur);
+      tr.style.strokeDashoffset = len * (1 - k);
+      const p = tr.getPointAtLength(len * k);
+      c.setAttribute('cx', p.x); c.setAttribute('cy', p.y);
+      if (k < 1) requestAnimationFrame(frame); else { c.remove(); g.classList.remove('fire'); }
+    })(t0);
+  }
+  function stepFlow() {
+    const sc = cur.scen[ST.scen], steps = sc.steps;
+    if (ST.idx >= steps.length) clearFlow();
+    if (ST.idx === 0) {
+      applyStep(cur.N);
+      svg.classList.add('playing');
+      setCur(Array.from(new Set(steps[0].map(e => cur.edges[e].from))));
+    }
+    const grp = steps[ST.idx]; ST.idx++;
+    const tk = ++token;
+    const dur = reduce ? 0 : Math.max(180, Math.min(650, speedMs() * 0.7));
+    grp.forEach(eid => fire(eid, dur, tk));
+    const arrive = () => { if (tk === token) setCur(Array.from(new Set(grp.map(e => cur.edges[e].to)))); };
+    dur ? setTimeout(arrive, dur) : arrive();
+    app.highlight(ST.idx - 1);
+    app.status(`<b>Bước ${ST.idx}/${steps.length} · ${esc(sc.n)}</b><br>${esc(groupText(grp))}`);
+    return ST.idx < steps.length;
+  }
+
+  /* ---------- zoom, kéo, pinch cho sân khấu SVG ---------- */
+  function setVB() { svg.setAttribute('viewBox', `${vb.x.toFixed(1)} ${vb.y.toFixed(1)} ${vb.w.toFixed(1)} ${vb.h.toFixed(1)}`); }
+  function zoomAt(fx_, fy_, k) {
+    const W = home.w, nw = Math.max(W / 6, Math.min(W * 1.4, vb.w / k)), nh = nw * home.h / home.w;
+    vb.x += fx_ * (vb.w - nw); vb.y += fy_ * (vb.h - nh); vb.w = nw; vb.h = nh; setVB();
+  }
+  host.addEventListener('wheel', e => {
+    if (!svg) return; e.preventDefault();
+    const r = host.getBoundingClientRect();
+    zoomAt((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height, Math.exp(-e.deltaY * 0.0015));
+  }, { passive: false });
+  const ptrs = new Map(); let lastD = 0;
+  host.addEventListener('pointerdown', e => { ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); host.setPointerCapture(e.pointerId); host.classList.add('dragging'); lastD = 0; });
+  host.addEventListener('pointermove', e => {
+    if (!svg || !ptrs.has(e.pointerId)) return;
+    const p = ptrs.get(e.pointerId), r = host.getBoundingClientRect();
+    if (ptrs.size === 2) {
+      ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      const a = Array.from(ptrs.values()), d = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
+      if (lastD) zoomAt(((a[0].x + a[1].x) / 2 - r.left) / r.width, ((a[0].y + a[1].y) / 2 - r.top) / r.height, d / lastD);
+      lastD = d; return;
+    }
+    vb.x -= (e.clientX - p.x) * vb.w / r.width; vb.y -= (e.clientY - p.y) * vb.h / r.height;
+    ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); setVB();
+  });
+  const endP = e => { ptrs.delete(e.pointerId); lastD = 0; if (!ptrs.size) host.classList.remove('dragging'); };
+  host.addEventListener('pointerup', endP); host.addEventListener('pointercancel', endP);
+  app.onHome = function () { if (svg) { vb = Object.assign({}, home); setVB(); } };
+
+  buildPickers();
+  render();
+  window.__lab = { ST, render, app, get cur() { return cur; }, setMode, ST_: ST };
+})();
+</script>
+
+</body></html>

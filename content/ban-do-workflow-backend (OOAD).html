@@ -1,0 +1,1189 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bản đồ workflow backend</title>
+</head>
+<body>
+<style>
+.navfix{position:fixed;top:50%;transform:translateY(-50%);z-index:50;width:44px;height:72px;border:1px solid var(--line);background:var(--panel);color:var(--fg);font-size:30px;line-height:1;cursor:pointer;opacity:.85;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.navfix:hover,.navfix:focus-visible{opacity:1;outline:2px solid var(--accent)}
+#navPrev{left:0;border-radius:0 10px 10px 0}#navNext{right:0;border-radius:10px 0 0 10px}
+@media (max-width:600px){.navfix{width:32px;height:56px;font-size:24px}}
+/* Bố cục: thanh tab ngang; mỗi tab là bảng điều khiển bên trái + kết quả bên phải + chú giải thuật ngữ bên dưới. */
+:root{
+  --bg:#ffffff; --panel:#f6f7f9; --fg:#14181d; --muted:#5d6670; --line:#d9dde3;
+  --accent:#2563eb; --accent-soft:#e8efff; --ok:#15803d; --ok-bg:#e7f6ec;
+  --warn:#9a5b00; --warn-bg:#fff3d6; --err:#b42318; --err-bg:#fdebe9;
+  --code-bg:#f1f3f6; --mono:ui-monospace,"Cascadia Code",Consolas,Menlo,monospace;
+}
+:root[data-theme="dark"]{
+  --bg:#13161a; --panel:#1b1f25; --fg:#e8ecf1; --muted:#9aa5b1; --line:#2b323b;
+  --accent:#6aa5ff; --accent-soft:#1f2c47; --ok:#5fd28a; --ok-bg:#16301f;
+  --warn:#f0b64d; --warn-bg:#3a2e12; --err:#ff8c80; --err-bg:#3d1c19; --code-bg:#12161b;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  padding-block:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));}
+.wrap{max-width:1180px;margin:0 auto}
+header{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+header h1{font-size:20px;margin:0;flex:1 1 260px;text-wrap:balance}
+header p{margin:0;color:var(--muted);font-size:13.5px;flex-basis:100%}
+.tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);margin-bottom:14px;padding-bottom:0}
+.tabs button{font:inherit;font-size:14px;white-space:nowrap;padding:9px 13px;border:1px solid transparent;border-bottom:none;
+  background:none;color:var(--muted);cursor:pointer;border-radius:8px 8px 0 0}
+.tabs button:hover{color:var(--fg)}
+.tabs button[aria-selected="true"]{color:var(--accent);background:var(--bg);border-color:var(--line);font-weight:650;
+  box-shadow:0 1px 0 var(--bg);margin-bottom:-1px}
+.tabs button:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.intro{margin:0 0 12px;color:var(--fg);max-width:75ch}
+.grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:14px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+.card{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:12px;min-width:0}
+.card h3{margin:0 0 10px;font-size:12.5px;font-weight:650;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.stack{display:flex;flex-direction:column;gap:12px;min-width:0}
+.row{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.row:last-child{margin-bottom:0}
+.row label,.lab{font-size:13px;display:flex;justify-content:space-between;gap:8px}
+.lab b{font-variant-numeric:tabular-nums;color:var(--accent)}
+input[type=text],input[type=number],input[type=password],select,textarea{font:inherit;font-size:13.5px;padding:6px 8px;border-radius:7px;
+  border:1px solid var(--line);background:var(--bg);color:var(--fg);width:100%;min-width:0}
+input[type=range]{width:100%;accent-color:var(--accent);margin:0}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;margin-bottom:8px}
+.chk input{margin-top:4px}
+.btns{display:flex;gap:6px;flex-wrap:wrap}
+.btn{font:inherit;font-size:13px;padding:6px 11px;border-radius:7px;cursor:pointer;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.danger{color:var(--err);border-color:var(--err)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.hint{font-size:12.5px;color:var(--muted);margin-top:6px}
+pre,.code{margin:0;font:12.5px/1.55 var(--mono);background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;
+  overflow:auto;white-space:pre-wrap;word-break:break-word;max-height:300px}
+.pill{display:inline-block;font-size:12px;font-weight:650;padding:1px 8px;border-radius:99px;border:1px solid currentColor;white-space:nowrap}
+.pill.ok{color:var(--ok);background:var(--ok-bg)} .pill.warn{color:var(--warn);background:var(--warn-bg)}
+.pill.err{color:var(--err);background:var(--err-bg)} .pill.info{color:var(--accent);background:var(--accent-soft)}
+table.t{border-collapse:collapse;width:100%;font-size:12.5px}
+table.t th,table.t td{border:1px solid var(--line);padding:3px 7px;text-align:left;vertical-align:top}
+table.t th{background:var(--code-bg);font-weight:650}
+.scroll{overflow-x:auto}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.mono{font-family:var(--mono)}
+.seg-h{color:#c2410c} .seg-p{color:#7e22ce} .seg-s{color:#0e7490}
+:root[data-theme="dark"] .seg-h{color:#ffa56b} :root[data-theme="dark"] .seg-p{color:#d3a4ff} :root[data-theme="dark"] .seg-s{color:#6fd6ea}
+.gloss{margin-top:14px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg)}
+.gloss summary{cursor:pointer;font-weight:650;font-size:13.5px}
+.gloss dl{margin:10px 0 0;display:grid;grid-template-columns:minmax(120px,max-content) 1fr;gap:6px 14px;font-size:13.5px}
+@media (max-width:560px){.gloss dl{grid-template-columns:1fr}}
+.gloss dt{font-weight:650;font-family:var(--mono);font-size:12.5px;color:var(--accent)}
+.gloss dd{margin:0}
+.sim{font-size:12.5px;color:var(--muted);margin-top:14px}
+.ent{display:grid;grid-template-columns:max-content 1fr;gap:3px 12px;font-family:var(--mono);font-size:12.5px}
+.ent span:nth-child(odd){color:var(--muted)}
+.svc{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--bg)}
+.bar{height:10px;border-radius:5px;background:var(--code-bg);border:1px solid var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+@media (prefers-reduced-motion:no-preference){.bar i{transition:width .25s}}
+
+.dcard{border:1px solid var(--line);border-radius:10px;background:var(--panel);overflow:hidden;margin-bottom:14px}
+.dwrap{overflow-x:auto;background:var(--bg)}
+.dcv{display:block}
+.status{padding:10px 12px;border-top:1px solid var(--line);background:var(--bg);font-size:14px;min-height:46px}
+.status b{color:var(--accent)}
+.hook{margin:0 0 12px;padding:8px 12px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;font-size:14px}
+.hook b{color:var(--accent)}
+.codeL{font:12.5px/1.6 var(--mono);margin:0}
+.codeL div{padding:1px 6px;border-radius:4px;white-space:pre-wrap;color:var(--muted)}
+.codeL div.on{background:var(--warn-bg);color:var(--warn);font-weight:650}
+.scn{display:flex;gap:6px;flex-wrap:wrap}
+.scn .btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+</style>
+<div class="wrap">
+  <header>
+    <h1>Bản đồ workflow backend: nhìn là nhớ</h1>
+    <button class="btn" id="themeBtn" type="button">Nền tối</button>
+    <p>Chín tab, mỗi tab một sơ đồ chạy được. Bấm nút bên dưới sơ đồ để xem dữ liệu đi qua từng bước. Phần có nhãn "mô phỏng" minh họa đúng logic code thật của dự án.</p>
+  </header>
+  <div class="tabs" role="tablist" id="tabs" aria-label="Chức năng"></div>
+  <div id="panels"></div>
+</div>
+<script>
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const pill = (kind, text) => '<span class="pill ' + kind + '">' + esc(text) + '</span>';
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const enc = new TextEncoder();
+const SLOW = 2;   // hệ số làm chậm mọi hoạt ảnh gói tin; chỉnh số này để nhanh/chậm hơn
+const REDUCE = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+const PAL = ['#2563eb', '#dc2626', '#059669', '#d97706', '#7c3aed', '#0891b2'];
+const LC = { ngoai: 5, pres: 0, app: 1, dom: 2, infra: 3, db: 4 };   // màu theo tầng
+
+/* ---- màu theo chủ đề (đọc từ biến CSS) ---- */
+const T = {};
+function readTheme() {
+  const cs = getComputedStyle(document.documentElement);
+  ['bg', 'panel', 'fg', 'muted', 'line', 'accent', 'ok', 'warn', 'err', 'code-bg', 'ok-bg', 'warn-bg', 'err-bg', 'accent-soft']
+    .forEach(k => { T[k] = cs.getPropertyValue('--' + k).trim() || '#888'; });
+}
+
+/* ---- hàm vẽ cơ bản (toạ độ thiết kế, tâm của hộp là x,y) ---- */
+function rr(c, x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  c.beginPath(); c.moveTo(x + r, y);
+  c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
+}
+function txt(c, s, x, y, o) {
+  o = o || {};
+  c.font = (o.bold ? 'bold ' : '') + (o.size || 14) + 'px system-ui,sans-serif';
+  c.fillStyle = o.color || T.fg; c.textAlign = o.align || 'center'; c.textBaseline = o.base || 'middle';
+  c.fillText(String(s), x, y);
+}
+function fit(c, s, w, size, bold) {            // cắt chữ cho vừa độ rộng
+  c.font = (bold ? 'bold ' : '') + size + 'px system-ui,sans-serif';
+  s = String(s);
+  if (c.measureText(s).width <= w) return s;
+  while (s.length > 1 && c.measureText(s + '…').width > w) s = s.slice(0, -1);
+  return s + '…';
+}
+function box(c, x, y, w, h, o) {
+  o = o || {};
+  c.save(); if (o.alpha != null) c.globalAlpha = o.alpha;
+  rr(c, x - w / 2, y - h / 2, w, h, o.r == null ? 10 : o.r);
+  c.fillStyle = o.fill || T.bg; c.fill();
+  if (o.tint) { const a = c.globalAlpha; c.globalAlpha = a * o.tint[1]; c.fillStyle = o.tint[0]; c.fill(); c.globalAlpha = a; }
+  if (o.dash) c.setLineDash(o.dash);
+  c.lineWidth = o.lw || 2; c.strokeStyle = o.stroke || T.line; c.stroke(); c.setLineDash([]);
+  if (o.title != null) txt(c, fit(c, o.title, w - 14, o.fs || 16, true), x, y - (o.sub ? h * 0.16 : 0), { size: o.fs || 16, bold: true, color: o.tc || T.fg });
+  if (o.sub) txt(c, fit(c, o.sub, w - 14, o.ss || 12.5), x, y + h * 0.24, { size: o.ss || 12.5, color: o.sc || T.muted });
+  c.restore();
+}
+function arrow(c, p, q, o) {
+  o = o || {};
+  const ang = Math.atan2(q[1] - p[1], q[0] - p[0]), hl = o.head === false ? 0 : 11;
+  c.save(); c.strokeStyle = o.color || T.muted; c.fillStyle = o.color || T.muted; c.lineWidth = o.lw || 2;
+  if (o.dash) c.setLineDash(o.dash);
+  c.beginPath(); c.moveTo(p[0], p[1]); c.lineTo(q[0] - Math.cos(ang) * hl * 0.6, q[1] - Math.sin(ang) * hl * 0.6); c.stroke(); c.setLineDash([]);
+  if (hl) { c.beginPath(); c.moveTo(q[0], q[1]); c.lineTo(q[0] - hl * Math.cos(ang - 0.4), q[1] - hl * Math.sin(ang - 0.4));
+    c.lineTo(q[0] - hl * Math.cos(ang + 0.4), q[1] - hl * Math.sin(ang + 0.4)); c.closePath(); c.fill(); }
+  c.restore();
+}
+function badge(c, s, x, y, color, filled) {   // nhãn nhỏ có viền, tâm tại x,y
+  c.save(); c.font = 'bold 12.5px system-ui,sans-serif';
+  const w = c.measureText(s).width + 16;
+  rr(c, x - w / 2, y - 11, w, 22, 11); c.fillStyle = filled ? color : T.bg; c.fill(); c.lineWidth = 1.6; c.strokeStyle = color; c.stroke();
+  txt(c, s, x, y, { size: 12.5, bold: true, color: filled ? '#fff' : color }); c.restore();
+}
+function cyl(c, x, y, w, h, o) {              // hình trụ = cơ sở dữ liệu
+  o = o || {}; const e = 10;
+  c.save(); c.lineWidth = o.lw || 2; c.strokeStyle = o.stroke || PAL[4]; c.fillStyle = o.fill || T.bg;
+  c.beginPath(); c.moveTo(x - w / 2, y - h / 2 + e); c.lineTo(x - w / 2, y + h / 2 - e);
+  c.ellipse(x, y + h / 2 - e, w / 2, e, 0, Math.PI, 0, true); c.lineTo(x + w / 2, y - h / 2 + e);
+  c.ellipse(x, y - h / 2 + e, w / 2, e, 0, 0, Math.PI * 2, true); c.fill(); c.stroke();
+  c.beginPath(); c.ellipse(x, y - h / 2 + e, w / 2, e, 0, 0, Math.PI); c.stroke(); c.restore();
+}
+function edgePts(a, b) {                      // điểm trên viền hai hộp
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const clip = (r, dx, dy) => {
+    const sx = dx ? (r.w / 2) / Math.abs(dx) : Infinity, sy = dy ? (r.h / 2) / Math.abs(dy) : Infinity, s = Math.min(sx, sy);
+    return [r.x + dx * s, r.y + dy * s];
+  };
+  return [clip(a, dx, dy), clip(b, -dx, -dy)];
+}
+function polyLen(p) { let L = 0; for (let i = 1; i < p.length; i++) L += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); return L; }
+function along(p, d) {
+  for (let i = 1; i < p.length; i++) {
+    const s = Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]);
+    if (d <= s || i === p.length - 1) { const f = s ? Math.min(1, d / s) : 1; return [p[i - 1][0] + (p[i][0] - p[i - 1][0]) * f, p[i - 1][1] + (p[i][1] - p[i - 1][1]) * f]; }
+    d -= s;
+  }
+  return p[p.length - 1];
+}
+
+/* ---- sân khấu canvas: toạ độ thiết kế cố định (w x h), tự co theo bề rộng ---- */
+const STAGES = [];
+class Stage {
+  constructor(host, w, h) {
+    this.w = w; this.h = h; this.pk = []; this.draw = function () {};
+    this.wrap = document.createElement('div'); this.wrap.className = 'dwrap';
+    this.cv = document.createElement('canvas'); this.cv.className = 'dcv'; this.cv.setAttribute('role', 'img');
+    this.wrap.appendChild(this.cv); host.appendChild(this.wrap);
+    this.ctx = this.cv.getContext('2d'); this.fit();
+    if (window.ResizeObserver) new ResizeObserver(() => this.fit()).observe(this.wrap);
+    STAGES.push(this);
+  }
+  fit() {
+    const cw = Math.max(this.wrap.clientWidth, 800), ch = cw * this.h / this.w, dpr = window.devicePixelRatio || 1;
+    this.cv.style.width = cw + 'px'; this.cv.style.height = ch + 'px';
+    this.cv.width = Math.round(cw * dpr); this.cv.height = Math.round(ch * dpr); this.k = cw * dpr / this.w;
+  }
+  /* gửi một "gói tin" chạy dọc đường pts; trả về Promise khi tới nơi */
+  packet(pts, o) {
+    o = o || {};
+    return new Promise(res => {
+      const len = polyLen(pts);
+      this.pk.push({ pts: pts, len: len, t0: performance.now(), dur: REDUCE ? 1 : SLOW * (o.dur || Math.max(380, len * 1.25)), color: o.color || PAL[1], label: o.label, res: res });
+    });
+  }
+  update(now) { this.pk = this.pk.filter(p => { if (now - p.t0 >= p.dur) { p.res(); return false; } return true; }); }
+  frame(now) {
+    if (!this.cv.offsetParent) return;
+    const c = this.ctx; c.setTransform(this.k, 0, 0, this.k, 0, 0); c.clearRect(0, 0, this.w, this.h);
+    this.draw(c, now);
+    this.pk.forEach(p => {
+      const f = Math.min(1, (now - p.t0) / p.dur), pos = along(p.pts, p.len * f);
+      c.save(); c.shadowColor = p.color; c.shadowBlur = 10; c.fillStyle = p.color; c.beginPath(); c.arc(pos[0], pos[1], 7, 0, Math.PI * 2); c.fill(); c.restore();
+      if (p.label) badge(c, p.label, pos[0], pos[1] - 20, p.color, true);
+    });
+  }
+}
+(function loop() {
+  const now = performance.now();
+  STAGES.forEach(s => { s.update(now); s.frame(now); });
+  requestAnimationFrame(loop);
+})();
+
+/* ---- khung giao diện chung của mỗi tab ---- */
+function shell(root, o) {
+  root.innerHTML =
+    '<p class="intro">' + o.intro + '</p>' +
+    (o.hook ? '<div class="hook"><b>Nhớ nhanh:</b> ' + o.hook + '</div>' : '') +
+    '<div class="dcard"><div class="dstage"></div><div class="status" aria-live="polite"></div></div>' +
+    '<div class="grid"><section class="card"><h3>Điều khiển</h3>' + o.controls + '</section>' +
+    '<section class="card stack"><h3 style="margin:0">Chi tiết</h3>' + (o.detail || '') + '</section></div>' +
+    (o.note ? '<p class="sim">' + o.note + '</p>' : '') +
+    '<details class="gloss" open><summary>Thuật ngữ trong tab này</summary><dl>' +
+    o.gloss.map(g => '<dt>' + esc(g[0]) + '</dt><dd>' + g[1] + '</dd>').join('') + '</dl></details>';
+  return { stage: new Stage($('.dstage', root), o.w || 1000, o.h || 460), status: html => { $('.status', root).innerHTML = html; } };
+}
+const hexOf = b => Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join('');
+/* =================== TAB 0: HÀNH TRÌNH MỘT REQUEST =================== */
+function tab0(root) {
+  const X = [230, 440, 650, 860], NW = 190, NH = 54;
+  const nodes = [
+    { id: 'client',  t: 'Client',            s: 'Postman / Swagger UI',   x: X[0], y: 50,  L: 'ngoai' },
+    { id: 'uvicorn', t: 'Uvicorn',           s: 'máy chủ ASGI :8000',     x: X[0], y: 150, L: 'pres' },
+    { id: 'router',  t: 'Router + Pydantic', s: 'FastAPI · schemas',      x: X[1], y: 150, L: 'pres' },
+    { id: 'deps',    t: 'Depends',           s: 'lắp AuthService, DB',    x: X[2], y: 150, L: 'pres' },
+    { id: 'errors',  t: 'Error handler',     s: 'AppError → mã HTTP',     x: X[3], y: 150, L: 'pres' },
+    { id: 'service', t: 'AuthService',       s: 'use case',               x: X[1], y: 250, L: 'app' },
+    { id: 'ports',   t: 'Ports',             s: 'Protocol = hợp đồng',    x: X[2], y: 250, L: 'app' },
+    { id: 'account', t: 'Account',           s: 'entity + quy tắc',       x: X[0], y: 350, L: 'dom' },
+    { id: 'repo',    t: 'Repository',        s: 'SQLAlchemy 2 ORM',       x: X[0], y: 450, L: 'infra' },
+    { id: 'argon',   t: 'Argon2Hasher',      s: 'argon2-cffi',            x: X[1], y: 450, L: 'infra' },
+    { id: 'jwt',     t: 'JwtService',        s: 'PyJWT · HS256',          x: X[2], y: 450, L: 'infra' },
+    { id: 'sms',     t: 'MockSmsSender',     s: 'ghi log, không gửi',     x: X[3], y: 450, L: 'infra' },
+    { id: 'pymysql', t: 'PyMySQL',           s: 'driver kết nối DB',      x: X[0], y: 545, L: 'infra' },
+    { id: 'alembic', t: 'Alembic',           s: 'migration tạo bảng',     x: X[3], y: 545, L: 'infra' },
+    { id: 'mysql',   t: 'MySQL 8',           s: 'DB ooad_busticket',      x: X[0], y: 650, L: 'db' }
+  ];
+  nodes.forEach(n => { n.w = NW; n.h = NH; n.st = 'cho'; });
+  const byId = {}; nodes.forEach(n => { byId[n.id] = n; });
+  const E = [['http', 'client', 'uvicorn', 'HTTP'], ['asgi', 'uvicorn', 'router', 'ASGI'], ['dep', 'router', 'deps', 'Depends'], ['call', 'router', 'service', 'gọi use case'],
+    ['build', 'deps', 'service', 'lắp'], ['port', 'service', 'ports', 'qua Port'], ['impl', 'ports', 'repo', 'cài đặt bởi'], ['sql', 'repo', 'pymysql', 'SQL'],
+    ['tcp', 'pymysql', 'mysql', 'TCP :3306'], ['rule', 'service', 'account', 'quy tắc'], ['hash', 'service', 'argon', 'băm / so'], ['token', 'service', 'jwt', 'ký / giải mã'],
+    ['sms', 'service', 'sms', 'gửi SMS'], ['err', 'service', 'errors', 'ném AppError'], ['mig', 'alembic', 'pymysql', 'migrate']]
+    .map(e => ({ id: e[0], a: byId[e[1]], b: byId[e[2]], label: e[3] }));
+  const eById = {}; E.forEach(e => { eById[e.id] = e; });
+  const BANDS = [['BÊN NGOÀI', 15, 85, 'ngoai'], ['PRESENTATION', 110, 190, 'pres'], ['APPLICATION', 210, 290, 'app'], ['DOMAIN', 310, 390, 'dom'], ['INFRASTRUCTURE', 410, 590, 'infra'], ['DATABASE', 610, 690, 'db']];
+
+  const F = (n, e, l, h, rev) => ({ n: n, e: e, l: l, h: h, rev: rev || [] });
+  const NAMES = ['Đăng nhập thành công', 'Sai mật khẩu', 'Bị khóa tạm', 'Đăng ký bằng OTP', 'Gọi /auth/me', 'Alembic tạo bảng'];
+  const back = (l, h) => F(['router', 'uvicorn', 'client'], ['asgi', 'http'], l, h, ['asgi', 'http']);
+  function loginHead(pass, locked) {
+    const f = [
+      F(['client'], [], 0, 'Client gửi <b>POST /auth/login</b> <code>{"phone":"0912345678","password":"' + pass + '"}</code>. Postman hay Swagger chỉ là công cụ gõ request HTTP.'),
+      F(['uvicorn'], ['http'], 0, '<b>Uvicorn</b> (máy chủ ASGI trong container, cổng 8000) đọc byte HTTP và giao cho FastAPI.'),
+      F(['router'], ['asgi'], 0, '<b>FastAPI</b> khớp /auth/login với hàm login(). <b>Pydantic</b> kiểm JSON: phone bắt đầu bằng 0, đủ 10–11 số. Sai thì trả 422 ngay.'),
+      F(['deps'], ['dep'], 0, '<b>Depends</b> mở Session SQLAlchemy và lắp AuthService cùng repository, Argon2, JWT, SMS mock. Đồ dùng được "tiêm" vào, router không tự tạo.'),
+      F(['service'], ['call', 'build'], 0, 'Router gọi <b>AuthService.login()</b>. Từ đây là tầng Application: chỉ có logic use case, không có HTTP hay SQL.'),
+      F(['ports', 'repo'], ['port', 'impl'], 1, 'Service gọi <b>get_by_phone()</b> qua <b>Port</b> (hợp đồng). Phần chạy thật là SqlAccountRepository ở tầng Infrastructure.'),
+      F(['pymysql', 'mysql'], ['sql', 'tcp'], 1, 'SQLAlchemy sinh <code>SELECT ... FROM accounts WHERE phone=...</code>, <b>PyMySQL</b> gửi qua mạng Docker tới <b>MySQL</b> và nhận một dòng.'),
+      F(['repo', 'account'], [], 1, 'Dòng DB đổi thành <b>Account</b> (dataclass thuần, tầng Domain): id=1, ' + (locked ? 'locked_until = bây giờ + 9 phút' : 'failed_login_count=0') + ', token_version=1.')
+    ];
+    f.push(locked
+      ? F(['service', 'account'], ['rule'], 3, 'Hỏi Account: <b>is_temporarily_locked() = True</b>. Dừng ngay, không so mật khẩu: đúng hay sai đều bị chặn.')
+      : F(['service', 'account'], ['rule'], 3, 'Hỏi Account: status = HOAT_DONG, <b>is_temporarily_locked() = False</b>. Luật khóa nằm ở entity nên test được mà không cần DB.'));
+    return f;
+  }
+  function build(k) {
+    if (k === 0) return loginHead('matkhau123', false).concat([
+      F(['service', 'argon'], ['hash'], 4, '<b>Argon2Hasher</b> băm "matkhau123" rồi so với password_hash trong DB. Khớp. DB không lưu mật khẩu gốc.'),
+      F(['account', 'repo', 'mysql'], ['sql', 'tcp'], 5, '<b>record_successful_login()</b> đưa số lần sai về 0, repository UPDATE và commit.'),
+      F(['service', 'jwt'], ['token'], 6, '<b>JwtService</b> (PyJWT) ký HS256 bằng JWT_SECRET: <code>{sub:"1", role, tv:1, exp:+60 phút}</code>.'),
+      back(6, 'Router đóng gói TokenResponse (Pydantic) → JSON → Uvicorn trả <b>HTTP 200</b> kèm access_token.')]);
+    if (k === 1) return loginHead('saimatkhau', false).concat([
+      F(['service', 'argon'], ['hash'], 4, 'Argon2.verify trả <b>False</b>.'),
+      F(['account', 'repo', 'mysql'], ['sql', 'tcp'], 4, '<b>record_failed_login()</b>: số lần sai 0 → 1. Đủ 5 lần thì khóa 15 phút. Repository UPDATE lại.'),
+      F(['service', 'errors'], ['err'], 4, 'Service ném <b>InvalidCredentials</b>, Error handler đổi thành <b>401</b> với câu chung chung, để người lạ không dò được số nào có tài khoản.'),
+      back(4, 'Client nhận <b>HTTP 401</b>. Sai liên tiếp 5 lần thì chuyển sang kịch bản "Bị khóa tạm".')]);
+    if (k === 2) return loginHead('matkhau123', true).concat([
+      F(['service', 'errors'], ['err'], 3, 'Service ném <b>LoginTemporarilyLocked</b>, Error handler đổi thành <b>423</b>.'),
+      back(3, 'Client nhận <b>HTTP 423</b>. Tự mở lại khi qua giờ locked_until.')]);
+    if (k === 3) return [
+      F(['client'], [], 7, 'Đăng ký có 2 request. Request 1: <b>POST /auth/register/otp</b> để xin mã OTP (UC19).'),
+      F(['uvicorn', 'router', 'deps'], ['http', 'asgi', 'dep'], 7, 'Uvicorn → Router → Pydantic → Depends lắp AuthService, giống lúc đăng nhập.'),
+      F(['service', 'ports', 'repo', 'mysql'], ['call', 'port', 'impl', 'sql', 'tcp'], 7, 'Kiểm tra số chưa có tài khoản (nếu có: 409). OTP trước chưa quá 60 giây: 429.'),
+      F(['service', 'argon'], ['hash'], 8, 'Sinh OTP 6 số bằng <b>secrets</b>, <b>Argon2 băm</b> trước khi lưu, hạn 120 giây.'),
+      F(['repo', 'mysql'], ['sql', 'tcp'], 8, 'INSERT vào <b>otp_codes</b>. Chỉ lưu mã băm.'),
+      F(['service', 'sms'], ['sms'], 8, '<b>MockSmsSender</b> chỉ ghi log, không gửi SMS thật.'),
+      back(8, 'Trả <b>200</b> kèm <code>mock_otp</code> (chỉ khi SMS_MOCK=true) để bạn test bằng Postman.'),
+      F(['client', 'uvicorn', 'router'], ['http', 'asgi'], 9, 'Request 2: <b>POST /auth/register</b> kèm full_name, phone, password, otp. Pydantic bắt mật khẩu < 8 ký tự, otp không đủ 6 số.'),
+      F(['service', 'ports', 'repo', 'mysql'], ['call', 'port', 'impl', 'sql', 'tcp'], 9, 'Lấy OTP mới nhất: chưa dùng, chưa hết hạn, wrong_count < 5.'),
+      F(['service', 'argon'], ['hash'], 9, 'Argon2.verify OTP → đúng, đánh dấu đã dùng. Sai: wrong_count + 1 và trả 400.'),
+      F(['service', 'argon', 'account'], ['hash', 'rule'], 10, 'Băm mật khẩu bằng Argon2, tạo <b>Account</b> mới: role KHACH_HANG, token_version 1.'),
+      F(['repo', 'mysql'], ['sql', 'tcp'], 10, 'INSERT INTO accounts. Cột phone UNIQUE là lưới an toàn cuối cùng.'),
+      back(10, '<b>HTTP 201</b>. Schema trả về không có trường password nên mật khẩu không thể lộ.')];
+    if (k === 4) return [
+      F(['client'], [], 11, 'Gọi <b>GET /auth/me</b> kèm <code>Authorization: Bearer eyJ...</code>.'),
+      F(['uvicorn', 'router', 'deps'], ['http', 'asgi', 'dep'], 11, 'HTTPBearer tách token, rồi gọi <b>AuthService.authenticate()</b>.'),
+      F(['service', 'jwt'], ['call', 'token'], 12, '<b>JwtService.decode</b> kiểm chữ ký và hạn. Sai hoặc hết hạn → 401.'),
+      F(['ports', 'repo', 'mysql'], ['port', 'impl', 'sql', 'tcp'], 12, 'Lấy Account id=1 từ DB để biết tài khoản còn tồn tại, chưa bị khóa.'),
+      F(['service', 'account'], ['rule'], 12, 'So <b>token_version</b> trong token với DB. Sau logout DB tăng lên nên token cũ bị 401.'),
+      back(12, '<b>HTTP 200</b> với thông tin tài khoản, không có password_hash.')];
+    return [
+      F(['alembic'], [], 13, 'Bạn chạy <code>docker compose exec backend alembic upgrade head</code>.'),
+      F(['alembic', 'pymysql', 'mysql'], ['mig', 'tcp'], 13, 'Alembic đọc .env, đọc alembic/versions/, hỏi bảng <b>alembic_version</b> đã chạy tới bản nào.'),
+      F(['mysql'], [], 14, 'Chạy 0001: <code>CREATE TABLE roles, accounts, otp_codes</code>, seed 3 vai trò, ghi "0001" vào alembic_version.')];
+  }
+  const CODE = ['ĐĂNG NHẬP  login(sđt, mật_khẩu)', '  tk ← kho.tìm_theo_sđt(sđt)   (không có → 401)', '  nếu tk bị khóa tay → 403', '  nếu tk.đang_khóa_tạm(bây_giờ) → 423',
+    '  nếu argon2 xác_minh sai: đếm_sai += 1 → 401', '  đếm_sai ← 0; lưu tk', '  trả JWT(id, vai_trò, token_version, 1 giờ)', 'ĐĂNG KÝ  (1) xin OTP  (2) gửi OTP + thông tin',
+    '  OTP ← 6 số ngẫu nhiên; lưu băm; gửi SMS (mock)', '  kiểm OTP: còn hạn, chưa dùng, đúng', '  tạo Account(KHÁCH HÀNG) → lưu', 'GỌI /auth/me  kèm Bearer token',
+    '  giải mã JWT; so token_version với DB', 'ALEMBIC  upgrade head', '  chạy migration chưa áp dụng'];
+
+  const ui = shell(root, {
+    intro: 'Đây là bản đồ tổng: một request đi từ Postman qua các tầng Clean Architecture đến MySQL rồi quay lại. Chọn kịch bản rồi bấm <b>Bước tiếp</b>; chấm sáng chạy dọc đường dữ liệu đang đi.',
+    hook: 'Client → <b>Uvicorn</b> → <b>Router</b> (Pydantic) → <b>AuthService</b> → <b>Port</b> → <b>Repository</b> → PyMySQL → <b>MySQL</b>, rồi trả ngược về.',
+    w: 1000, h: 700,
+    controls: '<div class="lab"><span>Kịch bản</span></div><div class="scn" id="s0-scn" style="margin-bottom:12px"></div>' +
+      '<div class="btns" style="margin-bottom:10px"><button class="btn primary" id="s0-play">▶ Chạy</button><button class="btn" id="s0-step">Bước tiếp</button><button class="btn" id="s0-reset">Làm lại</button></div>' +
+      '<div class="row"><div class="lab"><label for="s0-spd">Tốc độ (bước/giây, chậm = bên trái)</label><b id="s0-spdv">0.5</b></div><input id="s0-spd" type="range" min="0.25" max="4" step="0.25" value="0.5"></div>',
+    detail: '<div><div class="lab"><span>Mã giả (dòng đang chạy được tô sáng)</span></div><div class="codeL" id="s0-code" style="max-height:340px;overflow:auto"></div></div>',
+    gloss: [['Uvicorn', 'máy chủ chạy FastAPI, nghe cổng 8000 trong container.'], ['Pydantic', 'kiểm tra JSON vào/ra theo schema; sai hình dạng trả 422.'],
+      ['Depends()', 'FastAPI tự gọi hàm trong deps.py để lắp AuthService trước khi chạy router.'], ['Port (Protocol)', 'hợp đồng "tôi cần thứ có hàm này", không nói ai cài.'],
+      ['SQLAlchemy', 'đổi qua lại giữa bảng MySQL và đối tượng Python; sinh SQL cho bạn.'], ['PyMySQL', 'driver Python nói chuyện với MySQL qua cổng 3306.'],
+      ['Argon2 / PyJWT', 'băm mật khẩu / ký token đăng nhập.'], ['Alembic', 'tạo và nâng cấp cấu trúc bảng bằng file migration.']],
+    note: 'Mô phỏng theo code thật của dự án (backend/app). Đồng bộ với các tab bên cạnh: mỗi chi tiết có một tab riêng.'
+  });
+  const S = { frames: [], idx: 0, cur: [], curE: [], passed: {}, timer: null, running: false, k: 0 };
+  const codeEl = $('#s0-code', root);
+  codeEl.innerHTML = CODE.map(l => '<div>' + esc(l) + '</div>').join('');
+  const hl = i => $$('div', codeEl).forEach((d, j) => d.classList.toggle('on', j === i));
+
+  function reset() {
+    pause(); S.frames = build(S.k); S.idx = 0; S.cur = []; S.curE = []; S.passed = {};
+    nodes.forEach(n => { n.st = 'cho'; }); hl(-1);
+    ui.status('Kịch bản <b>' + NAMES[S.k] + '</b> gồm ' + S.frames.length + ' bước. Bấm <b>Bước tiếp</b> hoặc <b>Chạy</b>.');
+  }
+  function step() {
+    if (S.idx >= S.frames.length) { pause(); return; }
+    const f = S.frames[S.idx++];
+    S.cur.forEach(id => { byId[id].st = 'xong'; }); S.curE.forEach(id => { S.passed[id] = true; });
+    S.cur = f.n; S.curE = f.e; f.n.forEach(id => { byId[id].st = 'dangXet'; });
+    hl(f.l); ui.status('<b>Bước ' + S.idx + '/' + S.frames.length + '.</b> ' + f.h);
+    f.e.forEach(id => {
+      const e = eById[id], p = edgePts(e.a, e.b), rev = f.rev.indexOf(id) >= 0;
+      ui.stage.packet(rev ? [p[1], p[0]] : p, { color: PAL[1], dur: 520 });
+    });
+    if (S.idx >= S.frames.length) pause();
+  }
+  function play() { if (S.running) return; S.running = true; $('#s0-play', root).textContent = '❚❚ Tạm dừng'; const tick = () => { if (!S.running) return; step(); if (S.running) S.timer = setTimeout(tick, 1000 / S.spd); }; tick(); }
+  function pause() { S.running = false; $('#s0-play', root).textContent = '▶ Chạy'; clearTimeout(S.timer); }
+  S.spd = 0.5;
+  const scn = $('#s0-scn', root);
+  NAMES.forEach((n, i) => {
+    const b = document.createElement('button'); b.className = 'btn'; b.textContent = i + '. ' + n; b.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
+    b.onclick = () => { S.k = i; $$('button', scn).forEach((x, j) => x.setAttribute('aria-pressed', j === i ? 'true' : 'false')); reset(); };
+    scn.appendChild(b);
+  });
+  $('#s0-play', root).onclick = () => S.running ? pause() : play();
+  $('#s0-step', root).onclick = () => { pause(); step(); };
+  $('#s0-reset', root).onclick = reset;
+  $('#s0-spd', root).oninput = e => { S.spd = parseFloat(e.target.value); $('#s0-spdv', root).textContent = S.spd; };
+
+  ui.stage.draw = function (c) {
+    BANDS.forEach(b => { c.save(); c.globalAlpha = 0.08; c.fillStyle = PAL[LC[b[3]]]; c.fillRect(0, b[1], 1000, b[2] - b[1]); c.restore();
+      txt(c, b[0], 12, b[1] + 13, { size: 11, bold: true, color: PAL[LC[b[3]]], align: 'left' }); });
+    c.save(); c.setLineDash([8, 6]); c.strokeStyle = T.muted; c.lineWidth = 1.6; rr(c, 125, 95, 845, 495, 12); c.stroke(); rr(c, 125, 605, 250, 90, 12); c.stroke(); c.restore();
+    txt(c, 'Docker container: backend (Python 3.13)', 955, 107, { size: 12, color: T.muted, align: 'right' });
+    txt(c, 'Docker container: mysql (volume giữ dữ liệu)', 390, 650, { size: 12, color: T.muted, align: 'left' });
+    E.forEach(e => {
+      const p = edgePts(e.a, e.b), on = S.curE.indexOf(e.id) >= 0, done = S.passed[e.id];
+      arrow(c, p[0], p[1], { color: on ? PAL[1] : done ? PAL[0] : T.line, lw: on ? 4 : done ? 2.6 : 1.6, head: false });
+    });
+    nodes.forEach(n => {
+      const col = PAL[LC[n.L]];
+      if (n.st === 'dangXet') box(c, n.x, n.y, n.w, n.h, { fill: col, stroke: col, lw: 3.5, title: n.t, sub: n.s, tc: '#fff', sc: '#fff', fs: 15, ss: 12 });
+      else box(c, n.x, n.y, n.w, n.h, { fill: T.bg, stroke: col, lw: n.st === 'xong' ? 3 : 2, tint: n.st === 'xong' ? [col, 0.2] : null, title: n.t, sub: n.s, fs: 15, ss: 12 });
+    });
+    S.curE.forEach(id => { const e = eById[id], m = [(e.a.x + e.b.x) / 2, (e.a.y + e.b.y) / 2]; badge(c, e.label, m[0], m[1], PAL[1]); });
+    [['Đang xử lý (nền đặc)', 0], ['Đã đi qua (nền nhạt)', 1], ['Chưa tới (nền trắng)', 2]].forEach((it, i) => {
+      const y = 20 + i * 20; c.beginPath(); c.arc(800, y, 6, 0, 7); c.fillStyle = i === 0 ? PAL[0] : T.bg; c.fill();
+      if (i === 1) { c.globalAlpha = 0.25; c.fillStyle = PAL[0]; c.fill(); c.globalAlpha = 1; } c.lineWidth = 2; c.strokeStyle = PAL[0]; c.stroke();
+      txt(c, it[0], 814, y, { size: 12.5, align: 'left' });
+    });
+  };
+  reset();
+}
+/* =================== TAB 1: MIGRATION (Alembic) =================== */
+function tab1(root) {
+  const BASE = ['id', 'role_id', 'phone', 'password_hash', 'full_name', 'status', 'token_version'];
+  const S = { cur: -1, files: [{ rev: '0001', msg: 'auth tables', kind: 'init' }], modelEmail: false, log: [], db: {}, flash: 0 };
+  const sqlOf = (f, up) => f.kind === 'init'
+    ? (up ? ['CREATE TABLE roles (...)', 'CREATE TABLE accounts (...)', 'CREATE TABLE otp_codes (...)', "INSERT INTO roles VALUES ('KHACH_HANG'), ('NHAN_VIEN_BAN_VE'), ('ADMIN')"] : ['DROP TABLE accounts', 'DROP TABLE roles', 'DROP TABLE otp_codes'])
+    : ((f.kind === 'add') === up ? ['ALTER TABLE accounts ADD COLUMN email VARCHAR(255)'] : ['ALTER TABLE accounts DROP COLUMN email']);
+  function apply(f, up) {
+    const t = S.db;
+    if (f.kind === 'init') {
+      if (up) { t.roles = ['id', 'name', 'description']; t.accounts = BASE.slice(); t.otp_codes = ['id', 'phone', 'code_hash', 'purpose', 'expires_at', 'used', 'wrong_count']; }
+      else { delete t.roles; delete t.accounts; delete t.otp_codes; }
+    } else {
+      const cols = t.accounts;
+      if ((f.kind === 'add') === up) { if (cols.indexOf('email') < 0) cols.push('email'); } else { const i = cols.indexOf('email'); if (i >= 0) cols.splice(i, 1); }
+    }
+  }
+  const say = (cls, t) => { S.log.push('<span class="' + cls + '">' + esc(t) + '</span>'); };
+  const ui = shell(root, {
+    intro: 'Migration là <b>lịch sử phiên bản của cấu trúc bảng</b>. Model Python (trái) → file migration (giữa) → MySQL (phải). Tick "thêm cột email", bấm autogenerate, rồi upgrade và nhìn dòng dữ liệu chạy giữa ba cột.',
+    hook: 'Sửa <b>model</b> → <b>autogenerate</b> ra file migration → <b>upgrade head</b> áp vào MySQL. Muốn lùi thì <b>downgrade</b>.',
+    h: 470,
+    controls: '<div class="chk"><input type="checkbox" id="m-email"><label for="m-email">Model Python có thêm cột <code>email</code></label></div>' +
+      '<div class="btns" style="margin-bottom:8px"><button class="btn primary" id="m-head">upgrade head</button><button class="btn" id="m-up1">upgrade +1</button>' +
+      '<button class="btn" id="m-down1">downgrade -1</button><button class="btn danger" id="m-base">downgrade base</button></div>' +
+      '<div class="btns"><button class="btn" id="m-auto">revision --autogenerate</button><button class="btn" id="m-clear">Xóa nhật ký</button></div>' +
+      '<p class="hint">Mẹo: autogenerate chỉ chạy khi DB đã ở head (giống Alembic thật).</p>',
+    detail: '<div><div class="lab"><span>Nhật ký lệnh</span></div><pre id="m-log" style="min-height:170px"></pre></div>',
+    gloss: [['Alembic', 'công cụ migration của SQLAlchemy. Lệnh: <code>alembic upgrade head</code>.'], ['migration', 'file Python mô tả một bước đổi cấu trúc DB: upgrade() đi tới, downgrade() lùi lại.'],
+      ['revision', 'mã phiên bản như 0001. DB nhớ bản hiện tại trong bảng <code>alembic_version</code>.'], ['head / base', 'head = migration mới nhất, base = DB trống.'],
+      ['autogenerate', 'Alembic so model với DB thật rồi tự viết file migration; bạn vẫn phải đọc lại trước khi chạy.'], ['ORM / model', 'lớp Python đại diện một bảng (SQLAlchemy).']],
+    note: 'Mô phỏng theo alembic/versions/0001_auth_tables.py thật. Cột email chỉ là ví dụ.'
+  });
+  const st = ui.stage;
+  const fileY = i => 120 + i * 105, FX = 500;
+  function go(target) {
+    if (target === S.cur) { say('', S.cur === S.files.length - 1 ? 'Đã ở head, không có gì để chạy.' : 'Đã ở base, không còn gì để lùi.'); return; }
+    const dir = target > S.cur;
+    while (S.cur !== target) {
+      const idx = dir ? S.cur + 1 : S.cur, f = S.files[idx];
+      say('', (dir ? 'upgrade ' : 'downgrade ') + (dir ? (S.cur >= 0 ? S.files[S.cur].rev : '<base>') + ' -> ' + f.rev : f.rev + ' -> ' + (S.cur >= 1 ? S.files[S.cur - 1].rev : '<base>')) + ', ' + f.msg);
+      sqlOf(f, dir).forEach(q => say('sql', '   SQL> ' + q));
+      const a = [FX + 125, fileY(idx)], b = [745, 235];
+      st.packet(dir ? [a, b] : [b, a], { color: dir ? PAL[2] : PAL[3], dur: 600 });
+      apply(f, dir); S.cur += dir ? 1 : -1; S.flash = performance.now();
+    }
+    ui.status(dir ? '<b>upgrade</b>: chạy hàm upgrade() của từng file chưa áp dụng, rồi ghi bản mới vào <b>alembic_version = ' + S.files[S.cur].rev + '</b>.'
+      : '<b>downgrade</b>: chạy hàm downgrade() ngược lại, <b>alembic_version = ' + (S.cur >= 0 ? S.files[S.cur].rev : '(trống)') + '</b>.');
+  }
+  function autogen() {
+    if (S.cur !== S.files.length - 1) { say('err', 'ERROR Target database is not up to date. Hãy upgrade head trước.'); ui.status('Autogenerate bị từ chối: DB chưa ở head, Alembic không biết so sánh với bản nào.'); return; }
+    if (S.cur < 0) { say('err', 'DB còn trống (base), hãy upgrade head trước.'); return; }
+    const hasEmail = S.db.accounts.indexOf('email') >= 0, n = String(S.files.length + 1).padStart(4, '0');
+    let kind = null;
+    if (S.modelEmail && !hasEmail) kind = 'add'; else if (!S.modelEmail && hasEmail) kind = 'drop';
+    if (!kind) { say('', 'Model và DB đang khớp nhau, không có gì để tạo.'); ui.status('Model và DB <b>khớp nhau</b>, autogenerate không tạo file mới. Hãy tick/bỏ tick cột email rồi thử lại.'); return; }
+    S.files.push({ rev: n, msg: kind === 'add' ? 'add email to accounts' : 'drop email from accounts', kind: kind });
+    say('', (kind === 'add' ? "Detected added column 'accounts.email'" : "Detected removed column 'accounts.email'")); say('', 'Generating alembic/versions/' + n + '_' + kind + '_email.py ... done');
+    st.packet([[270, 200], [FX - 125, fileY(S.files.length - 1)]], { color: PAL[0], dur: 600 });
+    ui.status('<b>autogenerate</b>: Alembic so model (có' + (S.modelEmail ? '' : ' không') + ' cột email) với DB (' + (hasEmail ? 'có' : 'không có') + ' cột email) và <b>tự viết file ' + n + '</b>. File chưa áp dụng cho tới khi bạn upgrade.');
+  }
+  function log() { const lg = $('#m-log', root); lg.innerHTML = S.log.slice(-40).join('\n') || '(chưa chạy lệnh nào)'; lg.scrollTop = lg.scrollHeight; }
+  const act = f => () => { f(); log(); };
+  $('#m-email', root).onchange = e => { S.modelEmail = e.target.checked; ui.status('Bạn vừa sửa <b>model Python</b>' + (S.modelEmail ? ' (thêm email)' : ' (bỏ email)') + '. DB chưa đổi gì cho tới khi có migration và upgrade.'); };
+  $('#m-head', root).onclick = act(() => go(S.files.length - 1));
+  $('#m-up1', root).onclick = act(() => go(Math.min(S.cur + 1, S.files.length - 1)));
+  $('#m-down1', root).onclick = act(() => go(Math.max(S.cur - 1, -1)));
+  $('#m-base', root).onclick = act(() => go(-1));
+  $('#m-auto', root).onclick = act(autogen);
+  $('#m-clear', root).onclick = act(() => { S.log = []; });
+
+  st.draw = function (c, now) {
+    txt(c, 'MODEL PYTHON', 150, 28, { size: 12, bold: true, color: T.muted }); txt(c, 'FILE MIGRATION', FX, 28, { size: 12, bold: true, color: T.muted }); txt(c, 'MYSQL', 850, 28, { size: 12, bold: true, color: T.muted });
+    /* model */
+    const cols = BASE.concat(S.modelEmail ? ['email'] : []);
+    const mh = 70 + cols.length * 24;
+    box(c, 150, 60 + mh / 2, 230, mh, { stroke: PAL[0], lw: 2.5 });
+    txt(c, 'AccountModel', 150, 85, { size: 15, bold: true }); txt(c, 'bảng accounts', 150, 104, { size: 12, color: T.muted });
+    cols.forEach((n, i) => txt(c, n, 55, 130 + i * 24, { size: 13, align: 'left', color: n === 'email' ? PAL[0] : T.fg, bold: n === 'email' }));
+    /* các file */
+    S.files.forEach((f, i) => {
+      const ok = i <= S.cur, y = fileY(i);
+      box(c, FX, y, 250, 76, { stroke: ok ? PAL[2] : PAL[3], dash: ok ? null : [7, 5], lw: 2.5, tint: ok ? [PAL[2], 0.12] : null,
+        title: f.rev + '_' + f.msg.split(' ')[0], sub: f.msg, fs: 15 });
+      badge(c, ok ? '✓ đã áp dụng' : '… chưa áp dụng', FX, y + 52, ok ? PAL[2] : PAL[3]);
+      if (i === S.files.length - 1) badge(c, 'head', FX + 100, y - 46, PAL[0], true);
+      if (i === S.cur) { c.fillStyle = PAL[1]; c.beginPath(); c.moveTo(FX + 135, y); c.lineTo(FX + 160, y - 9); c.lineTo(FX + 160, y + 9); c.fill(); txt(c, 'DB ở đây', FX + 168, y, { size: 12, bold: true, color: PAL[1], align: 'left' }); }
+    });
+    if (!S.files.length) txt(c, '(chưa có file)', FX, 120, {});
+    /* mũi tên */
+    arrow(c, [270, 190], [FX - 135, 190], { color: PAL[0], lw: 2.5 }); txt(c, 'autogenerate', 385, 172, { size: 12, bold: true, color: PAL[0] });
+    arrow(c, [FX + 135 + 5, 300], [735, 300], { color: PAL[2], lw: 2.5 }); txt(c, 'upgrade', 688, 282, { size: 12, bold: true, color: PAL[2] });
+    arrow(c, [735, 330], [FX + 140, 330], { color: PAL[3], lw: 2.5, dash: [6, 5] }); txt(c, 'downgrade', 688, 350, { size: 12, bold: true, color: PAL[3] });
+    /* MySQL */
+    cyl(c, 850, 250, 230, 420, { stroke: PAL[4] });
+    const fl = Math.max(0, 1 - (now - S.flash) / 900);
+    const ver = S.cur >= 0 ? S.files[S.cur].rev : '(trống)';
+    box(c, 850, 110, 190, 46, { stroke: PAL[4], title: 'alembic_version', sub: 'version_num = ' + ver, fs: 13, ss: 12, tint: [PAL[4], 0.12 + fl * 0.4] });
+    const names = Object.keys(S.db);
+    if (!names.length) txt(c, 'Chưa có bảng nào', 850, 250, { size: 14, color: T.muted });
+    names.forEach((tn, i) => {
+      const cs = S.db[tn], y = 190 + i * 78;
+      box(c, 850, y, 190, 64, { stroke: PAL[4], tint: [PAL[4], 0.06 + fl * 0.35], title: tn, sub: cs.length + ' cột' + (cs.indexOf('email') >= 0 ? ' · có email' : ''), fs: 14, ss: 12 });
+    });
+  };
+  ui.status('Ba cột là ba nơi dữ liệu cấu trúc đi qua. Bắt đầu: bấm <b>upgrade head</b> để tạo bảng lần đầu.'); log();
+}
+
+/* =================== TAB 2: BĂM MẬT KHẨU =================== */
+function tab2(root) {
+  const S = { stored: null, ms: 0, algo: 'pbkdf2', n: 100000, salt: true, spin: 0, ok: null, gps: null };
+  const SETS = [['chữ số (10)', 10], ['a–z (26)', 26], ['chữ + số (62)', 62], ['mọi ký tự (94)', 94]];
+  const ui = shell(root, {
+    intro: 'Server không lưu mật khẩu gốc, chỉ lưu "dấu vân tay" (hash). Dự án dùng Argon2: <b>cố ý chậm</b> để kẻ trộm DB không thử hàng tỷ mật khẩu mỗi giây. Kéo thanh "số vòng" để thấy chuỗi băm dài ra và đồ thị bẻ khóa dịch chuyển.',
+    hook: 'Mật khẩu + <b>salt</b> → hàm băm <b>chạy N vòng</b> → chuỗi lưu trong DB. Muốn kiểm tra: băm lại rồi <b>so</b>, không bao giờ giải ngược.',
+    h: 520,
+    controls: '<div class="row"><label for="h-pw">Mật khẩu</label><input id="h-pw" type="text" value="matkhau123"></div>' +
+      '<div class="row"><label for="h-algo">Cách băm</label><select id="h-algo"><option value="sha">SHA-256 thường (nhanh, KHÔNG nên dùng)</option><option value="pbkdf2" selected>PBKDF2 (chậm có chủ đích, thay Argon2)</option></select></div>' +
+      '<div class="chk"><input type="checkbox" id="h-salt" checked><label for="h-salt">Thêm salt (chuỗi ngẫu nhiên riêng mỗi lần)</label></div>' +
+      '<div class="row"><div class="lab"><label for="h-cost">Số vòng lặp</label><b id="h-costv"></b></div><input id="h-cost" type="range" min="3" max="6.3" step="0.1" value="5"></div>' +
+      '<div class="btns" style="margin-bottom:10px"><button class="btn primary" id="h-go">Băm mật khẩu</button><button class="btn" id="h-again">Băm lại</button></div>' +
+      '<div class="row"><label for="h-chk">Thử đăng nhập với mật khẩu</label><input id="h-chk" type="text" placeholder="nhập để kiểm tra"></div>' +
+      '<div class="btns" style="margin-bottom:12px"><button class="btn" id="h-verify">So với hash đã lưu</button></div>' +
+      '<div class="row"><label for="h-set">Kẻ trộm đoán mật khẩu gồm</label><select id="h-set">' + SETS.map((s, i) => '<option value="' + i + '"' + (i === 2 ? ' selected' : '') + '>' + s[0] + '</option>').join('') + '</select></div>' +
+      '<div class="row"><div class="lab"><label for="h-len">Độ dài mật khẩu</label><b id="h-lenv"></b></div><input id="h-len" type="range" min="4" max="14" step="1" value="8"></div>',
+    detail: '<div><div class="lab"><span>Chuỗi lưu vào cột password_hash</span></div><pre id="h-out" style="min-height:56px">(bấm "Băm mật khẩu")</pre></div><div id="h-hist" class="code" style="min-height:40px">Các lần băm gần đây sẽ hiện ở đây. Có salt thì mỗi lần một khác.</div>',
+    gloss: [['hash (băm)', 'hàm một chiều: biến mật khẩu thành chuỗi cố định, không đảo ngược. Cùng đầu vào cho cùng đầu ra.'], ['salt', 'chuỗi ngẫu nhiên trộn vào trước khi băm: hai người cùng mật khẩu vẫn ra hash khác nhau.'],
+      ['Argon2', 'băm mật khẩu hiện đại, vừa chậm vừa tốn RAM nên card đồ họa khó bẻ. Dự án dùng <code>argon2-cffi</code>.'], ['brute force', 'thử lần lượt mọi khả năng. Hash càng chậm, kẻ trộm càng tốn thời gian.'],
+      ['verify', 'băm mật khẩu vừa nhập với đúng salt đã lưu rồi so sánh.']],
+    note: 'Trình duyệt không có Argon2, nên tab này dùng PBKDF2 thật (Web Crypto) để minh họa cùng ý tưởng "chậm có chủ đích + salt". Con số chỉ có ý nghĩa để so sánh.'
+  });
+  const g = id => $(id, root), iters = () => Math.round(Math.pow(10, parseFloat(g('#h-cost').value)));
+  let hist = [];
+  async function derive(pw, saltBytes, algo, n) {
+    if (algo === 'sha') return crypto.subtle.digest('SHA-256', new Uint8Array([...saltBytes, ...enc.encode(pw)]));
+    const key = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveBits']);
+    return crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: saltBytes, iterations: n }, key, 256);
+  }
+  async function doHash() {
+    const pw = g('#h-pw').value, algo = g('#h-algo').value, useSalt = g('#h-salt').checked, n = iters();
+    const salt = useSalt ? crypto.getRandomValues(new Uint8Array(16)) : new Uint8Array(0);
+    S.spin = performance.now(); S.ok = null;
+    const t0 = performance.now(), bits = await derive(pw, salt, algo, n), ms = Math.max(performance.now() - t0, 0.02);
+    S.spin = 0; S.ms = ms; S.algo = algo; S.n = n; S.salt = useSalt; S.gps = 1000 / ms;
+    S.stored = { text: (algo === 'sha' ? 'sha256' : 'pbkdf2$' + n) + '$' + (useSalt ? hexOf(salt) : '(không salt)') + '$' + hexOf(bits), saltHex: hexOf(salt), algo: algo, n: n };
+    g('#h-out').textContent = S.stored.text; hist.unshift(S.stored.text.slice(0, 64) + '…'); hist = hist.slice(0, 5); g('#h-hist').innerHTML = hist.map(esc).join('<br>');
+    ui.status('Một lần băm mất <b>' + ms.toFixed(ms < 10 ? 2 : 0) + ' ms</b> ' + (algo === 'sha' ? '→ kẻ trộm thử được <b>' + Math.round(S.gps).toLocaleString('vi-VN') + '</b> mật khẩu/giây trên 1 máy: quá nhanh.' : '→ chậm có chủ đích: chỉ thử được <b>' + Math.round(S.gps).toLocaleString('vi-VN') + '</b> mật khẩu/giây trên 1 máy.'));
+  }
+  async function verify() {
+    if (!S.stored) { ui.status('Hãy băm một mật khẩu trước.'); return; }
+    const saltBytes = S.stored.saltHex ? new Uint8Array(S.stored.saltHex.match(/../g).map(h => parseInt(h, 16))) : new Uint8Array(0);
+    const bits = await derive(g('#h-chk').value, saltBytes, S.stored.algo, S.stored.n);
+    S.ok = S.stored.text.endsWith('$' + hexOf(bits));
+    ui.status(S.ok ? '<b>Khớp</b>: băm mật khẩu vừa nhập (cùng salt, cùng số vòng) ra đúng chuỗi đã lưu → đăng nhập thành công (200).' : '<b>Không khớp</b> → 401 "Số điện thoại hoặc mật khẩu không đúng".');
+  }
+  const run = f => () => f().catch(e => { g('#h-out').textContent = 'Lỗi: ' + e.message; });
+  g('#h-go').onclick = run(doHash); g('#h-again').onclick = run(doHash); g('#h-verify').onclick = run(verify);
+  g('#h-cost').oninput = () => { g('#h-costv').textContent = iters().toLocaleString('vi-VN') + ' vòng'; };
+  g('#h-len').oninput = () => { g('#h-lenv').textContent = g('#h-len').value + ' ký tự'; };
+  g('#h-cost').oninput(); g('#h-len').oninput();
+
+  const fmt = sec => { if (sec < 1) return '< 1 giây'; const u = [['năm', 31557600], ['ngày', 86400], ['giờ', 3600], ['phút', 60], ['giây', 1]]; for (const [nm, s] of u) if (sec >= s) { const v = sec / s; return (v >= 1e6 ? v.toExponential(1) : v >= 100 ? Math.round(v).toLocaleString('vi-VN') : v.toFixed(1)) + ' ' + nm; } return ''; };
+  ui.stage.draw = function (c, now) {
+    const pw = g('#h-pw').value, cells = Math.round(3 + (parseFloat(g('#h-cost').value) - 3) / 3.3 * 21);
+    box(c, 100, 90, 160, 78, { stroke: PAL[0], title: 'Mật khẩu', sub: pw.length > 14 ? pw.slice(0, 13) + '…' : pw, fs: 15 });
+    const saltOn = g('#h-salt').checked;
+    box(c, 290, 90, 140, 78, { stroke: saltOn ? PAL[3] : T.line, dash: saltOn ? null : [6, 5], title: 'Salt', sub: saltOn ? (S.stored ? S.stored.saltHex.slice(0, 8) : 'ngẫu nhiên') : 'không dùng', fs: 15 });
+    /* hàm băm: hàng ô = số vòng */
+    const hx = 560, spinning = S.spin > 0;
+    box(c, hx, 100, 270, 112, { stroke: g('#h-algo').value === 'sha' ? PAL[1] : PAL[2], lw: 2.5 });
+    txt(c, g('#h-algo').value === 'sha' ? 'SHA-256 × 1 vòng' : 'PBKDF2 × ' + iters().toLocaleString('vi-VN') + ' vòng', hx, 62, { size: 14, bold: true });
+    const nc = g('#h-algo').value === 'sha' ? 1 : cells, cw = Math.min(22, 240 / nc), x0 = hx - (nc * cw) / 2;
+    for (let i = 0; i < nc; i++) {
+      const lit = spinning && Math.floor((now / 70) % nc) === i;
+      c.fillStyle = lit ? PAL[3] : PAL[2]; c.globalAlpha = lit ? 1 : 0.55; rr(c, x0 + i * cw + 1.5, 82, cw - 3, 22, 3); c.fill(); c.globalAlpha = 1;
+    }
+    if (S.stored) { const bw = Math.min(240, Math.max(6, Math.log10(S.ms * 100 + 1) / 4.5 * 240)); c.fillStyle = T['code-bg']; c.fillRect(hx - 120, 122, 240, 8); c.fillStyle = S.algo === 'sha' ? PAL[1] : PAL[2]; c.fillRect(hx - 120, 122, bw, 8); txt(c, S.ms.toFixed(S.ms < 10 ? 2 : 0) + ' ms', hx, 142, { size: 11.5, color: T.muted }); }
+    box(c, 850, 90, 210, 78, { stroke: PAL[4], title: 'password_hash', sub: S.stored ? fit(c, S.stored.text.split('$').slice(-1)[0], 190, 12) : '(chưa băm)', fs: 14 });
+    arrow(c, [180, 90], [220, 90], { color: T.muted }); arrow(c, [360, 90], [420, 90], { color: T.muted }); arrow(c, [695, 90], [743, 90], { color: T.muted });
+    if (S.ok !== null) badge(c, S.ok ? '✓ khớp: đăng nhập được' : '✗ không khớp: 401', 850, 150, S.ok ? PAL[2] : PAL[1], true);
+    /* đồ thị bẻ khóa */
+    const X0 = 110, X1 = 800, Y0 = 440, Y1 = 225, gps = S.gps || 2e5;
+    txt(c, 'Kẻ trộm cần bao lâu để bẻ khóa (thử hết một nửa không gian, 1 máy)?', 500, 195, { size: 14, bold: true });
+    const ly = v => Y0 - (Math.max(-1, Math.min(17, v)) + 1) / 18 * (Y0 - Y1), lx = L => X0 + (L - 4) / 10 * (X1 - X0);
+    [[3.56, '1 giờ'], [4.94, '1 ngày'], [7.5, '1 năm'], [10.5, '1000 năm']].forEach(t => { c.strokeStyle = T.line; c.setLineDash([5, 5]); c.lineWidth = 1; c.beginPath(); c.moveTo(X0, ly(t[0])); c.lineTo(X1, ly(t[0])); c.stroke(); c.setLineDash([]); txt(c, t[1], X0 - 8, ly(t[0]), { size: 12, align: 'right', color: T.muted }); });
+    c.strokeStyle = T.muted; c.lineWidth = 1.5; c.beginPath(); c.moveTo(X0, Y1); c.lineTo(X0, Y0); c.lineTo(X1, Y0); c.stroke();
+    for (let L = 4; L <= 14; L += 2) txt(c, L, lx(L), Y0 + 14, { size: 12, color: T.muted }); txt(c, 'độ dài mật khẩu (ký tự)', 455, Y0 + 32, { size: 12, color: T.muted });
+    SETS.forEach((s, i) => {
+      c.strokeStyle = PAL[i === 3 ? 4 : i]; c.lineWidth = i === +g('#h-set').value ? 3.5 : 1.8; c.globalAlpha = i === +g('#h-set').value ? 1 : 0.6; c.beginPath();
+      for (let L = 4; L <= 14; L += 0.5) { const v = Math.log10(Math.pow(s[1], L) / 2 / gps); const x = lx(L), y = ly(v); L === 4 ? c.moveTo(x, y) : c.lineTo(x, y); } c.stroke(); c.globalAlpha = 1;
+      txt(c, s[0], X1 + 14, 250 + i * 22, { size: 11.5, align: 'left', color: PAL[i === 3 ? 4 : i] });
+    });
+    const si = +g('#h-set').value, len = +g('#h-len').value, sec = Math.pow(SETS[si][1], len) / 2 / gps, vx = lx(len), vy = ly(Math.log10(sec));
+    c.fillStyle = PAL[1]; c.beginPath(); c.arc(vx, vy, 7, 0, 7); c.fill();
+    badge(c, fmt(sec) + (sec < 86400 * 30 ? ' ✗ yếu' : ' ✓ mạnh'), Math.min(vx, 740), Math.max(vy - 24, 244), sec < 86400 * 30 ? PAL[1] : PAL[2], true);
+  };
+  ui.status('Bấm <b>Băm mật khẩu</b>: ô vuông chạy nhanh = số vòng lặp. Đồ thị dưới dùng đúng tốc độ băm đo trên máy bạn.');
+  run(doHash)();
+}
+/* =================== TAB 3: JWT + token_version =================== */
+function tab3(root) {
+  const b64u = bytes => btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const b64uStr = s => b64u(enc.encode(s));
+  const fromB64u = s => { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; return new TextDecoder().decode(Uint8Array.from(atob(s), c => c.charCodeAt(0))); };
+  const hmac = async (secret, data) => { const k = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']); return b64u(await crypto.subtle.sign('HMAC', k, enc.encode(data))); };
+  const S = { token: '', serverSecret: 'bi-mat-cua-server-32-ky-tu-abcdef', dbTv: 1, gates: [null, null, null, null], result: null, tampered: false, sigBad: false, busy: false };
+  const GATES = [['Đúng 3 phần?', 'header.payload.sig'], ['Chữ ký khớp?', 'HMAC + JWT_SECRET'], ['Chưa hết hạn?', 'exp'], ['tv khớp?', 'token = DB']];
+  const ui = shell(root, {
+    intro: 'JWT là tấm vé do server ký. Server <b>không nhớ</b> vé, chỉ kiểm tra chữ ký. Vì không nhớ nên muốn "đăng xuất" phải nhờ <b>token_version</b> trong DB. Ký một token, rồi thử phá và xem gói tin dừng ở cổng nào.',
+    hook: 'Token đi qua <b>4 cổng</b>: đúng định dạng → chữ ký → hạn → token_version. Qua đủ 4 mới được 200.',
+    h: 470,
+    controls: '<div class="row"><label for="j-secret">JWT_SECRET dùng để ký (lúc đăng nhập)</label><input id="j-secret" type="text" value="bi-mat-cua-server-32-ky-tu-abcdef"></div>' +
+      '<div class="row"><label for="j-role">role trong payload</label><select id="j-role"><option>KHACH_HANG</option><option>NHAN_VIEN_BAN_VE</option><option>ADMIN</option></select></div>' +
+      '<div class="row"><div class="lab"><label for="j-exp">Hạn token</label><b id="j-expv"></b></div><input id="j-exp" type="range" min="5" max="120" step="5" value="60"></div>' +
+      '<div class="row"><div class="lab"><label for="j-time">Thời gian đã trôi kể từ lúc cấp</label><b id="j-timev"></b></div><input id="j-time" type="range" min="0" max="180" step="1" value="0"></div>' +
+      '<div class="btns" style="margin-bottom:8px"><button class="btn primary" id="j-sign">1. Đăng nhập: ký token</button><button class="btn primary" id="j-me">2. Gọi GET /auth/me</button></div>' +
+      '<div class="lab"><span>Phá thử</span></div><div class="btns"><button class="btn" id="j-tamper">Sửa role thành ADMIN</button><button class="btn" id="j-sigflip">Đổi 1 ký tự chữ ký</button>' +
+      '<button class="btn" id="j-logout">Đăng xuất (DB tv +1)</button><button class="btn" id="j-rot">Server đổi JWT_SECRET</button></div>',
+    detail: '<div><div class="lab"><span>Token (3 phần ngăn bằng dấu chấm)</span></div><pre id="j-tok" style="min-height:60px">(bấm "Đăng nhập: ký token")</pre></div><div class="cols"><div><div class="lab"><span class="seg-h">Header</span></div><pre id="j-h"></pre></div><div><div class="lab"><span class="seg-p">Payload</span></div><pre id="j-p"></pre></div></div>',
+    gloss: [['JWT', 'chuỗi header.payload.chữ_ký. Ai cũng đọc được payload (chỉ là base64), nên đừng để mật khẩu vào đó.'], ['HS256', 'ký bằng HMAC-SHA256 với bí mật chung JWT_SECRET. Sửa 1 chữ trong payload là chữ ký sai ngay.'],
+      ['exp', 'thời điểm hết hạn (dự án: 60 phút).'], ['token_version (tv)', 'số trong DB và trong token. Đăng xuất/đổi mật khẩu thì DB +1, token cũ có tv thấp hơn bị từ chối dù chưa hết hạn.'],
+      ['Bearer', 'cách gửi token: header <code>Authorization: Bearer &lt;token&gt;</code>.'], ['stateless', 'server không lưu danh sách token đã cấp: nhẹ, nhưng khó thu hồi.']],
+    note: 'Chữ ký HMAC ở tab này là thật, tính bằng Web Crypto trong trình duyệt. Phần "server" chỉ là các biến trong trang.'
+  });
+  const g = id => $(id, root), st = ui.stage;
+  const GX = [330, 500, 670, 840], GY = 120;
+  const payload = () => JSON.parse(fromB64u(S.token.split('.')[1]));
+  function showTok() {
+    if (!S.token) { g('#j-tok').textContent = '(chưa có token)'; g('#j-h').textContent = ''; g('#j-p').textContent = ''; return; }
+    const p = S.token.split('.');
+    g('#j-tok').innerHTML = '<span class="seg-h">' + esc(p[0]) + '</span>.<span class="seg-p">' + esc(p[1]) + '</span>.<span class="seg-s">' + esc(p[2] || '') + '</span>';
+    try { g('#j-h').textContent = JSON.stringify(JSON.parse(fromB64u(p[0])), null, 2); g('#j-p').textContent = JSON.stringify(JSON.parse(fromB64u(p[1])), null, 2); } catch (e) { g('#j-p').textContent = '(payload không đọc được)'; }
+  }
+  async function sign() {
+    const secret = g('#j-secret').value, head = b64uStr(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+    const pay = b64uStr(JSON.stringify({ sub: '1', role: g('#j-role').value, tv: S.dbTv, exp_phut: parseInt(g('#j-exp').value, 10) }));
+    S.token = head + '.' + pay + '.' + await hmac(secret, head + '.' + pay); S.tampered = false; S.sigBad = false; S.gates = [null, null, null, null]; S.result = null; showTok();
+    st.packet([[700, 330], [330, 340], [150, 190]], { color: PAL[2], dur: 700 });
+    ui.status('Server <b>cấp token</b>: ký header.payload bằng JWT_SECRET (HMAC-SHA256) rồi gửi về Client. Trong payload có <b>tv = ' + S.dbTv + '</b> (token_version lúc đó).');
+  }
+  async function me() {
+    if (S.busy) return; S.busy = true; S.gates = [null, null, null, null]; S.result = null;
+    try {
+      if (!S.token) { S.result = '401'; ui.status('Chưa có token: <b>401</b> (không có header Authorization).'); return; }
+      const parts = S.token.split('.'); let pass = true, why = '', pl = null;
+      const stepTo = i => st.packet([i === 0 ? [150, 190] : [GX[i - 1] + 62, GY], [GX[i] - 62, GY]], { color: PAL[1], dur: 420 });
+      for (let i = 0; i < 4; i++) {
+        await stepTo(i); let ok = true;
+        if (i === 0) ok = parts.length === 3;
+        else if (i === 1) { ok = (await hmac(S.serverSecret, parts[0] + '.' + parts[1])) === parts[2]; if (ok) { try { pl = JSON.parse(fromB64u(parts[1])); } catch (e) { ok = false; } } }
+        else if (i === 2) ok = parseInt(g('#j-time').value, 10) < pl.exp_phut;
+        else ok = pl.tv === S.dbTv;
+        S.gates[i] = ok ? 'ok' : 'fail';
+        if (!ok) { pass = false; why = ['không đúng 3 phần', 'chữ ký không khớp (bị sửa hoặc khác JWT_SECRET)', 'token đã hết hạn', 'token_version trong token (' + (pl && pl.tv) + ') ≠ DB (' + S.dbTv + ')'][i]; break; }
+      }
+      S.result = pass ? '200' : '401';
+      ui.status(pass ? '<b>HTTP 200</b>: qua đủ 4 cổng, server trả thông tin tài khoản (role ' + pl.role + ').' : '<b>HTTP 401</b> dừng ở cổng ' + (S.gates.indexOf('fail') + 1) + ': ' + why + '.');
+    } catch (e) { ui.status('Lỗi: ' + esc(e.message)); } finally { S.busy = false; }
+  }
+  const safe = f => () => f().catch(e => ui.status('Lỗi: ' + esc(e.message)));
+  g('#j-sign').onclick = safe(sign); g('#j-me').onclick = safe(me);
+  g('#j-tamper').onclick = () => { if (!S.token) return; const p = S.token.split('.'), c = JSON.parse(fromB64u(p[1])); c.role = 'ADMIN'; S.token = p[0] + '.' + b64uStr(JSON.stringify(c)) + '.' + p[2]; S.tampered = true; showTok(); ui.status('Đã sửa payload (role → ADMIN) nhưng <b>giữ chữ ký cũ</b>. Gọi /auth/me: cổng 2 sẽ bắt.'); };
+  g('#j-sigflip').onclick = () => { if (!S.token) return; const p = S.token.split('.'); p[2] = (p[2][0] === 'A' ? 'B' : 'A') + p[2].slice(1); S.token = p.join('.'); S.sigBad = true; showTok(); ui.status('Đã đổi 1 ký tự của chữ ký.'); };
+  g('#j-logout').onclick = () => { S.dbTv++; ui.status('POST /auth/logout: DB <b>token_version tăng lên ' + S.dbTv + '</b>. Token đã cấp còn nguyên, hãy gọi /auth/me để thấy cổng 4 chặn.'); };
+  g('#j-rot').onclick = () => { S.serverSecret = 'bi-mat-MOI-' + Math.random().toString(36).slice(2, 12) + '0123456789'; ui.status('Server đổi JWT_SECRET: mọi token ký bằng bí mật cũ đều vô hiệu.'); };
+  g('#j-exp').oninput = () => { g('#j-expv').textContent = g('#j-exp').value + ' phút'; }; g('#j-time').oninput = () => { g('#j-timev').textContent = g('#j-time').value + ' phút'; };
+  g('#j-exp').oninput(); g('#j-time').oninput();
+
+  st.draw = function (c) {
+    box(c, 90, 190, 130, 110, { stroke: PAL[0], lw: 2.5, title: 'Client', sub: 'giữ token' });
+    GATES.forEach((gt, i) => {
+      const s = S.gates[i], col = s === 'ok' ? PAL[2] : s === 'fail' ? PAL[1] : T.line;
+      box(c, GX[i], GY, 124, 76, { stroke: col, lw: s ? 3.5 : 2, tint: s ? [col, 0.14] : null, title: gt[0], sub: gt[1], fs: 13, ss: 11 });
+      txt(c, 'cổng ' + (i + 1), GX[i], GY - 56, { size: 12, color: T.muted, bold: true });
+      if (s) badge(c, s === 'ok' ? '✓ qua' : '✗ chặn', GX[i], GY + 58, col, true);
+      if (i) arrow(c, [GX[i - 1] + 64, GY], [GX[i] - 66, GY], { color: T.line, lw: 1.8 });
+    });
+    arrow(c, [155, 175], [GX[0] - 66, GY], { color: T.line, lw: 1.8 });
+    if (S.result) box(c, 840, 235, 124, 56, { stroke: S.result === '200' ? PAL[2] : PAL[1], lw: 3, fill: S.result === '200' ? PAL[2] : PAL[1], title: 'HTTP ' + S.result, sub: S.result === '200' ? 'được vào' : 'bị từ chối', tc: '#fff', sc: '#fff', fs: 17 });
+    /* dải token */
+    txt(c, 'TOKEN CỦA CLIENT', 60, 255, { size: 12, bold: true, color: T.muted, align: 'left' });
+    const segs = [['header', 'alg HS256', 110, '#c2410c', false], ['payload', S.token ? 'role · tv ' + payload().tv + ' · exp' : 'sub · role · tv · exp', 220, '#7e22ce', S.tampered], ['signature', 'HMAC(secret)', 170, '#0e7490', S.sigBad]];
+    let x = 60;
+    segs.forEach(sg => {
+      box(c, x + sg[2] / 2, 295, sg[2] - 6, 52, { stroke: sg[4] ? PAL[1] : sg[3], lw: sg[4] ? 4 : 2.5, tint: [sg[3], 0.12], title: sg[0], sub: sg[1], tc: sg[3], fs: 14, ss: 11.5 });
+      if (sg[4]) badge(c, 'bị sửa', x + sg[2] / 2, 328, PAL[1], true); x += sg[2];
+    });
+    /* server */
+    box(c, 700, 330, 230, 70, { stroke: PAL[4], title: 'MySQL', sub: 'accounts.token_version = ' + S.dbTv, fs: 15 });
+    box(c, 905, 330, 160, 70, { stroke: S.serverSecret === $('#j-secret', root).value ? PAL[2] : PAL[1], title: 'JWT_SECRET', sub: S.serverSecret === $('#j-secret', root).value ? 'trùng lúc ký' : 'ĐÃ KHÁC lúc ký', fs: 14 });
+    /* thanh thời gian */
+    const exp = parseInt($('#j-exp', root).value, 10), el = parseInt($('#j-time', root).value, 10), X0 = 90, W = 820, sc = W / 180;
+    txt(c, 'THỜI GIAN SỐNG CỦA TOKEN (phút kể từ lúc cấp)', 90, 376, { size: 12, bold: true, color: T.muted, align: 'left' });
+    c.fillStyle = T['code-bg']; c.fillRect(X0, 410, W, 16); c.fillStyle = PAL[2]; c.globalAlpha = 0.5; c.fillRect(X0, 410, exp * sc, 16); c.globalAlpha = 1;
+    c.fillStyle = PAL[1]; c.fillRect(X0 + exp * sc - 2, 404, 4, 28); txt(c, 'hết hạn ' + exp, X0 + exp * sc, 396, { size: 12, color: PAL[1], bold: true });
+    c.fillStyle = el >= exp ? PAL[1] : PAL[0]; c.beginPath(); c.arc(X0 + el * sc, 418, 9, 0, 7); c.fill(); txt(c, 'bây giờ ' + el, X0 + el * sc, 445, { size: 12, color: el >= exp ? PAL[1] : PAL[0], bold: true });
+  };
+  ui.status('Bấm <b>1. Đăng nhập: ký token</b>, rồi <b>2. Gọi /auth/me</b> để xem gói tin chạy qua 4 cổng.');
+}
+
+/* =================== TAB 4: PYDANTIC + MÃ HTTP =================== */
+function tab4(root) {
+  const EXISTING = '0912345678', GOOD = '483920';
+  const PRE = { ok: ['Tran B', '0987654321', 'matkhau123', GOOD, 0], phone: ['Tran B', '12345', 'matkhau123', GOOD, 0], short: ['Tran B', '0987654321', 'abc', GOOD, 0],
+    dup: ['Tran B', EXISTING, 'matkhau123', GOOD, 0], otp: ['Tran B', '0987654321', 'matkhau123', '000000', 0], exp: ['Tran B', '0987654321', 'matkhau123', GOOD, 1] };
+  const FIELDS = [['full_name', '1–100 ký tự'], ['phone', 'bắt đầu 0, 10–11 số'], ['password', '8–72 ký tự'], ['otp', 'đúng 6 chữ số']];
+  const S = { bad: [], stop: -1, code: null, msg: '', busy: false, lit: -1 };
+  const ui = shell(root, {
+    intro: 'POST /auth/register đi qua nhiều "cửa kiểm", mỗi cửa trả một mã HTTP khác nhau. Sửa ô bên dưới hoặc bấm mẫu có sẵn, rồi bấm <b>Gửi</b>: gói tin dừng ở cửa chặn nó.',
+    hook: 'Sai <b>hình dạng</b> → Pydantic <b>422</b>. Trùng SĐT → <b>409</b>. OTP sai/hết hạn → <b>400</b>. Qua hết → <b>201</b>.',
+    h: 470,
+    controls: '<div class="row"><label for="a-name">full_name</label><input id="a-name" type="text"></div><div class="row"><label for="a-phone">phone</label><input id="a-phone" type="text"></div>' +
+      '<div class="row"><label for="a-pw">password</label><input id="a-pw" type="text"></div><div class="row"><label for="a-otp">otp (mã đúng ở ví dụ này: ' + GOOD + ')</label><input id="a-otp" type="text"></div>' +
+      '<div class="chk"><input type="checkbox" id="a-exp"><label for="a-exp">OTP đã quá 120 giây</label></div>' +
+      '<div class="lab"><span>Mẫu nhanh</span></div><div class="btns" style="margin-bottom:10px"><button class="btn" data-p="ok">Hợp lệ</button><button class="btn" data-p="phone">SĐT sai</button><button class="btn" data-p="short">MK ngắn</button><button class="btn" data-p="dup">SĐT đã có</button><button class="btn" data-p="otp">OTP sai</button><button class="btn" data-p="exp">OTP hết hạn</button></div>' +
+      '<div class="btns"><button class="btn primary" id="a-send">Gửi POST /auth/register</button></div>',
+    detail: '<div><div class="lab"><span>Request body</span></div><pre id="a-body"></pre></div><div><div class="lab"><span>Response</span></div><pre id="a-resp" style="min-height:90px">(bấm Gửi)</pre></div>',
+    gloss: [['Pydantic', 'thư viện kiểm tra dữ liệu. Khai báo <code>phone: str = Field(pattern=...)</code>, FastAPI tự chặn dữ liệu sai.'], ['schema', 'lớp mô tả hình dạng JSON vào/ra (RegisterRequest). Swagger dùng nó để vẽ form.'],
+      ['422', 'dữ liệu sai hình dạng; Pydantic trả, code nghiệp vụ chưa chạy.'], ['409 / 400 / 201', '409 trùng SĐT; 400 OTP sai hoặc hết hạn; 201 tạo xong.'],
+      ['OpenAPI / Swagger', '<code>/docs</code> đọc <code>/openapi.json</code> do FastAPI sinh từ code. Postman import đúng file này.'], ['response_model', 'khuôn dữ liệu trả về; AccountResponse không có password nên không thể lộ.']],
+    note: 'Mô phỏng theo presentation/schemas/auth.py và AuthService.register.'
+  });
+  const g = id => $(id, root), st = ui.stage;
+  const read = () => ({ full_name: g('#a-name').value, phone: g('#a-phone').value, password: g('#a-pw').value, otp: g('#a-otp').value, expired: g('#a-exp').checked });
+  const fill = p => { g('#a-name').value = p[0]; g('#a-phone').value = p[1]; g('#a-pw').value = p[2]; g('#a-otp').value = p[3]; g('#a-exp').checked = !!p[4]; body(); };
+  const body = () => { const r = read(); g('#a-body').textContent = JSON.stringify({ full_name: r.full_name, phone: r.phone, password: r.password, otp: r.otp }, null, 2); };
+  const checks = r => [r.full_name.length >= 1 && r.full_name.length <= 100, /^0\d{9,10}$/.test(r.phone), r.password.length >= 8 && r.password.length <= 72, /^\d{6}$/.test(r.otp)];
+  const GY = [140, 250, 360], GXs = 600, CX = 80, PX = 300;
+  async function send() {
+    if (S.busy) return; S.busy = true; S.bad = []; S.stop = -1; S.code = null; S.lit = -1;
+    const r = read(), ck = checks(r); S.bad = ck.map((v, i) => v ? -1 : i).filter(i => i >= 0);
+    await st.packet([[CX + 70, 250], [PX - 125, 250]], { color: PAL[1], dur: 500 }); S.lit = 0;
+    let code, msg, resp;
+    if (S.bad.length) { code = 422; S.stop = 0; msg = 'Sai hình dạng: ' + S.bad.map(i => FIELDS[i][0]).join(', '); resp = { detail: S.bad.map(i => ({ loc: ['body', FIELDS[i][0]], msg: 'không đạt: ' + FIELDS[i][1] })) }; }
+    else {
+      await st.packet([[PX + 125, 250], [GXs - 90, GY[0]]], { color: PAL[1], dur: 450 }); S.lit = 1;
+      if (r.phone === EXISTING) { code = 409; S.stop = 1; msg = 'SĐT đã có tài khoản'; resp = { detail: 'Số điện thoại đã được đăng ký' }; }
+      else {
+        await st.packet([[GXs, GY[0] + 30], [GXs, GY[1] - 30]], { color: PAL[1], dur: 350 }); S.lit = 2;
+        if (r.expired || r.otp !== GOOD) { code = 400; S.stop = 2; msg = r.expired ? 'OTP đã hết hạn' : 'OTP không đúng'; resp = { detail: 'Mã OTP không đúng hoặc đã hết hạn' }; }
+        else { await st.packet([[GXs, GY[1] + 30], [GXs, GY[2] - 30]], { color: PAL[1], dur: 350 }); S.lit = 3; await st.packet([[GXs + 90, GY[2]], [830, GY[2]]], { color: PAL[2], dur: 400 });
+          code = 201; msg = 'Tạo tài khoản'; resp = { id: 2, phone: r.phone, full_name: r.full_name, role: 'KHACH_HANG', status: 'HOAT_DONG' }; }
+      }
+    }
+    S.code = code; S.msg = msg; g('#a-resp').textContent = 'HTTP ' + code + '\n' + JSON.stringify(resp, null, 2);
+    ui.status('<b>HTTP ' + code + '</b>: ' + esc(msg) + (code === 422 ? '. Pydantic chặn ngay ở cửa 1, AuthService chưa được gọi.' : code === 201 ? '. Mật khẩu đã băm Argon2 rồi INSERT vào accounts; response không có password.' : '.'));
+    S.busy = false;
+  }
+  $$('[data-p]', root).forEach(b => b.onclick = () => { fill(PRE[b.dataset.p]); S.bad = []; S.stop = -1; S.code = null; S.lit = -1; g('#a-resp').textContent = '(bấm Gửi)'; });
+  ['#a-name', '#a-phone', '#a-pw', '#a-otp'].forEach(id => g(id).oninput = body);
+  g('#a-send').onclick = send; fill(PRE.ok);
+
+  st.draw = function (c) {
+    const r = read(), ck = checks(r);
+    box(c, CX, 250, 130, 120, { stroke: PAL[0], lw: 2.5, title: 'Client', sub: 'Postman / Swagger' });
+    /* cửa 1: Pydantic với 4 trường */
+    const g1 = S.stop === 0 ? PAL[1] : S.lit >= 1 ? PAL[2] : T.line;
+    box(c, PX, 250, 250, 300, { stroke: g1, lw: S.lit >= 0 ? 3.5 : 2, tint: S.lit >= 0 ? [g1, 0.1] : null });
+    txt(c, 'Cửa 1 · Pydantic', PX, 118, { size: 15, bold: true }); txt(c, 'tầng Presentation', PX, 137, { size: 11.5, color: T.muted });
+    FIELDS.forEach((f, i) => {
+      const y = 180 + i * 58, bad = S.bad.indexOf(i) >= 0, fail = !ck[i];
+      box(c, PX, y, 220, 46, { stroke: bad ? PAL[1] : T.line, lw: bad ? 3 : 1.6, tint: bad ? [PAL[1], 0.12] : null, title: f[0] + (S.lit >= 0 ? (fail ? '  ✗' : '  ✓') : ''), sub: f[1], fs: 13.5, ss: 11.5 });
+    });
+    /* cửa 2-4: AuthService */
+    const gs = [['Cửa 2 · AuthService', 'SĐT chưa có tài khoản?'], ['Cửa 3 · AuthService', 'OTP đúng, còn hạn?'], ['Cửa 4 · Argon2 + DB', 'băm mật khẩu, INSERT']];
+    gs.forEach((gt, i) => {
+      const y = GY[i], idx = i + 1, col = S.stop === idx ? PAL[1] : S.lit > idx || (S.lit === idx && S.stop !== idx && S.code === 201) ? PAL[2] : S.lit === idx ? PAL[3] : T.line;
+      box(c, GXs, y, 180, 70, { stroke: col, lw: S.lit >= idx ? 3.5 : 2, tint: S.lit >= idx ? [col, 0.12] : null, title: gt[0], sub: gt[1], fs: 14, ss: 12 });
+    });
+    arrow(c, [PX + 125, 250], [GXs - 92, GY[0]], { color: T.line, lw: 1.8 }); arrow(c, [GXs, GY[0] + 36], [GXs, GY[1] - 36], { color: T.line, lw: 1.8 }); arrow(c, [GXs, GY[1] + 36], [GXs, GY[2] - 36], { color: T.line, lw: 1.8 });
+    cyl(c, 880, GY[2], 110, 90, { stroke: PAL[4] }); txt(c, 'MySQL', 880, GY[2] - 6, { size: 13, bold: true }); txt(c, 'accounts', 880, GY[2] + 12, { size: 11.5, color: T.muted });
+    arrow(c, [GXs + 92, GY[2]], [822, GY[2]], { color: T.line, lw: 1.8 });
+    /* khung kết quả */
+    const col = S.code === null ? T.line : S.code === 201 ? PAL[2] : PAL[1];
+    box(c, 880, 195, 170, 92, { stroke: col, lw: 3, fill: S.code === null ? T.bg : col, title: S.code === null ? 'Response' : 'HTTP ' + S.code, sub: S.code === null ? 'chưa gửi' : S.msg, tc: S.code === null ? T.fg : '#fff', sc: S.code === null ? T.muted : '#fff', fs: 22, ss: 11.5 });
+    if (S.stop >= 0) { const sy = S.stop === 0 ? 250 : GY[S.stop - 1], sx = S.stop === 0 ? PX + 125 : GXs + 90; c.save(); c.strokeStyle = PAL[1]; c.lineWidth = 2.4; c.setLineDash([6, 5]); c.beginPath(); c.moveTo(sx, sy); c.lineTo(sx + 30, sy); c.lineTo(sx + 30, 70); c.lineTo(880, 70); c.lineTo(880, 146); c.stroke(); c.restore(); arrow(c, [880, 130], [880, 148], { color: PAL[1], lw: 2.4 }); }
+  };
+  ui.status('Chọn mẫu hoặc sửa ô, rồi bấm <b>Gửi</b>. Thử "SĐT sai" để thấy Pydantic chặn trước khi AuthService chạy.');
+}
+/* =================== TAB 5: KHÓA TÀI KHOẢN (máy trạng thái) =================== */
+function tab5(root) {
+  const S = { max: 5, lockMin: 15, now: 0, failed: 0, until: null, status: 'HOAT_DONG', ev: [], pulse: { k: '', t: 0 } };
+  const ui = shell(root, {
+    intro: 'Quy tắc "sai quá nhiều lần thì khóa tạm" nằm trong thực thể <b>Account</b> (tầng Domain), không nằm trong router hay SQL. Đây là máy trạng thái của một tài khoản: bấm nhập sai, tua đồng hồ, để Admin khóa tay và xem nó chuyển trạng thái.',
+    hook: 'Sai đủ N lần → <b>Khóa tạm</b> (423, tự mở sau M phút). Admin khóa tay → <b>KHOA</b> (403, không tự mở). Đúng mật khẩu thì đếm về 0.',
+    h: 470,
+    controls: '<div class="row"><div class="lab"><label for="l-max">Số lần sai tối đa</label><b id="l-maxv"></b></div><input id="l-max" type="range" min="1" max="10" step="1" value="5"></div>' +
+      '<div class="row"><div class="lab"><label for="l-min">Thời gian khóa</label><b id="l-minv"></b></div><input id="l-min" type="range" min="1" max="60" step="1" value="15"></div>' +
+      '<div class="lab"><span>Người dùng đăng nhập</span></div><div class="btns" style="margin-bottom:10px"><button class="btn danger" id="l-bad">Nhập SAI mật khẩu</button><button class="btn primary" id="l-good">Nhập ĐÚNG mật khẩu</button></div>' +
+      '<div class="lab"><span>Đồng hồ</span></div><div class="btns" style="margin-bottom:10px"><button class="btn" data-t="1">+1 phút</button><button class="btn" data-t="5">+5 phút</button><button class="btn" data-t="15">+15 phút</button><button class="btn" data-t="60">+1 giờ</button></div>' +
+      '<div class="btns"><button class="btn" id="l-admin">Admin khóa/mở</button><button class="btn" id="l-reset">Làm lại</button></div>',
+    detail: '<div class="card" style="background:var(--bg)"><div class="lab"><span>Account (đối tượng Domain)</span></div><div class="ent" id="l-ent"></div></div><div><div class="lab"><span>Nhật ký request</span></div><pre id="l-log" style="min-height:110px"></pre></div>',
+    gloss: [['entity', 'đối tượng nghiệp vụ như Account: giữ dữ liệu và luật của chính nó, không biết web hay DB.'], ['dataclass', 'cách Python viết lớp chỉ chứa dữ liệu gọn nhất; entity của dự án là dataclass thuần.'],
+      ['locked_until', 'thời điểm được thử lại. Còn ở tương lai thì đăng nhập bị từ chối (423).'], ['status KHOA', 'Admin khóa tay (403), khác khóa tạm: không tự mở.'], ['401 / 403 / 423', '401 sai thông tin, 403 bị Admin khóa, 423 khóa tạm do sai nhiều lần.']],
+    note: 'Mô phỏng theo Account.record_failed_login, is_temporarily_locked và AuthService.login. Đồng hồ là đồng hồ giả để bạn tua.'
+  });
+  const g = id => $(id, root), st = ui.stage, locked = () => S.until !== null && S.until > S.now;
+  const state = () => S.status === 'KHOA' ? 'admin' : locked() ? 'lock' : 'ok';
+  const log = t => { S.ev.push(t); };
+  function pulse(k) { S.pulse = { k: k, t: performance.now() }; }
+  function login(correct) {
+    let line, kind;
+    if (S.status === 'KHOA') { line = '403 tài khoản bị Admin khóa (cửa 1)'; kind = 'bad'; }
+    else if (locked()) { line = '423 đang khóa tạm, còn ' + (S.until - S.now) + ' phút; chưa so mật khẩu (cửa 2)'; kind = 'bad'; }
+    else if (!correct) { S.failed++; kind = 'bad'; if (S.failed >= S.max) { S.until = S.now + S.lockMin; S.failed = 0; line = '401 sai lần thứ ' + S.max + ' → KHÓA ' + S.lockMin + ' phút'; pulse('lock'); } else line = '401 sai, failed_login_count = ' + S.failed + '/' + S.max; }
+    else { S.failed = 0; S.until = null; line = '200 thành công, đếm sai về 0, cấp token'; kind = 'good'; }
+    S.ev.push({ t: S.now, kind: kind, until: S.until }); S.lines.push('T+' + S.now + 'p ' + (correct ? 'đúng' : 'sai ') + ' → ' + line); ui.status('<b>' + esc(line) + '</b>'); render();
+  }
+  S.lines = []; S.ev = [];
+  function render() {
+    g('#l-maxv').textContent = S.max + ' lần'; g('#l-minv').textContent = S.lockMin + ' phút';
+    g('#l-ent').innerHTML = '<span>status</span><span>' + S.status + '</span><span>failed_login_count</span><span>' + S.failed + '</span><span>locked_until</span><span>' + (S.until === null ? 'None' : 'T+' + S.until + 'p') + '</span><span>bây giờ</span><span>T+' + S.now + 'p</span>';
+    const lg = g('#l-log'); lg.textContent = S.lines.slice(-30).join('\n') || '(chưa có request nào)'; lg.scrollTop = lg.scrollHeight;
+  }
+  g('#l-max').oninput = e => { S.max = parseInt(e.target.value, 10); render(); }; g('#l-min').oninput = e => { S.lockMin = parseInt(e.target.value, 10); render(); };
+  g('#l-bad').onclick = () => login(false); g('#l-good').onclick = () => login(true);
+  $$('[data-t]', root).forEach(b => b.onclick = () => { const was = state(); S.now += parseInt(b.dataset.t, 10); S.lines.push('T+' + S.now + 'p (tua +' + b.dataset.t + ' phút)'); if (was === 'lock' && state() === 'ok') { pulse('ok'); ui.status('Qua giờ <b>locked_until</b> → tài khoản <b>tự mở khóa tạm</b>.'); } render(); });
+  g('#l-admin').onclick = () => { S.status = S.status === 'KHOA' ? 'HOAT_DONG' : 'KHOA'; pulse(S.status === 'KHOA' ? 'admin' : 'ok'); S.lines.push('T+' + S.now + 'p Admin đặt status = ' + S.status); ui.status('Admin đặt <b>status = ' + S.status + '</b>.'); render(); };
+  g('#l-reset').onclick = () => { S.now = 0; S.failed = 0; S.until = null; S.status = 'HOAT_DONG'; S.lines = []; S.ev = []; ui.status('Đã làm lại từ đầu.'); render(); };
+
+  const POS = { ok: [230, 150], lock: [740, 150], admin: [230, 315] };
+  st.draw = function (c, now) {
+    const cur = state();
+    const sdef = [['ok', 'HOẠT ĐỘNG', 'cho đăng nhập', PAL[2]], ['lock', 'KHÓA TẠM', 'locked_until còn ở tương lai', PAL[3]], ['admin', 'KHÓA TAY', 'status = KHOA (Admin)', PAL[1]]];
+    arrow(c, [335, 135], [633, 135], { color: PAL[3], lw: 2.5 }); txt(c, 'sai đủ ' + S.max + ' lần', 485, 117, { size: 12.5, bold: true, color: PAL[3] });
+    arrow(c, [633, 168], [335, 168], { color: PAL[2], lw: 2.5, dash: [6, 5] }); txt(c, 'qua ' + S.lockMin + ' phút', 485, 188, { size: 12.5, bold: true, color: PAL[2] });
+    arrow(c, [175, 198], [175, 266], { color: PAL[1], lw: 2.4 }); arrow(c, [285, 268], [285, 200], { color: PAL[2], lw: 2.4, dash: [6, 5] });
+    txt(c, 'Admin khóa', 118, 232, { size: 12, bold: true, color: PAL[1], align: 'right' }); txt(c, 'Admin mở', 296, 232, { size: 12, bold: true, color: PAL[2], align: 'left' });
+    sdef.forEach(s => {
+      const p = POS[s[0]], on = cur === s[0], age = now - (S.pulse.k === s[0] ? S.pulse.t : -1e9), ring = Math.max(0, 1 - age / 700);
+      if (ring > 0) { c.save(); c.strokeStyle = s[3]; c.globalAlpha = ring; c.lineWidth = 5; rr(c, p[0] - 105 - ring * 18, p[1] - 45 - ring * 18, 210 + ring * 36, 90 + ring * 36, 16); c.stroke(); c.restore(); }
+      box(c, p[0], p[1], 210, 90, { stroke: s[3], lw: on ? 5 : 2, fill: on ? s[3] : T.bg, title: s[1], sub: s[2], tc: on ? '#fff' : T.fg, sc: on ? '#fff' : T.muted, fs: 18, ss: 12 });
+      if (on) badge(c, 'đang ở đây', p[0], p[1] - 62, s[3], true);
+    });
+    /* các chấm đếm lần sai */
+    txt(c, 'số lần sai', 230, 56, { size: 12, color: T.muted });
+    for (let i = 0; i < S.max; i++) { const x = 230 + (i - (S.max - 1) / 2) * 24; c.beginPath(); c.arc(x, 80, 9, 0, 7); c.fillStyle = i < S.failed ? PAL[1] : T.bg; c.fill(); c.lineWidth = 2; c.strokeStyle = i < S.failed ? PAL[1] : T.muted; c.stroke(); }
+    if (locked()) { const left = (S.until - S.now) / S.lockMin; c.fillStyle = T['code-bg']; c.fillRect(640, 210, 200, 12); c.fillStyle = PAL[3]; c.fillRect(640, 210, 200 * left, 12); txt(c, 'còn ' + (S.until - S.now) + ' phút', 740, 238, { size: 12, color: PAL[3], bold: true }); }
+    /* trục thời gian */
+    const X0 = 70, X1 = 930, Tmax = Math.max(60, S.now + 20), kx = t => X0 + t / Tmax * (X1 - X0);
+    txt(c, 'DÒNG THỜI GIAN (phút)', 70, 380, { size: 12, bold: true, color: T.muted, align: 'left' });
+    c.strokeStyle = T.muted; c.lineWidth = 2; c.beginPath(); c.moveTo(X0, 420); c.lineTo(X1, 420); c.stroke();
+    for (let t = 0; t <= Tmax; t += Tmax > 120 ? 30 : 15) { txt(c, t, kx(t), 440, { size: 11.5, color: T.muted }); c.beginPath(); c.moveTo(kx(t), 416); c.lineTo(kx(t), 424); c.stroke(); }
+    S.ev.forEach(e => { if (e.until && e.kind === 'bad' && e.until > e.t) { c.fillStyle = PAL[3]; c.globalAlpha = 0.28; c.fillRect(kx(e.t), 400, kx(Math.min(e.until, Tmax)) - kx(e.t), 18); c.globalAlpha = 1; } });
+    S.ev.forEach(e => { c.fillStyle = e.kind === 'good' ? PAL[2] : PAL[1]; c.beginPath(); c.arc(kx(e.t), 420, 5, 0, 7); c.fill(); });
+    c.fillStyle = PAL[0]; c.fillRect(kx(S.now) - 2, 396, 4, 34); txt(c, 'bây giờ', kx(S.now), 462, { size: 12, bold: true, color: PAL[0] });
+    txt(c, '● đỏ = nhập sai/bị chặn   ● xanh = nhập đúng   dải cam = đang khóa', 930, 380, { size: 12, color: T.muted, align: 'right' });
+  };
+  render(); ui.status('Bấm <b>Nhập SAI mật khẩu</b> liên tục: các chấm đỏ đầy dần, đủ ' + S.max + ' lần thì chuyển sang KHÓA TẠM.');
+}
+
+/* =================== TAB 6: KIẾN TRÚC (hành tây Clean Architecture) =================== */
+function tab6(root) {
+  const IMPL = { repo: { sql: ['SqlAccountRepository', 'SQLAlchemy → MySQL thật'], mem: ['InMemoryAccountRepository', 'dict trong RAM, dùng khi test'] },
+    hasher: { argon: ['Argon2Hasher', 'argon2-cffi, chậm'], plain: ['PlainHasher (test)', 'so chuỗi thẳng, KHÔNG an toàn'] },
+    sms: { mock: ['MockSmsSender', 'ghi log'], real: ['TwilioSmsSender (ví dụ)', 'chưa viết'] } };
+  const LAYERS = ['domain', 'application', 'infrastructure', 'presentation'];
+  const IM = [['thư viện chuẩn (dataclasses, datetime)', 'std'], ['app.domain.entities', 'domain'], ['app.application.use_cases', 'application'], ['app.application.ports', 'ports'],
+    ['app.infrastructure.db', 'infrastructure'], ['app.presentation.routers', 'presentation'], ['fastapi', 'fastapi'], ['pydantic', 'pydantic'], ['sqlalchemy', 'sqlalchemy'], ['pymysql', 'pymysql'], ['argon2', 'argon2'], ['jwt (PyJWT)', 'jwt']];
+  const ALLOW = { domain: ['std', 'domain'], application: ['std', 'domain', 'application', 'ports'], infrastructure: ['std', 'domain', 'application', 'ports', 'infrastructure', 'sqlalchemy', 'pymysql', 'argon2', 'jwt'],
+    presentation: ['std', 'domain', 'application', 'ports', 'infrastructure', 'presentation', 'fastapi', 'pydantic'] };
+  const WHY = { domain: 'Domain là lõi nghiệp vụ: chỉ được biết chính nó và thư viện chuẩn. Import SQLAlchemy/FastAPI vào đây thì đổi công nghệ sẽ phải sửa luật nghiệp vụ.',
+    application: 'Application điều phối use case: chỉ biết Domain và các Port (hợp đồng), không biết MySQL hay HTTP.',
+    infrastructure: 'Infrastructure là nơi cài đặt cụ thể (SQLAlchemy, Argon2, PyJWT, PyMySQL) nên được dùng các thư viện đó.',
+    presentation: 'Presentation nói chuyện với web (FastAPI, Pydantic). deps.py cũng ở đây vì là nơi lắp các lớp Infrastructure vào use case.' };
+  const S = { verdict: null, plug: { repo: 0, hasher: 0, sms: 0 }, prev: { repo: 'sql', hasher: 'argon', sms: 'mock' } };
+  const ui = shell(root, {
+    intro: 'Clean Architecture có đúng một luật: <b>mũi tên import chỉ hướng vào trong</b> (như củ hành). Bên trái là củ hành các tầng, bên phải là ổ cắm của AuthService. Thí nghiệm 1: rút phích cắm này cắm phích khác mà AuthService không đổi dòng nào. Thí nghiệm 2: thử cho một tầng import thứ nó không được phép.',
+    hook: '<b>Domain</b> ở tâm, biết ít nhất. Tầng ngoài được biết tầng trong, <b>không ngược lại</b>. Thứ cụ thể (MySQL, Argon2) cắm vào qua <b>Port</b>.',
+    h: 500,
+    controls: '<div class="lab"><span><b>Thí nghiệm 1</b>: đổi phích cắm</span></div>' +
+      '<div class="row"><label for="r-repo">Kho tài khoản (Port AccountRepository)</label><select id="r-repo"><option value="sql">SqlAccountRepository</option><option value="mem">InMemoryAccountRepository</option></select></div>' +
+      '<div class="row"><label for="r-hash">Bộ băm (Port PasswordHasher)</label><select id="r-hash"><option value="argon">Argon2Hasher</option><option value="plain">PlainHasher</option></select></div>' +
+      '<div class="row"><label for="r-sms">Gửi SMS (Port SmsSender)</label><select id="r-sms"><option value="mock">MockSmsSender</option><option value="real">TwilioSmsSender</option></select></div>' +
+      '<div class="lab" style="margin-top:14px"><span><b>Thí nghiệm 2</b>: kiểm tra luật import</span></div>' +
+      '<div class="row"><label for="r-layer">File nằm ở tầng</label><select id="r-layer">' + LAYERS.map(l => '<option>' + l + '</option>').join('') + '</select></div>' +
+      '<div class="row"><label for="r-imp">và viết dòng import</label><select id="r-imp">' + IM.map(i => '<option value="' + i[1] + '">' + esc(i[0]) + '</option>').join('') + '</select></div>' +
+      '<div class="btns"><button class="btn primary" id="r-check">Kiểm tra dòng import</button></div>',
+    detail: '<div><div class="lab"><span>AuthService (không đổi)</span></div><pre>def login(self, phone, password):\n    account = self.accounts.get_by_phone(phone)\n    if not self.hasher.verify(password, account.password_hash):\n        ...\n    return self.tokens.issue(account)</pre></div><div id="r-verdict"></div>',
+    gloss: [['Port (Protocol)', 'khai báo "tôi cần thứ có hàm get_by_phone()" mà không nói ai cài. Python gọi là <code>Protocol</code>.'], ['Dependency Injection', 'AuthService được "đưa" sẵn đồ dùng qua hàm khởi tạo thay vì tự tạo. FastAPI làm bằng <code>Depends()</code>.'],
+      ['Repository', 'lớp lo đọc/ghi một loại dữ liệu để use case không phải viết SQL.'], ['Session', 'một "phiên làm việc" với DB do SQLAlchemy cấp; mỗi request mở một cái rồi đóng.'], ['use case', 'một việc người dùng muốn làm (đăng nhập, đặt vé), viết ở tầng Application.']],
+    note: 'Luật import phản ánh đúng cấu trúc backend/app của dự án.'
+  });
+  const g = id => $(id, root), st = ui.stage;
+  const impl = k => IMPL[k][{ repo: g('#r-repo'), hasher: g('#r-hash'), sms: g('#r-sms') }[k].value];
+  ['repo', 'hasher', 'sms'].forEach(k => { const id = { repo: '#r-repo', hasher: '#r-hash', sms: '#r-sms' }[k]; g(id).onchange = () => { S.plug[k] = performance.now(); const a = impl(k); ui.status('Rút phích cũ, cắm <b>' + esc(a[0]) + '</b> (' + esc(a[1]) + ') vào Port. <b>AuthService không đổi một dòng.</b>' + (g(id).value === 'plain' ? ' Cảnh báo: PlainHasher chỉ để test.' : '')); }; });
+  g('#r-check').onclick = () => {
+    const layer = g('#r-layer').value, sel = g('#r-imp'), imp = sel.value, ok = ALLOW[layer].indexOf(imp) >= 0;
+    S.verdict = { layer: layer, imp: imp, ok: ok };
+    g('#r-verdict').innerHTML = '<div class="card" style="background:var(--bg)">' + (ok ? pill('ok', '✓ Được phép') : pill('err', '✗ Vi phạm luật')) + ' <span class="mono">' + esc(layer) + ' → ' + esc(sel.options[sel.selectedIndex].text) + '</span><p style="margin:8px 0 0">' + esc(WHY[layer]) + '</p></div>';
+    ui.status(ok ? '<b>Được phép</b>: mũi tên đi từ ngoài vào trong hoặc đến thư viện đúng tầng.' : '<b>Vi phạm</b>: mũi tên đi ngược ra ngoài hoặc đến thư viện không thuộc tầng đó.');
+  };
+  const CX = 250, CY = 255, anchor = { domain: [CX, CY], application: [CX, CY - 100], ports: [CX, CY + 100], infrastructure: [CX + 60, CY + 165], presentation: [CX + 60, CY - 165], std: [540, 255],
+    fastapi: [540, 85], pydantic: [540, 130], sqlalchemy: [540, 385], pymysql: [540, 340], argon2: [540, 430], jwt: [540, 470] };
+  const LIBS = [['std', 'thư viện chuẩn', 255, T.muted], ['fastapi', 'fastapi', 85, PAL[0]], ['pydantic', 'pydantic', 130, PAL[0]], ['pymysql', 'pymysql', 340, PAL[3]], ['sqlalchemy', 'sqlalchemy', 385, PAL[3]], ['argon2', 'argon2', 430, PAL[3]], ['jwt', 'PyJWT', 470, PAL[3]]];
+  st.draw = function (c, now) {
+    /* củ hành: vòng ngoài tách trên (presentation) dưới (infrastructure) */
+    c.save(); c.lineWidth = 2;
+    c.beginPath(); c.arc(CX, CY, 205, Math.PI, 0); c.closePath(); c.fillStyle = PAL[0]; c.globalAlpha = 0.12; c.fill(); c.globalAlpha = 1; c.strokeStyle = PAL[0]; c.stroke();
+    c.beginPath(); c.arc(CX, CY, 205, 0, Math.PI); c.closePath(); c.fillStyle = PAL[3]; c.globalAlpha = 0.14; c.fill(); c.globalAlpha = 1; c.strokeStyle = PAL[3]; c.stroke();
+    c.beginPath(); c.arc(CX, CY, 140, 0, 7); c.fillStyle = T.bg; c.fill(); c.fillStyle = PAL[1]; c.globalAlpha = 0.12; c.fill(); c.globalAlpha = 1; c.strokeStyle = PAL[1]; c.stroke();
+    c.beginPath(); c.arc(CX, CY, 72, 0, 7); c.fillStyle = T.bg; c.fill(); c.fillStyle = PAL[2]; c.globalAlpha = 0.16; c.fill(); c.globalAlpha = 1; c.strokeStyle = PAL[2]; c.stroke(); c.restore();
+    txt(c, 'PRESENTATION', CX, CY - 188, { size: 12, bold: true, color: PAL[0] }); txt(c, 'Router · Pydantic · Depends', CX, CY - 168, { size: 12, color: T.muted });
+    txt(c, 'INFRASTRUCTURE', CX, CY + 190, { size: 12, bold: true, color: PAL[3] }); txt(c, 'Repository · Argon2 · PyJWT', CX, CY + 170, { size: 12, color: T.muted });
+    txt(c, 'APPLICATION', CX, CY - 120, { size: 12, bold: true, color: PAL[1] }); txt(c, 'AuthService', CX, CY - 100, { size: 13, bold: true }); txt(c, 'Ports (Protocol)', CX, CY + 100, { size: 13, bold: true });
+    txt(c, 'DOMAIN', CX, CY - 14, { size: 12, bold: true, color: PAL[2] }); txt(c, 'Account', CX, CY + 8, { size: 14, bold: true });
+    LIBS.forEach(l => { box(c, 540, l[2], 130, 32, { stroke: l[3], title: l[1], fs: 13 }); });
+    txt(c, 'thư viện ngoài', 540, 55, { size: 12, color: T.muted, bold: true });
+    /* mũi tên kiểm tra import */
+    if (S.verdict) {
+      const v = S.verdict, a = anchor[v.layer], b = anchor[v.imp];
+      const sa = v.layer === 'presentation' ? [CX + 60, CY - 165] : v.layer === 'infrastructure' ? [CX + 60, CY + 165] : v.layer === 'application' ? [CX + 40, CY - 100] : [CX + 50, CY + 30];
+      const tb = b || [540, 255], col = v.ok ? PAL[2] : PAL[1];
+      arrow(c, sa, v.imp.length && ['std', 'fastapi', 'pydantic', 'sqlalchemy', 'pymysql', 'argon2', 'jwt'].indexOf(v.imp) >= 0 ? [tb[0] - 66, tb[1]] : tb, { color: col, lw: 4, dash: v.ok ? null : [8, 6] });
+      badge(c, v.ok ? '✓ được phép' : '✗ vi phạm', (sa[0] + tb[0]) / 2, (sa[1] + tb[1]) / 2 - 14, col, true);
+      void a;
+    }
+    /* ổ cắm AuthService */
+    box(c, 715, 250, 110, 330, { stroke: PAL[1], lw: 3 }); txt(c, 'AuthService', 715, 232, { size: 15, bold: true }); txt(c, 'không đổi', 715, 256, { size: 12, color: T.muted }); txt(c, 'dòng nào', 715, 272, { size: 12, color: T.muted });
+    [['repo', 'AccountRepository', 150], ['hasher', 'PasswordHasher', 250], ['sms', 'SmsSender', 350]].forEach(r => {
+      const age = Math.min(1, (now - S.plug[r[0]]) / 350), x = 892 + (1 - age) * 60, im = impl(r[0]);
+      txt(c, 'Port ' + r[1], 892, r[2] - 40, { size: 12, bold: true, color: PAL[1] });
+      c.fillStyle = PAL[1]; c.fillRect(770, r[2] - 6, 18, 12); c.fillRect(788, r[2] - 12, 6, 24);
+      c.strokeStyle = T.muted; c.lineWidth = 3; c.beginPath(); c.moveTo(794, r[2]); c.lineTo(x - 95, r[2]); c.stroke();
+      box(c, x, r[2], 190, 54, { stroke: PAL[3], lw: 2.5, tint: [PAL[3], 0.1], title: im[0], sub: im[1], fs: 12.5, ss: 11 });
+    });
+  };
+  ui.status('Thí nghiệm 1: đổi bộ chọn bên trái, phích cắm trượt vào ổ. Thí nghiệm 2: chọn tầng + dòng import rồi bấm <b>Kiểm tra</b>.');
+}
+/* =================== TAB 7: DOCKER COMPOSE =================== */
+function tab7(root) {
+  const S = { img: false, mysql: 'stopped', backend: 'stopped', frontend: 'stopped', migrated: false, accounts: 0, busy: false, log: [], dnsBad: false, portBusy: true, jwtMissing: false, fail: '', pulse: 0 };
+  const ui = shell(root, {
+    intro: 'docker-compose.yml mô tả cả hệ thống: MySQL, backend, frontend. Bấm lệnh và xem gói tin chạy: <b>pip install</b> kéo thư viện từ PyPI, request từ máy bạn vào cổng 8000, backend chờ MySQL "healthy". Bật các tình huống lỗi bạn từng gặp (DNS hỏng, cổng 3000 bị chiếm, quên migration).',
+    hook: '<b>up</b> = build image (pip install) → MySQL chạy, đợi <b>healthy</b> → backend chạy → cổng <b>8000</b> mở ra máy bạn. Quên <b>alembic upgrade head</b> thì API đăng ký lỗi 500.',
+    h: 480,
+    controls: '<div class="btns" style="margin-bottom:8px"><button class="btn primary" id="d-up">docker compose up -d --build mysql backend</button><button class="btn" id="d-front">up -d frontend</button></div>' +
+      '<div class="btns" style="margin-bottom:8px"><button class="btn" id="d-down">docker compose down</button><button class="btn danger" id="d-downv">down -v (xóa dữ liệu)</button></div>' +
+      '<div class="btns" style="margin-bottom:12px"><button class="btn" id="d-alembic">exec backend alembic upgrade head</button><button class="btn" id="d-health">curl /health</button><button class="btn" id="d-reg">Gọi API đăng ký</button><button class="btn" id="d-clear">Xóa nhật ký</button></div>' +
+      '<div class="lab"><span>Tình huống lỗi</span></div>' +
+      '<div class="chk"><input type="checkbox" id="d-dns"><label for="d-dns">DNS của Docker hỏng (không phân giải được pypi.org)</label></div>' +
+      '<div class="chk"><input type="checkbox" id="d-port" checked><label for="d-port">Cổng 3000 đang bị container khác (mt5) chiếm</label></div>' +
+      '<div class="chk"><input type="checkbox" id="d-jwt"><label for="d-jwt">File .env thiếu JWT_SECRET</label></div>',
+    detail: '<div><div class="lab"><span>Terminal</span></div><pre id="d-log" style="min-height:200px"></pre></div>',
+    gloss: [['Docker image', 'bản đóng gói sẵn chương trình + thư viện. Backend build image từ <code>backend/Dockerfile</code>; bước <code>pip install</code> cài FastAPI, SQLAlchemy...'], ['container', 'một image đang chạy; mỗi service chạy trong container riêng, nói chuyện nhau qua mạng ảo.'],
+      ['docker compose', 'đọc docker-compose.yml để bật nhiều container cùng lúc với đúng cổng, biến môi trường, thứ tự khởi động.'], ['healthcheck + depends_on', 'backend chỉ bật khi MySQL báo healthy.'],
+      ['volume', 'ổ đĩa giữ dữ liệu MySQL ngoài container. <code>down</code> giữ lại, <code>down -v</code> xóa sạch.'], ['cổng (port) 8000 → 8000', 'cổng máy bạn → cổng trong container. Hai thứ chiếm cùng một cổng máy thì lỗi.'], ['.env', 'file biến môi trường (mật khẩu DB, JWT_SECRET); nằm trong .gitignore.']],
+    note: 'Mô phỏng hành vi các lệnh docker compose thật của dự án; không có container nào chạy trên máy bạn.'
+  });
+  const g = id => $(id, root), st = ui.stage;
+  const out = t => { S.log.push(t); render(); };
+  async function lock(fn) { if (S.busy) return; S.busy = true; render(); try { await fn(); } finally { S.busy = false; render(); } }
+  function render() { const lg = g('#d-log'); lg.textContent = S.log.slice(-60).join('\n') || '$ (chưa chạy lệnh nào)'; lg.scrollTop = lg.scrollHeight; $$('button', root).forEach(b => { if (b.id && b.id.indexOf('d-') === 0 && b.id !== 'd-clear') b.disabled = S.busy; }); }
+  const CP = { mysql: [200, 290], backend: [500, 290], frontend: [800, 290] };
+  async function up() {
+    out('$ docker compose up -d --build mysql backend'); S.fail = '';
+    if (!S.img) {
+      out('#9 RUN pip install --no-cache-dir -r requirements.txt');
+      if (S.dnsBad) {
+        await st.packet([[500, 125], [500, 200]], { color: PAL[1], dur: 600, label: 'pip install' });
+        S.fail = 'dns'; out("#9 WARNING: NameResolutionError: Failed to resolve 'pypi.org' (Temporary failure in name resolution)"); out('#9 ERROR: No matching distribution found for fastapi==0.141.1');
+        out('failed to solve: pip install did not complete successfully'); out('→ Sửa: đặt {"dns":["8.8.8.8","1.1.1.1"]} trong /etc/docker/daemon.json rồi restart Docker.');
+        ui.status('<b>Build thất bại</b>: container không phân giải được tên miền pypi.org nên <b>pip install</b> không tải được thư viện (ô đỏ trên sơ đồ).'); return;
+      }
+      await st.packet([[500, 125], [500, 235]], { color: PAL[0], dur: 700, label: 'pip install' });
+      out('#9 Successfully installed fastapi uvicorn sqlalchemy alembic pymysql pyjwt argon2-cffi ...'); S.img = true;
+    }
+    if (S.mysql === 'stopped') { S.mysql = 'starting'; S.pulse = performance.now(); out(' Container mysql  Started'); ui.status('MySQL đang khởi động, <b>healthcheck</b> (mysqladmin ping) chưa pass.'); await sleep(REDUCE ? 50 : 1100); S.mysql = 'healthy'; out(' Container mysql  Healthy'); }
+    if (S.backend === 'stopped') {
+      await st.packet([[500, 345], [250, 345]], { color: PAL[2], dur: 450, label: 'đợi healthy' });
+      S.backend = 'running'; out(' Container backend  Started  (depends_on: mysql service_healthy)');
+      if (S.jwtMissing) out('WARNING backend: thiếu JWT_SECRET trong .env, dùng mặc định "change-me" (quá ngắn, đoán được)!');
+      out('INFO:     Uvicorn running on http://0.0.0.0:8000');
+    }
+    ui.status('Hệ thống đã lên: <b>MySQL healthy</b> rồi mới đến <b>backend</b>, cổng 8000 mở ra máy bạn.');
+  }
+  g('#d-up').onclick = () => lock(up);
+  g('#d-front').onclick = () => lock(async () => {
+    out('$ docker compose up -d frontend');
+    if (S.portBusy) { S.fail = 'port'; out('Error: Bind for 0.0.0.0:3000 failed: port is already allocated'); out('→ Sửa: dừng container đang chiếm cổng 3000 hoặc đổi cổng trong docker-compose.yml.'); ui.status('<b>Lỗi cổng 3000</b>: container khác (mt5) đã chiếm cổng này trên máy bạn nên frontend không bind được.'); return; }
+    S.fail = ''; S.frontend = 'running'; out(' Container frontend  Started'); ui.status('Frontend chạy ở cổng 3000.');
+  });
+  g('#d-down').onclick = () => lock(async () => { out('$ docker compose down'); S.mysql = S.backend = S.frontend = 'stopped'; S.fail = ''; out(' Container ... Removed (volume vẫn còn, dữ liệu an toàn)'); ui.status('Tắt container nhưng <b>volume mysql_data vẫn còn</b>: bảng và tài khoản không mất.'); });
+  g('#d-downv').onclick = () => lock(async () => { out('$ docker compose down -v'); S.mysql = S.backend = S.frontend = 'stopped'; S.migrated = false; S.accounts = 0; S.fail = ''; out(' Volume mysql_data  Removed (MẤT bảng và tài khoản)'); ui.status('<b>Mất dữ liệu</b>: volume bị xóa, phải chạy lại alembic upgrade head.'); });
+  g('#d-alembic').onclick = () => lock(async () => {
+    out('$ docker compose exec backend alembic upgrade head');
+    if (S.backend !== 'running') { out('service "backend" is not running'); ui.status('Backend chưa chạy nên không exec được.'); return; }
+    if (S.migrated) { out('(không có migration mới)'); return; }
+    await st.packet([[500, 215], [200, 215], [200, 235]], { color: PAL[4], dur: 800, label: 'alembic' }); out('INFO  Running upgrade  -> 0001, auth tables'); S.migrated = true; ui.status('Alembic tạo 3 bảng trong volume mysql_data.');
+  });
+  g('#d-health').onclick = () => lock(async () => {
+    out('$ curl localhost:8000/health');
+    if (S.backend !== 'running') { out('curl: (7) Failed to connect to localhost port 8000: Connection refused'); ui.status('Không kết nối được cổng 8000: backend chưa chạy.'); return; }
+    await st.packet([[680, 60], [500, 130], [500, 235]], { color: PAL[0], dur: 800, label: 'GET /health' }); out('{"status":"ok"}'); ui.status('<b>200</b>: gói tin đi từ máy bạn vào cổng 8000 rồi tới Uvicorn.');
+  });
+  g('#d-reg').onclick = () => lock(async () => {
+    out('$ curl -X POST localhost:8000/auth/register ...');
+    if (S.backend !== 'running') { out('curl: (7) Failed to connect to localhost port 8000'); ui.status('Backend chưa chạy.'); return; }
+    await st.packet([[680, 60], [500, 130], [500, 235], [330, 290], [250, 290]], { color: PAL[0], dur: 1100, label: 'POST /register' });
+    if (!S.migrated) { out('HTTP 500'); out("  (1146, \"Table 'ooad_busticket.accounts' doesn't exist\")  → bạn quên alembic upgrade head"); S.fail = 'mig'; ui.status('<b>500</b>: MySQL chưa có bảng accounts vì quên chạy migration.'); return; }
+    S.fail = ''; S.accounts++; out('HTTP 201 {"id":' + S.accounts + ',...}'); ui.status('<b>201</b>: tài khoản #' + S.accounts + ' đã được ghi vào volume mysql_data.');
+  });
+  g('#d-clear').onclick = () => { S.log = []; render(); };
+  g('#d-dns').onchange = e => { S.dnsBad = e.target.checked; }; g('#d-port').onchange = e => { S.portBusy = e.target.checked; }; g('#d-jwt').onchange = e => { S.jwtMissing = e.target.checked; };
+
+  st.draw = function (c, now) {
+    /* máy chủ */
+    c.save(); c.setLineDash([8, 6]); c.strokeStyle = T.muted; c.lineWidth = 1.6; rr(c, 30, 150, 940, 310, 14); c.stroke(); c.restore();
+    txt(c, 'MÁY CỦA BẠN (host) · mạng ảo của docker compose', 950, 445, { size: 12, color: T.muted, align: 'right', bold: true });
+    /* ngoài */
+    box(c, 330, 60, 170, 56, { stroke: S.fail === 'dns' ? PAL[1] : PAL[4], lw: S.fail === 'dns' ? 3.5 : 2, title: 'PyPI', sub: 'kho thư viện Python', fs: 15 });
+    box(c, 680, 60, 150, 56, { stroke: PAL[0], title: 'Postman / curl', sub: 'trên máy bạn', fs: 14 });
+    box(c, 900, 60, 120, 56, { stroke: PAL[3], title: 'mt5', sub: 'container khác', fs: 14 });
+    arrow(c, [330, 90], [500, 220], { color: S.fail === 'dns' ? PAL[1] : T.line, lw: 1.8, dash: S.fail === 'dns' ? [6, 5] : null });
+    if (S.fail === 'dns') badge(c, '✗ DNS không phân giải được pypi.org', 330, 122, PAL[1], true);
+    arrow(c, [680, 90], [520, 135], { color: T.line, lw: 1.8 }); arrow(c, [900, 90], [815, 135], { color: S.portBusy ? PAL[1] : T.line, lw: 1.8, dash: [6, 5] });
+    /* nhãn cổng trên viền host */
+    [['3306', 200, 'mysql'], ['8000', 500, 'backend'], ['3000', 800, 'frontend']].forEach(p => {
+      const bad = p[2] === 'frontend' && (S.fail === 'port'); badge(c, 'cổng ' + p[0], p[1], 150, bad ? PAL[1] : T.muted, bad);
+      arrow(c, [p[1], 163], [p[1], 219], { color: bad ? PAL[1] : T.line, lw: 1.8, head: false });
+    });
+    if (S.fail === 'port') badge(c, '✗ cổng 3000 đã bị mt5 chiếm', 800, 110, PAL[1], true);
+    /* container */
+    const cdef = [['mysql', 'mysql:8.0', S.mysql], ['backend', 'FastAPI + Uvicorn', S.backend], ['frontend', 'Vite / React', S.frontend]];
+    cdef.forEach(cd => {
+      const p = CP[cd[0]], stt = cd[2], col = stt === 'healthy' || stt === 'running' ? PAL[2] : stt === 'starting' ? PAL[3] : T.line;
+      box(c, p[0], p[1], 220, 140, { stroke: col, lw: stt === 'stopped' ? 2 : 3.5, tint: stt === 'stopped' ? null : [col, 0.12], title: cd[0], sub: cd[1], fs: 18 });
+      badge(c, stt === 'healthy' ? '✓ healthy' : stt === 'running' ? '✓ running' : stt === 'starting' ? '… starting' : '■ stopped', p[0], p[1] + 53, stt === 'stopped' ? T.muted : col, stt !== 'stopped');
+    });
+    if (S.mysql === 'starting') { const k = ((now - S.pulse) % 700) / 700; c.save(); c.strokeStyle = PAL[3]; c.globalAlpha = 1 - k; c.lineWidth = 4; rr(c, 90 - k * 16, 220 - k * 16, 220 + k * 32, 140 + k * 32, 14); c.stroke(); c.restore(); }
+    if (S.img) badge(c, 'image đã build', 500, 240, PAL[0]);
+    arrow(c, [388, 330], [312, 330], { color: PAL[2], lw: 2, dash: [6, 5] }); txt(c, 'depends_on', 350, 348, { size: 11.5, color: T.muted });
+    /* volume */
+    cyl(c, 200, 410, 130, 70, { stroke: PAL[4] }); txt(c, 'mysql_data', 200, 405, { size: 12.5, bold: true }); txt(c, S.migrated ? '3 bảng · ' + S.accounts + ' tài khoản' : 'chưa có bảng', 200, 424, { size: 11.5, color: T.muted });
+    arrow(c, [200, 360], [200, 375], { color: PAL[4], lw: 2, head: false });
+    if (S.fail === 'mig') badge(c, '✗ thiếu bảng accounts', 200, 462, PAL[1], true);
+    if (S.jwtMissing) badge(c, '! thiếu JWT_SECRET', 500, 372, PAL[3]);
+  };
+  render(); ui.status('Bấm <b>docker compose up</b> để xem build → MySQL healthy → backend chạy. Thử bật "DNS hỏng" trước để xem lỗi quen thuộc.');
+}
+
+/* =================== TAB 8: PYTEST + RUFF (ma trận độ phủ) =================== */
+function tab8(root) {
+  const COMP = ['Pydantic', 'Router', 'AuthService', 'Account', 'Repository', 'Argon2', 'PyJWT', 'SQLite'];
+  const TESTS = [
+    ['test_health', [1], [1]], ['test_register_login_me', [0, 1, 2, 3, 4, 5, 6, 7], [1, 2, 4]], ['test_register_duplicate_phone', [0, 1, 2, 4, 7], [2]],
+    ['test_register_wrong_otp', [0, 1, 2, 4, 5, 7], [2, 5]], ['test_otp_resend_too_soon', [0, 1, 2, 4, 7], [2]], ['test_login_wrong_password_then_locked', [0, 1, 2, 3, 4, 5, 7], [3]],
+    ['test_logout_revokes_token', [1, 2, 4, 6, 7], [2]], ['test_me_requires_token', [1, 2], [1]]
+  ];
+  const MUT = [['m1', 'authenticate() bỏ qua so token_version', 2, 'test_logout_revokes_token', 'assert 200 == 401'], ['m2', 'logout() không tăng token_version', 2, 'test_logout_revokes_token', 'assert 200 == 401'],
+    ['m3', 'login() không đếm lần nhập sai', 3, 'test_login_wrong_password_then_locked', 'assert 401 == 423'], ['m4', 'register() không kiểm tra OTP', 2, 'test_register_wrong_otp', 'assert 201 == 400'],
+    ['m5', 'cho đăng ký trùng số điện thoại', 2, 'test_register_duplicate_phone', 'assert 200 == 409'], ['m6', 'bỏ giới hạn xin lại OTP', 2, 'test_otp_resend_too_soon', 'assert 200 == 429'],
+    ['m7', '/auth/me không đòi token', 1, 'test_me_requires_token', 'assert 200 == 401'], ['m8', 'response trả luôn password_hash', 0, null, null], ['m9', 'JWT không bao giờ hết hạn', 6, null, null]];
+  const S = { on: {}, res: null, ran: false };
+  const ui = shell(root, {
+    intro: 'Mỗi hàng là một test, mỗi cột là một bộ phận của backend. <b>Chấm đặc</b> = test đó <i>kiểm tra</i> bộ phận ấy, <b>vòng rỗng</b> = test chỉ <i>đi ngang qua</i>. Hãy "cài bug" vào một bộ phận rồi chạy pytest: hàng nào kiểm tra bộ phận đó sẽ đỏ. Bộ phận không có chấm đặc nào thì bug ở đó lọt lưới.',
+    hook: 'Test xanh = các chỗ <b>được kiểm tra</b> vẫn đúng. Chỗ nào cột <b>không có chấm đặc</b> thì chưa ai canh. Hãy tick bug số 8 và 9.',
+    h: 495,
+    controls: '<div class="lab"><span>Cài bug vào code</span></div>' + MUT.map(m => '<div class="chk"><input type="checkbox" id="t-' + m[0] + '" data-m="' + m[0] + '"><label for="t-' + m[0] + '">' + esc(m[1]) + ' <span class="mono" style="color:var(--muted)">(' + COMP[m[2]] + ')</span></label></div>').join('') +
+      '<div class="btns" style="margin:10px 0 14px"><button class="btn primary" id="t-run">Chạy pytest</button><button class="btn" id="t-clear">Gỡ hết bug</button></div>' +
+      '<div class="lab"><span>Kiểm tra phong cách code (ruff)</span></div><div class="chk"><input type="checkbox" id="t-f401"><label for="t-f401">Thêm một import không dùng tới</label></div><div class="chk"><input type="checkbox" id="t-f841"><label for="t-f841">Khai báo biến rồi không dùng</label></div><div class="btns"><button class="btn" id="t-ruff">Chạy ruff check</button></div>',
+    detail: '<div><div class="lab"><span>Đầu ra terminal</span></div><pre id="t-out" style="min-height:150px">(bấm "Chạy pytest")</pre></div>',
+    gloss: [['pytest', 'công cụ chạy test của Python: tìm hàm <code>test_*</code> trong tests/, mỗi hàm là một kiểm tra.'], ['TestClient', 'bộ gọi API giả của FastAPI: gọi endpoint ngay trong bộ nhớ, không mở cổng thật.'],
+      ['fixture (conftest.py)', 'đoạn chuẩn bị dùng chung. Dự án dựng DB SQLite trong RAM cho mỗi test nên không đụng MySQL thật.'], ['ruff', 'công cụ kiểm lỗi và định dạng code rất nhanh. <code>F401</code> = import thừa, <code>F841</code> = biến không dùng.'],
+      ['assert', 'câu khẳng định trong test; sai là test đỏ (FAILED).'], ['khoảng trống test', 'chỗ code có lỗi mà không test nào kiểm tới. Test xanh chưa chắc là code đúng.']],
+    note: 'Danh sách 8 test lấy từ tests/test_auth.py và test_health.py; bảng "kiểm tra gì" là mô phỏng theo nội dung từng test, không chạy pytest thật.'
+  });
+  const g = id => $(id, root), st = ui.stage;
+  function evaluate() { const r = {}; MUT.forEach(m => { if (S.on[m[0]] && m[3]) r[m[3]] = m[4]; }); return r; }
+  function run() {
+    S.res = evaluate(); S.ran = true;
+    const fails = TESTS.filter(t => S.res[t[0]]), n = TESTS.length;
+    let o = '$ pytest -q\n' + TESTS.map(t => S.res[t[0]] ? 'F' : '.').join('') + '\n';
+    fails.forEach(t => { o += '\n___ ' + t[0] + ' ___\nE   ' + S.res[t[0]] + '\n'; });
+    o += '\n' + (fails.length ? fails.length + ' failed, ' : '') + (n - fails.length) + ' passed'; g('#t-out').textContent = o;
+    const gaps = MUT.filter(m => S.on[m[0]] && !m[3]);
+    ui.status(fails.length ? '<b>' + fails.length + ' test đỏ</b>: các hàng đỏ là những test <i>kiểm tra</i> đúng bộ phận bị cài bug.' + (gaps.length ? ' Còn <b>' + gaps.length + ' bug lọt lưới</b> (cột không có chấm đặc).' : '')
+      : gaps.length ? '<b>Toàn bộ test xanh nhưng code vẫn có bug</b>: ' + esc(gaps.map(m => m[1]).join('; ')) + ' → cột <b>' + esc(gaps.map(m => COMP[m[2]]).join(', ')) + '</b> không có chấm đặc nào, chưa test nào canh.' : 'Tất cả test xanh, chưa cài bug nào.');
+  }
+  $$('[data-m]', root).forEach(c => c.onchange = () => { S.on[c.dataset.m] = c.checked; S.ran = false; S.res = null; });
+  g('#t-run').onclick = run;
+  g('#t-ruff').onclick = () => {
+    const is = []; if (g('#t-f401').checked) is.push('app/application/use_cases/auth.py:3:8: F401 `os` imported but unused'); if (g('#t-f841').checked) is.push('app/application/use_cases/auth.py:57:9: F841 Local variable `unused` is assigned to but never used');
+    g('#t-out').textContent = '$ ruff check .\n' + (is.length ? is.join('\n') + '\nFound ' + is.length + ' error' + (is.length > 1 ? 's' : '') + '.' : 'All checks passed!'); ui.status(is.length ? 'ruff tìm thấy ' + is.length + ' lỗi phong cách (không phải lỗi logic).' : 'ruff: code sạch.');
+  };
+  g('#t-clear').onclick = () => { S.on = {}; S.res = null; S.ran = false; $$('[data-m]', root).forEach(c => { c.checked = false; }); g('#t-out').textContent = '(bấm "Chạy pytest")'; ui.status('Đã gỡ hết bug.'); };
+
+  const CX0 = 395, CS = 72, RY0 = 112, RS = 41;
+  st.draw = function (c) {
+    const bugCols = {}; MUT.forEach(m => { if (S.on[m[0]]) bugCols[m[2]] = true; });
+    const gapCols = {}; COMP.forEach((_, j) => { gapCols[j] = !TESTS.some(t => t[2].indexOf(j) >= 0); });
+    COMP.forEach((nm, j) => {
+      const x = CX0 + j * CS;
+      if (bugCols[j]) { c.save(); c.fillStyle = PAL[1]; c.globalAlpha = 0.1; c.fillRect(x - CS / 2 + 2, 50, CS - 4, 360); c.restore(); badge(c, 'BUG', x, 30, PAL[1], true); }
+      txt(c, nm, x, 74, { size: 12.5, bold: true, color: bugCols[j] ? PAL[1] : T.fg });
+    });
+    txt(c, 'Bộ phận của backend →', 46, 74, { size: 12.5, color: T.muted, align: 'left', bold: true });
+    TESTS.forEach((t, i) => {
+      const y = RY0 + i * RS, bad = S.res && S.res[t[0]], pass = S.res && !bad;
+      if (bad) { c.save(); c.fillStyle = PAL[1]; c.globalAlpha = 0.12; c.fillRect(10, y - RS / 2 + 3, 980, RS - 6); c.restore(); }
+      txt(c, S.res ? (bad ? '✗' : '✓') : '–', 26, y, { size: 16, bold: true, color: bad ? PAL[1] : pass ? PAL[2] : T.muted });
+      txt(c, fit(c, t[0], 320, 12.5), 46, y, { size: 12.5, align: 'left', color: bad ? PAL[1] : T.fg, bold: !!bad });
+      COMP.forEach((_, j) => {
+        const x = CX0 + j * CS;
+        if (t[2].indexOf(j) >= 0) { c.fillStyle = bad && bugCols[j] ? PAL[1] : PAL[0]; c.beginPath(); c.arc(x, y, 9, 0, 7); c.fill(); }
+        else if (t[1].indexOf(j) >= 0) { c.strokeStyle = T.muted; c.lineWidth = 2; c.beginPath(); c.arc(x, y, 6.5, 0, 7); c.stroke(); }
+      });
+    });
+    COMP.forEach((_, j) => { if (bugCols[j] && gapCols[j]) badge(c, 'lọt lưới', CX0 + j * CS, 430, PAL[3], true); else if (gapCols[j]) txt(c, 'chưa ai canh', CX0 + j * CS, 430, { size: 11.5, color: T.muted }); });
+    c.fillStyle = PAL[0]; c.beginPath(); c.arc(60, 470, 8, 0, 7); c.fill(); txt(c, '= test kiểm tra bộ phận này (assert)', 76, 470, { size: 12, align: 'left', color: T.muted });
+    c.strokeStyle = T.muted; c.lineWidth = 2; c.beginPath(); c.arc(380, 470, 6, 0, 7); c.stroke(); txt(c, '= chỉ đi ngang qua', 394, 470, { size: 12, align: 'left', color: T.muted });
+  };
+  ui.status('Tick một bug (ví dụ <b>m7</b>: /auth/me không đòi token), bấm <b>Chạy pytest</b>, rồi nhìn hàng nào đỏ.');
+}
+
+/* =================== KHỞI ĐỘNG: thanh tab =================== */
+const TABS = [['journey', '0. Hành trình request', tab0], ['migration', '1. Migration', tab1], ['hash', '2. Băm mật khẩu', tab2], ['jwt', '3. JWT & đăng xuất', tab3], ['api', '4. Pydantic & mã HTTP', tab4],
+  ['lock', '5. Khóa tài khoản', tab5], ['arch', '6. Kiến trúc & Depends', tab6], ['docker', '7. Docker Compose', tab7], ['test', '8. pytest & ruff', tab8]];
+const tabsEl = $('#tabs'), panelsEl = $('#panels'), built = {};
+readTheme();
+TABS.forEach(function (t, i) {
+  const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.id = 'tab-' + t[0]; b.textContent = t[1]; b.setAttribute('aria-controls', 'panel-' + t[0]);
+  b.onclick = () => select(t[0]);
+  b.onkeydown = e => { if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return; const j = (i + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length; select(TABS[j][0]); $('#tab-' + TABS[j][0]).focus(); };
+  tabsEl.appendChild(b);
+  const p = document.createElement('div'); p.id = 'panel-' + t[0]; p.setAttribute('role', 'tabpanel'); p.setAttribute('aria-labelledby', b.id); p.hidden = true; panelsEl.appendChild(p);
+});
+function select(id) {
+  TABS.forEach(function (t) {
+    const on = t[0] === id;
+    $('#tab-' + t[0]).setAttribute('aria-selected', on ? 'true' : 'false'); $('#tab-' + t[0]).tabIndex = on ? 0 : -1; $('#panel-' + t[0]).hidden = !on;
+    if (on && !built[id]) { built[id] = true; t[2]($('#panel-' + id)); }
+  });
+  try { history.replaceState(null, '', '#' + id); } catch (e) { /* trang nhúng có thể không cho đổi hash */ }
+}
+$('#themeBtn').onclick = function () {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark'); this.textContent = dark ? 'Nền tối' : 'Nền sáng'; readTheme();
+};
+/* Nút Back/Next cố định hai bên + phím ← →: chuyển sang tab trước/sau */
+function nav(d) {
+  const i = TABS.findIndex(t => $('#tab-' + t[0]).getAttribute('aria-selected') === 'true'), j = i + d;
+  if (j >= 0 && j < TABS.length) { select(TABS[j][0]); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+}
+[['navPrev', '‹', 'Tab trước (←)', -1], ['navNext', '›', 'Tab sau (→)', 1]].forEach(a => {
+  const b = document.createElement('button'); b.type = 'button'; b.id = a[0]; b.className = 'navfix'; b.textContent = a[1]; b.title = a[2]; b.setAttribute('aria-label', a[2]);
+  b.onclick = () => nav(a[3]); document.body.appendChild(b);
+});
+document.addEventListener('keydown', e => {
+  if ((e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+  if (e.target.closest && e.target.closest('input,select,textarea,[role=tab]')) return;   // để ô nhập/thanh trượt/thanh tab tự xử lý
+  nav(e.key === 'ArrowRight' ? 1 : -1);
+});
+select(TABS.some(t => t[0] === location.hash.slice(1)) ? location.hash.slice(1) : 'journey');
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,2859 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Lab nơ-ron NLP</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Bố cục: thanh tab dính trên cùng, mỗi tab là một sân khấu mạng nơ-ron + bảng điều khiển bên phải */
+body { margin: 0; background: var(--vl-bg, #ffffff); color: var(--vl-fg, #14181d); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--vl-bg, #ffffff); }
+body .vl-app {
+  max-width: 1180px; margin: 0 auto; padding-block: 14px 32px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+body .vl-title { font-size: 17px; line-height: 1.35; text-wrap: balance; }
+.lab-tabs {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--vl-bg, #ffffff); border-bottom: 1px solid var(--vl-line, #d9dde3);
+}
+.lab-tabs-in {
+  max-width: 1180px; margin: 0 auto; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: thin;
+  padding-block: 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.lab-tab {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 14px 6px 7px; border-radius: 999px; cursor: pointer;
+  border: 1.5px solid var(--vl-line, #d9dde3); background: var(--vl-panel, #f6f7f9); color: var(--vl-fg, #14181d);
+  font: 600 13px/1.2 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  transition: background-color .18s ease, border-color .18s ease, color .18s ease;
+}
+.lab-tab .n {
+  display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--c); color: #fff; font-size: 12px; font-variant-numeric: tabular-nums;
+}
+.lab-tab:hover { border-color: var(--c); }
+.lab-tab[aria-selected="true"] { background: var(--c); border-color: var(--c); color: #fff; }
+.lab-tab[aria-selected="true"] .n { background: #fff; color: var(--c); }
+.lab-tab:focus-visible, .vl-btn:focus-visible, input[type=range]:focus-visible, select:focus-visible {
+  outline: 3px solid var(--vl-accent, #2563eb); outline-offset: 2px;
+}
+@media (max-width: 860px) { body .vl-title { flex-basis: 100%; } }
+@media (prefers-reduced-motion: reduce) { .lab-tab { transition: none; } }
+
+/* Nút Lùi / Tiếp nổi hai bên màn hình, luôn nằm trong tầm nhìn */
+.lab-fab {
+  position: fixed; top: 50%; transform: translateY(-50%); z-index: 30;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  width: 46px; padding: 12px 0; border-radius: 14px; cursor: pointer;
+  border: 2px solid var(--c, #2563eb); background: var(--vl-panel, #f6f7f9); color: var(--c, #2563eb);
+  box-shadow: 0 4px 14px rgba(0,0,0,.18); opacity: .94;
+  font: 700 11px/1.1 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  transition: background-color .15s ease, color .15s ease, opacity .15s ease, transform .15s ease;
+}
+.lab-fab .a { font-size: 20px; line-height: 1; }
+.lab-fab-l { left: max(6px, env(safe-area-inset-left, 0px)); }
+.lab-fab-r { right: max(6px, env(safe-area-inset-right, 0px)); background: var(--c, #2563eb); color: #fff; }
+.lab-fab:hover { opacity: 1; }
+.lab-fab:active { transform: translateY(-50%) scale(.94); }
+.lab-fab[aria-disabled="true"] { opacity: .38; cursor: default; box-shadow: none; }
+@media (min-width: 640px) {
+  body .vl-app { padding-left: max(62px, env(safe-area-inset-left, 0px)); padding-right: max(62px, env(safe-area-inset-right, 0px)); }
+}
+@media (max-width: 639px) { .lab-fab { width: 38px; padding: 9px 0; opacity: .88; } .lab-fab .a { font-size: 17px; } }
+
+/* Ô công thức: công thức tổng quát + nhật ký thế số (ô mới lên đầu, ô cũ giữ nguyên) */
+.lab-formula { margin-top: 16px; display: flex; flex-direction: column; gap: 12px; }
+.lab-formula h2 { margin: 0; font-size: 15px; font-weight: 650; }
+.lab-formula .lf-sub { margin: 2px 0 0; font-size: 12.5px; color: var(--vl-muted, #5b6470); }
+.lf-gen { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.lf-chip, .lf-cell {
+  border: 1px solid var(--vl-line, #d9dde3); border-left: 5px solid var(--c, #2563eb);
+  border-radius: 10px; background: var(--vl-panel, #f6f7f9); padding: 9px 12px; min-width: 0;
+}
+.lf-chip b, .lf-cell b.lf-t { display: block; font-size: 12px; color: var(--c, #2563eb); margin-bottom: 4px; }
+.lf-l { font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+.lf-l.f { color: var(--vl-muted, #5b6470); font-style: italic; }
+.lf-l.r { font-weight: 700; }
+.lf-bar { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.lf-count { font-size: 12.5px; color: var(--vl-muted, #5b6470); font-variant-numeric: tabular-nums; }
+.lf-log { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 10px; max-height: 520px; overflow: auto; padding: 2px 4px 4px 0; }
+.lf-cell.new { outline: 2px solid var(--c, #2563eb); outline-offset: -1px; }
+.lf-empty { grid-column: 1 / -1; font-size: 13px; color: var(--vl-muted, #5b6470); padding: 10px 2px; }
+@media (prefers-reduced-motion: reduce) { .lab-fab { transition: none; } }
+</style>
+<script>
+/* === core/base.js (khung visual-lab, giữ nguyên) === */
+/* ============================================================================
+   VLab — khung dùng chung cho mọi trang mô phỏng bài học IT/AI
+   ----------------------------------------------------------------------------
+   Dán TOÀN BỘ file này vào thẻ <script> của trang HTML xuất ra.
+   Không phụ thuộc thư viện ngoài. Chạy được offline.
+
+   Cung cấp sẵn:
+     - Chủ đề sáng/tối tự theo hệ thống + nút đổi
+     - 4 bảng màu (có 1 bảng thân thiện với người mù màu)
+     - Zoom bằng con lăn, kéo để di chuyển, nút đặt lại khung nhìn
+     - Thanh trượt tham số
+     - Bộ chạy: Chạy / Tạm dừng / Bước tiếp / Làm lại + thanh tốc độ
+     - Ô nhập công thức (parser an toàn, KHÔNG dùng eval)
+     - Khung mã giả tiếng Việt có tô sáng dòng đang chạy
+     - Ô "Đang xảy ra gì?" và ô "Vì sao?"
+
+   API chính:  const app = VLab.create({...});   xem phần cuối file.
+   ========================================================================== */
+(function (global) {
+  'use strict';
+
+  const VLab = {};
+
+  /* ==========================================================================
+     1. BẢNG MÀU
+     ========================================================================== */
+  const PALETTES = {
+    'Mặc định':      ['#2563eb', '#dc2626', '#059669', '#d97706', '#7c3aed', '#0891b2'],
+    'Dịu mắt':       ['#4f6d7a', '#c07a5c', '#6a8d73', '#a4789a', '#8c7851', '#5a7d9a'],
+    'Tương phản cao':['#0040ff', '#ff0040', '#00a000', '#ff8000', '#8000ff', '#00a0a0'],
+    'Thân thiện mù màu': ['#0072B2', '#E69F00', '#009E73', '#CC79A7', '#56B4E9', '#D55E00']
+  };
+  let paletteName = 'Mặc định';
+
+  /* ==========================================================================
+     2. CSS — nhúng một lần
+     ========================================================================== */
+  const CSS = `
+  :root{
+    --vl-bg:#ffffff; --vl-panel:#f6f7f9; --vl-fg:#14181d; --vl-muted:#5d6670;
+    --vl-line:#d9dde3; --vl-accent:#2563eb; --vl-grid:#e8ebef; --vl-axis:#9aa3ad;
+    --vl-hl:#fff3bf; --vl-hl-fg:#5c4600;
+  }
+  :root[data-vl-theme="dark"]{
+    --vl-bg:#13161a; --vl-panel:#1b1f25; --vl-fg:#e8ecf1; --vl-muted:#9aa5b1;
+    --vl-line:#2b323b; --vl-accent:#5b9dff; --vl-grid:#22272e; --vl-axis:#5d6670;
+    --vl-hl:#3a3414; --vl-hl-fg:#ffe79a;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-vl-theme="light"]){
+      --vl-bg:#13161a; --vl-panel:#1b1f25; --vl-fg:#e8ecf1; --vl-muted:#9aa5b1;
+      --vl-line:#2b323b; --vl-accent:#5b9dff; --vl-grid:#22272e; --vl-axis:#5d6670;
+      --vl-hl:#3a3414; --vl-hl-fg:#ffe79a;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--vl-bg);color:var(--vl-fg);
+    font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+  .vl-app{max-width:1180px;margin:0 auto;padding:16px;}
+  .vl-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+  .vl-title{font-size:18px;font-weight:650;margin:0;flex:1 1 220px;}
+  .vl-head-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .vl-main{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start;}
+  @media (max-width:860px){ .vl-main{grid-template-columns:1fr;} }
+  .vl-stage-wrap{position:relative;border:1px solid var(--vl-line);border-radius:10px;
+    overflow:hidden;background:var(--vl-panel);}
+  .vl-stage{display:block;width:100%;height:auto;touch-action:none;cursor:grab;}
+  .vl-stage.dragging{cursor:grabbing;}
+  .vl-status{padding:10px 12px;border-top:1px solid var(--vl-line);background:var(--vl-bg);
+    font-size:14px;min-height:42px;color:var(--vl-fg);}
+  .vl-status b{color:var(--vl-accent);}
+  .vl-side{display:flex;flex-direction:column;gap:12px;min-width:0;}
+  .vl-card{border:1px solid var(--vl-line);border-radius:10px;background:var(--vl-panel);padding:12px;}
+  .vl-card h3{margin:0 0 8px;font-size:13px;font-weight:650;text-transform:uppercase;
+    letter-spacing:.04em;color:var(--vl-muted);}
+  .vl-row{margin-bottom:12px;}
+  .vl-row:last-child{margin-bottom:0;}
+  .vl-lab{display:flex;justify-content:space-between;gap:8px;font-size:13px;margin-bottom:4px;}
+  .vl-lab span:last-child{font-variant-numeric:tabular-nums;color:var(--vl-accent);font-weight:600;}
+  input[type=range]{width:100%;accent-color:var(--vl-accent);margin:0;}
+  .vl-btn{font:inherit;font-size:13px;padding:6px 11px;border-radius:7px;cursor:pointer;
+    border:1px solid var(--vl-line);background:var(--vl-bg);color:var(--vl-fg);}
+  .vl-btn:hover{border-color:var(--vl-accent);}
+  .vl-btn.primary{background:var(--vl-accent);border-color:var(--vl-accent);color:#fff;}
+  .vl-btns{display:flex;gap:6px;flex-wrap:wrap;}
+  select,input[type=text]{font:inherit;font-size:13px;padding:6px 8px;border-radius:7px;
+    border:1px solid var(--vl-line);background:var(--vl-bg);color:var(--vl-fg);width:100%;}
+  .vl-head-tools select{width:auto;}
+  .vl-err{color:#dc2626;font-size:12px;margin-top:4px;min-height:16px;}
+  :root[data-vl-theme="dark"] .vl-err{color:#ff8080;}
+  .vl-code{margin:0;font:12.5px/1.6 ui-monospace,"Cascadia Code",Consolas,monospace;
+    counter-reset:vlline;max-height:260px;overflow:auto;}
+  .vl-code div{padding:1px 6px;border-radius:4px;white-space:pre-wrap;color:var(--vl-muted);}
+  .vl-code div.on{background:var(--vl-hl);color:var(--vl-hl-fg);font-weight:600;}
+  .vl-why{font-size:13.5px;color:var(--vl-fg);}
+  .vl-why p{margin:0 0 8px;} .vl-why p:last-child{margin:0;}
+  .vl-hint{font-size:12px;color:var(--vl-muted);margin-top:6px;}
+  `;
+
+  function injectCSS() {
+    if (document.getElementById('vl-css')) return;
+    const s = document.createElement('style');
+    s.id = 'vl-css';
+    s.textContent = CSS;
+    document.head.appendChild(s);
+  }
+
+  /* ==========================================================================
+     3. PARSER CÔNG THỨC — an toàn, không dùng eval()
+     Hỗ trợ: + - * / ^ ( ) , số, biến, hàm dựng sẵn, hằng pi/e
+     Dùng:  const f = VLab.compile('x^2 + 3*x', ['x']);  f({x:2}) -> 10
+     ========================================================================== */
+  const FUNCS = {
+    sin: Math.sin, cos: Math.cos, tan: Math.tan,
+    asin: Math.asin, acos: Math.acos, atan: Math.atan,
+    sinh: Math.sinh, cosh: Math.cosh, tanh: Math.tanh,
+    exp: Math.exp, sqrt: Math.sqrt, abs: Math.abs,
+    log: Math.log, ln: Math.log, log10: Math.log10, log2: Math.log2,
+    floor: Math.floor, ceil: Math.ceil, round: Math.round, sign: Math.sign,
+    min: Math.min, max: Math.max, pow: Math.pow, atan2: Math.atan2,
+    relu: function (v) { return v > 0 ? v : 0; },
+    sigmoid: function (v) { return 1 / (1 + Math.exp(-v)); }
+  };
+  const CONSTS = { pi: Math.PI, e: Math.E };
+
+  function tokenize(src) {
+    const out = [];
+    let i = 0;
+    while (i < src.length) {
+      const c = src[i];
+      if (c === ' ' || c === '\t' || c === '\n') { i++; continue; }
+      if (/[0-9.]/.test(c)) {
+        let j = i;
+        while (j < src.length && /[0-9.]/.test(src[j])) j++;
+        const num = parseFloat(src.slice(i, j));
+        if (isNaN(num)) throw new Error('Số không hợp lệ: ' + src.slice(i, j));
+        out.push({ t: 'num', v: num });
+        i = j; continue;
+      }
+      if (/[A-Za-z_]/.test(c)) {
+        let j = i;
+        while (j < src.length && /[A-Za-z0-9_]/.test(src[j])) j++;
+        out.push({ t: 'name', v: src.slice(i, j) });
+        i = j; continue;
+      }
+      if ('+-*/^(),'.indexOf(c) >= 0) { out.push({ t: c }); i++; continue; }
+      throw new Error('Ký tự lạ: "' + c + '"');
+    }
+    return out;
+  }
+
+  // Chuyển sang hậu tố bằng thuật toán sân ga (shunting-yard)
+  function toRPN(tokens) {
+    // Dấu trừ đứng trước (u-) nằm giữa */ và ^, nên -x^2 = -(x^2)
+    const prec = { '+': 1, '-': 1, '*': 2, '/': 2, 'u-': 2.5, '^': 3 };
+    const right = { '^': true, 'u-': true };
+    const out = [], ops = [];
+    let prev = null;
+    for (let k = 0; k < tokens.length; k++) {
+      const tk = tokens[k];
+      if (tk.t === 'num') { out.push(tk); }
+      else if (tk.t === 'name') {
+        if (tokens[k + 1] && tokens[k + 1].t === '(') ops.push({ t: 'fn', v: tk.v, argc: 1 });
+        else out.push(tk);
+      }
+      else if (tk.t === ',') {
+        while (ops.length && ops[ops.length - 1].t !== '(') out.push(ops.pop());
+        if (!ops.length) throw new Error('Dấu phẩy đặt sai chỗ');
+        for (let m = ops.length - 2; m >= 0; m--) {
+          if (ops[m].t === 'fn') { ops[m].argc++; break; }
+          if (ops[m].t === '(') break;
+        }
+      }
+      else if (tk.t === '(') { ops.push(tk); }
+      else if (tk.t === ')') {
+        while (ops.length && ops[ops.length - 1].t !== '(') out.push(ops.pop());
+        if (!ops.length) throw new Error('Thiếu dấu mở ngoặc');
+        ops.pop();
+        if (ops.length && ops[ops.length - 1].t === 'fn') out.push(ops.pop());
+      }
+      else {
+        let op = tk.t;
+        const unary = (op === '-' || op === '+') &&
+          (prev === null || prev.t === '(' || prev.t === ',' ||
+            '+-*/^'.indexOf(prev.t) >= 0);
+        if (unary) {
+          // dấu đứng trước toán hạng: không đẩy toán tử nào ra, chỉ xếp vào chồng
+          if (op === '+') { prev = tk; continue; }
+          ops.push({ t: 'u-' }); prev = tk; continue;
+        }
+        while (ops.length) {
+          const top = ops[ops.length - 1];
+          const topOp = top.t === 'fn' ? null : top.t;
+          if (topOp && topOp !== '(' &&
+            (prec[topOp] > prec[op] || (prec[topOp] === prec[op] && !right[op]))) {
+            out.push(ops.pop());
+          } else break;
+        }
+        ops.push({ t: op });
+      }
+      prev = tk;
+    }
+    while (ops.length) {
+      const top = ops.pop();
+      if (top.t === '(') throw new Error('Thiếu dấu đóng ngoặc');
+      out.push(top);
+    }
+    return out;
+  }
+
+  /**
+   * Biên dịch một biểu thức thành hàm.
+   * @param {string} src  ví dụ 'x^2 + 3*x'
+   * @param {string[]} vars  tên các biến được phép, ví dụ ['x'] hoặc ['x','y']
+   * @returns {function(Object): number}
+   */
+  VLab.compile = function (src, vars) {
+    vars = vars || ['x'];
+    const rpn = toRPN(tokenize(String(src)));
+    // Kiểm tra ngay lúc biên dịch: tên lạ, và biểu thức thiếu/thừa toán hạng
+    let depth = 0;
+    for (const tk of rpn) {
+      if (tk.t === 'name' && vars.indexOf(tk.v) < 0 && !(tk.v in CONSTS))
+        throw new Error('Không hiểu "' + tk.v + '"');
+      if (tk.t === 'fn' && !(tk.v in FUNCS))
+        throw new Error('Không có hàm "' + tk.v + '"');
+      if (tk.t === 'num' || tk.t === 'name') depth += 1;
+      else if (tk.t === 'u-') depth += 0;
+      else if (tk.t === 'fn') depth += 1 - tk.argc;
+      else depth -= 1;
+      if (depth < 1) throw new Error('Biểu thức thiếu toán hạng');
+    }
+    if (depth !== 1) throw new Error('Biểu thức chưa hoàn chỉnh');
+    return function (scope) {
+      const st = [];
+      for (const tk of rpn) {
+        if (tk.t === 'num') st.push(tk.v);
+        else if (tk.t === 'name') st.push(tk.v in CONSTS ? CONSTS[tk.v] : (scope[tk.v] || 0));
+        else if (tk.t === 'u-') st.push(-st.pop());
+        else if (tk.t === 'fn') {
+          const args = st.splice(st.length - tk.argc, tk.argc);
+          st.push(FUNCS[tk.v].apply(null, args));
+        } else {
+          const b = st.pop(), a = st.pop();
+          st.push(tk.t === '+' ? a + b : tk.t === '-' ? a - b :
+            tk.t === '*' ? a * b : tk.t === '/' ? a / b : Math.pow(a, b));
+        }
+      }
+      return st.pop();
+    };
+  };
+
+  /** Đạo hàm số (dùng khi không có công thức đạo hàm) */
+  VLab.deriv = function (f, scope, varName, h) {
+    h = h || 1e-5;
+    const s1 = Object.assign({}, scope), s2 = Object.assign({}, scope);
+    s1[varName] = scope[varName] + h;
+    s2[varName] = scope[varName] - h;
+    return (f(s1) - f(s2)) / (2 * h);
+  };
+
+  /* ==========================================================================
+     4. KHUNG NHÌN 2D — zoom bằng con lăn, kéo để di chuyển
+     ========================================================================== */
+  function makeView2D(canvas, opts, onChange) {
+    opts = opts || {};
+    const home = {
+      cx: opts.cx || 0,                  // toạ độ thế giới ở giữa khung
+      cy: opts.cy || 0,
+      scale: opts.scale || 40            // số pixel cho 1 đơn vị thế giới
+    };
+    const v = { cx: home.cx, cy: home.cy, scale: home.scale };
+
+    function toScreen(x, y) {
+      return [canvas.clientWidth / 2 + (x - v.cx) * v.scale,
+              canvas.clientHeight / 2 - (y - v.cy) * v.scale];
+    }
+    function toWorld(px, py) {
+      return [(px - canvas.clientWidth / 2) / v.scale + v.cx,
+              -(py - canvas.clientHeight / 2) / v.scale + v.cy];
+    }
+
+    // Bài có thể gán v.onPointerDown / onPointerMove / onPointerUp để tự xử lý
+    // (ví dụ kéo một nút của đồ thị). onPointerDown trả về true thì khung nhìn
+    // không kéo theo. Toạ độ truyền vào là pixel trong canvas.
+    let drag = null, grabbed = false;
+    function local(e) {
+      const r = canvas.getBoundingClientRect();
+      return [e.clientX - r.left, e.clientY - r.top];
+    }
+    canvas.addEventListener('pointerdown', function (e) {
+      canvas.setPointerCapture(e.pointerId);
+      if (v.onPointerDown) {
+        const p = local(e);
+        if (v.onPointerDown(p[0], p[1], e)) { grabbed = true; return; }
+      }
+      drag = { x: e.clientX, y: e.clientY, cx: v.cx, cy: v.cy };
+      canvas.classList.add('dragging');
+    });
+    canvas.addEventListener('pointermove', function (e) {
+      if (grabbed) {
+        if (v.onPointerMove) { const p = local(e); v.onPointerMove(p[0], p[1], e); }
+        return;
+      }
+      if (!drag) return;
+      v.cx = drag.cx - (e.clientX - drag.x) / v.scale;
+      v.cy = drag.cy + (e.clientY - drag.y) / v.scale;
+      onChange();
+    });
+    function endDrag() {
+      if (grabbed && v.onPointerUp) v.onPointerUp();
+      grabbed = false;
+      drag = null;
+      canvas.classList.remove('dragging');
+    }
+    canvas.addEventListener('pointerup', endDrag);
+    canvas.addEventListener('pointercancel', endDrag);
+
+    canvas.addEventListener('wheel', function (e) {
+      e.preventDefault();
+      const r = canvas.getBoundingClientRect();
+      const [wx, wy] = toWorld(e.clientX - r.left, e.clientY - r.top);
+      const k = Math.exp(-e.deltaY * 0.0015);
+      v.scale = Math.max(2, Math.min(4000, v.scale * k));
+      // giữ nguyên điểm dưới con trỏ
+      const [nx, ny] = toWorld(e.clientX - r.left, e.clientY - r.top);
+      v.cx += wx - nx; v.cy += wy - ny;
+      onChange();
+    }, { passive: false });
+
+    // pinch 2 ngón trên cảm ứng
+    let pinch = null;
+    canvas.addEventListener('touchmove', function (e) {
+      if (e.touches.length !== 2) { pinch = null; return; }
+      e.preventDefault();
+      const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX,
+                           e.touches[0].clientY - e.touches[1].clientY);
+      if (pinch) { v.scale = Math.max(2, Math.min(4000, v.scale * d / pinch)); onChange(); }
+      pinch = d;
+    }, { passive: false });
+    canvas.addEventListener('touchend', function () { pinch = null; });
+
+    v.toScreen = toScreen;
+    v.toWorld = toWorld;
+    v.reset = function () { v.cx = home.cx; v.cy = home.cy; v.scale = home.scale; onChange(); };
+    v.setHome = function (o) { Object.assign(home, o); v.reset(); };
+
+    /** Vẽ lưới + trục. Gọi đầu tiên trong hàm vẽ của bài. */
+    v.drawGrid = function (ctx) {
+      const W = canvas.clientWidth, H = canvas.clientHeight;
+      const cs = getComputedStyle(document.documentElement);
+      const grid = cs.getPropertyValue('--vl-grid').trim();
+      const axis = cs.getPropertyValue('--vl-axis').trim();
+      // bước lưới "đẹp": 1, 2, 5, 10...
+      let step = Math.pow(10, Math.floor(Math.log10(80 / v.scale)));
+      const n = 80 / (step * v.scale);
+      if (n > 5) step *= 5; else if (n > 2) step *= 2;
+      const [x0, y1] = toWorld(0, 0), [x1, y0] = toWorld(W, H);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = grid;
+      ctx.beginPath();
+      for (let x = Math.ceil(x0 / step) * step; x <= x1; x += step) {
+        const px = Math.round(toScreen(x, 0)[0]) + 0.5;
+        ctx.moveTo(px, 0); ctx.lineTo(px, H);
+      }
+      for (let y = Math.ceil(y0 / step) * step; y <= y1; y += step) {
+        const py = Math.round(toScreen(0, y)[1]) + 0.5;
+        ctx.moveTo(0, py); ctx.lineTo(W, py);
+      }
+      ctx.stroke();
+      // trục
+      ctx.strokeStyle = axis; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      const oy = Math.round(toScreen(0, 0)[1]) + 0.5;
+      const ox = Math.round(toScreen(0, 0)[0]) + 0.5;
+      ctx.moveTo(0, oy); ctx.lineTo(W, oy);
+      ctx.moveTo(ox, 0); ctx.lineTo(ox, H);
+      ctx.stroke();
+      // nhãn số
+      ctx.fillStyle = axis;
+      ctx.font = '11px system-ui,sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      const lbl = (t) => Math.abs(t) < 1e-9 ? '0' :
+        (Math.abs(t) < 1e-4 || Math.abs(t) >= 1e5 ? t.toExponential(1) :
+          parseFloat(t.toPrecision(4)).toString());
+      for (let x = Math.ceil(x0 / step) * step; x <= x1; x += step) {
+        if (Math.abs(x) < step / 2) continue;
+        ctx.fillText(lbl(x), toScreen(x, 0)[0], Math.min(H - 14, Math.max(2, oy + 3)));
+      }
+      ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      for (let y = Math.ceil(y0 / step) * step; y <= y1; y += step) {
+        if (Math.abs(y) < step / 2) continue;
+        ctx.fillText(lbl(y), Math.max(24, Math.min(W - 2, ox - 5)), toScreen(0, y)[1]);
+      }
+    };
+    return v;
+  }
+
+  /* ==========================================================================
+     5. TẠO ỨNG DỤNG
+     ========================================================================== */
+  /**
+   * @param {Object} cfg
+   *   title    {string}  tiêu đề trang
+   *   why      {string}  nội dung ô "Vì sao?" (HTML đơn giản)
+   *   stage    {'2d'|'none'}  '2d' tạo sẵn canvas + zoom/pan; 'none' để bài tự dựng (3D)
+   *   view     {Object}  {cx, cy, scale} khung nhìn ban đầu (chỉ với stage '2d')
+   *   height   {number}  chiều cao sân khấu, mặc định 460
+   *   func     {Object}  {label, value, vars} hiện ô nhập công thức
+   *   params   {Array}   [{id, label, min, max, step, value, fixed}]
+   *   player   {boolean} hiện bộ Chạy/Bước/Làm lại
+   *   code     {string[]} các dòng mã giả tiếng Việt
+   *   onDraw   {function(ctx, app)}  vẽ lại (chỉ với stage '2d')
+   *   onStep   {function(app): boolean}  chạy một bước; trả về false khi kết thúc
+   *   onReset  {function(app)}  đặt lại trạng thái bài
+   *   onParam  {function(id, value, app)}  khi một tham số đổi
+   */
+  VLab.create = function (cfg) {
+    injectCSS();
+    cfg = cfg || {};
+    const app = {};
+    const root = document.createElement('div');
+    root.className = 'vl-app';
+    document.body.appendChild(root);
+
+    /* --- đầu trang --- */
+    const head = document.createElement('div');
+    head.className = 'vl-head';
+    head.innerHTML =
+      '<h1 class="vl-title"></h1><div class="vl-head-tools">' +
+      '<select class="vl-pal" title="Bảng màu"></select>' +
+      '<button class="vl-btn vl-theme">Sáng/Tối</button>' +
+      '<button class="vl-btn vl-home">Đặt lại khung nhìn</button></div>';
+    head.querySelector('.vl-title').textContent = cfg.title || 'Mô phỏng';
+    root.appendChild(head);
+
+    const palSel = head.querySelector('.vl-pal');
+    Object.keys(PALETTES).forEach(function (n) {
+      const o = document.createElement('option');
+      o.value = n; o.textContent = n; palSel.appendChild(o);
+    });
+    palSel.value = paletteName;
+    palSel.addEventListener('change', function () {
+      paletteName = palSel.value; app.redraw();
+    });
+    head.querySelector('.vl-theme').addEventListener('click', function () {
+      const cur = document.documentElement.getAttribute('data-vl-theme');
+      const sysDark = global.matchMedia &&
+        global.matchMedia('(prefers-color-scheme: dark)').matches;
+      const now = cur || (sysDark ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-vl-theme', now === 'dark' ? 'light' : 'dark');
+      app.redraw();
+    });
+
+    /* --- bố cục chính --- */
+    const main = document.createElement('div');
+    main.className = 'vl-main';
+    root.appendChild(main);
+
+    const stageWrap = document.createElement('div');
+    stageWrap.className = 'vl-stage-wrap';
+    main.appendChild(stageWrap);
+
+    const side = document.createElement('div');
+    side.className = 'vl-side';
+    main.appendChild(side);
+
+    /* --- sân khấu --- */
+    const stageMode = cfg.stage || '2d';
+    const stageH = cfg.height || 460;
+    let canvas = null, ctx = null;
+    app.stageEl = stageWrap;
+
+    if (stageMode === '2d') {
+      canvas = document.createElement('canvas');
+      canvas.className = 'vl-stage';
+      canvas.style.height = stageH + 'px';
+      stageWrap.appendChild(canvas);
+      ctx = canvas.getContext('2d');
+      app.canvas = canvas; app.ctx = ctx;
+    } else {
+      const host = document.createElement('div');
+      host.className = 'vl-stage';
+      host.style.height = stageH + 'px';
+      stageWrap.appendChild(host);
+      app.host = host;
+    }
+
+    const statusEl = document.createElement('div');
+    statusEl.className = 'vl-status';
+    statusEl.innerHTML = '<span class="vl-muted">Sẵn sàng.</span>';
+    stageWrap.appendChild(statusEl);
+
+    /* --- khung nhìn --- */
+    if (stageMode === '2d') {
+      app.view = makeView2D(canvas, cfg.view, function () { app.redraw(); });
+    }
+    head.querySelector('.vl-home').addEventListener('click', function () {
+      if (app.view) app.view.reset();
+      else if (app.onHome) app.onHome();
+    });
+
+    /* --- ô nhập công thức --- */
+    app.f = null;
+    if (cfg.func) {
+      const card = document.createElement('div');
+      card.className = 'vl-card';
+      card.innerHTML = '<h3>Công thức</h3>' +
+        '<div class="vl-lab"><span></span></div>' +
+        '<input type="text" class="vl-fn">' +
+        '<div class="vl-err"></div>' +
+        '<div class="vl-hint">Dùng được: + - * / ^ ( ) và sin, cos, exp, ln, sqrt, abs, tanh, relu, sigmoid, pi, e</div>';
+      card.querySelector('.vl-lab span').textContent =
+        cfg.func.label || ('Hàm theo ' + (cfg.func.vars || ['x']).join(', '));
+      const inp = card.querySelector('.vl-fn');
+      const err = card.querySelector('.vl-err');
+      inp.value = cfg.func.value || 'x^2';
+      function recompile() {
+        try {
+          app.f = VLab.compile(inp.value, cfg.func.vars || ['x']);
+          app.fSource = inp.value;
+          err.textContent = '';
+          if (cfg.onReset) cfg.onReset(app);
+          app.redraw();
+        } catch (e) {
+          err.textContent = 'Lỗi: ' + e.message;
+        }
+      }
+      inp.addEventListener('change', recompile);
+      inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') recompile(); });
+      side.appendChild(card);
+      try {
+        app.f = VLab.compile(inp.value, cfg.func.vars || ['x']);
+        app.fSource = inp.value;
+      } catch (e) { err.textContent = 'Lỗi: ' + e.message; }
+    }
+
+    /* --- thanh trượt tham số --- */
+    const paramVals = {};
+    if (cfg.params && cfg.params.length) {
+      const card = document.createElement('div');
+      card.className = 'vl-card';
+      card.innerHTML = '<h3>Tham số</h3>';
+      cfg.params.forEach(function (p) {
+        paramVals[p.id] = p.value;
+        const row = document.createElement('div');
+        row.className = 'vl-row';
+        row.innerHTML = '<div class="vl-lab"><span></span><span class="vl-val"></span></div>' +
+          '<input type="range">';
+        row.querySelector('.vl-lab span').textContent = p.label;
+        const val = row.querySelector('.vl-val');
+        const r = row.querySelector('input');
+        r.min = p.min; r.max = p.max; r.step = p.step; r.value = p.value;
+        const fmt = function (v) {
+          return p.fixed != null ? Number(v).toFixed(p.fixed) : String(v);
+        };
+        val.textContent = fmt(p.value);
+        r.addEventListener('input', function () {
+          paramVals[p.id] = parseFloat(r.value);
+          val.textContent = fmt(r.value);
+          if (cfg.onParam) cfg.onParam(p.id, paramVals[p.id], app);
+          app.redraw();
+        });
+        card.appendChild(row);
+      });
+      side.appendChild(card);
+    }
+    app.param = function (id) { return paramVals[id]; };
+    app.params = paramVals;
+
+    /* --- bộ chạy --- */
+    app.running = false;
+    app.stepCount = 0;
+    if (cfg.player) {
+      const card = document.createElement('div');
+      card.className = 'vl-card';
+      card.innerHTML = '<h3>Chạy mô phỏng</h3>' +
+        '<div class="vl-btns"><button class="vl-btn primary vl-play">▶ Chạy</button>' +
+        '<button class="vl-btn vl-step">Bước tiếp</button>' +
+        '<button class="vl-btn vl-again">Làm lại</button></div>' +
+        '<div class="vl-row" style="margin-top:12px">' +
+        '<div class="vl-lab"><span>Tốc độ (bước/giây)</span><span class="vl-spd">8</span></div>' +
+        '<input type="range" class="vl-speed" min="1" max="60" step="1" value="8"></div>';
+      side.appendChild(card);
+      const btnPlay = card.querySelector('.vl-play');
+      const spdEl = card.querySelector('.vl-spd');
+      const spdIn = card.querySelector('.vl-speed');
+      spdIn.addEventListener('input', function () { spdEl.textContent = spdIn.value; });
+
+      let timer = null;
+      function oneStep() {
+        const alive = cfg.onStep ? cfg.onStep(app) : false;
+        app.stepCount++;
+        app.redraw();
+        if (alive === false) app.pause();
+      }
+      app.play = function () {
+        if (app.running) return;
+        app.running = true;
+        btnPlay.textContent = '❚❚ Tạm dừng';
+        const tick = function () {
+          if (!app.running) return;
+          oneStep();
+          timer = setTimeout(tick, 1000 / parseFloat(spdIn.value));
+        };
+        tick();
+      };
+      app.pause = function () {
+        app.running = false;
+        btnPlay.textContent = '▶ Chạy';
+        if (timer) { clearTimeout(timer); timer = null; }
+      };
+      btnPlay.addEventListener('click', function () {
+        app.running ? app.pause() : app.play();
+      });
+      card.querySelector('.vl-step').addEventListener('click', function () {
+        app.pause(); oneStep();
+      });
+      card.querySelector('.vl-again').addEventListener('click', function () {
+        app.pause();
+        app.stepCount = 0;
+        if (cfg.onReset) cfg.onReset(app);
+        app.highlight(-1);
+        app.redraw();
+      });
+    }
+
+    /* --- mã giả --- */
+    let codeLines = [];
+    if (cfg.code && cfg.code.length) {
+      const card = document.createElement('div');
+      card.className = 'vl-card';
+      card.innerHTML = '<h3>Thuật toán</h3><div class="vl-code"></div>';
+      const box = card.querySelector('.vl-code');
+      cfg.code.forEach(function (line) {
+        const d = document.createElement('div');
+        d.textContent = line;
+        box.appendChild(d);
+        codeLines.push(d);
+      });
+      side.appendChild(card);
+    }
+    /** Tô sáng dòng mã giả đang chạy (-1 để bỏ tô sáng) */
+    app.highlight = function (i) {
+      codeLines.forEach(function (d, k) { d.classList.toggle('on', k === i); });
+    };
+
+    /* --- ô "Vì sao?" --- */
+    if (cfg.why) {
+      const card = document.createElement('div');
+      card.className = 'vl-card';
+      card.innerHTML = '<h3>Vì sao?</h3><div class="vl-why"></div>';
+      card.querySelector('.vl-why').innerHTML = cfg.why;
+      side.appendChild(card);
+    }
+
+    /* --- API phụ --- */
+    /** Cập nhật ô "Đang xảy ra gì?" dưới sân khấu */
+    app.status = function (html) { statusEl.innerHTML = html; };
+    /** Lấy màu thứ i của bảng màu đang chọn */
+    app.color = function (i) {
+      const p = PALETTES[paletteName];
+      return p[((i % p.length) + p.length) % p.length];
+    };
+    /** Lấy giá trị một biến CSS của chủ đề, ví dụ app.css('--vl-fg') */
+    app.css = function (name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    };
+
+    /* --- vòng vẽ --- */
+    let pending = false;
+    app.redraw = function () {
+      if (pending) return;
+      pending = true;
+      requestAnimationFrame(function () {
+        pending = false;
+        if (stageMode === '2d') {
+          const dpr = global.devicePixelRatio || 1;
+          const w = canvas.clientWidth, h = canvas.clientHeight;
+          if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+            canvas.width = Math.round(w * dpr);
+            canvas.height = Math.round(h * dpr);
+          }
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          ctx.clearRect(0, 0, w, h);
+          if (cfg.onDraw) cfg.onDraw(ctx, app);
+        } else if (cfg.onDraw) {
+          cfg.onDraw(null, app);
+        }
+      });
+    };
+
+    global.addEventListener('resize', function () { app.redraw(); });
+    if (global.matchMedia) {
+      global.matchMedia('(prefers-color-scheme: dark)')
+        .addEventListener('change', function () { app.redraw(); });
+    }
+
+    if (cfg.onReset) cfg.onReset(app);
+    app.redraw();
+    return app;
+  };
+
+  /* ==========================================================================
+     6. TIỆN ÍCH VẼ (canvas 2D)
+     ========================================================================== */
+  /** Vẽ đường cong y = f(x) trong toạ độ thế giới */
+  VLab.plotFunction = function (ctx, view, f, color, width) {
+    const W = ctx.canvas.clientWidth;
+    ctx.strokeStyle = color; ctx.lineWidth = width || 2;
+    ctx.beginPath();
+    let started = false;
+    for (let px = 0; px <= W; px++) {
+      const x = view.toWorld(px, 0)[0];
+      const y = f(x);
+      if (!isFinite(y)) { started = false; continue; }
+      const [sx, sy] = view.toScreen(x, y);
+      if (sy < -1e4 || sy > 1e4) { started = false; continue; }
+      if (started) ctx.lineTo(sx, sy); else { ctx.moveTo(sx, sy); started = true; }
+    }
+    ctx.stroke();
+  };
+
+  /** Vẽ một chấm tròn tại toạ độ thế giới */
+  VLab.dot = function (ctx, view, x, y, color, r) {
+    const [sx, sy] = view.toScreen(x, y);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(sx, sy, r || 5, 0, Math.PI * 2);
+    ctx.fill();
+  };
+
+  /** Vẽ mũi tên từ (x1,y1) đến (x2,y2) trong toạ độ thế giới */
+  VLab.arrow = function (ctx, view, x1, y1, x2, y2, color, width) {
+    const [a, b] = view.toScreen(x1, y1);
+    const [c, d] = view.toScreen(x2, y2);
+    const ang = Math.atan2(d - b, c - a);
+    const len = 9;
+    ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width || 2;
+    ctx.beginPath(); ctx.moveTo(a, b); ctx.lineTo(c, d); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(c, d);
+    ctx.lineTo(c - len * Math.cos(ang - 0.4), d - len * Math.sin(ang - 0.4));
+    ctx.lineTo(c - len * Math.cos(ang + 0.4), d - len * Math.sin(ang + 0.4));
+    ctx.closePath(); ctx.fill();
+  };
+
+  /** Viết chữ tại toạ độ màn hình */
+  VLab.label = function (ctx, px, py, text, color, align) {
+    ctx.fillStyle = color;
+    ctx.font = '12px system-ui,sans-serif';
+    ctx.textAlign = align || 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, px, py);
+  };
+
+  VLab.palettes = PALETTES;
+  global.VLab = VLab;
+
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ============================================================================
+   Eng — bộ tính toán thật cho neuron / MLP (forward, loss, backprop, cập nhật)
+   Không phụ thuộc giao diện; chạy được cả trong trình duyệt lẫn Node để kiểm tra.
+   ========================================================================== */
+(function (g) {
+  'use strict';
+
+  const EPS = 1e-12;
+  const sig = function (z) { return 1 / (1 + Math.exp(-z)); };
+
+  const ACT = {
+    linear:  { f: function (z) { return z; },              d: function () { return 1; } },
+    sigmoid: { f: sig,                                      d: function (z, a) { return a * (1 - a); } },
+    relu:    { f: function (z) { return z > 0 ? z : 0; },  d: function (z) { return z > 0 ? 1 : 0; } }
+  };
+
+  function softmax(z) {
+    const m = Math.max.apply(null, z);
+    const e = z.map(function (v) { return Math.exp(v - m); });
+    const s = e.reduce(function (p, c) { return p + c; }, 0);
+    return e.map(function (v) { return v / s; });
+  }
+
+  /* net = { sizes:[2,2,1], acts:['sigmoid','sigmoid'], loss:'bce',
+             W:[ layer0[j][i], layer1[j][i] ], b:[ layer0[j], layer1[j] ] } */
+  function cloneNet(n) {
+    return {
+      sizes: n.sizes.slice(), acts: n.acts.slice(), loss: n.loss,
+      W: n.W.map(function (M) { return M.map(function (r) { return r.slice(); }); }),
+      b: n.b.map(function (v) { return v.slice(); })
+    };
+  }
+
+  function lerpNet(a, b, t) {
+    const n = cloneNet(b);
+    for (let l = 0; l < n.W.length; l++) {
+      for (let j = 0; j < n.W[l].length; j++) {
+        for (let i = 0; i < n.W[l][j].length; i++)
+          n.W[l][j][i] = a.W[l][j][i] + (b.W[l][j][i] - a.W[l][j][i]) * t;
+        n.b[l][j] = a.b[l][j] + (b.b[l][j] - a.b[l][j]) * t;
+      }
+    }
+    return n;
+  }
+
+  /* A[0] = x, A[l+1] = đầu ra sau kích hoạt của lớp l; Z[l] = trước kích hoạt */
+  function forward(net, x) {
+    const A = [x.slice()], Z = [];
+    for (let l = 0; l < net.W.length; l++) {
+      const z = net.W[l].map(function (row, i) {
+        let s = net.b[l][i];
+        for (let j = 0; j < row.length; j++) s += row[j] * A[l][j];
+        return s;
+      });
+      Z.push(z);
+      A.push(net.acts[l] === 'softmax' ? softmax(z)
+        : z.map(function (v) { return ACT[net.acts[l]].f(v); }));
+    }
+    return { A: A, Z: Z, yhat: A[A.length - 1] };
+  }
+
+  function lossValue(net, yhat, y) {
+    let s = 0, k;
+    switch (net.loss) {
+      case 'mse':
+        for (k = 0; k < yhat.length; k++) s += (yhat[k] - y[k]) * (yhat[k] - y[k]);
+        return s;
+      case 'hmse':
+        for (k = 0; k < yhat.length; k++) s += (yhat[k] - y[k]) * (yhat[k] - y[k]);
+        return 0.5 * s;
+      case 'bce': {
+        const p = Math.min(1 - EPS, Math.max(EPS, yhat[0]));
+        return -(y[0] * Math.log(p) + (1 - y[0]) * Math.log(1 - p));
+      }
+      case 'ce':
+        for (k = 0; k < yhat.length; k++) s -= y[k] * Math.log(Math.max(EPS, yhat[k]));
+        return s;
+    }
+    throw new Error('loss lạ: ' + net.loss);
+  }
+
+  function backward(net, fw, y) {
+    const L = net.W.length, A = fw.A, Z = fw.Z, yh = fw.yhat, act = net.acts[L - 1];
+    let d;
+    if ((act === 'softmax' && net.loss === 'ce') || (act === 'sigmoid' && net.loss === 'bce')) {
+      d = yh.map(function (v, k) { return v - y[k]; });       // δ = ŷ − y
+    } else {
+      d = yh.map(function (v, k) {
+        const dl = net.loss === 'mse' ? 2 * (v - y[k]) : (v - y[k]);
+        return dl * ACT[act].d(Z[L - 1][k], v);
+      });
+    }
+    const delta = new Array(L);
+    delta[L - 1] = d;
+    for (let l = L - 2; l >= 0; l--) {
+      const Wn = net.W[l + 1], dn = delta[l + 1];
+      delta[l] = Z[l].map(function (z, i) {
+        let s = 0;
+        for (let k = 0; k < dn.length; k++) s += Wn[k][i] * dn[k];
+        return s * ACT[net.acts[l]].d(z, A[l + 1][i]);
+      });
+    }
+    const dW = delta.map(function (dl, l) {
+      return dl.map(function (di) { return A[l].map(function (aj) { return di * aj; }); });
+    });
+    const db = delta.map(function (dl) { return dl.slice(); });
+    return { delta: delta, dW: dW, db: db };
+  }
+
+  function meanGrads(list) {
+    const n = list.length, out = { dW: [], db: [] };
+    const first = list[0];
+    for (let l = 0; l < first.dW.length; l++) {
+      out.dW.push(first.dW[l].map(function (row, j) {
+        return row.map(function (_, i) {
+          let s = 0;
+          for (let k = 0; k < n; k++) s += list[k].dW[l][j][i];
+          return s / n;
+        });
+      }));
+      out.db.push(first.db[l].map(function (_, j) {
+        let s = 0;
+        for (let k = 0; k < n; k++) s += list[k].db[l][j];
+        return s / n;
+      }));
+    }
+    return out;
+  }
+
+  function mulberry(seed) {
+    let a = seed >>> 0;
+    const f = function () {
+      a = (a + 0x6D2B79F5) >>> 0;
+      let t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+    f.get = function () { return a; };      // đọc/ghi trạng thái để lưu ảnh chụp (nút Lùi)
+    f.set = function (v) { a = v >>> 0; };
+    return f;
+  }
+
+  /* ---------------------------------------------------------------------------
+     Trainer: mỗi step() chạy ĐÚNG MỘT pha:  0 xuôi · 1 mất mát · 2 ngược · 3 cập nhật
+     cfg = { makeNet(), samples:[{x:[],y:[]}], mode:'batch'|'sgd',
+             lr(), shuffle(), updateAll(), maxEpoch() }
+     ------------------------------------------------------------------------ */
+  function Trainer(cfg) { this.cfg = cfg; this.reset(); }
+
+  Trainer.prototype.reset = function () {
+    this.net = this.cfg.makeNet();
+    this.epoch = 0; this.pos = 0; this.phase = 0; this.updates = 0;
+    this.rng = mulberry(20261017);
+    this.order = this._newOrder();
+    this.group = this.previewGroup();
+    this.fw = null; this.losses = null; this.L = null; this.grad = null;
+    this.lossHist = [];
+  };
+
+  Trainer.prototype._newOrder = function () {
+    const n = this.cfg.samples.length, o = [];
+    for (let i = 0; i < n; i++) o.push(i);
+    if (this.cfg.shuffle && this.cfg.shuffle()) {
+      for (let i = n - 1; i > 0; i--) {
+        const j = Math.floor(this.rng() * (i + 1));
+        const t = o[i]; o[i] = o[j]; o[j] = t;
+      }
+    }
+    return o;
+  };
+
+  Trainer.prototype.previewGroup = function () {
+    const n = this.cfg.samples.length;
+    if (this.cfg.mode === 'batch') { const a = []; for (let i = 0; i < n; i++) a.push(i); return a; }
+    return [this.order[this.pos]];
+  };
+
+  /* Ảnh chụp trạng thái trước một bước; restore() đưa bộ huấn luyện về đúng trạng thái đó */
+  Trainer.prototype.snapshot = function () {
+    return { net: cloneNet(this.net), epoch: this.epoch, pos: this.pos, phase: this.phase,
+      updates: this.updates, order: this.order.slice(), rng: this.rng.get(), group: this.group.slice(),
+      fw: this.fw, losses: this.losses, L: this.L, grad: this.grad, deltas: this.deltas,
+      nLoss: this.lossHist.length };
+  };
+  Trainer.prototype.restore = function (s) {
+    this.net = cloneNet(s.net); this.epoch = s.epoch; this.pos = s.pos; this.phase = s.phase;
+    this.updates = s.updates; this.order = s.order.slice(); this.rng.set(s.rng); this.group = s.group.slice();
+    this.fw = s.fw; this.losses = s.losses; this.L = s.L; this.grad = s.grad; this.deltas = s.deltas;
+    this.lossHist.length = s.nLoss;
+  };
+
+  Trainer.prototype.done = function () { return this.epoch >= this.cfg.maxEpoch(); };
+
+  Trainer.prototype.step = function () {
+    const cfg = this.cfg, S = cfg.samples, net = this.net, ph = this.phase;
+    const res = { phase: ph, epoch: this.epoch, pos: this.pos };
+
+    if (ph === 0) {
+      this.group = this.previewGroup();
+      this.fw = this.group.map(function (i) { return forward(net, S[i].x); });
+      this.losses = null; this.L = null; this.grad = null; this.deltas = null;
+    } else if (ph === 1) {
+      const self = this;
+      this.losses = this.group.map(function (i, k) { return lossValue(net, self.fw[k].yhat, S[i].y); });
+      this.L = this.losses.reduce(function (p, c) { return p + c; }, 0) / this.losses.length;
+      this.lossHist.push(this.L);
+    } else if (ph === 2) {
+      const self = this;
+      const per = this.group.map(function (i, k) { return backward(net, self.fw[k], S[i].y); });
+      this.deltas = per.map(function (p) { return p.delta; });
+      this.grad = meanGrads(per);
+    } else {
+      const lr = cfg.lr(), upd = cfg.updateAll ? cfg.updateAll() : true;
+      res.prevNet = cloneNet(net);
+      const first = upd ? 0 : net.W.length - 1;
+      for (let l = first; l < net.W.length; l++) {
+        for (let j = 0; j < net.W[l].length; j++) {
+          for (let i = 0; i < net.W[l][j].length; i++)
+            net.W[l][j][i] -= lr * this.grad.dW[l][j][i];
+          net.b[l][j] -= lr * this.grad.db[l][j];
+        }
+      }
+      res.lr = lr;
+      this.updates++;
+      if (cfg.mode === 'batch') { this.epoch++; }
+      else {
+        this.pos++;
+        if (this.pos >= S.length) { this.epoch++; this.pos = 0; this.order = this._newOrder(); }
+      }
+    }
+    this.phase = (ph + 1) % 4;
+    res.group = this.group;
+    return res;
+  };
+
+  const Eng = {
+    sig: sig, softmax: softmax, forward: forward, backward: backward, lossValue: lossValue,
+    cloneNet: cloneNet, lerpNet: lerpNet, Trainer: Trainer, meanGrads: meanGrads
+  };
+  if (typeof module !== 'undefined' && module.exports) module.exports = Eng;
+  g.Eng = Eng;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ============================================================================
+   Scen — số liệu đầu bài lấy từ các file PDF (đã đối chiếu bằng mắt trên trang gốc)
+   ========================================================================== */
+(function (g) {
+  'use strict';
+
+  function net(sizes, acts, loss, W, b) { return { sizes: sizes, acts: acts, loss: loss, W: W, b: b }; }
+
+  const Scen = {
+    /* File 1 & 2: 3 điểm nằm trên y = 2x + 1 */
+    regData: [{ x: [1], y: [3] }, { x: [2], y: [5] }, { x: [3], y: [7] }],
+    neuron: function (actName, w0, b0) {
+      return net([1, 1], [actName], 'mse', [[[w0]]], [[b0]]);
+    },
+
+    /* File 3: Logistic Regression, x = −1, 1, 2 ; y = 0, 1, 1 */
+    logitData: [{ x: [-1], y: [0] }, { x: [1], y: [1] }, { x: [2], y: [1] }],
+    logit: function (w0, b0) {
+      return net([1, 1], ['sigmoid'], 'bce', [[[w0]]], [[b0]]);
+    },
+
+    /* File 4 (Notes_MLP_from_Scratch): MLP [2,2,1], sigmoid, BCE */
+    notesData: [{ x: [0.5, 0.8], y: [1] }],
+    notes: function () {
+      return net([2, 2, 1], ['sigmoid', 'sigmoid'], 'bce',
+        [[[0.1, 0.3], [0.2, 0.4]], [[0.5, 0.6]]],
+        [[0.1, 0.2], [0.3]]);
+    },
+
+    /* File 5 (Examples_MLP_Backpropagation): ba ví dụ */
+    ex1Data: [{ x: [0.05, 0.10], y: [1] }],
+    ex1: function () {
+      return net([2, 2, 1], ['sigmoid', 'sigmoid'], 'bce',
+        [[[0.15, 0.20], [0.25, 0.30]], [[0.40, 0.45]]],
+        [[0.35, 0.35], [0.60]]);
+    },
+    ex2Data: [{ x: [2, 3], y: [10] }],
+    ex2: function () {
+      return net([2, 1], ['linear'], 'hmse', [[[1, 2]]], [[0.5]]);
+    },
+    ex3Data: [{ x: [0.5, 0.7], y: [1, 0, 0] }],
+    ex3: function () {
+      return net([2, 3], ['softmax'], 'ce',
+        [[[1, 2], [1, 0], [0, 0]]],
+        [[0.1, 0.5, 0.1]]);
+    },
+
+    /* File 6 (Mock_MLP): câu 2 hồi quy ReLU + tuyến tính, câu 3 softmax */
+    mock2Data: [{ x: [1, 2], y: [2] }],
+    mock2: function () {
+      return net([2, 2, 1], ['relu', 'linear'], 'hmse',
+        [[[1, 0], [-1, 1]], [[0.5, -1]]],
+        [[0, -2], [0.5]]);
+    },
+    mock3Data: [{ x: [1, -1], y: [0, 1, 0] }],
+    mock3: function () {
+      return net([2, 2, 3], ['relu', 'softmax'], 'ce',
+        [[[1, 0], [0, -1]], [[1, 0], [0, 0], [0, 1]]],
+        [[0, 0], [0, 0, 0]]);
+    }
+  };
+
+  if (typeof module !== 'undefined' && module.exports) module.exports = Scen;
+  g.Scen = Scen;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ============================================================================
+   Rnn — vanilla RNN many-to-one (forward pass), số liệu từ file Exercise_RNN_Binary_Text_Classification
+   ========================================================================== */
+(function (g) {
+  'use strict';
+  const V = ['I', 'love', 'sports', 'books', 'movies'];
+  const P = {
+    Wx: [[0.1, 0.2, 0.3, 0.4, 0.5], [0.6, 0.7, 0.8, 0.9, 1.0]],
+    Wh: [[0.1, -0.2], [-0.3, 0.4]],
+    b: [0.1, 0.1],
+    Wout: [0.5, -0.4], bout: 0.1
+  };
+  const SENT = [[0, 1, 2], [0, 1, 3], [4, 1, 0], [2, 2, 2]];
+
+  function matVec(M, v) { return M.map(function (row) { let s = 0; for (let i = 0; i < row.length; i++) s += row[i] * v[i]; return s; }); }
+
+  /* tokens: mảng chỉ số trong V (độ dài 3). Trả về mọi đại lượng trung gian theo thời gian. */
+  function run(tokens) {
+    const X = [], Wxx = [], Whh = [], A = [], H = [[0, 0]];
+    for (let t = 0; t < tokens.length; t++) {
+      const x = V.map(function (_, i) { return i === tokens[t] ? 1 : 0; });
+      const wx = matVec(P.Wx, x), wh = matVec(P.Wh, H[t]);
+      const a = wx.map(function (v, j) { return v + wh[j] + P.b[j]; });
+      X.push(x); Wxx.push(wx); Whh.push(wh); A.push(a); H.push(a.map(Math.tanh));
+    }
+    const h3 = H[H.length - 1];
+    const z = P.Wout[0] * h3[0] + P.Wout[1] * h3[1] + P.bout;
+    const yhat = 1 / (1 + Math.exp(-z));
+    return { tokens: tokens, X: X, Wxx: Wxx, Whh: Whh, A: A, H: H, z: z, yhat: yhat, label: yhat >= 0.5 ? 1 : 0 };
+  }
+
+  const Rnn = { V: V, P: P, SENT: SENT, run: run, STEPS: 14 };
+  if (typeof module !== 'undefined' && module.exports) module.exports = Rnn;
+  g.Rnn = Rnn;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* ============================================================================
+   === PHẦN RIÊNG CỦA BÀI: 6 tab mô phỏng mạng (template graph) ===
+   Thứ tự tab theo thứ tự học: Batch GD → SGD → Logistic → MLP từ đầu →
+   Lan truyền ngược (3 ví dụ) → Đề thi thử MLP.
+   ========================================================================== */
+(function () {
+  'use strict';
+
+  var REDUCED = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  var SUB = '₀₁₂₃₄₅₆₇₈₉', SUP = '⁰¹²³⁴⁵⁶⁷⁸⁹';
+  function sub(n) { return String(n).split('').map(function (c) { return SUB[+c]; }).join(''); }
+  function sup(n) { return String(n).split('').map(function (c) { return SUP[+c]; }).join(''); }
+  function fmt(v, d) {
+    d = d == null ? 4 : d;
+    if (typeof v !== 'number' || isNaN(v)) return 'NaN';
+    if (!isFinite(v)) return v > 0 ? '+∞' : '−∞';
+    var a = Math.abs(v);
+    if (a !== 0 && (a < 1e-4 || a >= 1e5)) return v.toExponential(2).replace('-', '−').replace('e+', 'e');
+    return String(+v.toFixed(d)).replace('-', '−');
+  }
+  function fv(arr, d) { return '[' + arr.map(function (v) { return fmt(v, d); }).join(', ') + ']'; }
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function ease(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+  function hexToRgb(hex) {
+    var h = hex.replace('#', '');
+    if (h.length === 3) h = h.split('').map(function (c) { return c + c; }).join('');
+    var n = parseInt(h, 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  function rgba(hex, a) { var c = hexToRgb(hex); return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')'; }
+  function onColor(hex) {                      // chữ trắng hay chữ tối trên nền màu
+    var c = hexToRgb(hex).map(function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+    return (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) > 0.34 ? '#14181d' : '#ffffff';
+  }
+
+  var ACT_VN = { sigmoid: 'σ', relu: 'ReLU', linear: 'tuyến tính', softmax: 'Softmax' };
+  var W_LETTER = ['w', 'u', 'v', 't'], B_LETTER = ['b', 'c', 'd', 'e'];
+  function wSym(wl, j, i, sizes) {
+    var l = W_LETTER[wl];
+    return (sizes[wl] === 1 && sizes[wl + 1] === 1) ? l : l + sub(j + 1) + sub(i + 1);
+  }
+  function bSym(wl, j, sizes) { return B_LETTER[wl] + (sizes[wl + 1] > 1 ? sub(j + 1) : ''); }
+
+  /* ======================================================================
+     1. Dựng đồ thị (nút + cạnh) từ kích thước các lớp
+     ==================================================================== */
+  function buildTopo(spec) {
+    var sizes = spec.sizes, Lw = sizes.length - 1, lanes = spec.lanes || 1;
+    var dx = spec.dx || 3.7, dy = spec.dy || 3.2, laneDy = spec.laneDy || 3.0;
+    var cols = sizes.length + 1;
+    var nodes = [], edges = [], byId = {};
+    function colX(c) { return (c - (cols - 1) / 2) * dx; }
+    function add(n) { nodes.push(n); byId[n.id] = n; return n; }
+    var ln, l, i, j, wl, k;
+    for (ln = 0; ln < lanes; ln++) {
+      var laneY = ((lanes - 1) / 2 - ln) * laneDy;
+      for (l = 0; l < sizes.length; l++) {
+        var m = sizes[l];
+        for (i = 0; i < m; i++) {
+          var y = laneY + ((m - 1) / 2 - i) * dy;
+          var n = add({ id: ln + ':' + l + ':' + i, x: colX(l), y: y, kind: l === 0 ? 'in' : 'neu',
+            layer: l, idx: i, lane: ln, name: spec.name(l, i, ln), r: 0.42 });
+          if (l > 0) {
+            var bn = add({ id: 'b' + ln + ':' + (l - 1) + ':' + i, x: n.x, y: y + 1.25, kind: 'bias',
+              layer: l, idx: i, lane: ln, name: 'b', r: 0.27, wl: l - 1 });
+            edges.push({ a: bn.id, b: n.id, kind: 'b', wl: l - 1, j: i, lane: ln });
+          }
+        }
+      }
+      for (wl = 0; wl < Lw; wl++)
+        for (j = 0; j < sizes[wl + 1]; j++)
+          for (i = 0; i < sizes[wl]; i++)
+            edges.push({ a: ln + ':' + wl + ':' + i, b: ln + ':' + (wl + 1) + ':' + j, kind: 'W',
+              wl: wl, i: i, j: j, lane: ln, m: sizes[wl + 1] });
+    }
+    add({ id: 'L', x: colX(cols - 1), y: 0, kind: 'loss', layer: Lw + 1, idx: 0, lane: -1, name: 'L', r: 0.5 });
+    for (ln = 0; ln < lanes; ln++)
+      for (k = 0; k < sizes[Lw]; k++)
+        edges.push({ a: ln + ':' + Lw + ':' + k, b: 'L', kind: 'loss', lane: ln, k: k });
+    return { nodes: nodes, edges: edges, byId: byId, Lw: Lw, sizes: sizes };
+  }
+
+  /* ======================================================================
+     2. Mô tả 6 tab
+     ==================================================================== */
+  var CODE_NEURON_BATCH = [
+    'khởi tạo w, b',
+    'lặp từng epoch (1 epoch = 1 lần cập nhật):',
+    '    ① xuôi: với MỌI mẫu i: ŷᵢ ← f(w·xᵢ + b)',
+    '    ② mất mát: L ← trung bình của (ŷᵢ − yᵢ)²',
+    '    ③ ngược: gw, gb ← trung bình gradient của TẤT CẢ mẫu',
+    '    ④ cập nhật: w ← w − η·gw ; b ← b − η·gb'
+  ];
+  var CODE_NEURON_SGD = [
+    'khởi tạo w, b',
+    'lặp từng epoch, duyệt từng mẫu (xáo trộn nếu bật):',
+    '    ① xuôi: ŷ ← f(w·x + b) chỉ với MỘT mẫu',
+    '    ② mất mát: L ← (ŷ − y)²',
+    '    ③ ngược: gw, gb ← gradient của mẫu đó',
+    '    ④ cập nhật ngay: w ← w − η·gw ; b ← b − η·gb'
+  ];
+  var CODE_LOGIT = [
+    'khởi tạo w ← 0, b ← 0',
+    'lặp từng epoch, duyệt từng mẫu (x, y):',
+    '    ① xuôi: z ← w·x + b ; ŷ ← σ(z)',
+    '    ② mất mát: L ← −[y·ln ŷ + (1−y)·ln(1−ŷ)]',
+    '    ③ ngược: δ ← ŷ − y ; gw ← δ·x ; gb ← δ',
+    '    ④ cập nhật: w ← w − η·gw ; b ← b − η·gb'
+  ];
+  var CODE_MLP = [
+    'khởi tạo W, b của mọi lớp',
+    'lặp từng epoch, với mỗi mẫu (x, y):',
+    '    ① xuôi: aˡ ← f(Wˡ·aˡ⁻¹ + bˡ), từ lớp 1 đến lớp ra',
+    '    ② mất mát: L ← loss(ŷ, y)',
+    '    ③ ngược: δᴸ ← ∂L/∂zᴸ ; δˡ ← (Wˡ⁺¹)ᵀδˡ⁺¹ ⊙ f′(zˡ) ; gradient = δ·(đầu vào)ᵀ',
+    '    ④ cập nhật: W ← W − η·gW ; b ← b − η·gb'
+  ];
+
+  function nameFn(inNames, hidNames, outNames, lanes) {
+    return function (l, i, ln) {
+      if (lanes > 1) return l === 0 ? 'x' + sub(ln + 1) : 'ŷ' + sub(ln + 1);
+      if (l === 0) return inNames[i];
+      if (l === outNames.layer) return outNames.names[i];
+      return hidNames[l - 1][i];
+    };
+  }
+  function mlpName(inNames, hid, out, Lw) {
+    return function (l, i) {
+      if (l === 0) return inNames[i];
+      if (l === Lw) return out[i];
+      return hid[l - 1][i];
+    };
+  }
+
+  function mkParams(ids) {
+    var P = {
+      lr: function (min, max, step, value, fixed) {
+        return { id: 'lr', label: 'Tốc độ học (learning rate) η', min: min, max: max, step: step, value: value, fixed: fixed };
+      },
+      act: { id: 'act', label: 'Hàm kích hoạt (activation): 0 = tuyến tính, 1 = sigmoid', min: 0, max: 1, step: 1, value: 0 },
+      shuffle: { id: 'shuffle', label: 'Thứ tự mẫu: 0 = cố định, 1 = xáo trộn mỗi epoch', min: 0, max: 1, step: 1, value: 0 },
+      w0: function (min, max) { return { id: 'w0', label: 'Trọng số ban đầu w (weight)', min: min, max: max, step: 0.1, value: 0, fixed: 1 }; },
+      b0: function (min, max) { return { id: 'b0', label: 'Độ lệch ban đầu b (bias)', min: min, max: max, step: 0.1, value: 0, fixed: 1 }; },
+      maxEpoch: function (max, value) { return { id: 'maxEpoch', label: 'Số epoch tối đa (một epoch = duyệt hết dữ liệu một lượt)', min: 1, max: max, step: 1, value: value }; }
+    };
+    return P;
+  }
+  var PP = mkParams();
+  var DETAIL = { id: 'detail', label: 'Số trên lưới: 0 = gọn (dễ đọc), 1 = đầy đủ (z, y, δ, ∂)', min: 0, max: 1, step: 1, value: 0 };
+
+  var RNN_PH = ['① Wₓxₜ', '② Wₕhₜ₋₁', '③ aₜ', '④ hₜ = tanh', '⑤ Logit z', '⑥ ŷ và nhãn'];
+  var RNN_CHIP = ['① Wₓx', '② Wₕh', '③ a', '④ tanh', '⑤ z', '⑥ ŷ'];
+  var RNN_COL = [0, 5, 1, 2, 3, 4];
+  var RNN_CODE = [
+    'h₀ ← [0, 0]',
+    'với t = 1, 2, 3:',
+    '    ① Wₓxₜ  (xₜ là one-hot nên đây là cột của Wₓ ứng với token wₜ)',
+    '    ② Wₕhₜ₋₁',
+    '    ③ aₜ ← Wₓxₜ + Wₕhₜ₋₁ + b',
+    '    ④ hₜ ← tanh(aₜ)',
+    'z ← Wout·h₃ + bout',
+    'ŷ ← sigmoid(z) ; dự đoán lớp 1 nếu ŷ ≥ 0.5, ngược lại lớp 0'
+  ];
+  var RNN_CLASS = ['lớp 0 · Không phải Thể thao', 'lớp 1 · Thể thao'];
+
+
+  var TABS = [
+    /* ---------------------------------------------------------- 1 */
+    {
+      key: 'batch', label: 'Batch GD', color: '#1d4ed8',
+      h1: 'Bài 1 · Neuron học bằng Batch Gradient Descent (xuống dốc theo cả lô dữ liệu)',
+      params: [PP.lr(0.001, 0.25, 0.001, 0.01, 3), PP.act, PP.w0(-2, 3), PP.b0(-2, 3), PP.maxEpoch(1000, 100), DETAIL],
+      code: CODE_NEURON_BATCH, kind: 'neuron',
+      scen: function (app) {
+        var actName = app.param('act') >= 1 ? 'sigmoid' : 'linear';
+        return {
+          sizes: [1, 1], lanes: 3, mode: 'batch', samples: Scen.regData, lossLabel: 'MSE', plot: 'reg',
+          makeNet: function () { return Scen.neuron(actName, app.param('w0'), app.param('b0')); },
+          name: nameFn(null, null, null, 3), dx: 3.3
+        };
+      }    },
+    /* ---------------------------------------------------------- 2 */
+    {
+      key: 'sgd', label: 'SGD', color: '#6d28d9',
+      h1: 'Bài 2 · Neuron học bằng SGD (xuống dốc ngẫu nhiên: mỗi lần một mẫu)',
+      params: [PP.lr(0.001, 0.3, 0.001, 0.01, 3), PP.act, PP.shuffle, PP.w0(-2, 3), PP.b0(-2, 3), PP.maxEpoch(300, 60), DETAIL],
+      code: CODE_NEURON_SGD, kind: 'neuron',
+      scen: function (app) {
+        var actName = app.param('act') >= 1 ? 'sigmoid' : 'linear';
+        return {
+          sizes: [1, 1], lanes: 3, mode: 'sgd', samples: Scen.regData, lossLabel: 'MSE', plot: 'reg',
+          makeNet: function () { return Scen.neuron(actName, app.param('w0'), app.param('b0')); },
+          name: nameFn(null, null, null, 3), dx: 3.3
+        };
+      }    },
+    /* ---------------------------------------------------------- 3 */
+    {
+      key: 'logit', label: 'Logistic', color: '#0e7490',
+      h1: 'Bài 3 · Logistic Regression bằng SGD (phân loại nhị phân)',
+      params: [PP.lr(0.01, 3, 0.01, 0.1, 2), PP.shuffle, PP.w0(-3, 3), PP.b0(-3, 3), PP.maxEpoch(300, 60), DETAIL],
+      code: CODE_LOGIT, kind: 'neuron',
+      scen: function (app) {
+        return {
+          sizes: [1, 1], lanes: 3, mode: 'sgd', samples: Scen.logitData, lossLabel: 'BCE', plot: 'logit',
+          makeNet: function () { return Scen.logit(app.param('w0'), app.param('b0')); },
+          name: nameFn(null, null, null, 3), dx: 3.3
+        };
+      }    },
+    /* ---------------------------------------------------------- 4 */
+    {
+      key: 'notes', label: 'MLP từ đầu', color: '#047857',
+      h1: 'Bài 4 · MLP từ đầu: mạng nhiều lớp 2-2-1 (sigmoid + BCE)',
+      params: [PP.lr(0.01, 5, 0.01, 0.1, 2),
+        { id: 'updAll', label: 'Lớp được cập nhật: 0 = chỉ lớp ra (như tài liệu), 1 = mọi lớp', min: 0, max: 1, step: 1, value: 0 },
+        PP.maxEpoch(200, 30), DETAIL],
+      code: CODE_MLP, kind: 'mlp', updateAll: true,
+      scen: function () {
+        return {
+          sizes: [2, 2, 1], lanes: 1, mode: 'sgd', samples: Scen.notesData, lossLabel: 'BCE', plot: null,
+          makeNet: Scen.notes, name: mlpName(['x₁', 'x₂'], [['h₁', 'h₂']], ['ŷ'], 2)
+        };
+      }    },
+    /* ---------------------------------------------------------- 5 */
+    {
+      key: 'ex', label: 'Lan truyền ngược', color: '#b45309',
+      h1: 'Bài 5 · Lan truyền ngược (backpropagation) qua ba ví dụ',
+      params: [
+        { id: 'vd', label: 'Ví dụ: 1 = phân loại nhị phân, 2 = hồi quy, 3 = Softmax', min: 1, max: 3, step: 1, value: 1 },
+        PP.lr(0.01, 2, 0.01, 0.1, 2), PP.maxEpoch(100, 20), DETAIL],
+      code: CODE_MLP, kind: 'mlp', lrByVd: [0.1, 0.05, 0.1],
+      scen: function (app) {
+        var v = Math.round(app.param('vd'));
+        if (v === 2) return {
+          sizes: [2, 1], lanes: 1, mode: 'sgd', samples: Scen.ex2Data, lossLabel: '½MSE', plot: null,
+          makeNet: Scen.ex2, name: mlpName(['a₁', 'a₂'], [], ['ŷ'], 1)
+        };
+        if (v === 3) return {
+          sizes: [2, 3], lanes: 1, mode: 'sgd', samples: Scen.ex3Data, lossLabel: 'CE', plot: null,
+          makeNet: Scen.ex3, name: mlpName(['a₁', 'a₂'], [], ['ŷ₁', 'ŷ₂', 'ŷ₃'], 1)
+        };
+        return {
+          sizes: [2, 2, 1], lanes: 1, mode: 'sgd', samples: Scen.ex1Data, lossLabel: 'BCE', plot: null,
+          makeNet: Scen.ex1, name: mlpName(['x₁', 'x₂'], [['h₁', 'h₂']], ['ŷ'], 2)
+        };
+      }    },
+    /* ---------------------------------------------------------- 6 */
+    {
+      key: 'mock', label: 'Đề thi thử', color: '#be123c',
+      h1: 'Bài 6 · Đề thi thử MLP: ReLU, hồi quy và Softmax',
+      params: [
+        { id: 'cau', label: 'Câu của đề: 2 = hồi quy, 3 = phân loại Softmax', min: 2, max: 3, step: 1, value: 2 },
+        PP.lr(0.01, 2, 0.01, 0.1, 2), PP.maxEpoch(100, 20), DETAIL],
+      code: CODE_MLP, kind: 'mlp',
+      scen: function (app) {
+        var c = Math.round(app.param('cau'));
+        if (c === 3) return {
+          sizes: [2, 2, 3], lanes: 1, mode: 'sgd', samples: Scen.mock3Data, lossLabel: 'CE', plot: null,
+          makeNet: Scen.mock3, name: mlpName(['x₁', 'x₂'], [['h₁', 'h₂']], ['ŷ₁', 'ŷ₂', 'ŷ₃'], 2)
+        };
+        return {
+          sizes: [2, 2, 1], lanes: 1, mode: 'sgd', samples: Scen.mock2Data, lossLabel: '½MSE', plot: null,
+          makeNet: Scen.mock2, name: mlpName(['x₁', 'x₂'], [['h₁', 'h₂']], ['ŷ'], 2)
+        };
+      }    },
+    /* ---------------------------------------------------------- 7 */
+    {
+      key: 'rnn', label: 'RNN', color: '#a21caf',
+      h1: 'Bài 7 · RNN many-to-one: phân loại câu Thể thao / Không phải Thể thao (forward pass)',
+      params: [
+        { id: 'sent', label: 'Câu: 0 = (I, love, sports) theo đề, 1 = (I, love, books), 2 = (movies, love, I), 3 = (sports, sports, sports)', min: 0, max: 3, step: 1, value: 0 },
+        DETAIL],
+      code: RNN_CODE, kind: 'rnn',
+      scen: function (app) {
+        var idx = Math.round(app.param('sent'));
+        return { rnn: Rnn.run(Rnn.SENT[idx]), mode: 'rnn', samples: [], sizes: [5, 2, 1], lossLabel: '' };
+      }
+    }
+  ];
+
+  /* ======================================================================
+     3. Trạng thái từng tab
+     ==================================================================== */
+  var tabs = [], activeTab = null, fabL = null, fabR = null;
+
+  function syncFabs() {
+    if (!fabL || !activeTab) return;
+    var T = activeTab;
+    fabL.setAttribute('aria-disabled', (T.hist && T.hist.length) ? 'false' : 'true');
+    fabL.style.setProperty('--c', T.def.color); fabR.style.setProperty('--c', T.def.color);
+  }
+
+  function sampleDesc(T, res) {
+    var sc = T.sc, S = sc.samples, n = S.length;
+    if (sc.mode === 'batch') return 'cả ' + n + ' mẫu cùng lúc';
+    if (n > 1) {
+      var i = res.group[0];
+      return 'mẫu ' + (i + 1) + '/' + n + ' (x = ' + fmt(S[i].x[0]) + ', y = ' + fmt(S[i].y[0]) + ')';
+    }
+    return 'x = ' + fv(S[0].x) + ', y = ' + fv(S[0].y);
+  }
+
+  function resetTab(T) {
+    var app = T.app;
+    T.sc = T.def.scen(app);
+    var sc = T.sc;
+    if (sc.rnn) { resetRnn(T); return; }
+    T.tr = new Eng.Trainer({
+      makeNet: sc.makeNet, samples: sc.samples, mode: sc.mode,
+      lr: function () { return app.param('lr'); },
+      shuffle: function () { return !!app.param('shuffle'); },
+      updateAll: function () { return T.def.updateAll ? app.param('updAll') >= 1 : true; },
+      maxEpoch: function () { return app.param('maxEpoch'); }
+    });
+    T.topo = buildTopo({ sizes: sc.sizes, lanes: sc.lanes, name: sc.name, dx: sc.dx });
+    T.ui = { cur: -1, t0: 0, dur: 0, group: T.tr.group.slice(), fw: null, losses: null, L: null,
+      grad: null, deltas: null, prevNet: null, epoch: 0, desc: sampleDesc(T, { group: T.tr.group }) };
+    T.fitW = 0;
+    app.highlight(-1); T.hl = -1;
+    clearLog(T);
+    syncFabs();
+    app.status('<b>Sẵn sàng.</b>');
+    app.redraw();
+  }
+
+  function animDur(T) {
+    if (REDUCED) return 0;
+    return clamp((T.sec || 0.5) * 0.9, 0.06, 1.3);   // hoạt ảnh một pha gói trong khoảng thời gian một bước
+  }
+
+  function stepTab(T) {
+    if (T.def.kind === 'rnn') return stepRnn(T);
+    var app = T.app, tr = T.tr, ui = T.ui, sc = T.sc;
+    if (tr.phase === 0 && tr.done()) {
+      app.status('<b>Đã chạy đủ ' + tr.epoch + ' epoch.</b>');
+      return false;
+    }
+    var stEl = T.root.querySelector('.vl-status');
+    T.hist.push({ tr: tr.snapshot(), ui: Object.assign({}, ui, { group: ui.group.slice() }), status: stEl ? stEl.innerHTML : '', hl: T.hl, steps: app.stepCount });
+    if (T.hist.length > 3000) T.hist.shift();
+    var res = tr.step();
+    ui.cur = res.phase; ui.t0 = performance.now(); ui.dur = animDur(T);
+    ui.epoch = res.epoch;
+    if (res.phase === 0) {
+      ui.group = res.group.slice(); ui.fw = tr.fw;
+      ui.losses = null; ui.L = null; ui.grad = null; ui.deltas = null;
+      ui.desc = sampleDesc(T, res);
+    } else if (res.phase === 1) { ui.losses = tr.losses; ui.L = tr.L; }
+    else if (res.phase === 2) { ui.grad = tr.grad; ui.deltas = tr.deltas; }
+    else { ui.prevNet = res.prevNet; ui.lr = res.lr; }
+    app.highlight(res.phase + 2); T.hl = res.phase + 2;
+    app.status(statusHTML(T, res));
+    pushCell(T, res, sc.mode !== 'batch' && sc.samples.length > 1 ? 'mẫu ' + (res.group[0] + 1) + '/' + sc.samples.length : '');
+    syncFabs();
+    return !(res.phase === 3 && tr.done());
+  }
+
+  function setSlider(T, id, v) {
+    var idx = -1;
+    T.def.params.forEach(function (p, k) { if (p.id === id) idx = k; });
+    var inputs = T.root.querySelectorAll('.vl-side .vl-card input[type=range]');
+    var el = inputs[idx];
+    if (!el) return;
+    el.value = v;
+    el.dispatchEvent(new Event('input'));
+  }
+
+  function hardReset(T) {
+    if (T.app.pause) T.app.pause();
+    T.app.stepCount = 0;
+    resetTab(T);
+  }
+
+  function paramChanged(T, id, v) {
+    if (T.busy) return;
+    if (id === 'lr' || id === 'maxEpoch' || id === 'updAll' || id === 'detail') { if (id === 'updAll') refreshGeneral(T); T.app.redraw(); return; }
+    if (id === 'vd' || id === 'cau') {
+      if (id === 'vd' && T.def.lrByVd) {
+        T.busy = true; setSlider(T, 'lr', T.def.lrByVd[Math.round(v) - 1]); T.busy = false;
+      } else if (id === 'cau') {
+        T.busy = true; setSlider(T, 'lr', 0.1); T.busy = false;
+      }
+    }
+    hardReset(T);
+  }
+
+  /* ======================================================================
+     4. Văn bản "Đang xảy ra gì?" — luôn nêu con số cụ thể
+     ==================================================================== */
+  function fnName(a) { return a === 'sigmoid' ? 'σ' : a === 'relu' ? 'ReLU' : a === 'softmax' ? 'Softmax' : ''; }
+
+  function statusHTML(T, res) {
+    var tr = T.tr, sc = T.sc, net = tr.net, S = sc.samples, ui = T.ui, g = res.group;
+    var neuron = sc.sizes.length === 2 && sc.sizes[0] === 1 && sc.sizes[1] === 1;
+    var head = '<b>Epoch ' + res.epoch + '</b>' + (sc.mode === 'batch' ? '' : ' · ' + ui.desc);
+    var Lw = net.W.length, outAct = net.acts[Lw - 1];
+    var k, l, s;
+
+    if (res.phase === 0) {
+      if (neuron) {
+        var w0 = net.W[0][0][0], b0 = net.b[0][0], f = fnName(net.acts[0]);
+        if (sc.mode === 'batch') {
+          var yh = tr.fw.map(function (q) { return q.yhat[0]; });
+          var ys = g.map(function (i) { return S[i].y[0]; });
+          return head + ' · <b>① Xuôi.</b> Cả ' + g.length + ' mẫu dùng chung w = ' + fmt(w0) + ', b = ' + fmt(b0) +
+            '. ŷᵢ = ' + (f ? f + '(w·xᵢ + b)' : 'w·xᵢ + b') + ' → ŷ = ' + fv(yh) + '. Nhãn y = ' + fv(ys) +
+            ', sai số e = ŷ − y = ' + fv(yh.map(function (v, i) { return v - ys[i]; })) + '.';
+        }
+        var x = S[g[0]].x[0], y = S[g[0]].y[0], z = tr.fw[0].Z[0][0], yhat = tr.fw[0].yhat[0];
+        return head + ' · <b>① Xuôi.</b> z = w·x + b = ' + fmt(w0) + '×' + fmt(x) + ' + ' + fmt(b0) + ' = ' + fmt(z) +
+          (f ? '; ŷ = ' + f + '(z) = ' + fmt(yhat) : '; ŷ = z') + '. Nhãn y = ' + fmt(y) +
+          (sc.lossLabel === 'BCE' ? '; mô hình đang cho xác suất lớp 1 là ' + fmt(yhat * 100, 1) + '%.' : ', sai số e = ŷ − y = ' + fmt(yhat - y) + '.');
+      }
+      s = head + ' · <b>① Xuôi.</b> x = ' + fv(S[g[0]].x) + '.';
+      for (l = 0; l < Lw; l++) {
+        var a = tr.fw[0].A[l + 1], zz = tr.fw[0].Z[l];
+        var fn = fnName(net.acts[l]);
+        s += ' Lớp ' + (l + 1) + ': z' + sup(l + 1) + ' = W' + sup(l + 1) + '·a' + (l ? sup(l) : '(x)') + ' + b' + sup(l + 1) + ' = ' + fv(zz) +
+          (fn ? ' → ' + (l === Lw - 1 ? 'ŷ' : 'a' + sup(l + 1)) + ' = ' + fn + '(z) = ' + fv(a) : ' → ŷ = z' + (l === Lw - 1 ? '' : '') + ' = ' + fv(a)) + '.';
+      }
+      if (outAct === 'softmax') s += ' Tổng ba xác suất = ' + fmt(tr.fw[0].yhat.reduce(function (p, c) { return p + c; }, 0)) + '.';
+      return s;
+    }
+
+    if (res.phase === 1) {
+      var Ls = tr.losses, yhat1 = tr.fw.map(function (q) { return q.yhat; });
+      if (net.loss === 'mse' && sc.mode === 'batch')
+        return head + ' · <b>② Mất mát.</b> MSE = trung bình của eᵢ² = (' +
+          yhat1.map(function (q, i) { return fmt(Ls[i]); }).join(' + ') + ')/' + Ls.length + ' = <b>' + fmt(tr.L) + '</b>.';
+      if (net.loss === 'mse')
+        return head + ' · <b>② Mất mát.</b> L = (ŷ − y)² = (' + fmt(yhat1[0][0]) + ' − ' + fmt(S[g[0]].y[0]) + ')² = <b>' + fmt(Ls[0]) + '</b>.';
+      if (net.loss === 'bce') {
+        var yy = S[g[0]].y[0];
+        return head + ' · <b>② Mất mát.</b> L = −[y·ln ŷ + (1−y)·ln(1−ŷ)] = −ln(' + fmt(yy === 1 ? yhat1[0][0] : 1 - yhat1[0][0]) + ') = <b>' + fmt(Ls[0]) + '</b>. ' +
+          'Mô hình gán xác suất ' + fmt((yy === 1 ? yhat1[0][0] : 1 - yhat1[0][0]) * 100, 1) + '% cho nhãn đúng.';
+      }
+      if (net.loss === 'hmse')
+        return head + ' · <b>② Mất mát.</b> L = ½(ŷ − y)² = ½(' + fmt(yhat1[0][0]) + ' − ' + fmt(S[g[0]].y[0]) + ')² = <b>' + fmt(Ls[0]) + '</b>.';
+      var cls = S[g[0]].y.indexOf(1);
+      return head + ' · <b>② Mất mát.</b> L = −Σ yₖ·ln ŷₖ = −ln(ŷ' + sub(cls + 1) + ') = −ln(' + fmt(yhat1[0][cls]) + ') = <b>' + fmt(Ls[0]) + '</b>.';
+    }
+
+    if (res.phase === 2) {
+      var gr = tr.grad, dl = tr.deltas[0];
+      if (neuron) {
+        var gw = gr.dW[0][0][0], gb = gr.db[0][0];
+        if (sc.lossLabel === 'BCE')
+          return head + ' · <b>③ Ngược.</b> δ = ŷ − y = ' + fmt(dl[0][0]) + '; ∂L/∂w = δ·x = ' + fmt(gw) + '; ∂L/∂b = δ = ' + fmt(gb) + '.';
+        return head + ' · <b>③ Ngược.</b> ' + (sc.mode === 'batch' ? 'Gradient trung bình trên cả ' + g.length + ' mẫu: ' : 'Gradient của mẫu này: ') +
+          '∂L/∂w = ' + fmt(gw) + ', ∂L/∂b = ' + fmt(gb) + '.';
+      }
+      s = head + ' · <b>③ Ngược.</b>';
+      var simple = (outAct === 'softmax' && net.loss === 'ce') || (outAct === 'sigmoid' && net.loss === 'bce') || (outAct === 'linear' && net.loss === 'hmse');
+      s += ' δ' + sup(Lw) + (simple ? ' = ŷ − y' : ' = ∂L/∂z' + sup(Lw)) + ' = ' + fv(dl[Lw - 1]) + '.';
+      for (l = Lw - 2; l >= 0; l--)
+        s += ' δ' + sup(l + 1) + ' = (W' + sup(l + 2) + ')ᵀδ' + sup(l + 2) + ' ⊙ f′(z' + sup(l + 1) + ') = ' + fv(dl[l]) + '.';
+      var dead = [];
+      for (l = 0; l < Lw - 1; l++)
+        if (net.acts[l] === 'relu') tr.fw[0].Z[l].forEach(function (zv, i) { if (zv <= 0) dead.push('h' + sub(i + 1)); });
+      if (dead.length) s += ' ' + dead.join(', ') + ' có z ≤ 0 nên ReLU′ = 0.';
+      return s;
+    }
+
+    /* pha 4 — cập nhật */
+    var pv = res.prevNet, lr = res.lr, gr4 = tr.grad;
+    var updAll = T.def.updateAll ? T.app.param('updAll') >= 1 : true;
+    var first = updAll ? 0 : Lw - 1;
+    if (neuron) {
+      var gw4 = gr4.dW[0][0][0], gb4 = gr4.db[0][0];
+      return head + ' · <b>④ Cập nhật.</b> w ← ' + fmt(pv.W[0][0][0]) + ' − ' + fmt(lr) + ' × (' + fmt(gw4) + ') = <b>' + fmt(net.W[0][0][0]) +
+        '</b>; b ← ' + fmt(pv.b[0][0]) + ' − ' + fmt(lr) + ' × (' + fmt(gb4) + ') = <b>' + fmt(net.b[0][0]) + '</b>.' +
+        (tr.done() ? ' Đã chạy đủ ' + tr.epoch + ' epoch.' : '');
+    }
+    var best = null;
+    for (l = first; l < Lw; l++)
+      for (var j = 0; j < net.W[l].length; j++)
+        for (var i = 0; i < net.W[l][j].length; i++) {
+          var gv = Math.abs(gr4.dW[l][j][i]);
+          if (!best || gv > best.g) best = { l: l, j: j, i: i, g: gv };
+        }
+    s = head + ' · <b>④ Cập nhật</b> (η = ' + fmt(lr) + '): W ← W − η·∂L/∂W' + (updAll ? '' : ', chỉ ở lớp ra') + '. Ví dụ ' +
+      wSym(best.l, best.j, best.i, sc.sizes) + ' ← ' + fmt(pv.W[best.l][best.j][best.i]) + ' − ' + fmt(lr) + ' × (' + fmt(gr4.dW[best.l][best.j][best.i]) + ') = <b>' +
+      fmt(net.W[best.l][best.j][best.i]) + '</b>.';
+    var x0 = S[0].x, y0 = S[0].y;
+    var nf = Eng.forward(net, x0);
+    var nL = Eng.lossValue(net, nf.yhat, y0);
+    s += ' Nếu xuôi lại ngay: ' + (nf.yhat.length > 1 ? 'ŷ = ' + fv(nf.yhat) : 'ŷ ≈ ' + fmt(nf.yhat[0])) + ', loss mới = <b>' + fmt(nL) + '</b> (trước đó ' + fmt(tr.L) + ': ' + (nL < tr.L ? 'giảm' : 'không giảm') + ').';
+    return s;
+  }
+
+  /* ======================================================================
+     5. Vẽ
+     ==================================================================== */
+  function fit(T, W, H) {
+    var nodes = T.topo.nodes, x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    nodes.forEach(function (n) {
+      x0 = Math.min(x0, n.x - n.r); x1 = Math.max(x1, n.x + n.r);
+      y0 = Math.min(y0, n.y - n.r); y1 = Math.max(y1, n.y + n.r);
+    });
+    var padX = 1.2, padTop = 0.5, padBot = 1.9;
+    var bw = (x1 - x0) + 2 * padX, bh = (y1 - y0) + padTop + padBot;
+    var topPx = 70, botPx = 172;
+    var aw = W - 12, ah = H - topPx - botPx;
+    var scale = clamp(Math.min(aw / bw, ah / bh), 14, 110);
+    var yc = ((y1 + padTop) + (y0 - padBot)) / 2;
+    var yr = topPx + ah / 2;
+    T.app.view.setHome({ cx: (x0 + x1) / 2, cy: yc - (H / 2 - yr) / scale, scale: scale });
+    T.fitW = W; T.fitH = H;
+  }
+
+  /* Đẩy các ô chữ ra khỏi hình tròn của nút và khỏi nhau; lò xo kéo nhẹ về vị trí gốc nên kết quả ổn định giữa các khung hình */
+  function drawItems(ctx, items, bg, fg) {
+    ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+    items.forEach(function (it) {
+      var x0 = it.x - it.w / 2, y0 = it.y - it.h / 2;
+      ctx.save();
+      ctx.globalAlpha = it.on ? 1 : 0.3;
+      if (Math.hypot(it.x - it.ax, it.y - it.ay) > 12) {           // đường nối từ vị trí gốc tới ô chữ đã bị đẩy
+        ctx.strokeStyle = rgba(fg, 0.4); ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(it.ax, it.ay); ctx.lineTo(it.x, it.y); ctx.stroke(); ctx.setLineDash([]);
+      }
+      if (it.type === 'lab') {
+        ctx.fillStyle = rgba(bg, 0.95); ctx.strokeStyle = it.edge; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.roundRect(x0, y0, it.w, it.h, 5); ctx.fill(); ctx.stroke();
+      } else {
+        ctx.fillStyle = rgba(bg, 0.9); ctx.fillRect(x0, y0, it.w, it.h);
+      }
+      ctx.fillStyle = fg;
+      var lhh = it.h / it.lines.length;
+      it.lines.forEach(function (tx, k) { ctx.fillText(tx, it.x, y0 + lhh * (k + 0.5) + 0.5); });
+      ctx.restore();
+    });
+  }
+
+  function placeItems(items, circles, W, H) {
+    var loY = 78, hiY = H - 150 - 16, it, jt, c, k, a, b, n = items.length;
+    items.forEach(function (q) { q.x = q.ax; q.y = q.ay; });
+    for (k = 0; k < 60; k++) {
+      for (a = 0; a < n; a++) {
+        it = items[a];
+        for (b = 0; b < circles.length; b++) {
+          c = circles[b];
+          var nx = Math.max(it.x - it.w / 2, Math.min(c.x, it.x + it.w / 2));
+          var ny = Math.max(it.y - it.h / 2, Math.min(c.y, it.y + it.h / 2));
+          var dx = nx - c.x, dy = ny - c.y, d = Math.hypot(dx, dy);
+          if (d < c.r) {
+            if (d < 0.01) { dx = it.x - c.x; dy = (it.y - c.y) || 1; d = Math.hypot(dx, dy) || 1; }
+            var push = (c.r - d) + 1;
+            it.x += dx / d * push; it.y += dy / d * push;
+          }
+        }
+        for (b = a + 1; b < n; b++) {
+          jt = items[b];
+          var ox = (it.w + jt.w) / 2 + 2 - Math.abs(it.x - jt.x), oy = (it.h + jt.h) / 2 + 2 - Math.abs(it.y - jt.y);
+          if (ox > 0 && oy > 0) {
+            if (oy <= ox) { var sy = (it.y === jt.y ? (a < b ? -1 : 1) : (it.y < jt.y ? -1 : 1)); it.y += sy * oy / 2; jt.y -= sy * oy / 2; }
+            else { var sx = (it.x === jt.x ? (a < b ? -1 : 1) : (it.x < jt.x ? -1 : 1)); it.x += sx * ox / 2; jt.x -= sx * ox / 2; }
+          }
+        }
+      }
+      for (a = 0; a < n; a++) {
+        it = items[a];
+        it.x += (it.ax - it.x) * 0.03; it.y += (it.ay - it.y) * 0.03;
+        it.x = Math.max(4 + it.w / 2, Math.min(W - 4 - it.w / 2, it.x));
+        it.y = Math.max(loY + it.h / 2, Math.min(hiY - it.h / 2, it.y));
+      }
+    }
+  }
+
+  function drawTab(T, ctx) {
+    var app = T.app, view = app.view;
+    var W = ctx.canvas.clientWidth, H = ctx.canvas.clientHeight;
+    if (!T.topo || !T.ui || W < 40 || H < 40 || T.root.hidden) return;
+    if (T.fitW !== W || T.fitH !== H) fit(T, W, H);
+    if (T.sc.rnn) { drawRnn(T, ctx, W, H); return; }
+
+    var ui = T.ui, tr = T.tr, topo = T.topo, Lw = topo.Lw, sc = T.sc, sizes = sc.sizes;
+    var now = performance.now();
+    var p = (ui.cur < 0 || ui.dur <= 0) ? 1 : clamp((now - ui.t0) / (ui.dur * 1000), 0, 1);
+    var net = (ui.cur === 3 && ui.prevNet) ? Eng.lerpNet(ui.prevNet, tr.net, ease(p)) : tr.net;
+    var updAll = T.def.updateAll ? app.param('updAll') >= 1 : true;
+    var full = app.param('detail') >= 1, items = [];
+
+    var C = { fwd: app.color(0), loss: app.color(1), upd: app.color(2), bwd: app.color(3), inp: app.color(4), hid: app.color(5) };
+    var fg = app.css('--vl-fg'), muted = app.css('--vl-muted'), axis = app.css('--vl-axis');
+    var bg = app.css('--vl-bg'), line = app.css('--vl-line');
+    var phaseCol = ui.cur === 0 ? C.fwd : ui.cur === 1 ? C.loss : ui.cur === 2 ? C.bwd : C.upd;
+
+    function P(n) { return view.toScreen(n.x, n.y); }
+    function sampleOf(lane) { return sc.lanes > 1 ? lane : 0; }
+    function laneOn(lane) { return lane < 0 || ui.group.indexOf(sampleOf(lane)) >= 0; }
+    function gIdx(lane) { return ui.group.indexOf(sampleOf(lane)); }
+    function gradVisible(wl) {
+      if (!ui.grad || ui.cur < 2) return false;
+      return ui.cur > 2 || p * (Lw + 1) >= (Lw - wl) + 1;
+    }
+
+    var gd = mlpGuides(T);
+    drawGuides(T, ctx, H, gd.seps, gd.labels, { axis: axis, muted: muted });
+
+    /* ---------- cạnh ---------- */
+    var labels = [];
+    topo.edges.forEach(function (e) {
+      var a = topo.byId[e.a], b = topo.byId[e.b];
+      var on = laneOn(e.lane);
+      var pa = P(a), pb = P(b);
+      var dx = pb[0] - pa[0], dy = pb[1] - pa[1], len = Math.hypot(dx, dy) || 1, ux = dx / len, uy = dy / len;
+      var ra = a.r * view.scale, rb = b.r * view.scale;
+      var s0 = [pa[0] + ux * ra, pa[1] + uy * ra], t0 = [pb[0] - ux * rb, pb[1] - uy * rb];
+      var wv = e.kind === 'W' ? net.W[e.wl][e.j][e.i] : e.kind === 'b' ? net.b[e.wl][e.j] : 0;
+      var lw = e.kind === 'loss' ? 1.8 : 1.4 + Math.min(4.5, Math.abs(wv) * 2.2);
+
+      ctx.save();
+      ctx.globalAlpha = on ? 1 : 0.26;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = rgba(axis, 0.85); ctx.lineWidth = lw;
+      if (e.kind === 'W' && wv < 0) ctx.setLineDash([7, 5]);
+      ctx.beginPath(); ctx.moveTo(s0[0], s0[1]); ctx.lineTo(t0[0], t0[1]); ctx.stroke();
+      ctx.setLineDash([]);
+
+      /* dòng chảy: mực loang dọc cạnh + chấm sáng */
+      var tw = -1, rev = false, col = phaseCol;
+      if (on) {
+        if (ui.cur === 0 && e.kind !== 'loss') tw = clamp(p * Lw - e.wl, 0, 1);
+        else if (ui.cur === 1 && e.kind === 'loss') tw = p;
+        else if (ui.cur === 2) {
+          rev = true;
+          tw = e.kind === 'loss' ? clamp(p * (Lw + 1), 0, 1) : clamp(p * (Lw + 1) - (Lw - e.wl), 0, 1);
+        } else if (ui.cur === 3 && e.kind !== 'loss' && (updAll || e.wl === Lw - 1)) {
+          tw = 1;
+        }
+      }
+      if (tw >= 0) {
+        var upd = ui.cur === 3;
+        var alpha = upd ? 0.9 * (1 - p) : (tw >= 1 ? 0.8 * (1 - clamp((p - 0.8) / 0.2, 0, 1)) : 0.95);
+        var from = rev ? t0 : s0, to = rev ? s0 : t0;
+        var hx = from[0] + (to[0] - from[0]) * tw, hy = from[1] + (to[1] - from[1]) * tw;
+        if (alpha > 0.01 && (tw > 0 || upd)) {
+          ctx.strokeStyle = rgba(col, alpha); ctx.lineWidth = lw + 2.4;
+          ctx.beginPath(); ctx.moveTo(from[0], from[1]); ctx.lineTo(hx, hy); ctx.stroke();
+        }
+        if (!upd && tw > 0 && tw < 1) {
+          ctx.shadowColor = col; ctx.shadowBlur = 14;
+          ctx.fillStyle = col;
+          ctx.beginPath(); ctx.arc(hx, hy, 6, 0, Math.PI * 2); ctx.fill();
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath(); ctx.arc(hx, hy, 2.4, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+      ctx.restore();
+
+      if (e.kind === 'W') {
+        var t = (sizes[e.wl] === 1 && e.m === 1) ? 0.5 : 0.3 + 0.36 * (e.j / Math.max(1, e.m - 1));
+        var gv = gradVisible(e.wl) ? ui.grad.dW[e.wl][e.j][e.i] : null;
+        var prevW = ui.prevNet ? ui.prevNet.W[e.wl][e.j][e.i] : wv;
+        var dlt = (ui.cur === 3 && p > 0.05) ? tr.net.W[e.wl][e.j][e.i] - prevW : 0;
+        var txt = wSym(e.wl, e.j, e.i, sizes) + '=' + fmt(wv);
+        labels.push({ x: s0[0] + (t0[0] - s0[0]) * t, y: s0[1] + (t0[1] - s0[1]) * t, l1: txt + (Math.abs(dlt) > 1e-12 ? (dlt > 0 ? ' ▲' : ' ▼') : ''),
+          l2: (gv == null || !(full || ui.cur === 2)) ? null : '∂=' + fmt(gv), on: on, edge: gv != null ? C.bwd : (ui.cur === 3 && Math.abs(dlt) > 1e-12 ? C.upd : line) });
+      }
+    });
+
+    ctx.font = '11px system-ui,sans-serif';
+    labels.forEach(function (lb) {
+      var w1 = ctx.measureText(lb.l1).width, w2 = lb.l2 ? ctx.measureText(lb.l2).width : 0;
+      items.push({ type: 'lab', lines: lb.l2 ? [lb.l1, lb.l2] : [lb.l1], w: Math.max(w1, w2) + 10, h: lb.l2 ? 31 : 18,
+        ax: lb.x, ay: lb.y - 7, on: lb.on, edge: lb.edge });
+    });
+
+    /* ---------- nút ---------- */
+    topo.nodes.forEach(function (n) {
+      var pp = P(n), r = n.r * view.scale, on = laneOn(n.lane), g = gIdx(n.lane);
+      var col = n.kind === 'in' ? C.inp : n.kind === 'loss' ? C.loss : n.kind === 'bias' ? axis : (n.layer === Lw ? C.fwd : C.hid);
+      var revealed = false, a = null, z = null;
+      if (n.kind === 'neu' && ui.fw && g >= 0) {
+        revealed = ui.cur > 0 || (ui.cur === 0 && p * Lw >= n.layer);
+        if (revealed) { a = ui.fw[g].A[n.layer][n.idx]; z = ui.fw[g].Z[n.layer - 1][n.idx]; }
+      }
+      var level = 0.2;
+      if (a != null) level = (net.acts[n.layer - 1] === 'sigmoid' || net.acts[n.layer - 1] === 'softmax') ? clamp(a, 0, 1) : 1 - Math.exp(-Math.abs(a) / 2);
+
+      ctx.save();
+      ctx.globalAlpha = on ? 1 : 0.32;
+
+      /* vòng sáng khi tín hiệu tới nơi */
+      var ring = -1, rcol = phaseCol;
+      if (on) {
+        if (ui.cur === 0 && n.kind !== 'in' && n.kind !== 'loss') { var v0 = p * Lw - n.layer; if (v0 >= 0 && v0 <= 1) ring = v0; }
+        else if (ui.cur === 1 && n.kind === 'loss' && p > 0.8) ring = (p - 0.8) / 0.2;
+        else if (ui.cur === 2) {
+          var arrive = n.kind === 'loss' ? 0 : (Lw - n.layer + 1);
+          var v2 = p * (Lw + 1) - arrive;
+          if (n.kind !== 'in' && v2 >= 0 && v2 <= 1) ring = v2;
+          if (n.kind === 'loss' && p * (Lw + 1) < 1) ring = p * (Lw + 1);
+        }
+      }
+      if (ring >= 0) {
+        ctx.strokeStyle = rgba(rcol, 0.6 * (1 - ring)); ctx.lineWidth = 3.5;
+        ctx.beginPath(); ctx.arc(pp[0], pp[1], r + 3 + ring * 13, 0, Math.PI * 2); ctx.stroke();
+      }
+
+      ctx.beginPath(); ctx.arc(pp[0], pp[1], r, 0, Math.PI * 2);
+      ctx.fillStyle = rgba(col, n.kind === 'bias' ? 0.14 : 0.16 + 0.5 * level); ctx.fill();
+      ctx.lineWidth = n.kind === 'bias' ? 2 : 2.8; ctx.strokeStyle = col; ctx.stroke();
+
+      ctx.fillStyle = fg; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = '600 ' + clamp(r * 0.78, 10, 16) + 'px system-ui,sans-serif';
+      ctx.fillText(n.name, pp[0], pp[1] + 0.5);
+
+      /* chữ số liệu */
+      var lines = [];
+      if (n.kind === 'in') lines.push(fmt(sc.samples[sampleOf(n.lane)].x[n.idx]));
+      else if (n.kind === 'loss') {
+        lines.push(sc.lossLabel);
+        if (ui.L != null && (ui.cur > 1 || p >= 0.6)) lines.push(fmt(ui.L));
+      } else if (n.kind === 'neu') {
+        var isOut = n.layer === Lw, nm = isOut ? 'ŷ' + (sizes[Lw] > 1 ? sub(n.idx + 1) : '') : 'a';
+        if (revealed) {
+          if (full && net.acts[n.layer - 1] !== 'linear') lines.push('z=' + fmt(z));
+          var tgt = isOut ? sc.samples[Math.max(0, sampleOf(n.lane))].y[n.idx] : 0;
+          lines.push(nm + '=' + fmt(a) + (isOut && !full ? ' (y=' + fmt(tgt) + ')' : ''));
+          if (isOut && full) lines.push('y=' + fmt(tgt));
+        } else lines.push('…');
+        if (ui.deltas && g >= 0 && (full ? ui.cur >= 2 : ui.cur === 2) && (ui.cur > 2 || p * (Lw + 1) >= (Lw - n.layer + 1)))
+          lines.push('δ=' + fmt(ui.deltas[g][n.layer - 1][n.idx]));
+      } else if (n.kind === 'bias') {
+        lines.push(bSym(n.wl, n.idx, sizes) + '=' + fmt(net.b[n.wl][n.idx]));
+        if (gradVisible(n.wl) && (full || ui.cur === 2)) lines.push('∂=' + fmt(ui.grad.db[n.wl][n.idx]));
+      }
+      ctx.font = '11px system-ui,sans-serif';
+      ctx.restore();
+      if (lines.length) {
+        var lw2 = 0;
+        lines.forEach(function (tx) { lw2 = Math.max(lw2, ctx.measureText(tx).width); });
+        var bw2 = lw2 + 8, bh2 = lines.length * 14;
+        items.push(n.kind === 'bias'
+          ? { type: 'txt', lines: lines, w: bw2, h: bh2, ax: pp[0] + r + 4 + bw2 / 2, ay: pp[1], on: on }
+          : { type: 'txt', lines: lines, w: bw2, h: bh2, ax: pp[0], ay: pp[1] + r + 4 + bh2 / 2, on: on });
+      }
+    });
+
+    /* ---------- xếp chữ: đẩy các ô chữ ra khỏi nút và khỏi nhau, rồi mới vẽ ---------- */
+    var circles = topo.nodes.map(function (n) { var q = P(n); return { x: q[0], y: q[1], r: n.r * view.scale + 3 }; });
+    placeItems(items, circles, W, H);
+    drawItems(ctx, items, bg, fg);
+
+    /* ---------- thanh 4 pha ---------- */
+    var names = ['① Xuôi', '② Mất mát', '③ Ngược', '④ Cập nhật'], cols = [C.fwd, C.loss, C.bwd, C.upd];
+    var pad = 12, gap = 6, cw = (W - 2 * pad - 3 * gap) / 4, ch = 28;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (var k = 0; k < 4; k++) {
+      var cx = pad + k * (cw + gap), cy = 10;
+      var state = k === ui.cur ? 'on' : (ui.cur >= 0 && k < ui.cur) ? 'done' : 'idle';
+      ctx.beginPath(); ctx.roundRect(cx, cy, cw, ch, 8);
+      if (state === 'on') { ctx.fillStyle = cols[k]; ctx.fill(); }
+      else if (state === 'done') { ctx.fillStyle = rgba(cols[k], 0.22); ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = cols[k]; ctx.stroke(); }
+      else { ctx.lineWidth = 1.5; ctx.strokeStyle = line; ctx.stroke(); }
+      ctx.font = '600 12px system-ui,sans-serif';
+      ctx.fillStyle = state === 'on' ? onColor(cols[k]) : state === 'done' ? fg : muted;
+      ctx.fillText(names[k], cx + cw / 2, cy + ch / 2 + 0.5);
+      if (state === 'on' && p < 1) {
+        ctx.fillStyle = rgba(onColor(cols[k]), 0.65);
+        ctx.fillRect(cx + 8, cy + ch - 5, (cw - 16) * p, 3);
+      }
+    }
+    ctx.textAlign = 'left'; ctx.font = '12px system-ui,sans-serif'; ctx.fillStyle = fg;
+    ctx.fillText('Epoch ' + ui.epoch + ' · ' + ui.desc + (tr.updates ? ' · đã cập nhật ' + tr.updates + ' lần' : ''), pad, 52);
+
+    drawStrip(T, ctx, W, H, { C: C, fg: fg, muted: muted, axis: axis, bg: bg, line: line, net: net, p: p, phaseCol: phaseCol });
+  }
+
+  /* ---------- hai đồ thị nhỏ ở đáy sân khấu ---------- */
+  function box(ctx, x, y, w, h, title, st) {
+    ctx.fillStyle = st.bg; ctx.strokeStyle = st.line; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(x, y, w, h, 8); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = st.muted; ctx.font = '600 11px system-ui,sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText(title, x + 10, y + 13);
+  }
+
+  function drawStrip(T, ctx, W, H, st) {
+    var sc = T.sc, tr = T.tr, ui = T.ui, pad = 12, sh = 150, y0 = H - sh - 10;
+    var has = !!sc.plot;
+    var gw = has ? (W - 3 * pad) / 2 : W - 2 * pad;
+    if (has) drawModel(T, ctx, pad, y0, gw, sh, st);
+    drawLoss(T, ctx, has ? 2 * pad + gw : pad, y0, gw, sh, st);
+  }
+
+  function drawModel(T, ctx, x, y, w, h, st) {
+    var sc = T.sc, ui = T.ui, C = st.C, net = st.net, S = sc.samples;
+    var logit = sc.plot === 'logit';
+    box(ctx, x, y, w, h, logit ? 'Đường sigmoid và biên quyết định' : 'Mô hình khớp dữ liệu', st);
+    var ix = x + 32, iy = y + 26, iw = w - 44, ih = h - 42;
+    var xs = S.map(function (s) { return s.x[0]; }), ys = S.map(function (s) { return s.y[0]; });
+    var xmin = Math.min.apply(null, xs) - 1, xmax = Math.max.apply(null, xs) + 1;
+    var ymin = logit ? -0.15 : Math.min.apply(null, ys) - 1, ymax = logit ? 1.15 : Math.max.apply(null, ys) + 1;
+    function X(v) { return ix + (v - xmin) / (xmax - xmin) * iw; }
+    function Y(v) { return iy + ih - (v - ymin) / (ymax - ymin) * ih; }
+    ctx.strokeStyle = st.line; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(ix, iy); ctx.lineTo(ix, iy + ih); ctx.lineTo(ix + iw, iy + ih); ctx.stroke();
+    ctx.fillStyle = st.muted; ctx.font = '10px system-ui,sans-serif'; ctx.textAlign = 'right';
+    var yt = logit ? [0, 0.5, 1] : [Math.ceil(ymin), Math.round((ymin + ymax) / 2), Math.floor(ymax)];
+    yt.forEach(function (v) {
+      ctx.fillText(String(v), ix - 4, Y(v));
+      ctx.strokeStyle = st.line; ctx.globalAlpha = 0.5; ctx.beginPath(); ctx.moveTo(ix, Y(v)); ctx.lineTo(ix + iw, Y(v)); ctx.stroke(); ctx.globalAlpha = 1;
+    });
+    ctx.textAlign = 'center';
+    xs.forEach(function (v) { ctx.fillText(String(v), X(v), iy + ih + 9); });
+
+    ctx.save();
+    ctx.beginPath(); ctx.rect(ix, iy - 2, iw, ih + 4); ctx.clip();
+    /* phần dư (sai số) từ điểm tới đường */
+    S.forEach(function (s, i) {
+      var yh = Eng.forward(net, s.x).yhat[0];
+      ctx.strokeStyle = rgba(C.loss, 0.75); ctx.lineWidth = 1.6; ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(X(s.x[0]), Y(s.y[0])); ctx.lineTo(X(s.x[0]), Y(yh)); ctx.stroke(); ctx.setLineDash([]);
+    });
+    if (logit) {
+      ctx.strokeStyle = rgba(st.axis, 0.9); ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(ix, Y(0.5)); ctx.lineTo(ix + iw, Y(0.5)); ctx.stroke(); ctx.setLineDash([]);
+      var wv = net.W[0][0][0], bv = net.b[0][0];
+      if (Math.abs(wv) > 1e-6) {
+        var bx = -bv / wv;
+        if (bx > xmin && bx < xmax) {
+          ctx.strokeStyle = C.upd; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(X(bx), iy); ctx.lineTo(X(bx), iy + ih); ctx.stroke();
+        }
+      }
+    }
+    ctx.strokeStyle = C.fwd; ctx.lineWidth = 2.6; ctx.beginPath();
+    for (var k = 0; k <= 80; k++) {
+      var xv = xmin + (xmax - xmin) * k / 80, yv = Eng.forward(net, [xv]).yhat[0];
+      var sx = X(xv), sy = Y(yv);
+      if (k === 0) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    S.forEach(function (s, i) {
+      var act = ui.group.indexOf(i) >= 0;
+      ctx.beginPath(); ctx.arc(X(s.x[0]), Y(s.y[0]), act ? 6 : 5, 0, Math.PI * 2);
+      ctx.fillStyle = C.inp; ctx.fill();
+      ctx.lineWidth = act ? 3 : 1.5; ctx.strokeStyle = act ? st.phaseCol : st.fg; ctx.stroke();
+    });
+    ctx.fillStyle = st.fg; ctx.font = '11px system-ui,sans-serif'; ctx.textAlign = 'right';
+    var wv2 = net.W[0][0][0], bv2 = net.b[0][0];
+    ctx.fillText('w=' + fmt(wv2, 3) + ', b=' + fmt(bv2, 3), x + w - 10, y + 13);
+    if (logit && Math.abs(wv2) > 1e-6) {
+      ctx.textAlign = 'left'; ctx.fillStyle = st.muted;
+      ctx.fillText('biên x = −b/w = ' + fmt(-bv2 / wv2, 3), ix + 4, iy + ih - 6);
+    }
+  }
+
+  function drawLoss(T, ctx, x, y, w, h, st) {
+    var tr = T.tr, C = st.C, hist = tr.lossHist, n = hist.length;
+    box(ctx, x, y, w, h, 'Loss theo ' + (T.sc.mode === 'batch' ? 'epoch' : 'lần cập nhật') + ' (thang nén log)', st);
+    var ix = x + 40, iy = y + 26, iw = w - 52, ih = h - 42;
+    ctx.strokeStyle = st.line; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(ix, iy); ctx.lineTo(ix, iy + ih); ctx.lineTo(ix + iw, iy + ih); ctx.stroke();
+    ctx.font = '10px system-ui,sans-serif'; ctx.textBaseline = 'middle';
+    if (n === 0) {
+      ctx.fillStyle = st.muted; ctx.textAlign = 'center';
+      ctx.fillText('Chưa có dữ liệu: loss xuất hiện sau pha ②', ix + iw / 2, iy + ih / 2);
+      return;
+    }
+    var finite = hist.filter(function (v) { return isFinite(v); });
+    var maxv = Math.max(1e-9, Math.min(1e12, Math.max.apply(null, finite.length ? finite : [1])));
+    var den = Math.log10(1 + maxv);
+    var last = hist[n - 1];
+    function X(i) { return ix + (n <= 1 ? 0 : i / Math.max(7, n - 1) * iw); }
+    function Y(v) { var q = isFinite(v) ? Math.log10(1 + Math.min(v, 1e12)) / den : 1; return iy + ih - clamp(q, 0, 1) * ih; }
+    ctx.fillStyle = st.muted; ctx.textAlign = 'right';
+    ctx.fillText(fmt(maxv, 3), ix - 4, iy + 2); ctx.fillText('0', ix - 4, iy + ih);
+    ctx.beginPath(); ctx.moveTo(X(0), iy + ih);
+    hist.forEach(function (v, i) { ctx.lineTo(X(i), Y(v)); });
+    ctx.lineTo(X(n - 1), iy + ih); ctx.closePath();
+    ctx.fillStyle = rgba(C.loss, 0.14); ctx.fill();
+    ctx.strokeStyle = C.loss; ctx.lineWidth = 2.4; ctx.beginPath();
+    hist.forEach(function (v, i) { if (i === 0) ctx.moveTo(X(i), Y(v)); else ctx.lineTo(X(i), Y(v)); });
+    ctx.stroke();
+    ctx.beginPath(); ctx.arc(X(n - 1), Y(last), 4.5, 0, Math.PI * 2); ctx.fillStyle = C.loss; ctx.fill();
+    ctx.lineWidth = 1.5; ctx.strokeStyle = st.fg; ctx.stroke();
+    ctx.textAlign = 'right'; ctx.fillStyle = st.fg; ctx.font = '11px system-ui,sans-serif';
+    ctx.fillText('L=' + fmt(last), x + w - 10, y + 13);
+    if (!isFinite(last) || last > 1e6) {
+      ctx.textAlign = 'center'; ctx.fillStyle = st.fg; ctx.font = '600 12px system-ui,sans-serif';
+      ctx.fillText('Phân kỳ (diverge): loss tăng vọt', ix + iw / 2, iy + 14);
+    }
+  }
+
+  /* ======================================================================
+     5b. Công thức tổng quát + thế số từng bước (mỗi bước một ô mới, ô cũ giữ nguyên)
+     Dòng bắt đầu bằng "#" là công thức chữ; dòng bắt đầu bằng "!" là kết quả (in đậm).
+     ==================================================================== */
+  function pn(v) { return v < 0 ? '(' + fmt(v) + ')' : fmt(v); }
+  function fprime(act, z, a) { return act === 'sigmoid' ? a * (1 - a) : act === 'relu' ? (z > 0 ? 1 : 0) : 1; }
+  function fprimeTxt(act, z, a) {
+    if (act === 'sigmoid') return pn(a) + '×(1−' + pn(a) + ')';
+    if (act === 'relu') return 'ReLU′(' + fmt(z) + ')=' + (z > 0 ? 1 : 0);
+    return '1';
+  }
+  function zName(l, j, n) { return 'z' + (n > 1 ? sub(j + 1) : '') + sup(l + 1); }
+  function dName(l, j, n) { return 'δ' + (n > 1 ? sub(j + 1) : '') + sup(l + 1); }
+
+  function isNeuron(sc) { return sc.sizes.length === 2 && sc.sizes[0] === 1 && sc.sizes[1] === 1; }
+  function isSimple(net) {
+    var Lw = net.W.length, a = net.acts[Lw - 1];
+    return (a === 'softmax' && net.loss === 'ce') || (a === 'sigmoid' && net.loss === 'bce') || (a === 'linear' && net.loss === 'hmse');
+  }
+
+  /* 4 công thức tổng quát, thay đổi theo bài đang chọn */
+  function generalFormulas(T) {
+    if (T.def.kind === 'rnn') return rnnGeneral();
+    var sc = T.sc, net = T.tr.net, loss = net.loss, act = net.acts[net.W.length - 1];
+    var lossF = loss === 'mse' ? (sc.mode === 'batch' ? 'L = (1/N)·Σ (ŷᵢ − yᵢ)²' : 'L = (ŷ − y)²')
+      : loss === 'hmse' ? 'L = ½·Σ (ŷₖ − yₖ)²'
+      : loss === 'bce' ? 'L = −[y·ln ŷ + (1−y)·ln(1−ŷ)]' : 'L = −Σ yₖ·ln ŷₖ';
+    if (isNeuron(sc)) {
+      var sig = net.acts[0] === 'sigmoid';
+      var batch = sc.mode === 'batch';
+      return [
+        'z = w·x + b' + (sig ? '\nŷ = σ(z) = 1/(1 + e⁻ᶻ)' : '\nŷ = z') + (batch ? '\n(làm cho từng mẫu i)' : ''),
+        lossF,
+        loss === 'bce' ? 'δ = ŷ − y\n∂L/∂w = δ·x\n∂L/∂b = δ'
+          : 'δᵢ = 2(ŷᵢ − yᵢ)·f′(zᵢ)\n∂L/∂w = ' + (batch ? '(1/N)·Σ δᵢ·xᵢ\n∂L/∂b = (1/N)·Σ δᵢ' : 'δ·x\n∂L/∂b = δ'),
+        'w ← w − η·∂L/∂w\nb ← b − η·∂L/∂b'
+      ];
+    }
+    var updAll = T.def.updateAll ? T.app.param('updAll') >= 1 : true;
+    return [
+      'zˡ = Wˡ·aˡ⁻¹ + bˡ   (a⁰ = x)\naˡ = f(zˡ)' + (act === 'softmax' ? '\nlớp ra: ŷₖ = e^zₖ / Σ e^zⱼ' : ''),
+      lossF,
+      (isSimple(net) ? 'δᴸ = ŷ − y' : 'δᴸ = (ŷ − y)·f′(zᴸ)') +
+        (net.W.length > 1 ? '\nδˡ = (Wˡ⁺¹)ᵀ·δˡ⁺¹ ⊙ f′(zˡ)' : '') + '\n∂L/∂Wˡ = δˡ·(aˡ⁻¹)ᵀ\n∂L/∂bˡ = δˡ',
+      'Wˡ ← Wˡ − η·∂L/∂Wˡ\nbˡ ← bˡ − η·∂L/∂bˡ' + (updAll ? '' : '\n(chỉ cập nhật lớp ra)')
+    ];
+  }
+
+  function lossLines(net, yh, y, L) {
+    var k, parts = [], out = [];
+    switch (net.loss) {
+      case 'hmse':
+        for (k = 0; k < yh.length; k++) parts.push('(' + fmt(yh[k]) + ' − ' + pn(y[k]) + ')²');
+        out.push('#L = ½·Σ (ŷₖ − yₖ)²');
+        out.push('L = ½×' + (parts.length > 1 ? '[' + parts.join(' + ') + ']' : parts[0]));
+        break;
+      case 'mse':
+        for (k = 0; k < yh.length; k++) parts.push('(' + fmt(yh[k]) + ' − ' + pn(y[k]) + ')²');
+        out.push('#L = (ŷ − y)²');
+        out.push('L = ' + parts.join(' + '));
+        break;
+      case 'bce':
+        out.push('#L = −[y·ln ŷ + (1−y)·ln(1−ŷ)]');
+        out.push('L = −[' + fmt(y[0]) + '×ln(' + fmt(yh[0]) + ') + (1−' + fmt(y[0]) + ')×ln(1−' + fmt(yh[0]) + ')]');
+        break;
+      default:
+        for (k = 0; k < yh.length; k++) parts.push(fmt(y[k]) + '×ln(' + fmt(yh[k]) + ')');
+        out.push('#L = −Σ yₖ·ln ŷₖ');
+        out.push('L = −[' + parts.join(' + ') + ']');
+    }
+    out.push('!L = ' + fmt(L));
+    return out;
+  }
+
+  /* Dựng nội dung một ô công thức cho pha vừa chạy xong */
+  function stepCell(T, res) {
+    var tr = T.tr, sc = T.sc, net = tr.net, S = sc.samples, g = res.group, ph = res.phase;
+    var Lw = net.W.length, neuron = isNeuron(sc), L = [], k, l, j, i;
+    var Wd = ph === 3 ? res.prevNet : net;      // trọng số dùng cho pha này (pha ④ lấy bản trước khi cập nhật)
+
+    if (ph === 0) {
+      if (neuron) {
+        var f0 = net.acts[0], w = net.W[0][0][0], b = net.b[0][0];
+        L.push('#z = w·x + b' + (f0 === 'sigmoid' ? ' ;  ŷ = σ(z)' : ' ;  ŷ = z'));
+        g.forEach(function (si, q) {
+          var lab = g.length > 1 ? sub(q + 1) : '', x = S[si].x[0], fw = tr.fw[q];
+          L.push('z' + lab + ' = ' + pn(w) + '×' + pn(x) + ' + ' + pn(b) + ' = ' + fmt(fw.Z[0][0]));
+          L.push('!ŷ' + lab + ' = ' + (f0 === 'sigmoid' ? 'σ(' + fmt(fw.Z[0][0]) + ') = ' : '') + fmt(fw.yhat[0]) + '   (y' + lab + ' = ' + fmt(S[si].y[0]) + ')');
+        });
+      } else {
+        var fw0 = tr.fw[0];
+        for (l = 0; l < Lw; l++) {
+          var nl = net.W[l].length, inName = l ? 'a' + sup(l) : 'x';
+          L.push('#' + 'z' + sup(l + 1) + ' = W' + sup(l + 1) + '·' + inName + ' + b' + sup(l + 1));
+          for (j = 0; j < nl; j++) {
+            var terms = [];
+            for (i = 0; i < net.W[l][j].length; i++) terms.push(pn(Wd.W[l][j][i]) + '×' + pn(fw0.A[l][i]));
+            L.push(zName(l, j, nl) + ' = ' + terms.join(' + ') + ' + ' + pn(Wd.b[l][j]) + ' = ' + fmt(fw0.Z[l][j]));
+          }
+          var an = T.topo.byId['0:' + (l + 1) + ':'];
+          if (net.acts[l] === 'softmax') {
+            var ez = fw0.Z[l].map(function (v) { return 'e^' + fmt(v); }).join(' + ');
+            for (j = 0; j < nl; j++) L.push('!ŷ' + sub(j + 1) + ' = e^' + fmt(fw0.Z[l][j]) + ' / (' + ez + ') = ' + fmt(fw0.A[l + 1][j]));
+          } else {
+            for (j = 0; j < nl; j++) {
+              var nm = T.topo.byId['0:' + (l + 1) + ':' + j].name, fn = fnName(net.acts[l]);
+              L.push('!' + nm + ' = ' + (fn ? fn + '(' + fmt(fw0.Z[l][j]) + ') = ' : '') + fmt(fw0.A[l + 1][j]));
+            }
+          }
+        }
+      }
+    } else if (ph === 1) {
+      if (net.loss === 'mse' && sc.mode === 'batch') {
+        L.push('#L = (1/N)·Σ (ŷᵢ − yᵢ)²');
+        L.push('L = [' + g.map(function (si, q) { return '(' + fmt(tr.fw[q].yhat[0]) + ' − ' + pn(S[si].y[0]) + ')²'; }).join(' + ') + '] / ' + g.length);
+        L.push('L = [' + tr.losses.map(function (v) { return fmt(v); }).join(' + ') + '] / ' + g.length);
+        L.push('!L = ' + fmt(tr.L));
+      } else {
+        L = lossLines(net, tr.fw[0].yhat, S[g[0]].y, tr.L);
+      }
+    } else if (ph === 2) {
+      var gr = tr.grad, d = tr.deltas;
+      if (neuron) {
+        var a0 = net.acts[0], N = g.length, dx = [], dd = [];
+        if (net.loss === 'bce') L.push('#δ = ŷ − y ;  ∂L/∂w = δ·x ;  ∂L/∂b = δ');
+        else L.push('#δ = 2(ŷ − y)·f′(z) ;  ∂L/∂w = ' + (N > 1 ? '(1/N)·Σ δᵢ·xᵢ ;  ∂L/∂b = (1/N)·Σ δᵢ' : 'δ·x ;  ∂L/∂b = δ'));
+        g.forEach(function (si, q) {
+          var lab = N > 1 ? sub(q + 1) : '', fwq = tr.fw[q], yh = fwq.yhat[0], yy = S[si].y[0], x = S[si].x[0], dv = d[q][0][0];
+          if (net.loss === 'bce') L.push('δ' + lab + ' = ' + fmt(yh) + ' − ' + pn(yy) + ' = ' + fmt(dv));
+          else L.push('δ' + lab + ' = 2×(' + fmt(yh) + ' − ' + pn(yy) + ')×' + fprimeTxt(a0, fwq.Z[0][0], yh) + ' = ' + fmt(dv));
+          dx.push(pn(dv) + '×' + pn(x)); dd.push(pn(dv));
+        });
+        var sumX = dx.join(' + '), sumD = dd.join(' + ');
+        L.push('!∂L/∂w = ' + (N > 1 ? '(' + sumX + ')/' + N : sumX) + ' = ' + fmt(gr.dW[0][0][0]));
+        L.push('!∂L/∂b = ' + (N > 1 ? '(' + sumD + ')/' + N + ' = ' : 'δ = ') + fmt(gr.db[0][0]));
+      } else {
+        var fwq2 = tr.fw[0], dl = d[0], yh2 = fwq2.yhat, y2 = S[g[0]].y;
+        for (l = Lw - 1; l >= 0; l--) {
+          var nl2 = net.W[l].length;
+          L.push('#' + (l === Lw - 1 ? (isSimple(net) ? 'δ' + sup(l + 1) + ' = ŷ − y' : 'δ' + sup(l + 1) + ' = (ŷ − y)·f′(z' + sup(l + 1) + ')')
+            : 'δ' + sup(l + 1) + ' = (W' + sup(l + 2) + ')ᵀ·δ' + sup(l + 2) + ' ⊙ f′(z' + sup(l + 1) + ')'));
+          for (j = 0; j < nl2; j++) {
+            var line;
+            if (l === Lw - 1) {
+              line = dName(l, j, nl2) + ' = ' + fmt(yh2[j]) + ' − ' + pn(y2[j]);
+              if (!isSimple(net)) line += ')×' + fprimeTxt(net.acts[l], fwq2.Z[l][j], yh2[j]), line = line.replace(' = ', ' = (');
+            } else {
+              var tt = [];
+              for (k = 0; k < net.W[l + 1].length; k++) tt.push(pn(net.W[l + 1][k][j]) + '×' + pn(dl[l + 1][k]));
+              line = dName(l, j, nl2) + ' = (' + tt.join(' + ') + ') × ' + fprimeTxt(net.acts[l], fwq2.Z[l][j], fwq2.A[l + 1][j]);
+            }
+            L.push(line + ' = ' + fmt(dl[l][j]));
+          }
+        }
+        L.push('#∂L/∂W = δ × (đầu vào của cạnh) ;  ∂L/∂b = δ');
+        for (l = Lw - 1; l >= 0; l--) {
+          for (j = 0; j < net.W[l].length; j++) {
+            for (i = 0; i < net.W[l][j].length; i++)
+              L.push('∂L/∂' + wSym(l, j, i, sc.sizes) + ' = ' + pn(dl[l][j]) + '×' + pn(fwq2.A[l][i]) + ' = ' + fmt(gr.dW[l][j][i]));
+            L.push('∂L/∂' + bSym(l, j, sc.sizes) + ' = ' + fmt(gr.db[l][j]));
+          }
+        }
+      }
+    } else {
+      var lr = res.lr, gr4 = tr.grad, pv = res.prevNet;
+      var updAll = T.def.updateAll ? T.app.param('updAll') >= 1 : true;
+      L.push('#tham số ← tham số − η·gradient   (η = ' + fmt(lr) + ')');
+      for (l = updAll ? 0 : Lw - 1; l < Lw; l++) {
+        for (j = 0; j < net.W[l].length; j++) {
+          for (i = 0; i < net.W[l][j].length; i++)
+            L.push((neuron ? 'w' : wSym(l, j, i, sc.sizes)) + ' ← ' + fmt(pv.W[l][j][i]) + ' − ' + fmt(lr) + '×' + pn(gr4.dW[l][j][i]) + ' = ' + fmt(net.W[l][j][i]));
+          L.push((neuron ? 'b' : bSym(l, j, sc.sizes)) + ' ← ' + fmt(pv.b[l][j]) + ' − ' + fmt(lr) + '×' + pn(gr4.db[l][j]) + ' = ' + fmt(net.b[l][j]));
+        }
+      }
+    }
+    return L;
+  }
+
+  var PH_NAME = ['① Xuôi', '② Mất mát', '③ Ngược', '④ Cập nhật'];
+  var PH_COL = [0, 1, 3, 2];                 // chỉ số màu của khung vẽ cho từng pha
+
+  function addLabelLines(el, lines) {
+    lines.forEach(function (t) {
+      var d = document.createElement('div');
+      d.className = 'lf-l' + (t.charAt(0) === '#' ? ' f' : t.charAt(0) === '!' ? ' r' : '');
+      d.textContent = (t.charAt(0) === '#' || t.charAt(0) === '!') ? t.slice(1) : t;
+      el.appendChild(d);
+    });
+  }
+
+  function buildFormulaSection(T) {
+    var sec = document.createElement('section');
+    sec.className = 'lab-formula';
+    sec.setAttribute('aria-label', 'Công thức và thế số');
+    sec.innerHTML =
+      '<div><h2>Công thức (formula)</h2></div>' +
+      '<div class="lf-gen"></div>' +
+      '<div class="lf-bar"><div><h2>Thế số từng bước</h2></div><span class="lf-count"></span></div>' +
+      '<div class="lf-log" tabindex="0" role="log" aria-label="Nhật ký thế số"></div>';
+    T.root.appendChild(sec);
+    T.genEl = sec.querySelector('.lf-gen');
+    T.logEl = sec.querySelector('.lf-log');
+    T.cntEl = sec.querySelector('.lf-count');
+    T.log = [];
+    refreshFormulaUI(T);
+  }
+
+  function refreshGeneral(T) {
+    if (!T.genEl || !T.sc || !T.tr) return;
+    var f = generalFormulas(T);
+    T.genEl.textContent = '';
+    var rn = T.def.kind === 'rnn', names = rn ? RNN_PH : PH_NAME, cols = rn ? RNN_COL : PH_COL;
+    for (var k = 0; k < f.length; k++) {
+      var c = document.createElement('div');
+      c.className = 'lf-chip';
+      c.style.setProperty('--c', T.app.color(cols[k]));
+      var h = document.createElement('b'); h.textContent = names[k];
+      c.appendChild(h);
+      f[k].split('\n').forEach(function (ln) { addLabelLines(c, [ln]); });
+      T.genEl.appendChild(c);
+    }
+  }
+
+  function refreshFormulaUI(T) {
+    if (!T.logEl) return;
+    if (!T.log.length) {
+      T.logEl.textContent = '';
+      var e = document.createElement('div'); e.className = 'lf-empty';
+      e.textContent = 'Chưa có bước nào.';
+      T.logEl.appendChild(e);
+    }
+    T.cntEl.textContent = T.log.length ? 'Đã có ' + T.log.length + ' ô' : '';
+  }
+
+  function clearLog(T) {
+    T.hist = [];
+    if (!T.logEl) return;
+    T.log = [];
+    refreshFormulaUI(T);
+    refreshGeneral(T);
+  }
+
+  function pushCell(T, res, desc) {
+    if (!T.logEl) return;
+    if (!T.log.length) T.logEl.textContent = '';
+    var n = T.log.length + 1;
+    var cell = document.createElement('div');
+    cell.className = 'lf-cell new';
+    var rn = T.def.kind === 'rnn';
+    cell.style.setProperty('--c', T.app.color(rn ? RNN_COL[res.phase] : PH_COL[res.phase]));
+    var h = document.createElement('b'); h.className = 'lf-t';
+    h.textContent = rn ? 'Bước ' + n + (res.s < 12 ? ' · t = ' + (res.t + 1) : '') + ' · ' + RNN_PH[res.phase]
+      : 'Bước ' + n + ' · Epoch ' + res.epoch + ' · ' + PH_NAME[res.phase] + (desc ? ' · ' + desc : '');
+    cell.appendChild(h);
+    addLabelLines(cell, rn ? rnnCell(T, res) : stepCell(T, res));
+    var first = T.logEl.firstChild;
+    if (first && first.classList) first.classList.remove('new');
+    T.logEl.insertBefore(cell, first);
+    T.log.push(cell);
+    if (T.logEl.scrollTop) T.logEl.scrollTop = 0;
+    while (T.logEl.childNodes.length > 800) T.logEl.removeChild(T.logEl.lastChild);
+    refreshFormulaUI(T);
+  }
+
+  function popCell(T) {
+    var cell = T.log.pop();
+    if (cell && cell.parentNode) cell.parentNode.removeChild(cell);
+    var first = T.logEl && T.logEl.firstChild;
+    if (first && first.classList && T.log.length) first.classList.add('new');
+    refreshFormulaUI(T);
+  }
+
+  /* ---------- Lùi một bước ---------- */
+  function undoTab(T) {
+    if (!T.hist || !T.hist.length) return false;
+    var app = T.app;
+    if (app.pause) app.pause();
+    var h = T.hist.pop();
+    T.tr.restore(h.tr);
+    T.ui = h.ui;
+    T.ui.t0 = performance.now() - 1e7;           // đã "chạy xong" hoạt ảnh của trạng thái cũ
+    app.stepCount = h.steps;
+    app.highlight(h.hl); T.hl = h.hl;
+    var st = T.root.querySelector('.vl-status');
+    if (st) st.innerHTML = h.status;
+    popCell(T);
+    app.redraw();
+    syncFabs();
+    return true;
+  }
+
+  /* ======================================================================
+     5c. Tab RNN: mạng hồi quy many-to-one trải theo thời gian (chỉ forward pass)
+     14 bước: với mỗi t = 1..3 có 4 pha (Wₓxₜ, Wₕhₜ₋₁, aₜ, hₜ = tanh), rồi z và ŷ.
+     ==================================================================== */
+  function buildRnnTopo(R) {
+    var dxT = 3.9, nodes = [], edges = [], byId = {}, yH = [1.1, -1.1], t, j, i;
+    function add(n) { n.lane = 0; nodes.push(n); byId[n.id] = n; return n; }
+    function xs(c) { return (c - 2) * dxT; }
+    for (j = 0; j < 2; j++) add({ id: 'h:0:' + j, x: xs(0), y: yH[j], kind: 'h', t: 0, j: j, name: 'h' + sub(j + 1), r: 0.42 });
+    for (t = 1; t <= 3; t++) {
+      for (j = 0; j < 2; j++) add({ id: 'h:' + t + ':' + j, x: xs(t), y: yH[j], kind: 'h', t: t, j: j, name: 'h' + sub(j + 1), r: 0.42 });
+      add({ id: 'x:' + t, x: xs(t) - 1.6, y: -3.7, kind: 'x', t: t, name: Rnn.V[R.tokens[t - 1]], r: 0.6 });
+      for (j = 0; j < 2; j++) add({ id: 'b:' + t + ':' + j, x: xs(t), y: yH[j] + (j === 0 ? 1.3 : -1.3), kind: 'bias', t: t, j: j, name: 'b', r: 0.27 });
+    }
+    add({ id: 'o', x: xs(4), y: 0, kind: 'out', name: 'ŷ', r: 0.55 });
+    for (t = 1; t <= 3; t++) {
+      for (j = 0; j < 2; j++) {
+        edges.push({ a: 'x:' + t, b: 'h:' + t + ':' + j, kind: 'Wx', t: t, j: j });
+        edges.push({ a: 'b:' + t + ':' + j, b: 'h:' + t + ':' + j, kind: 'b', t: t, j: j });
+        for (i = 0; i < 2; i++) edges.push({ a: 'h:' + (t - 1) + ':' + i, b: 'h:' + t + ':' + j, kind: 'Wh', t: t, i: i, j: j });
+      }
+    }
+    for (i = 0; i < 2; i++) edges.push({ a: 'h:3:' + i, b: 'o', kind: 'Wo', i: i });
+    var labels = [{ x: xs(0), text: 'h₀ (ban đầu)', short: 'h₀' }];
+    for (t = 1; t <= 3; t++) labels.push({ x: xs(t) - 0.8, text: 't = ' + t + ' · ' + Rnn.V[R.tokens[t - 1]], short: 't=' + t });
+    labels.push({ x: xs(4), text: 'Phân lớp', short: 'Ra' });
+    return { nodes: nodes, edges: edges, byId: byId, Lw: 0, sizes: [5, 2, 1],
+      seps: [xs(1) - 2.6, xs(2) - 2.6, xs(3) - 2.6, (xs(3) + xs(4)) / 2], guideLabels: labels };
+  }
+
+  /* Nét đứt phân tầng + tên tầng. seps/labels tính theo toạ độ thế giới nên đi theo khi kéo/thu phóng. */
+  function drawGuides(T, ctx, H, seps, labels, st) {
+    var view = T.app.view, yb = 0;
+    T.topo.nodes.forEach(function (n) { yb = Math.max(yb, view.toScreen(n.x, n.y)[1] + n.r * view.scale); });
+    var yTop = 74, yBot = Math.min(H - 166, yb + 46);
+    ctx.save();
+    ctx.strokeStyle = rgba(st.axis, 0.6); ctx.lineWidth = 1.5; ctx.setLineDash([7, 6]);
+    seps.forEach(function (sx) {
+      var px = view.toScreen(sx, 0)[0];
+      ctx.beginPath(); ctx.moveTo(px, yTop); ctx.lineTo(px, yBot); ctx.stroke();
+    });
+    ctx.setLineDash([]);
+    ctx.fillStyle = st.muted; ctx.font = '600 11px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    labels.forEach(function (lb, k) {
+      var px = view.toScreen(lb.x, 0)[0];
+      var left = k === 0 ? 0 : view.toScreen(seps[k - 1], 0)[0], right = k < seps.length ? view.toScreen(seps[k], 0)[0] : 1e9;
+      var room = Math.min(right - left, 400) - 8;
+      var txt = ctx.measureText(lb.text).width <= room ? lb.text : (lb.short || lb.text);
+      ctx.fillText(txt, px, 66);
+    });
+    ctx.restore();
+  }
+
+  /* cột + đường phân tầng cho các tab MLP / neuron */
+  function mlpGuides(T) {
+    var topo = T.topo, Lw = topo.Lw, cols = [], l;
+    for (l = 0; l <= Lw + 1; l++) {
+      var ns = topo.nodes.filter(function (n) { return n.layer === l; }), sx = 0;
+      ns.forEach(function (n) { sx += n.x; });
+      cols.push(ns.length ? sx / ns.length : 0);
+    }
+    var labels = cols.map(function (cx, k) {
+      var text = k === 0 ? 'Đầu vào (input)' : k === Lw ? 'Đầu ra (output)' : k === Lw + 1 ? 'Mất mát (loss)'
+        : (Lw > 2 ? 'Lớp ẩn ' + k + ' (hidden)' : 'Lớp ẩn (hidden)');
+      var short = k === 0 ? 'Vào' : k === Lw ? 'Ra' : k === Lw + 1 ? 'Loss' : 'Ẩn';
+      return { x: cx, text: text, short: short };
+    });
+    var seps = [];
+    for (l = 0; l < cols.length - 1; l++) seps.push((cols[l] + cols[l + 1]) / 2);
+    return { seps: seps, labels: labels };
+  }
+
+  function resetRnn(T) {
+    var app = T.app, sc = T.sc, R = sc.rnn;
+    T.tr = { k: 0, done: function () { return this.k >= Rnn.STEPS; },
+      snapshot: function () { return this.k; }, restore: function (s) { this.k = s; } };
+    T.topo = buildRnnTopo(R);
+    T.ui = { cur: -1, t0: 0, dur: 0, group: [], s: null };
+    T.fitW = 0;
+    app.highlight(-1); T.hl = -1;
+    clearLog(T);
+    syncFabs();
+    app.status('<b>Sẵn sàng.</b> Câu đầu vào: (' + R.tokens.map(function (k) { return Rnn.V[k]; }).join(', ') + ').');
+    app.redraw();
+  }
+
+  function rnnCell(T, res) {
+    var R = T.sc.rnn, P = Rnn.P, t = res.t, ph = res.phase, L = [], j, i, terms;
+    var tok = R.tokens[t], T1 = sub(t + 1);
+    if (ph === 0) {
+      L.push('#Wₓx' + T1 + ' = cột ' + (tok + 1) + ' của Wₓ (token "' + Rnn.V[tok] + '"),  x' + T1 + ' = ' + JSON.stringify(R.X[t]).replace(/,/g, ', '));
+      for (j = 0; j < 2; j++) {
+        terms = P.Wx[j].map(function (w, q) { return pn(w) + '×' + R.X[t][q]; }).join(' + ');
+        L.push('(Wₓx' + T1 + ')' + sub(j + 1) + ' = ' + terms + ' = ' + fmt(R.Wxx[t][j]));
+      }
+      L.push('!Wₓx' + T1 + ' = ' + fv(R.Wxx[t]));
+    } else if (ph === 1) {
+      L.push('#Wₕh' + sub(t) + ' với h' + sub(t) + ' = ' + fv(R.H[t]));
+      for (j = 0; j < 2; j++)
+        L.push('(Wₕh' + sub(t) + ')' + sub(j + 1) + ' = ' + pn(P.Wh[j][0]) + '×' + pn(R.H[t][0]) + ' + ' + pn(P.Wh[j][1]) + '×' + pn(R.H[t][1]) + ' = ' + fmt(R.Whh[t][j]));
+      L.push('!Wₕh' + sub(t) + ' = ' + fv(R.Whh[t]));
+    } else if (ph === 2) {
+      L.push('#a' + T1 + ' = Wₓx' + T1 + ' + Wₕh' + sub(t) + ' + b');
+      for (j = 0; j < 2; j++)
+        L.push('a' + T1 + sub(j + 1) + ' = ' + fmt(R.Wxx[t][j]) + ' + ' + pn(R.Whh[t][j]) + ' + ' + fmt(P.b[j]) + ' = ' + fmt(R.A[t][j]));
+      L.push('!a' + T1 + ' = ' + fv(R.A[t]));
+    } else if (ph === 3) {
+      L.push('#h' + T1 + ' = tanh(a' + T1 + ')');
+      for (j = 0; j < 2; j++) L.push('h' + T1 + sub(j + 1) + ' = tanh(' + fmt(R.A[t][j]) + ') = ' + fmt(R.H[t + 1][j]));
+      L.push('!h' + T1 + ' = ' + fv(R.H[t + 1]));
+    } else if (ph === 4) {
+      var h3 = R.H[3];
+      L.push('#z = Wout·h₃ + bout');
+      L.push('z = ' + fmt(P.Wout[0]) + '×' + fmt(h3[0]) + ' + ' + pn(P.Wout[1]) + '×' + fmt(h3[1]) + ' + ' + fmt(P.bout));
+      L.push('!z = ' + fmt(R.z));
+    } else {
+      L.push('#ŷ = sigmoid(z) = 1/(1 + e^(−z))');
+      L.push('ŷ = 1/(1 + e^(' + (R.z < 0 ? '' : '−') + fmt(Math.abs(R.z)) + ')) = 1/(1 + ' + fmt(Math.exp(-R.z)) + ')');
+      L.push('!ŷ = ' + fmt(R.yhat));
+      L.push('ŷ ' + (R.yhat >= 0.5 ? '≥' : '<') + ' 0.5  →  dự đoán ' + RNN_CLASS[R.label]);
+    }
+    return L;
+  }
+
+  function rnnGeneral() {
+    return [
+      'Wₓxₜ = cột của Wₓ ứng với token wₜ\n(xₜ là one-hot, h₀ = [0, 0])',
+      'Wₕhₜ₋₁',
+      'aₜ = Wₓxₜ + Wₕhₜ₋₁ + b',
+      'hₜ = tanh(aₜ)',
+      'z = Wout·h₃ + bout',
+      'ŷ = sigmoid(z) = 1/(1 + e⁻ᶻ)\nŷ ≥ 0.5 → lớp 1, ngược lại lớp 0'
+    ];
+  }
+
+  function stepRnn(T) {
+    var app = T.app, tr = T.tr, ui = T.ui;
+    if (tr.done()) { app.status('<b>Đã chạy xong forward pass.</b>'); return false; }
+    var stEl = T.root.querySelector('.vl-status');
+    T.hist.push({ tr: tr.snapshot(), ui: Object.assign({}, ui, { group: [] }), status: stEl ? stEl.innerHTML : '', hl: T.hl, steps: app.stepCount });
+    var s = tr.k; tr.k++;
+    var t = s < 12 ? Math.floor(s / 4) : 2, ph = s < 12 ? s % 4 : 4 + (s - 12);
+    ui.cur = ph; ui.s = s; ui.t0 = performance.now(); ui.dur = animDur(T);
+    var hl = ph < 4 ? ph + 2 : (ph === 4 ? 6 : 7);
+    app.highlight(hl); T.hl = hl;
+    var res = { phase: ph, t: t, s: s };
+    var body = rnnCell(T, res).map(function (ln) {
+      var c = ln.charAt(0);
+      return (c === '#' || c === '!' ? ln.slice(1) : ln).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }).join('; ');
+    app.status('<b>' + (s < 12 ? 't = ' + (t + 1) + ' · ' : '') + RNN_PH[ph] + '.</b> ' + body);
+    pushCell(T, res, '');
+    syncFabs();
+    return !tr.done();
+  }
+
+  function drawRnn(T, ctx, W, H) {
+    var app = T.app, view = app.view, ui = T.ui, tr = T.tr, topo = T.topo, R = T.sc.rnn, done = tr.k;
+    var full = app.param('detail') >= 1, items = [], P = Rnn.P;
+    var now = performance.now();
+    var p = (ui.cur < 0 || ui.dur <= 0) ? 1 : clamp((now - ui.t0) / (ui.dur * 1000), 0, 1);
+    var C = { fwd: app.color(0), loss: app.color(1), upd: app.color(2), bwd: app.color(3), inp: app.color(4), hid: app.color(5) };
+    var fg = app.css('--vl-fg'), muted = app.css('--vl-muted'), axis = app.css('--vl-axis'), bg = app.css('--vl-bg'), line = app.css('--vl-line');
+    function phCol(ph) { return app.color(RNN_COL[ph]); }
+    var cs = ui.cur >= 0 && ui.s != null ? ui.s : -1;
+    var cT = cs >= 0 && cs < 12 ? Math.floor(cs / 4) : -1;
+    var col = cs >= 0 ? phCol(ui.cur) : C.fwd;
+    function known(t, q) { return done > 4 * t + q; }
+    var zKnown = done > 12, yKnown = done > 13;
+    function P2(n) { return view.toScreen(n.x, n.y); }
+
+    drawGuides(T, ctx, H, topo.seps, topo.guideLabels, { axis: axis, muted: muted });
+
+    ctx.font = '11px system-ui,sans-serif';
+    /* ---------- cạnh ---------- */
+    topo.edges.forEach(function (e) {
+      var a = topo.byId[e.a], b = topo.byId[e.b], pa = P2(a), pb = P2(b);
+      var dx = pb[0] - pa[0], dy = pb[1] - pa[1], len = Math.hypot(dx, dy) || 1, ux = dx / len, uy = dy / len;
+      var s0 = [pa[0] + ux * a.r * view.scale, pa[1] + uy * a.r * view.scale], t0 = [pb[0] - ux * b.r * view.scale, pb[1] - uy * b.r * view.scale];
+      var wv, active = false, name;
+      if (e.kind === 'Wx') { wv = P.Wx[e.j][R.tokens[e.t - 1]]; active = cs === 4 * (e.t - 1); name = 'Wₓ' + sub(e.j + 1) + sub(R.tokens[e.t - 1] + 1); }
+      else if (e.kind === 'Wh') { wv = P.Wh[e.j][e.i]; active = cs === 4 * (e.t - 1) + 1; name = 'Wₕ' + sub(e.j + 1) + sub(e.i + 1); }
+      else if (e.kind === 'b') { wv = P.b[e.j]; active = cs === 4 * (e.t - 1) + 2; }
+      else { wv = P.Wout[e.i]; active = cs === 12; name = 'Wout' + sub(e.i + 1); }
+      var lw = 1.4 + Math.min(4.5, Math.abs(wv) * 2.2);
+      ctx.save();
+      ctx.lineCap = 'round'; ctx.strokeStyle = rgba(axis, 0.85); ctx.lineWidth = lw;
+      if (wv < 0 && e.kind !== 'b') ctx.setLineDash([7, 5]);
+      ctx.beginPath(); ctx.moveTo(s0[0], s0[1]); ctx.lineTo(t0[0], t0[1]); ctx.stroke();
+      ctx.setLineDash([]);
+      if (active && cs >= 0) {
+        var tw = p, hx = s0[0] + (t0[0] - s0[0]) * tw, hy = s0[1] + (t0[1] - s0[1]) * tw;
+        ctx.strokeStyle = rgba(col, tw >= 1 ? 0.8 * (1 - clamp((p - 0.8) / 0.2, 0, 1)) : 0.95); ctx.lineWidth = lw + 2.4;
+        ctx.beginPath(); ctx.moveTo(s0[0], s0[1]); ctx.lineTo(hx, hy); ctx.stroke();
+        if (tw > 0 && tw < 1) {
+          ctx.shadowColor = col; ctx.shadowBlur = 14; ctx.fillStyle = col;
+          ctx.beginPath(); ctx.arc(hx, hy, 6, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+          ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(hx, hy, 2.4, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+      ctx.restore();
+      if (e.kind !== 'b' && (full || active)) {
+        var f = e.kind === 'Wo' ? 0.5 : (e.kind === 'Wh' ? (e.i === e.j ? 0.36 : 0.64) : (e.j === 0 ? 0.25 : 0.4));
+        var txt = name + '=' + fmt(wv);
+        items.push({ type: 'lab', lines: [txt], w: ctx.measureText(txt).width + 10, h: 18, ax: s0[0] + (t0[0] - s0[0]) * f, ay: s0[1] + (t0[1] - s0[1]) * f - 7,
+          on: true, edge: active ? col : line });
+      }
+    });
+
+    /* ---------- nút ---------- */
+    topo.nodes.forEach(function (n) {
+      var pp = P2(n), r = n.r * view.scale, ncol, lines = [], level = 0.2, ring = -1;
+      if (n.kind === 'x') {
+        ncol = C.inp;
+        ctx.font = '600 ' + clamp(r * 0.8, 10, 15) + 'px system-ui,sans-serif';
+        var pw = Math.max(2 * r, ctx.measureText(n.name).width + 16), ph2 = 1.5 * r;
+        ctx.beginPath(); ctx.roundRect(pp[0] - pw / 2, pp[1] - ph2 / 2, pw, ph2, 8);
+        ctx.fillStyle = rgba(ncol, 0.22); ctx.fill(); ctx.lineWidth = 2.6; ctx.strokeStyle = ncol; ctx.stroke();
+        ctx.fillStyle = fg; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(n.name, pp[0], pp[1] + 0.5);
+        lines.push('x' + sub(n.t) + '=' + JSON.stringify(R.X[n.t - 1]).replace(/,/g, ','));
+      } else {
+        if (n.kind === 'h') {
+          ncol = C.hid;
+          var t0i = n.t - 1;
+          if (n.t === 0) { level = 0.2; lines.push('h₀=0'); }
+          else {
+            var q = known(t0i, 3) ? 3 : known(t0i, 2) ? 2 : known(t0i, 1) ? 1 : known(t0i, 0) ? 0 : -1;
+            var vals = [R.Wxx[t0i][n.j], R.Whh[t0i][n.j], R.A[t0i][n.j], R.H[n.t][n.j]];
+            var names = ['Wₓx', 'Wₕh', 'a', 'h'];
+            if (q >= 0) {
+              level = q === 3 ? clamp(Math.abs(vals[3]), 0, 1) : 0.35;
+              if (full) { for (var m = 0; m <= q; m++) lines.push(names[m] + '=' + fmt(vals[m])); }
+              else lines.push(names[q] + '=' + fmt(vals[q]));
+            } else lines.push('…');
+            if (cs >= 0 && cs === 4 * t0i + 3) ring = p;
+          }
+        } else if (n.kind === 'bias') {
+          ncol = axis; lines.push('b' + sub(n.j + 1) + '=' + fmt(P.b[n.j]));
+        } else {
+          ncol = C.fwd;
+          if (zKnown) { lines.push('z=' + fmt(R.z)); level = 0.4; }
+          if (yKnown) { lines.push('ŷ=' + fmt(R.yhat)); lines.push(RNN_CLASS[R.label]); level = clamp(R.yhat, 0, 1); }
+          if (!zKnown) lines.push('…');
+          if (cs === 12 || cs === 13) ring = p;
+        }
+        ctx.save();
+        if (ring >= 0) {
+          ctx.strokeStyle = rgba(col, 0.6 * (1 - ring)); ctx.lineWidth = 3.5;
+          ctx.beginPath(); ctx.arc(pp[0], pp[1], r + 3 + ring * 13, 0, Math.PI * 2); ctx.stroke();
+        }
+        ctx.beginPath(); ctx.arc(pp[0], pp[1], r, 0, Math.PI * 2);
+        ctx.fillStyle = rgba(ncol, n.kind === 'bias' ? 0.14 : 0.16 + 0.5 * level); ctx.fill();
+        ctx.lineWidth = n.kind === 'bias' ? 2 : 2.8; ctx.strokeStyle = ncol; ctx.stroke();
+        ctx.fillStyle = fg; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.font = '600 ' + clamp(r * 0.78, 10, 16) + 'px system-ui,sans-serif';
+        ctx.fillText(n.name, pp[0], pp[1] + 0.5);
+        ctx.restore();
+      }
+      ctx.font = '11px system-ui,sans-serif';
+      if (lines.length) {
+        var lw2 = 0;
+        lines.forEach(function (tx) { lw2 = Math.max(lw2, ctx.measureText(tx).width); });
+        var bw = lw2 + 8, bh = lines.length * 14;
+        var below = n.kind === 'bias' && n.j === 0 ? -1 : 1;
+        var yoff = n.kind === 'x' ? 1.5 * r / 2 + 4 : r + 4;
+        items.push({ type: 'txt', lines: lines, w: bw, h: bh, ax: pp[0], ay: pp[1] + below * (yoff + bh / 2), on: true });
+      }
+    });
+
+    var circles = topo.nodes.map(function (n) { var q = P2(n); return { x: q[0], y: q[1], r: (n.kind === 'x' ? n.r * 0.9 : n.r) * view.scale + 3 }; });
+    placeItems(items, circles, W, H);
+    drawItems(ctx, items, bg, fg);
+
+    /* ---------- 6 ô pha ---------- */
+    var pad = 12, gap = 6, cw = (W - 2 * pad - 5 * gap) / 6, ch = 28, k;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (k = 0; k < 6; k++) {
+      var cx = pad + k * (cw + gap), cy = 10, cc = phCol(k);
+      var state = (cs >= 0 && k === ui.cur) ? 'on' : (cs >= 0 && (cs >= 12 ? k < ui.cur : (k < ui.cur && cs < 12))) ? 'done' : 'idle';
+      ctx.beginPath(); ctx.roundRect(cx, cy, cw, ch, 8);
+      if (state === 'on') { ctx.fillStyle = cc; ctx.fill(); }
+      else if (state === 'done') { ctx.fillStyle = rgba(cc, 0.22); ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = cc; ctx.stroke(); }
+      else { ctx.lineWidth = 1.5; ctx.strokeStyle = line; ctx.stroke(); }
+      ctx.font = '600 ' + (cw < 70 ? 10.5 : 12) + 'px system-ui,sans-serif';
+      ctx.fillStyle = state === 'on' ? onColor(cc) : state === 'done' ? fg : muted;
+      ctx.fillText(RNN_CHIP[k], cx + cw / 2, cy + ch / 2 + 0.5);
+      if (state === 'on' && p < 1) { ctx.fillStyle = rgba(onColor(cc), 0.65); ctx.fillRect(cx + 8, cy + ch - 5, (cw - 16) * p, 3); }
+    }
+    ctx.textAlign = 'left'; ctx.font = '12px system-ui,sans-serif'; ctx.fillStyle = fg;
+    ctx.fillText('Câu: (' + R.tokens.map(function (q2) { return Rnn.V[q2]; }).join(', ') + ')' + (cs >= 0 ? ' · ' + (cs < 12 ? 'thời điểm t = ' + (cT + 1) : 'phân lớp') + ' · bước ' + done + '/' + Rnn.STEPS : ''), pad, 52);
+
+    drawRnnStrip(T, ctx, W, H, { C: C, fg: fg, muted: muted, axis: axis, bg: bg, line: line, known: known, zKnown: zKnown, yKnown: yKnown, R: R, full: full });
+  }
+
+  function drawRnnStrip(T, ctx, W, H, st) {
+    var pad = 12, sh = 150, y0 = H - sh - 10, R = st.R, C = st.C;
+    var lw = Math.round((W - 3 * pad) * 0.6), rw = W - 3 * pad - lw;
+    box(ctx, pad, y0, lw, sh, 'Hidden state theo thời gian (h₁ ▮, h₂ ▮ trong khoảng −1 đến 1)', st);
+    var ix = pad + 14, iw = lw - 28, iy = y0 + 26, ih = sh - 50, zero = iy + ih / 2, k, j;
+    ctx.strokeStyle = st.line; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(ix, zero); ctx.lineTo(ix + iw, zero); ctx.stroke();
+    var gw = iw / 4;
+    ctx.font = '10px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (k = 0; k < 4; k++) {
+      var gx = ix + gw * k + gw / 2, ok = k === 0 || st.known(k - 1, 3);
+      ctx.fillStyle = st.muted; ctx.fillText('h' + sub(k), gx, iy + ih + 12);
+      for (j = 0; j < 2; j++) {
+        if (!ok) continue;
+        var v = R.H[k][j], bh = clamp(v, -1, 1) * (ih / 2 - 4), bx = gx + (j === 0 ? -17 : 3);
+        ctx.fillStyle = j === 0 ? C.fwd : C.upd;
+        ctx.fillRect(bx, bh >= 0 ? zero - bh : zero, 14, Math.max(1, Math.abs(bh)));
+        if (st.full) { ctx.fillStyle = st.fg; ctx.fillText(fmt(v, 2), bx + 7, bh >= 0 ? zero - bh - 7 : zero - bh + 7); }
+      }
+    }
+    var rx = pad * 2 + lw;
+    box(ctx, rx, y0, rw, sh, 'Đầu ra: ŷ so với ngưỡng 0.5', st);
+    var gx0 = rx + 16, gw2 = rw - 32, gy = y0 + 58;
+    ctx.fillStyle = rgba(st.axis, 0.25); ctx.fillRect(gx0, gy - 6, gw2, 12);
+    ctx.strokeStyle = st.fg; ctx.setLineDash([4, 3]); ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(gx0 + gw2 / 2, gy - 14); ctx.lineTo(gx0 + gw2 / 2, gy + 14); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = st.muted; ctx.textAlign = 'center'; ctx.fillText('0', gx0, gy + 22); ctx.fillText('0.5', gx0 + gw2 / 2, gy + 22); ctx.fillText('1', gx0 + gw2, gy + 22);
+    ctx.font = '11px system-ui,sans-serif'; ctx.textAlign = 'left';
+    if (st.yKnown) {
+      var mx = gx0 + gw2 * clamp(R.yhat, 0, 1);
+      ctx.fillStyle = R.label ? C.upd : C.loss; ctx.beginPath(); ctx.arc(mx, gy, 7, 0, Math.PI * 2); ctx.fill();
+      ctx.lineWidth = 1.5; ctx.strokeStyle = st.fg; ctx.stroke();
+      ctx.fillStyle = st.fg; ctx.fillText('z=' + fmt(R.z) + '   ŷ=' + fmt(R.yhat), gx0, y0 + sh - 30);
+      ctx.fillText('Dự đoán: ' + RNN_CLASS[R.label], gx0, y0 + sh - 14);
+    } else {
+      ctx.fillStyle = st.muted; ctx.fillText(st.zKnown ? 'z=' + fmt(R.z) + ' (chưa qua sigmoid)' : 'Chưa tính', gx0, y0 + sh - 22);
+    }
+  }
+
+  /* ======================================================================
+     6. Khởi tạo: thanh tab + 6 ứng dụng
+     ==================================================================== */
+  function init() {
+  var nav = document.createElement('nav');
+  nav.className = 'lab-tabs';
+  nav.setAttribute('aria-label', 'Các bài mô phỏng');
+  var navIn = document.createElement('div');
+  navIn.className = 'lab-tabs-in';
+  navIn.setAttribute('role', 'tablist');
+  nav.appendChild(navIn);
+  document.body.appendChild(nav);
+
+  TABS.forEach(function (def, idx) {
+    var T = { def: def, idx: idx, ui: null, tr: null, topo: null, app: null, root: null, fitW: 0, fitH: 0, busy: false };
+    tabs.push(T);
+    var btn = document.createElement('button');
+    btn.className = 'lab-tab'; btn.type = 'button'; btn.id = 'lab-tab-' + idx;
+    btn.setAttribute('role', 'tab'); btn.setAttribute('aria-controls', 'lab-panel-' + idx);
+    btn.style.setProperty('--c', def.color);
+    btn.innerHTML = '<span class="n">' + (idx + 1) + '</span><span class="t"></span>';
+    btn.querySelector('.t').textContent = def.label;
+    btn.addEventListener('click', function () { selectTab(idx, true); });
+    navIn.appendChild(btn);
+    T.btn = btn;
+
+    T.app = VLab.create({
+      title: def.h1, stage: '2d', height: 640,
+      view: { cx: 0, cy: 0, scale: 50 },
+      params: def.params, player: true, code: def.code,
+      onReset: function (app) { T.app = app; resetTab(T); },
+      onParam: function (id, v) { paramChanged(T, id, v); },
+      onStep: function () { return stepTab(T); },
+      onDraw: function (ctx) { drawTab(T, ctx); }
+    });
+    T.root = T.app.stageEl.closest('.vl-app');
+    T.root.id = 'lab-panel-' + idx;
+    T.root.setAttribute('role', 'tabpanel');
+    T.root.setAttribute('aria-labelledby', 'lab-tab-' + idx);
+    /* thời gian mỗi bước tính bằng giây (0.1 – 1.5); khung gốc nhận "bước/giây" nên đổi ngược 1/giây */
+    var sp = T.root.querySelector('.vl-speed');
+    T.sec = 0.5;
+    if (sp) {
+      var spRow = sp.closest('.vl-row');
+      spRow.style.display = 'none';
+      sp.min = '0.1'; sp.step = 'any'; sp.value = String(1 / T.sec);
+      var row2 = document.createElement('div');
+      row2.className = 'vl-row'; row2.style.marginTop = '12px';
+      row2.innerHTML = '<div class="vl-lab"><span>Thời gian mỗi bước (giây)</span><span class="lab-sec-val">0.5 giây</span></div>' +
+        '<input type="range" class="lab-sec" min="0.1" max="3" step="0.1" value="0.5" aria-label="Thời gian mỗi bước, tính bằng giây">';
+      spRow.parentNode.insertBefore(row2, spRow.nextSibling);
+      var secIn = row2.querySelector('.lab-sec'), secVal = row2.querySelector('.lab-sec-val');
+      secIn.addEventListener('input', function () {
+        var v = Math.max(0.1, parseFloat(secIn.value) || 0.5);
+        T.sec = v; sp.value = String(1 / v); secVal.textContent = v.toFixed(1) + ' giây';
+      });
+    }
+    /* thanh trượt trả phím ←/→ về cho nút Lùi/Tiếp sau khi thả chuột */
+    Array.prototype.forEach.call(T.root.querySelectorAll('input[type=range]'), function (r) {
+      r.addEventListener('change', function () { if (r.blur) r.blur(); });
+    });
+    T.hist = [];
+    buildFormulaSection(T);
+    refreshGeneral(T);
+
+    /* kéo từng nút bằng chuột */
+    var drag = null;
+    T.app.view.onPointerDown = function (px, py) {
+      var w = T.app.view.toWorld(px, py), ns = T.topo.nodes;
+      for (var i = ns.length - 1; i >= 0; i--) {
+        if (Math.hypot(ns[i].x - w[0], ns[i].y - w[1]) < Math.max(ns[i].r, 0.3) + 0.08) { drag = ns[i]; return true; }
+      }
+      return false;
+    };
+    T.app.view.onPointerMove = function (px, py) {
+      if (!drag) return;
+      var w = T.app.view.toWorld(px, py);
+      drag.x = w[0]; drag.y = w[1];
+      T.app.redraw();
+    };
+    T.app.view.onPointerUp = function () { drag = null; };
+  });
+
+  function selectTab(i, focus) {
+    var prev = activeTab;
+    if (prev && prev.app.pause && prev !== tabs[i]) prev.app.pause();
+    activeTab = tabs[i];
+    tabs.forEach(function (T, k) {
+      var on = k === i;
+      T.root.hidden = !on;
+      T.btn.setAttribute('aria-selected', on ? 'true' : 'false');
+      T.btn.tabIndex = on ? 0 : -1;
+    });
+    activeTab.fitW = 0;
+    activeTab.app.redraw();
+    syncFabs();
+    if (focus) activeTab.btn.focus();
+    try { localStorage.setItem('lab-nn-tab', String(i)); } catch (e) { /* bỏ qua */ }
+    var bar = activeTab.btn;
+    if (bar.scrollIntoView) bar.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }
+
+  /* hai nút nổi hai bên màn hình + phím ← → */
+  function mkFab(cls, arrow, text, label, fn) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'lab-fab ' + cls; b.setAttribute('aria-label', label); b.title = label;
+    b.innerHTML = '<span class="a"></span><span class="t"></span>';
+    b.querySelector('.a').textContent = arrow; b.querySelector('.t').textContent = text;
+    b.addEventListener('click', fn);
+    document.body.appendChild(b);
+    return b;
+  }
+  function goBack() { if (activeTab) undoTab(activeTab); }
+  function goNext() {
+    if (!activeTab) return;
+    var btn = activeTab.root.querySelector('.vl-step');
+    if (btn) btn.click();
+  }
+  fabL = mkFab('lab-fab-l', '◀', 'Lùi', 'Lùi một bước (phím ←)', goBack);
+  fabR = mkFab('lab-fab-r', '▶', 'Tiếp', 'Bước tiếp (phím →)', goNext);
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.defaultPrevented) return;
+    var t = e.target;
+    if (t && t.closest && t.closest('input[type=range], input[type=text], input[type=number], textarea, select, [contenteditable="true"]')) return;
+    e.preventDefault();
+    if (e.key === 'ArrowLeft') goBack(); else goNext();
+  });
+
+  var start = 0;
+  try { var s = parseInt(localStorage.getItem('lab-nn-tab'), 10); if (s >= 0 && s < tabs.length) start = s; } catch (e) { /* bỏ qua */ }
+  selectTab(start, false);
+
+  /* vòng cập nhật khung hình: chỉ vẽ lại khi pha đang chuyển động */
+  function loop() {
+    requestAnimationFrame(loop);
+    var T = activeTab;
+    if (!T || !T.ui || T.ui.cur < 0) return;
+    if (performance.now() - T.ui.t0 < T.ui.dur * 1000 + 60) T.app.redraw();
+  }
+  requestAnimationFrame(loop);
+
+  /* nền sáng là mặc định; nút "Sáng/Tối" của khung vẽ vẫn đổi được */
+  if (!document.documentElement.getAttribute('data-vl-theme')) document.documentElement.setAttribute('data-vl-theme', 'light');
+  if (activeTab) activeTab.app.redraw();
+  }
+
+  if (document.body) init();
+  else document.addEventListener('DOMContentLoaded', init);
+})();
+</script>
+
+</body></html>
