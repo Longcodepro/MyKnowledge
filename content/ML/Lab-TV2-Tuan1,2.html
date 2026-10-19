@@ -1,0 +1,1051 @@
+<title>Phòng lab Tuần 1 và 2</title>
+<meta charset="utf-8">
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+.navfix{position:fixed;top:50%;transform:translateY(-50%);z-index:50;width:44px;height:72px;border:1px solid var(--line);background:var(--panel);color:var(--fg);font-size:30px;line-height:1;cursor:pointer;opacity:.85;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.navfix:hover,.navfix:focus-visible{opacity:1;outline:2px solid var(--accent)}
+#navPrev{left:0;border-radius:0 10px 10px 0}#navNext{right:0;border-radius:10px 0 0 10px}
+@media (max-width:600px){.navfix{width:32px;height:56px;font-size:24px}}
+/* Bố cục: thanh tab ngang; mỗi tab là bảng điều khiển bên trái + kết quả bên phải + chú giải thuật ngữ bên dưới. */
+:root{
+  --bg:#ffffff; --panel:#f6f7f9; --fg:#14181d; --muted:#5d6670; --line:#d9dde3;
+  --accent:#2563eb; --accent-soft:#e8efff; --ok:#15803d; --ok-bg:#e7f6ec;
+  --warn:#9a5b00; --warn-bg:#fff3d6; --err:#b42318; --err-bg:#fdebe9;
+  --code-bg:#f1f3f6; --mono:ui-monospace,"Cascadia Code",Consolas,Menlo,monospace;
+}
+:root[data-theme="dark"]{
+  --bg:#13161a; --panel:#1b1f25; --fg:#e8ecf1; --muted:#9aa5b1; --line:#2b323b;
+  --accent:#6aa5ff; --accent-soft:#1f2c47; --ok:#5fd28a; --ok-bg:#16301f;
+  --warn:#f0b64d; --warn-bg:#3a2e12; --err:#ff8c80; --err-bg:#3d1c19; --code-bg:#12161b;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  padding-block:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));}
+.wrap{max-width:1180px;margin:0 auto}
+header{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+header h1{font-size:20px;margin:0;flex:1 1 260px;text-wrap:balance}
+header p{margin:0;color:var(--muted);font-size:13.5px;flex-basis:100%}
+.tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);margin-bottom:14px;padding-bottom:0}
+.tabs button{font:inherit;font-size:14px;white-space:nowrap;padding:9px 13px;border:1px solid transparent;border-bottom:none;
+  background:none;color:var(--muted);cursor:pointer;border-radius:8px 8px 0 0}
+.tabs button:hover{color:var(--fg)}
+.tabs button[aria-selected="true"]{color:var(--accent);background:var(--bg);border-color:var(--line);font-weight:650;
+  box-shadow:0 1px 0 var(--bg);margin-bottom:-1px}
+.tabs button:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.intro{margin:0 0 12px;color:var(--fg);max-width:75ch}
+.grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:14px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+.card{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:12px;min-width:0}
+.card h3{margin:0 0 10px;font-size:12.5px;font-weight:650;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.stack{display:flex;flex-direction:column;gap:12px;min-width:0}
+.row{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.row:last-child{margin-bottom:0}
+.row label,.lab{font-size:13px;display:flex;justify-content:space-between;gap:8px}
+.lab b{font-variant-numeric:tabular-nums;color:var(--accent)}
+input[type=text],input[type=number],input[type=password],select,textarea{font:inherit;font-size:13.5px;padding:6px 8px;border-radius:7px;
+  border:1px solid var(--line);background:var(--bg);color:var(--fg);width:100%;min-width:0}
+input[type=range]{width:100%;accent-color:var(--accent);margin:0}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;margin-bottom:8px}
+.chk input{margin-top:4px}
+.btns{display:flex;gap:6px;flex-wrap:wrap}
+.btn{font:inherit;font-size:13px;padding:6px 11px;border-radius:7px;cursor:pointer;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.danger{color:var(--err);border-color:var(--err)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.hint{font-size:12.5px;color:var(--muted);margin-top:6px}
+pre,.code{margin:0;font:12.5px/1.55 var(--mono);background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;
+  overflow:auto;white-space:pre-wrap;word-break:break-word;max-height:300px}
+.pill{display:inline-block;font-size:12px;font-weight:650;padding:1px 8px;border-radius:99px;border:1px solid currentColor;white-space:nowrap}
+.pill.ok{color:var(--ok);background:var(--ok-bg)} .pill.warn{color:var(--warn);background:var(--warn-bg)}
+.pill.err{color:var(--err);background:var(--err-bg)} .pill.info{color:var(--accent);background:var(--accent-soft)}
+table.t{border-collapse:collapse;width:100%;font-size:12.5px}
+table.t th,table.t td{border:1px solid var(--line);padding:3px 7px;text-align:left;vertical-align:top}
+table.t th{background:var(--code-bg);font-weight:650}
+.scroll{overflow-x:auto}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.mono{font-family:var(--mono)}
+.seg-h{color:#c2410c} .seg-p{color:#7e22ce} .seg-s{color:#0e7490}
+:root[data-theme="dark"] .seg-h{color:#ffa56b} :root[data-theme="dark"] .seg-p{color:#d3a4ff} :root[data-theme="dark"] .seg-s{color:#6fd6ea}
+.gloss{margin-top:14px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg)}
+.gloss summary{cursor:pointer;font-weight:650;font-size:13.5px}
+.gloss dl{margin:10px 0 0;display:grid;grid-template-columns:minmax(120px,max-content) 1fr;gap:6px 14px;font-size:13.5px}
+@media (max-width:560px){.gloss dl{grid-template-columns:1fr}}
+.gloss dt{font-weight:650;font-family:var(--mono);font-size:12.5px;color:var(--accent)}
+.gloss dd{margin:0}
+.sim{font-size:12.5px;color:var(--muted);margin-top:14px}
+.ent{display:grid;grid-template-columns:max-content 1fr;gap:3px 12px;font-family:var(--mono);font-size:12.5px}
+.ent span:nth-child(odd){color:var(--muted)}
+.svc{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--bg)}
+.bar{height:10px;border-radius:5px;background:var(--code-bg);border:1px solid var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+@media (prefers-reduced-motion:no-preference){.bar i{transition:width .25s}}
+
+.dcard{border:1px solid var(--line);border-radius:10px;background:var(--panel);overflow:hidden;margin-bottom:14px}
+.dwrap{overflow-x:auto;background:var(--bg)}
+.dcv{display:block}
+.status{padding:10px 12px;border-top:1px solid var(--line);background:var(--bg);font-size:14px;min-height:46px}
+.status b{color:var(--accent)}
+.hook{margin:0 0 12px;padding:8px 12px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;font-size:14px}
+.hook b{color:var(--accent)}
+.codeL{font:12.5px/1.6 var(--mono);margin:0}
+.codeL div{padding:1px 6px;border-radius:4px;white-space:pre-wrap;color:var(--muted)}
+.codeL div.on{background:var(--warn-bg);color:var(--warn);font-weight:650}
+.scn{display:flex;gap:6px;flex-wrap:wrap}
+.scn .btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+</style>
+<div class="wrap">
+  <header>
+    <h1>Phòng lab TV2: từ PDF đến dữ liệu có nhãn</h1>
+    <button class="btn" id="themeBtn" type="button">Nền tối</button>
+    <p>Quy trình, đầu vào, đầu ra và việc cần làm tiếp của TV2 ở tuần 1 và tuần 2, cùng một khung chung để làm lại với các tuần sau.</p>
+  </header>
+  <div class="tabs" role="tablist" id="tabs" aria-label="Nhiệm vụ tuần 1"></div>
+  <div id="panels"></div>
+</div>
+<script>
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const pill = (kind, text) => '<span class="pill ' + kind + '">' + esc(text) + '</span>';
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const enc = new TextEncoder();
+const SLOW = 2;   // hệ số làm chậm mọi hoạt ảnh gói tin; chỉnh số này để nhanh/chậm hơn
+const REDUCE = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+const PAL = ['#2563eb', '#dc2626', '#059669', '#d97706', '#7c3aed', '#0891b2'];
+const LC = { ngoai: 5, pres: 0, app: 1, dom: 2, infra: 3, db: 4 };   // màu theo tầng
+
+/* ---- màu theo chủ đề (đọc từ biến CSS) ---- */
+const T = {};
+function readTheme() {
+  const cs = getComputedStyle(document.documentElement);
+  ['bg', 'panel', 'fg', 'muted', 'line', 'accent', 'ok', 'warn', 'err', 'code-bg', 'ok-bg', 'warn-bg', 'err-bg', 'accent-soft']
+    .forEach(k => { T[k] = cs.getPropertyValue('--' + k).trim() || '#888'; });
+}
+
+/* ---- hàm vẽ cơ bản (toạ độ thiết kế, tâm của hộp là x,y) ---- */
+function rr(c, x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  c.beginPath(); c.moveTo(x + r, y);
+  c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
+}
+function txt(c, s, x, y, o) {
+  o = o || {};
+  c.font = (o.bold ? 'bold ' : '') + (o.size || 14) + 'px system-ui,sans-serif';
+  c.fillStyle = o.color || T.fg; c.textAlign = o.align || 'center'; c.textBaseline = o.base || 'middle';
+  c.fillText(String(s), x, y);
+}
+function fit(c, s, w, size, bold) {            // cắt chữ cho vừa độ rộng
+  c.font = (bold ? 'bold ' : '') + size + 'px system-ui,sans-serif';
+  s = String(s);
+  if (c.measureText(s).width <= w) return s;
+  while (s.length > 1 && c.measureText(s + '…').width > w) s = s.slice(0, -1);
+  return s + '…';
+}
+function box(c, x, y, w, h, o) {
+  o = o || {};
+  c.save(); if (o.alpha != null) c.globalAlpha = o.alpha;
+  rr(c, x - w / 2, y - h / 2, w, h, o.r == null ? 10 : o.r);
+  c.fillStyle = o.fill || T.bg; c.fill();
+  if (o.tint) { const a = c.globalAlpha; c.globalAlpha = a * o.tint[1]; c.fillStyle = o.tint[0]; c.fill(); c.globalAlpha = a; }
+  if (o.dash) c.setLineDash(o.dash);
+  c.lineWidth = o.lw || 2; c.strokeStyle = o.stroke || T.line; c.stroke(); c.setLineDash([]);
+  if (o.title != null) txt(c, fit(c, o.title, w - 14, o.fs || 16, true), x, y - (o.sub ? h * 0.16 : 0), { size: o.fs || 16, bold: true, color: o.tc || T.fg });
+  if (o.sub) txt(c, fit(c, o.sub, w - 14, o.ss || 12.5), x, y + h * 0.24, { size: o.ss || 12.5, color: o.sc || T.muted });
+  c.restore();
+}
+function arrow(c, p, q, o) {
+  o = o || {};
+  const ang = Math.atan2(q[1] - p[1], q[0] - p[0]), hl = o.head === false ? 0 : 11;
+  c.save(); c.strokeStyle = o.color || T.muted; c.fillStyle = o.color || T.muted; c.lineWidth = o.lw || 2;
+  if (o.dash) c.setLineDash(o.dash);
+  c.beginPath(); c.moveTo(p[0], p[1]); c.lineTo(q[0] - Math.cos(ang) * hl * 0.6, q[1] - Math.sin(ang) * hl * 0.6); c.stroke(); c.setLineDash([]);
+  if (hl) { c.beginPath(); c.moveTo(q[0], q[1]); c.lineTo(q[0] - hl * Math.cos(ang - 0.4), q[1] - hl * Math.sin(ang - 0.4));
+    c.lineTo(q[0] - hl * Math.cos(ang + 0.4), q[1] - hl * Math.sin(ang + 0.4)); c.closePath(); c.fill(); }
+  c.restore();
+}
+function badge(c, s, x, y, color, filled) {   // nhãn nhỏ có viền, tâm tại x,y
+  c.save(); c.font = 'bold 12.5px system-ui,sans-serif';
+  const w = c.measureText(s).width + 16;
+  rr(c, x - w / 2, y - 11, w, 22, 11); c.fillStyle = filled ? color : T.bg; c.fill(); c.lineWidth = 1.6; c.strokeStyle = color; c.stroke();
+  txt(c, s, x, y, { size: 12.5, bold: true, color: filled ? '#fff' : color }); c.restore();
+}
+function cyl(c, x, y, w, h, o) {              // hình trụ = cơ sở dữ liệu
+  o = o || {}; const e = 10;
+  c.save(); c.lineWidth = o.lw || 2; c.strokeStyle = o.stroke || PAL[4]; c.fillStyle = o.fill || T.bg;
+  c.beginPath(); c.moveTo(x - w / 2, y - h / 2 + e); c.lineTo(x - w / 2, y + h / 2 - e);
+  c.ellipse(x, y + h / 2 - e, w / 2, e, 0, Math.PI, 0, true); c.lineTo(x + w / 2, y - h / 2 + e);
+  c.ellipse(x, y - h / 2 + e, w / 2, e, 0, 0, Math.PI * 2, true); c.fill(); c.stroke();
+  c.beginPath(); c.ellipse(x, y - h / 2 + e, w / 2, e, 0, 0, Math.PI); c.stroke(); c.restore();
+}
+function edgePts(a, b) {                      // điểm trên viền hai hộp
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const clip = (r, dx, dy) => {
+    const sx = dx ? (r.w / 2) / Math.abs(dx) : Infinity, sy = dy ? (r.h / 2) / Math.abs(dy) : Infinity, s = Math.min(sx, sy);
+    return [r.x + dx * s, r.y + dy * s];
+  };
+  return [clip(a, dx, dy), clip(b, -dx, -dy)];
+}
+function polyLen(p) { let L = 0; for (let i = 1; i < p.length; i++) L += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); return L; }
+function along(p, d) {
+  for (let i = 1; i < p.length; i++) {
+    const s = Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]);
+    if (d <= s || i === p.length - 1) { const f = s ? Math.min(1, d / s) : 1; return [p[i - 1][0] + (p[i][0] - p[i - 1][0]) * f, p[i - 1][1] + (p[i][1] - p[i - 1][1]) * f]; }
+    d -= s;
+  }
+  return p[p.length - 1];
+}
+
+/* ---- sân khấu canvas: toạ độ thiết kế cố định (w x h), tự co theo bề rộng ---- */
+const STAGES = [];
+class Stage {
+  constructor(host, w, h) {
+    this.w = w; this.h = h; this.pk = []; this.draw = function () {};
+    this.wrap = document.createElement('div'); this.wrap.className = 'dwrap';
+    this.cv = document.createElement('canvas'); this.cv.className = 'dcv'; this.cv.setAttribute('role', 'img');
+    this.wrap.appendChild(this.cv); host.appendChild(this.wrap);
+    this.ctx = this.cv.getContext('2d'); this.fit();
+    if (window.ResizeObserver) new ResizeObserver(() => this.fit()).observe(this.wrap);
+    STAGES.push(this);
+  }
+  fit() {
+    const cw = Math.max(this.wrap.clientWidth, 800), ch = cw * this.h / this.w, dpr = window.devicePixelRatio || 1;
+    this.cv.style.width = cw + 'px'; this.cv.style.height = ch + 'px';
+    this.cv.width = Math.round(cw * dpr); this.cv.height = Math.round(ch * dpr); this.k = cw * dpr / this.w;
+  }
+  /* gửi một "gói tin" chạy dọc đường pts; trả về Promise khi tới nơi */
+  packet(pts, o) {
+    o = o || {};
+    return new Promise(res => {
+      const len = polyLen(pts);
+      this.pk.push({ pts: pts, len: len, t0: performance.now(), dur: REDUCE ? 1 : SLOW * (o.dur || Math.max(380, len * 1.25)), color: o.color || PAL[1], label: o.label, res: res });
+    });
+  }
+  update(now) { this.pk = this.pk.filter(p => { if (now - p.t0 >= p.dur) { p.res(); return false; } return true; }); }
+  frame(now) {
+    if (!this.cv.offsetParent) return;
+    const c = this.ctx; c.setTransform(this.k, 0, 0, this.k, 0, 0); c.clearRect(0, 0, this.w, this.h);
+    this.draw(c, now);
+    this.pk.forEach(p => {
+      const f = Math.min(1, (now - p.t0) / p.dur), pos = along(p.pts, p.len * f);
+      c.save(); c.shadowColor = p.color; c.shadowBlur = 10; c.fillStyle = p.color; c.beginPath(); c.arc(pos[0], pos[1], 7, 0, Math.PI * 2); c.fill(); c.restore();
+      if (p.label) badge(c, p.label, pos[0], pos[1] - 20, p.color, true);
+    });
+  }
+}
+(function loop() {
+  const now = performance.now();
+  STAGES.forEach(s => { s.update(now); s.frame(now); });
+  requestAnimationFrame(loop);
+})();
+
+/* ---- khung giao diện chung của mỗi tab ---- */
+function shell(root, o) {
+  root.innerHTML =
+    '<p class="intro">' + o.intro + '</p>' +
+    (o.hook ? '<div class="hook"><b>Nhớ nhanh:</b> ' + o.hook + '</div>' : '') +
+    '<div class="dcard"><div class="dstage"></div><div class="status" aria-live="polite"></div></div>' +
+    '<div class="grid"><section class="card"><h3>Điều khiển</h3>' + o.controls + '</section>' +
+    '<section class="card stack"><h3 style="margin:0">Chi tiết</h3>' + (o.detail || '') + '</section></div>' +
+    (o.note ? '<p class="sim">' + o.note + '</p>' : '') +
+    '<details class="gloss" open><summary>Thuật ngữ trong tab này</summary><dl>' +
+    o.gloss.map(g => '<dt>' + esc(g[0]) + '</dt><dd>' + g[1] + '</dd>').join('') + '</dl></details>';
+  return { stage: new Stage($('.dstage', root), o.w || 1000, o.h || 460), status: html => { $('.status', root).innerHTML = html; } };
+}
+const hexOf = b => Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join('');
+
+
+/* =================== BỘ DỰNG SƠ ĐỒ CHUNG: node + cạnh + gói tin + kịch bản + mã giả =================== */
+const F = (n, e, l, h, rev, x) => ({ n: n, e: e, l: l, h: h, rev: rev || [], x: x });
+function makeFlow(root, cfg) {
+  cfg.nodes.forEach(n => { n.w = n.w || 150; n.h = n.h || 56; n.st = 'cho'; });
+  const byId = {}; cfg.nodes.forEach(n => { byId[n.id] = n; });
+  const E = cfg.edges.map(e => ({ id: e[0], a: byId[e[1]], b: byId[e[2]], label: e[3] }));
+  const eById = {}; E.forEach(e => { eById[e.id] = e; });
+  const W = cfg.w || 1000, H = cfg.h || 460, BANDS = cfg.bands || [];
+  const ui = shell(root, {
+    intro: cfg.intro, hook: cfg.hook, w: W, h: H,
+    controls: '<div class="lab"><span>Kịch bản</span></div><div class="scn f-scn" style="margin-bottom:12px"></div>' +
+      '<div class="btns" style="margin-bottom:10px"><button class="btn primary f-play" type="button">▶ Chạy</button><button class="btn f-step" type="button">Bước tiếp</button><button class="btn f-reset" type="button">Làm lại</button></div>' +
+      '<div class="row"><div class="lab"><label>Tốc độ (bước/giây, chậm = bên trái)</label><b class="f-spdv">0.5</b></div><input class="f-spd" type="range" min="0.25" max="4" step="0.25" value="0.5" aria-label="Tốc độ"></div>' + (cfg.controls || ''),
+    detail: '<div><div class="lab"><span>Mã giả (dòng đang chạy được tô sáng)</span></div><div class="codeL f-code" style="max-height:300px;overflow:auto"></div></div>' + (cfg.detail || ''),
+    gloss: cfg.gloss, note: cfg.note
+  });
+  const S = { frames: [], idx: 0, cur: [], curE: [], passed: {}, timer: null, running: false, k: 0, spd: 0.5, stage: 0 };
+  const codeEl = $('.f-code', root);
+  codeEl.innerHTML = cfg.code.map(l => '<div>' + esc(l) + '</div>').join('');
+  const hl = i => $$('div', codeEl).forEach((d, j) => d.classList.toggle('on', j === i));
+  function pause() { S.running = false; $('.f-play', root).textContent = '▶ Chạy'; clearTimeout(S.timer); }
+  function reset() {
+    pause(); if (cfg.onReset) cfg.onReset(S, root);
+    S.frames = cfg.build(S.k, root); S.idx = 0; S.cur = []; S.curE = []; S.passed = {}; S.stage = 0;
+    cfg.nodes.forEach(n => { n.st = 'cho'; }); hl(-1);
+    ui.status('Kịch bản <b>' + cfg.names[S.k] + '</b> gồm ' + S.frames.length + ' bước.');
+    if (cfg.onFrame) cfg.onFrame(null, S, root);
+  }
+  function step() {
+    if (S.idx >= S.frames.length) { pause(); return; }
+    const f = S.frames[S.idx++];
+    S.cur.forEach(id => { byId[id].st = 'xong'; }); S.curE.forEach(id => { S.passed[id] = true; });
+    S.cur = f.n; S.curE = f.e; f.n.forEach(id => { byId[id].st = 'dangXet'; });
+    if (f.x != null) S.stage = f.x;
+    hl(f.l); ui.status('<b>Bước ' + S.idx + '/' + S.frames.length + '.</b> ' + f.h);
+    if (cfg.onFrame) cfg.onFrame(f, S, root);
+    f.e.forEach(id => {
+      const e = eById[id], p = edgePts(e.a, e.b), rev = f.rev.indexOf(id) >= 0;
+      ui.stage.packet(rev ? [p[1], p[0]] : p, { color: PAL[1], dur: 520 });
+    });
+    if (S.idx >= S.frames.length) pause();
+  }
+  function play() { if (S.running) return; S.running = true; $('.f-play', root).textContent = '❚❚ Tạm dừng';
+    const tick = () => { if (!S.running) return; step(); if (S.running) S.timer = setTimeout(tick, 1000 / S.spd); }; tick(); }
+  const scn = $('.f-scn', root);
+  cfg.names.forEach((n, i) => {
+    const b = document.createElement('button'); b.className = 'btn'; b.type = 'button'; b.textContent = i + '. ' + n; b.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
+    b.onclick = () => { S.k = i; $$('button', scn).forEach((x, j) => x.setAttribute('aria-pressed', j === i ? 'true' : 'false')); if (cfg.onScenario) cfg.onScenario(i, root); reset(); };
+    scn.appendChild(b);
+  });
+  $('.f-play', root).onclick = () => S.running ? pause() : play();
+  $('.f-step', root).onclick = () => { pause(); step(); };
+  $('.f-reset', root).onclick = reset;
+  $('.f-spd', root).oninput = e => { S.spd = parseFloat(e.target.value); $('.f-spdv', root).textContent = S.spd; };
+  ui.stage.draw = function (c) {
+    BANDS.forEach(b => { c.save(); c.globalAlpha = 0.08; c.fillStyle = PAL[b[3]]; c.fillRect(0, b[1], W, b[2] - b[1]); c.restore();
+      txt(c, b[0], 12, b[1] + 13, { size: 11, bold: true, color: PAL[b[3]], align: 'left' }); });
+    E.forEach(e => {
+      const p = edgePts(e.a, e.b), on = S.curE.indexOf(e.id) >= 0, done = S.passed[e.id];
+      arrow(c, p[0], p[1], { color: on ? PAL[1] : done ? PAL[0] : T.line, lw: on ? 4 : done ? 2.6 : 1.6, head: on || done });
+    });
+    cfg.nodes.forEach(n => {
+      const col = PAL[n.c == null ? 0 : n.c];
+      if (n.st === 'dangXet') box(c, n.x, n.y, n.w, n.h, { fill: col, stroke: col, lw: 3.5, title: n.t, sub: n.s, tc: '#fff', sc: '#fff', fs: 14.5, ss: 11.5 });
+      else box(c, n.x, n.y, n.w, n.h, { fill: T.bg, stroke: col, lw: n.st === 'xong' ? 3 : 2, tint: n.st === 'xong' ? [col, 0.2] : null, title: n.t, sub: n.s, fs: 14.5, ss: 11.5 });
+    });
+    S.curE.forEach(id => { const e = eById[id], m = [(e.a.x + e.b.x) / 2, (e.a.y + e.b.y) / 2]; if (e.label) badge(c, e.label, m[0], m[1], PAL[1]); });
+    if (cfg.extra) cfg.extra(c, S);
+    [['Đang xử lý (nền đặc)', 0], ['Đã đi qua (nền nhạt)', 1], ['Chưa tới (nền trắng)', 2]].forEach((it, i) => {
+      const x = 22 + i * 190, y = H - 14; c.beginPath(); c.arc(x, y, 6, 0, 7); c.fillStyle = i === 0 ? PAL[0] : T.bg; c.fill();
+      if (i === 1) { c.globalAlpha = 0.25; c.fillStyle = PAL[0]; c.fill(); c.globalAlpha = 1; } c.lineWidth = 2; c.strokeStyle = PAL[0]; c.stroke();
+      txt(c, it[0], x + 12, y, { size: 12, align: 'left', color: T.muted });
+    });
+  };
+  reset();
+  return { S: S, ui: ui, reset: reset, step: step, byId: byId };
+}
+
+/* =================== TAB 0: DÂY CHUYỀN CẢ TUẦN =================== */
+function tab0(root) {
+  const nodes = [
+    { id: 'pdf', t: 'data/raw/*.pdf', s: '57 file scan', x: 200, y: 52, w: 230, c: 5 },
+    { id: 'inv', t: 'make_inventory', s: '1 · bảng kê', x: 100, y: 170, c: 0 }, { id: 'img', t: 'pdf_to_images', s: '2 · PDF → ảnh', x: 290, y: 170, c: 0 },
+    { id: 'ocr', t: 'ocr_run', s: '3 · OCR', x: 480, y: 170, c: 0 }, { id: 'cln', t: 'clean_text', s: '4 · làm sạch', x: 670, y: 170, c: 0 },
+    { id: 'ext', t: 'extract_clos', s: '5 · tách CLO', x: 860, y: 170, c: 0 },
+    { id: 'o1', t: 'inventory.csv', s: '57 dòng', x: 100, y: 340, c: 3 }, { id: 'o2', t: 'images/', s: '488 ảnh PNG', x: 290, y: 340, c: 3 },
+    { id: 'o3', t: 'ocr/', s: 'p-N.txt · .levels', x: 480, y: 340, c: 3 }, { id: 'o4', t: 'ocr_clean/', s: 'chữ đã sạch', x: 670, y: 340, c: 3 },
+    { id: 'o5', t: 'clos_raw.csv', s: '411 CLO', x: 860, y: 340, c: 3 },
+    { id: 'man', t: 'clos_manual_fixes.csv', s: 'sửa tay, đè lên', x: 860, y: 440, w: 200, c: 1 }
+  ];
+  const edges = [['a1', 'pdf', 'inv', 'PDF'], ['a2', 'pdf', 'img', 'PDF'], ['b1', 'inv', 'img', 'bảng kê'], ['b2', 'img', 'ocr', 'ảnh'], ['b3', 'ocr', 'cln', 'chữ'], ['b4', 'cln', 'ext', 'chữ sạch'],
+    ['d1', 'inv', 'o1', ''], ['d2', 'img', 'o2', ''], ['d3', 'ocr', 'o3', ''], ['d4', 'cln', 'o4', ''], ['d5', 'ext', 'o5', ''], ['m', 'man', 'o5', 'đè lên']];
+  const names = ['Chạy cả dây chuyền', 'Chạy lại (có bộ nhớ đệm)', 'Môn thiếu mã (stt74)', 'Bản trùng (82 trùng 48)'];
+  const CODE = ['data/raw/*.pdf  (đầu vào)', '1. make_inventory → inventory.csv', '2. pdf_to_images → images/<môn>/p-N.png', '3. ocr_run --all → ocr/<môn>/', '4. clean_text → ocr_clean/<môn>/',
+    '5. extract_clos → clos_raw.csv', '   áp clos_manual_fixes.csv lên kết quả tự động'];
+  function build(k) {
+    const head = F(['pdf'], [], 0, 'Có <b>57 file PDF</b> scan trong data/raw/ (54 môn và 3 bản trùng). Đây là đầu vào duy nhất của cả dây chuyền.');
+    if (k === 0) return [head,
+      F(['inv', 'o1'], ['a1', 'd1'], 1, '<b>make_inventory.py</b> đọc tên file, tách STT, mã môn, tên môn, đếm trang, đánh dấu bản trùng → <b>inventory.csv</b>.'),
+      F(['img', 'o2'], ['b1', 'a2', 'd2'], 2, '<b>pdf_to_images.py</b> chỉ lấy dòng không trùng, gọi pdftoppm 300 DPI → 488 ảnh PNG, mỗi trang một file.'),
+      F(['ocr', 'o3'], ['b2', 'd3'], 3, '<b>ocr_run.py</b>: Tesseract đọc chữ mọi trang, PaddleOCR đọc số trình độ ở trang CLO → thư mục <b>ocr/</b>.'),
+      F(['cln', 'o4'], ['b3', 'd4'], 4, '<b>clean_text.py</b> bỏ ký tự kẻ bảng, ghép dòng, sửa dấu theo từ điển → <b>ocr_clean/</b>. Thư mục ocr/ giữ nguyên để đối chiếu.'),
+      F(['ext', 'o5'], ['b4', 'd5'], 5, '<b>extract_clos.py</b> tìm trang CLO, cắt hàng, ghép chữ đẹp với số trình độ → <b>clos_raw.csv</b> (411 CLO, 54 môn).'),
+      F(['man', 'o5'], ['m'], 6, 'Các hàng sửa tay nằm riêng trong clos_manual_fixes.csv và được <b>đè lên</b> kết quả tự động mỗi lần chạy, nên chạy lại không mất công sửa.')];
+    if (k === 1) return [F(['pdf'], [], 0, 'Chạy lại toàn bộ dây chuyền lần hai. Mọi bước đều kiểm tra "đã làm chưa" trước khi làm.'),
+      F(['inv', 'o1'], ['a1', 'd1'], 1, 'make_inventory ghi đè inventory.csv từ đầu (chỉ mất vài giây). Vì vậy sửa tên PDF cho đúng rồi chạy lại, đừng chỉ sửa trong CSV.'),
+      F(['img', 'o2'], ['b1', 'd2'], 2, 'pdf_to_images thấy thư mục images/<môn>/ đã có PNG → <b>bỏ qua</b> (không render lại 915 MB ảnh).'),
+      F(['ocr', 'o3'], ['b2', 'd3'], 3, 'ocr_run dùng <b>bộ nhớ đệm</b> ocr_raw/: trang nào đã có kết quả thì bỏ qua. Cả bộ chạy lại chỉ vài giây thay vì hơn 1 giờ.'),
+      F(['cln', 'o4'], ['b3', 'd4'], 4, 'clean_text chạy lại trong khoảng 1 giây.'),
+      F(['ext', 'man', 'o5'], ['b4', 'd5', 'm'], 5, 'extract_clos tính lại CLO tự động rồi áp lại các hàng sửa tay. Công sửa tay không mất.')];
+    if (k === 2) return [F(['pdf'], [], 0, 'File "<b>74 - Công nghệ. NET.pdf</b>" không có mã môn 6 số.'),
+      F(['inv', 'o1'], ['a1', 'd1'], 1, 'make_inventory ghi course_code <b>trống</b> và in cảnh báo "THIẾU mã môn". File không có mã không bao giờ bị coi là trùng.'),
+      F(['img', 'o2'], ['b1', 'a2', 'd2'], 2, 'Ảnh được lưu vào thư mục <b>images/stt74/</b>: dùng STT làm khóa thay cho mã môn.'),
+      F(['ocr', 'o3'], ['b2', 'd3'], 3, 'OCR chạy bình thường vào ocr/stt74/.'),
+      F(['cln', 'o4'], ['b3', 'd4'], 4, 'Làm sạch vào ocr_clean/stt74/.'),
+      F(['ext', 'o5'], ['b4', 'd5'], 5, 'clos_raw.csv ghi course_code = <b>stt74</b>. Cần hỏi TV1 mã thật rồi sửa tên PDF và chạy lại trước khi xuất JSON ở tuần 2.')];
+    return [F(['pdf'], [], 0, 'Hai file "<b>48 - 841407 - ...</b>" và "<b>82 - 841407 - ...</b>" là cùng một môn.'),
+      F(['inv', 'o1'], ['a1', 'd1'], 1, 'Cùng mã 841407: file STT nhỏ nhất (48) là bản gốc, file 82 ghi <b>duplicate_of = tên file 48</b>.'),
+      F(['img'], ['b1'], 2, 'pdf_to_images chỉ lấy dòng có duplicate_of trống → <b>không render</b> file 82.'),
+      F(['ocr'], ['b2'], 3, 'OCR cũng chỉ chạy trên bản gốc, tiết kiệm thời gian.'),
+      F(['o5'], [], 5, 'Kết quả: 57 file nhưng chỉ 54 môn. Dự án có 3 cặp trùng: 48/82, 62/81 và 63/66.')];
+  }
+  makeFlow(root, {
+    intro: 'Đây là bản đồ tổng của tuần 1 (nhiệm vụ TV2): năm script nối với nhau thành một dây chuyền, mỗi script nhận đầu ra của script trước.',
+    hook: 'PDF → <b>bảng kê</b> → <b>ảnh</b> → <b>OCR</b> → <b>làm sạch</b> → <b>tách CLO</b> → clos_raw.csv. Sai ở đầu thì sai đến cuối.',
+    w: 1000, h: 480, nodes: nodes, edges: edges, names: names, code: CODE, build: build,
+    bands: [['ĐẦU VÀO', 8, 96, 5], ['SCRIPT (src/syllabus_core/data/)', 120, 222, 0], ['DỮ LIỆU RA (data/)', 290, 470, 3]],
+    gloss: [['PDF scan', 'đề cương chụp thành ảnh nên máy chưa đọc được chữ, phải qua OCR.'], ['OCR', 'đọc chữ từ ảnh (Optical Character Recognition).'], ['CLO', 'chuẩn đầu ra học phần (Course Learning Outcome), mỗi môn có vài mục G1, G2...'],
+      ['Bộ nhớ đệm', 'kết quả trung gian lưu lại để lần sau khỏi làm lại (ocr_raw/).'], ['Bản trùng', 'hai file PDF của cùng một môn; chỉ giữ một.'], ['data/interim/', 'dữ liệu trung gian; không đưa lên git.']],
+    note: 'Số liệu (57 file, 54 môn, 488 trang, 411 CLO) là số thật của dự án tính đến 12/10/2026.'
+  });
+}
+
+/* =================== TAB 1: BẢNG KÊ =================== */
+function tab1(root) {
+  const nodes = [
+    { id: 'f1', t: '25 - 841405', s: 'Xác suất thống kê', x: 100, y: 58, w: 170, c: 5 }, { id: 'f2', t: '48 - 841407', s: 'Các hệ quản trị CSDL', x: 290, y: 58, w: 170, c: 5 },
+    { id: 'f3', t: '74 - Công nghệ. NET', s: 'không có mã môn', x: 480, y: 58, w: 170, c: 5 }, { id: 'f4', t: '82 - 841407', s: 'Các hệ quản trị CSDL', x: 670, y: 58, w: 170, c: 5 },
+    { id: 'f5', t: '1. MoTaCTDT...', s: 'không theo mẫu tên', x: 860, y: 58, w: 170, c: 5 },
+    { id: 'rx', t: 'Regex tách tên', s: 'STT · mã · tên', x: 250, y: 200, w: 190, c: 0 }, { id: 'pp', t: 'pypdf', s: 'đếm số trang', x: 500, y: 200, w: 170, c: 0 }, { id: 'dp', t: 'Tìm bản trùng', s: 'cùng mã → giữ STT nhỏ', x: 760, y: 200, w: 200, c: 0 },
+    { id: 'sk', t: 'Bỏ qua + báo', s: 'không vào bảng', x: 130, y: 340, w: 170, c: 1 }, { id: 'out', t: 'inventory.csv', s: 'file_name · course_code · course_name · n_pages · duplicate_of', x: 560, y: 340, w: 440, c: 3 }];
+  const edges = [['e1', 'f1', 'rx', ''], ['e2', 'f2', 'rx', ''], ['e3', 'f3', 'rx', ''], ['e4', 'f4', 'rx', ''], ['e5', 'f5', 'rx', ''], ['er', 'rx', 'pp', 'dòng hợp lệ'], ['ep', 'pp', 'dp', ''], ['eo', 'dp', 'out', 'ghi CSV'], ['es', 'rx', 'sk', 'không khớp']];
+  const names = ['File bình thường', 'File thiếu mã môn', 'Bản trùng', 'File không theo mẫu'];
+  const CODE = ['với mỗi file *.pdf trong data/raw/:', '  khớp "STT - mã6số - tên.pdf"?', '    có → ghi STT, mã, tên', '    không, nhưng "STT - tên.pdf" → mã để trống', '    không khớp gì → bỏ qua và báo', '  đếm số trang bằng pypdf', 'sắp theo STT; với mỗi mã đã gặp:', '  file đầu tiên = bản gốc; file sau: duplicate_of ← tên bản gốc', 'ghi inventory.csv (UTF-8)'];
+  function build(k) {
+    const idx = [1, 3, 4, 5][k], f = 'f' + idx, e = 'e' + idx;
+    const first = [F([f], [], 0, ['File "<b>25 - 841405 - Xác suất thống kê.pdf</b>" nằm trong data/raw/.', 'File "<b>74 - Công nghệ. NET.pdf</b>": tên có STT nhưng không có dãy 6 chữ số.', 'File "<b>82 - 841407 - Các hệ quản trị cơ sở dữ liệu.pdf</b>".', 'File "<b>1. MoTaCTDT_KyThuatPhanMem.pdf</b>" là mô tả chương trình đào tạo, không phải đề cương.'][k])];
+    if (k === 3) return first.concat([F(['rx'], [e], 1, 'Regex không khớp mẫu nào (không có " - " sau STT).'), F(['sk'], ['es'], 4, 'File bị <b>bỏ qua và được báo</b> trong log, không có dòng trong bảng.')]);
+    return first.concat([
+      F(['rx'], [e], k === 1 ? 3 : 2, ['Regex tách được: STT=<b>25</b>, mã=<b>841405</b>, tên=Xác suất thống kê.', 'Mẫu đầy đủ không khớp, nhưng mẫu "STT - tên" khớp: STT=<b>74</b>, mã=<b>(trống)</b>, tên=Công nghệ. NET. Log in "THIẾU mã môn".', 'Tách được: STT=<b>82</b>, mã=<b>841407</b>, tên=Các hệ quản trị cơ sở dữ liệu.'][k]),
+      F(['pp'], ['er'], 5, 'pypdf mở file và đếm số trang. File lỗi vẫn có dòng trong bảng, chỉ để trống n_pages.'),
+      F(['dp'], ['ep'], 7, ['Mã 841405 chưa gặp lần nào → là bản gốc, <code>duplicate_of</code> để trống.', 'File không có mã thì <b>không bao giờ</b> bị coi là trùng, vì không có gì để so sánh.', 'Mã 841407 đã gặp ở file STT 48 → file này ghi <code>duplicate_of = "48 - 841407 - ..."</code>.'][k]),
+      F(['out'], ['eo'], 8, k === 2 ? 'Dòng này vẫn nằm trong bảng nhưng được đánh dấu trùng nên các bước sau sẽ <b>bỏ qua</b> nó.' : k === 1 ? 'Dòng được ghi với course_code trống. Các script sau dùng khóa <code>stt74</code>.' : 'Dòng được ghi vào inventory.csv.')]);
+  }
+  const parse = f => {
+    let m = f.match(/^(\d+)\s*-\s*(\d{6})\s*-\s*(.+)\.pdf$/i);
+    if (m) return { ok: true, stt: m[1], code: m[2], name: m[3] };
+    m = f.match(/^(\d+)\s*-\s*(.+)\.pdf$/i);
+    return m ? { ok: true, stt: m[1], code: '', name: m[2] } : { ok: false };
+  };
+  const out = root => {
+    const r = parse($('.fi-in', root).value.trim());
+    $('.fi-out', root).innerHTML = r.ok ? '<table class="t"><tr><th>STT</th><th>course_code</th><th>course_name</th></tr><tr><td>' + esc(r.stt) + '</td><td class="mono">' + (r.code || pill('warn', 'THIẾU mã')) + '</td><td>' + esc(r.name) + '</td></tr></table>'
+      : pill('err', 'Không khớp mẫu') + ' <span class="hint">Script sẽ bỏ qua file này và báo trong log.</span>';
+  };
+  makeFlow(root, {
+    intro: 'Bước đầu tiên là biết mình đang có gì. <b>make_inventory.py</b> quét thư mục PDF, tách thông tin từ <b>tên file</b> và ghi thành bảng.',
+    hook: 'Tên file → <b>regex</b> → STT, mã, tên → đếm trang → <b>cùng mã thì giữ STT nhỏ nhất</b> → inventory.csv.',
+    w: 1000, h: 400, nodes: nodes, edges: edges, names: names, code: CODE, build: build,
+    bands: [['THƯ MỤC data/raw/', 8, 112, 5], ['XỬ LÝ', 140, 262, 0], ['KẾT QUẢ', 290, 392, 3]],
+    controls: '<div class="row" style="margin-top:12px"><div class="lab"><label>Thử một tên file bất kỳ</label></div><input type="text" class="fi-in" value="49 - 841408 - Lập trình Java.pdf" aria-label="Tên file thử"></div><div class="fi-out"></div>',
+    gloss: [['regex', 'mẫu chữ để tách phần cần lấy từ một chuỗi, ở đây là STT, mã 6 số, tên.'], ['duplicate_of', 'cột ghi tên file gốc nếu file này là bản trùng; trống nếu là bản gốc.'], ['pypdf', 'thư viện Python đọc PDF, dùng để đếm trang.'], ['BOM', 'ký hiệu đầu file UTF-8 để Excel mở đúng tiếng Việt; các script đọc bằng utf-8-sig.']],
+    note: 'Quy tắc lấy từ make_inventory.py. Chạy lại script sẽ ghi đè inventory.csv từ đầu.'
+  });
+  $('.fi-in', root).oninput = () => out(root);
+  out(root);
+}
+
+/* =================== TAB 2: PDF -> ẢNH =================== */
+function tab2(root) {
+  const nodes = [{ id: 'inv', t: 'inventory.csv', s: 'bảng kê', x: 150, y: 56, w: 200, c: 5 }, { id: 'pdf', t: 'PDF của môn', s: 'data/raw/', x: 500, y: 56, w: 200, c: 5 },
+    { id: 'ft', t: 'Lọc bản trùng', s: 'duplicate_of trống', x: 150, y: 190, w: 200, c: 0 }, { id: 'ck', t: 'Đã có PNG chưa?', s: 'images/<khóa>/', x: 500, y: 190, w: 200, c: 0 },
+    { id: 'pp', t: 'pdftoppm -r 300', s: 'mỗi trang một PNG', x: 850, y: 190, w: 200, c: 0 }, { id: 'im', t: 'images/<khóa>/p-N.png', s: '2481×3509 px / trang', x: 850, y: 330, w: 220, c: 3 },
+    { id: 'vf', t: 'So số ảnh với số trang', s: 'lệch thì báo lỗi', x: 500, y: 330, w: 220, c: 1 }];
+  const edges = [['a', 'inv', 'ft', 'đọc'], ['b', 'ft', 'ck', 'từng môn'], ['c', 'pdf', 'pp', 'PDF'], ['d', 'ck', 'pp', 'chưa có'], ['e', 'pp', 'im', 'ghi ảnh'], ['f', 'im', 'vf', 'đếm'], ['g', 'ck', 'vf', 'đã có']];
+  const names = ['Môn mới', 'Đã có ảnh → bỏ qua', 'Số ảnh lệch số trang', 'Môn thiếu mã (stt74)'];
+  const CODE = ['với mỗi môn không trùng trong inventory.csv:', '  khóa ← mã môn (hoặc stt<N> nếu thiếu mã)', '  nếu images/<khóa>/ đã có PNG → bỏ qua', '  pdftoppm -r 300 -png  (mỗi trang một ảnh)', '  nếu số ảnh ≠ số trang PDF → đánh dấu LỆCH', 'thoát mã 1 nếu có môn lỗi hoặc lệch'];
+  function build(k) {
+    const key = k === 3 ? 'stt74' : '841047', head = F(['inv', 'ft'], ['a'], 0, 'Đọc inventory.csv, bỏ các dòng có <code>duplicate_of</code>. Môn đang xét: <b>' + key + '</b>' + (k === 3 ? ' (không có mã nên dùng STT làm khóa)' : ' (8 trang)') + '.');
+    const chk = F(['ck'], ['b'], 2, k === 1 ? 'Thư mục images/' + key + '/ <b>đã có PNG</b> → bỏ qua, không render lại.' : 'Thư mục images/' + key + '/ chưa có PNG → cần render.');
+    if (k === 1) return [head, chk, F(['vf'], ['g'], 4, 'Môn này không tốn thời gian. Log in "đã có, bỏ qua". Đây là lý do chạy lại script rất nhanh.')];
+    return [head, chk, F(['pdf', 'pp'], ['c', 'd'], 3, 'Gọi <code>pdftoppm -r 300 -png</code>: mỗi trang PDF thành một ảnh PNG 300 DPI.'),
+      F(['im'], ['e'], 3, 'Ghi ảnh vào <b>images/' + key + '/</b>: ' + (k === 2 ? 'chỉ có 11 ảnh cho PDF 12 trang (một trang render lỗi).' : 'p-1.png … p-8.png (PDF dưới 10 trang nên không có số 0 đệm).')),
+      F(['vf'], ['f'], 4, k === 2 ? '<b>LỆCH</b>: 11 ảnh ≠ 12 trang. Script thoát với mã 1. Xóa thư mục images/' + key + '/ rồi chạy lại.' : 'Số ảnh = số trang → hợp lệ.')];
+  }
+  function demo(root) {
+    const dpi = +$('.dpi', root).value, px = Math.max(2, Math.round(9 * dpi / 72)), W = Math.round(8.27 * dpi), H = Math.round(11.69 * dpi), cv = $('.cvd', root), cx = cv.getContext('2d');
+    const o = document.createElement('canvas'), oc = o.getContext('2d'); oc.font = px + 'px sans-serif';
+    const t = 'Học phần: Cơ sở lập trình', w = Math.ceil(oc.measureText(t).width) + 4; o.width = w; o.height = Math.ceil(px * 1.8);
+    oc.fillStyle = '#fff'; oc.fillRect(0, 0, o.width, o.height); oc.fillStyle = '#000'; oc.font = px + 'px sans-serif'; oc.textBaseline = 'middle'; oc.fillText(t, 2, o.height / 2);
+    cx.imageSmoothingEnabled = false; cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height);
+    const s = Math.min(cv.width / o.width, cv.height / o.height); cx.drawImage(o, 0, 0, o.width * s, o.height * s);
+    const mb = W * H * 0.215 / 1e6, n = Math.max(1, +$('.np', root).value || 1), d = String(n).length;
+    $('.dpiv', root).textContent = dpi;
+    $('.dinfo', root).innerHTML = 'Ở <b>' + dpi + ' DPI</b>: trang A4 (8,27×11,69 inch) = <b>' + W + '×' + H + ' px</b>, chữ 9pt cao ~<b>' + px + ' px</b>, mỗi PNG ~<b>' + mb.toFixed(1) + ' MB</b>, cả bộ 488 trang ~<b>' + (mb * 488 / 1000).toFixed(2) + ' GB</b>.<br>Tên ảnh: <code>p-' + String(1).padStart(d, '0') + '.png</code> … <code>p-' + String(n).padStart(d, '0') + '.png</code>';
+  }
+  makeFlow(root, {
+    intro: 'OCR chỉ đọc được <b>ảnh</b>, nên mỗi trang PDF phải thành một file PNG trước. Script này còn biết <b>bỏ qua môn đã làm</b> và <b>báo lệch</b> khi số ảnh không khớp số trang.',
+    hook: 'Mỗi môn: <b>chưa có ảnh</b> → pdftoppm 300 DPI → so số ảnh với số trang. <b>Đã có ảnh</b> → bỏ qua.',
+    w: 1000, h: 400, nodes: nodes, edges: edges, names: names, code: CODE, build: build,
+    bands: [['ĐẦU VÀO', 8, 104, 5], ['XỬ LÝ', 130, 250, 0], ['KẾT QUẢ', 280, 380, 3]],
+    controls: '<div class="row" style="margin-top:12px"><div class="lab"><label>DPI (điểm ảnh trên mỗi inch)</label><b class="dpiv">300</b></div><input type="range" class="dpi" min="40" max="600" step="10" value="300" aria-label="DPI"></div>' +
+      '<div class="row"><div class="lab"><label>Số trang của PDF</label></div><input type="number" class="np" min="1" max="120" value="8" aria-label="Số trang"></div>',
+    detail: '<div><div class="lab"><span>Chữ cỡ 9pt ở DPI đang chọn (phóng to để thấy điểm ảnh)</span></div><canvas class="cvd" width="520" height="86" style="max-width:100%;border:1px solid var(--line);border-radius:8px;background:#fff" role="img" aria-label="Chữ mẫu ở độ phân giải đang chọn"></canvas><p class="hint dinfo"></p></div>',
+    gloss: [['DPI', 'số điểm ảnh trên mỗi inch; càng cao càng nét nhưng ảnh càng nặng.'], ['pdftoppm', 'công cụ dòng lệnh đổi trang PDF thành ảnh.'], ['PNG', 'định dạng ảnh không mất chất lượng, hợp với chữ scan.'], ['khóa môn', 'tên thư mục ảnh: mã môn, hoặc stt74, stt80 nếu thiếu mã.'], ['số 0 đệm', 'p-02.png thay vì p-2.png khi PDF từ 10 trang, để xếp tên đúng thứ tự.']],
+    note: 'Ước lượng dung lượng dựa trên số đo thật: 915 MB cho 488 ảnh ở 300 DPI. Ở DPI khác chỉ là xấp xỉ.'
+  });
+  $('.dpi', root).oninput = () => demo(root); $('.np', root).oninput = () => demo(root); demo(root);
+}
+
+/* =================== TAB 3: OCR - CHỌN ENGINE =================== */
+const TRUTH = [['G1', 'Áp dụng kiến thức căn bản về lập trình', '5'], ['G2', 'Thực hiện thành thạo ngôn ngữ lập trình', '5'], ['G3', 'Phân tích, thiết kế thuật toán hiệu quả', '4']];
+const ENG = {
+  tess: { name: 'Tesseract', rows: [['G1', 'Áp dụng kiến thức căn bản về lập trình', 'S'], ['G2', 'Thực hiện thành thạo ngôn ngữ lập trình', '3'], ['G3', 'Phân tích, thiết kế thuật toán hiệu quả', '4']] },
+  pad: { name: 'PaddleOCR', rows: [['G1', 'Ap dung kien thuc can ban ve lap trinh', '5'], ['G2', 'Thuc hien thanh thao ngon ngu lap trinh', '5'], ['G3', 'Phan tich, thiet ke thuat toan hieu qua', '4']] },
+  hop: { name: 'Kết hợp', rows: [['G1', 'Áp dụng kiến thức căn bản về lập trình', '5'], ['G2', 'Thực hiện thành thạo ngôn ngữ lập trình', '5'], ['G3', 'Phân tích, thiết kế thuật toán hiệu quả', '4']] }
+};
+const engScore = k => { let t = 0, l = 0; ENG[k].rows.forEach((r, i) => { t += r[1] === TRUTH[i][1]; l += r[2] === TRUTH[i][2]; }); return [t, l]; };
+function tab3(root) {
+  const nodes = [{ id: 'pg', t: 'Trang mẫu (ảnh)', s: 'bảng 3 CLO: G1, G2, G3', x: 130, y: 200, w: 210, c: 5 },
+    { id: 'te', t: 'Tesseract', s: 'nhanh · dấu tốt · sai số', x: 500, y: 90, w: 220, c: 0 }, { id: 'pa', t: 'PaddleOCR', s: 'chậm · số đúng · rơi dấu', x: 500, y: 310, w: 220, c: 3 },
+    { id: 'hp', t: 'Kết hợp', s: 'chữ Tesseract + số Paddle', x: 850, y: 200, w: 220, c: 2 }, { id: 'tr', t: 'Đáp án gõ tay', s: 'để chấm điểm', x: 850, y: 380, w: 200, c: 4 }];
+  const edges = [['a', 'pg', 'te', 'ảnh'], ['b', 'pg', 'pa', 'ảnh'], ['c', 'te', 'hp', 'chữ'], ['d', 'pa', 'hp', 'số trình độ'], ['e', 'tr', 'hp', 'chấm']];
+  const names = ['So sánh trên một trang mẫu', 'Thời gian chạy cả bộ'];
+  const CODE = ['Tesseract(ảnh) → chữ (tốt) + số trình độ (hay sai)', 'PaddleOCR(ảnh) → số trình độ (đúng) + chữ (rơi dấu)', 'kết hợp: chữ ← Tesseract; số ← PaddleOCR', 'chấm: so từng ô với đáp án gõ tay', 'chọn engine nào cho điểm cao và thời gian chấp nhận được'];
+  function build(k) {
+    if (k === 1) return [F(['pg'], [], 4, 'Cả bộ có <b>488 trang</b>, trong đó khoảng 85 trang là trang CLO.'),
+      F(['te'], ['a'], 0, '<b>Tesseract</b> chạy song song nhiều luồng: cả 488 trang mất khoảng <b>2 phút</b>.'),
+      F(['pa'], ['b'], 1, '<b>PaddleOCR</b> chạy 1 luồng, ~50 giây/trang: 488 × 50 s ≈ <b>6,8 giờ</b> nếu chạy mọi trang.'),
+      F(['hp'], ['c', 'd'], 2, 'Kết hợp: Tesseract mọi trang (2 phút) + PaddleOCR chỉ ~85 trang CLO (≈ <b>1,2 giờ</b>). Tiết kiệm hơn 5 giờ mà vẫn có số trình độ đúng.')];
+    return [F(['pg'], [], 3, 'Trang mẫu có bảng 3 CLO. Đáp án gõ tay: số trình độ là <b>5, 5, 4</b>.', [], 'none'),
+      F(['te'], ['a'], 0, 'Tesseract đọc cả trang trong vài giây.', [], 'tess'),
+      F([], [], 0, 'Kết quả Tesseract: chữ đúng <b>3/3</b> hàng nhưng số trình độ chỉ đúng <b>1/3</b> (đọc "5" thành "S" và "3").', [], 'tess'),
+      F(['pa'], ['b'], 1, 'PaddleOCR đọc cùng trang, chậm khoảng 50 giây.', [], 'pad'),
+      F([], [], 1, 'Kết quả PaddleOCR: số trình độ đúng <b>3/3</b> nhưng rơi dấu nên chữ đúng <b>0/3</b> hàng ("Ap dung kien thuc...").', [], 'pad'),
+      F(['hp'], ['c', 'd'], 2, 'Ghép: <b>chữ lấy từ Tesseract, số trình độ lấy từ PaddleOCR</b>, theo thứ tự CLO.', [], 'hop'),
+      F(['tr'], ['e'], 3, 'Chấm với đáp án: bản kết hợp đúng <b>6/6</b> ô. Đây là engine đã chốt (decisions.md D1).', [], 'hop')];
+  }
+  function view(root, key) {
+    const body = $('.eng-t', root); if (!key || key === 'none') { body.innerHTML = '<tr><td colspan="3" class="hint">Chạy kịch bản để xem kết quả của từng engine.</td></tr>'; $('.eng-n', root).textContent = 'Kết quả OCR trên bảng mẫu'; return; }
+    const e = ENG[key]; let ok = 0;
+    body.innerHTML = e.rows.map((r, i) => { const a = r[1] === TRUTH[i][1], b = r[2] === TRUTH[i][2]; ok += a + b;
+      return '<tr><td class="mono">' + r[0] + '</td><td>' + esc(r[1]) + ' ' + pill(a ? 'ok' : 'err', a ? '✔ chữ đúng' : '✘ sai dấu') + '</td><td class="mono">' + esc(r[2]) + ' ' + pill(b ? 'ok' : 'err', b ? '✔' : '✘ đúng là ' + TRUTH[i][2]) + '</td></tr>'; }).join('');
+    $('.eng-n', root).innerHTML = '<b>' + e.name + '</b> đúng <b>' + ok + '/6</b> ô';
+  }
+  makeFlow(root, {
+    intro: 'Nhóm thử hai engine OCR miễn phí trên cùng một trang và thấy <b>mỗi engine giỏi một việc</b>. Bảng mẫu là bản rút gọn mô phỏng đúng kiểu lỗi đã quan sát.',
+    hook: 'Tesseract: <b>chữ tốt, số sai</b>. PaddleOCR: <b>số đúng, chữ rơi dấu</b>. Kết hợp: chữ của Tesseract + số của PaddleOCR.',
+    w: 1000, h: 440, nodes: nodes, edges: edges, names: names, code: CODE, build: build,
+    detail: '<div><div class="lab"><span class="eng-n"></span></div><div class="scroll"><table class="t"><tr><th>clo_id</th><th>text</th><th>level</th></tr><tbody class="eng-t"></tbody></table></div></div>',
+    gloss: [['Tesseract', 'engine OCR mã nguồn mở, có gói tiếng Việt "vie", chạy nhanh.'], ['PaddleOCR', 'engine OCR dùng mạng nơ-ron, chậm hơn nhưng đọc số trong bảng tốt hơn.'], ['level_raw', 'số trình độ năng lực in trong đề cương, chưa quy đổi sang thang Bloom.'], ['đáp án gõ tay', 'bản nhập lại đúng nguyên văn từ ảnh để chấm điểm (hiện chưa ai kiểm lại, verified = no).']],
+    note: 'Số thật trên 5 đề cương khó nằm trong docs/ocr_comparison.md. Điểm 36/36 trên 5 môn đó lạc quan vì quy tắc được chỉnh khi nhìn chính chúng.',
+    onFrame: (f, S, root) => view(root, f ? f.x : 'none'),
+    extra: (c, S) => {
+      if (S.k !== 0) return;
+      if (S.idx >= 3) txt(c, 'chữ ' + engScore('tess')[0] + '/3 · số ' + engScore('tess')[1] + '/3', 500, 135, { size: 12.5, bold: true, color: PAL[1] });
+      if (S.idx >= 5) txt(c, 'chữ ' + engScore('pad')[0] + '/3 · số ' + engScore('pad')[1] + '/3', 500, 355, { size: 12.5, bold: true, color: PAL[1] });
+      if (S.idx >= 6) txt(c, 'chữ 3/3 · số 3/3', 850, 245, { size: 12.5, bold: true, color: PAL[2] });
+    }
+  });
+}
+
+/* =================== TAB 4: OCR - CHẠY KẾT HỢP =================== */
+function tab4(root) {
+  const nodes = [{ id: 'im', t: 'p-N.png', s: 'ảnh một trang', x: 120, y: 56, c: 5 },
+    { id: 'te', t: 'Giai đoạn 1: Tesseract', s: 'mọi trang · song song', x: 120, y: 170, w: 210, c: 0 }, { id: 'ic', t: 'is_clo_page ?', s: 'có phải trang CLO không', x: 420, y: 170, w: 190, c: 1 },
+    { id: 'pa', t: 'Giai đoạn 2: PaddleOCR', s: 'chỉ trang CLO · ~50 s', x: 720, y: 170, w: 210, c: 3 }, { id: 'ca', t: 'ocr_raw/paddleocr/', s: 'bộ nhớ đệm', x: 900, y: 56, w: 160, c: 3 },
+    { id: 'lv', t: 'paddle_levels', s: 'ghép mã G ↔ số', x: 720, y: 290, w: 210, c: 0 },
+    { id: 'o1', t: 'ocr/…/p-N.txt', s: 'chữ Tesseract', x: 120, y: 400, w: 190, c: 3 }, { id: 'o2', t: 'ocr/…/p-N.levels', s: 'số trình độ theo thứ tự', x: 460, y: 400, w: 210, c: 3 }, { id: 'rp', t: 'clo_pages_report.csv', s: 'trang CLO đã ghép chưa', x: 800, y: 400, w: 200, c: 3 }];
+  const edges = [['a', 'im', 'te', 'ảnh'], ['b', 'te', 'ic', 'chữ'], ['c', 'te', 'o1', 'ghi'], ['d', 'ic', 'pa', 'là CLO'], ['e', 'pa', 'ca', 'lưu'], ['f', 'pa', 'lv', 'chữ Paddle'], ['g', 'lv', 'o2', 'ghi'], ['h', 'lv', 'rp', 'ghi'], ['i', 'ic', 'rp', 'không phải CLO']];
+  const names = ['Trang thường (không có CLO)', 'Trang CLO bình thường', 'Trang CLO có số trang thừa', 'Trang CLO bị sót 1 số', 'Chạy lại (bộ nhớ đệm)'];
+  const CODE = ['giai đoạn 1: mọi trang chưa có trong ocr_raw/', '  Tesseract(ảnh) → p-N.txt + p-N.tsv', 'nhận trang CLO từ chữ Tesseract:', '  tiêu đề "chuẩn đầu ra học phần" / hai mã G liên tiếp / trang nối tiếp', 'giai đoạn 2: chỉ trang CLO chưa có cache', '  PaddleOCR(ảnh) → chữ Paddle; lưu cache ngay', 'paddle_levels: số thứ k = trình độ của CLO thứ k', '  3 mã, 3 số → ghép;  4 số → bỏ số cuối (số trang)', '  số lượng lệch khác → trả rỗng, không đoán', 'ghi p-N.levels và clo_pages_report.csv'];
+  const pm = k => (k === 2 ? 'page' : k === 3 ? 'miss' : 'ok');
+  function levelsView(root, k) {
+    const m = pm(k), lv = ['5', '5', '4']; if (m === 'page') lv.push('2'); if (m === 'miss') lv.pop();
+    const raw = ['G1', 'G2', 'G3', 'Ap dung kien thuc can ban', 'Thuc hien thanh thao', 'Phan tich, thiet ke'].concat(lv);
+    let out, msg;
+    if (lv.length === 3) { out = lv; msg = '3 mã và 3 số → khớp, ghép theo thứ tự.'; } else if (lv.length === 4) { out = lv.slice(0, 3); msg = '3 mã nhưng 4 số → dư đúng 1 số ở cuối, đó là số trang nên bỏ đi.'; } else { out = []; msg = '3 mã nhưng chỉ ' + lv.length + ' số → không khớp, trả về rỗng và <b>không đoán</b>.'; }
+    $('.lv-raw', root).textContent = k === 0 ? '(trang thường: không chạy PaddleOCR)' : raw.join('\n');
+    $('.lv-out', root).innerHTML = k === 0 ? '' : out.length ? out.map((v, i) => '<tr><td class="mono">G' + (i + 1) + '</td><td class="mono">' + v + '</td></tr>').join('') : '<tr><td colspan="2">' + pill('warn', '.levels rỗng → cần sửa tay') + '</td></tr>';
+    $('.lv-msg', root).innerHTML = k === 0 ? '' : msg;
+  }
+  function build(k) {
+    const start = [F(['im'], [], 0, 'Một trang ảnh vào hàng đợi.'), F(['te', 'o1'], ['a', 'c'], 1, 'Tesseract đọc chữ trang này và ghi <b>p-N.txt</b> (kèm p-N.tsv có độ tin cậy từng từ để làm từ điển ở bước làm sạch).')];
+    if (k === 4) return [F(['im'], [], 0, 'Chạy lại với cờ <code>--all</code>.'), F(['te'], ['a'], 0, 'Trang đã có trong ocr_raw/tesseract → <b>bỏ qua</b>.'), F(['pa', 'ca'], ['d', 'e'], 4, 'Trang CLO đã có trong cache PaddleOCR → <b>bỏ qua</b>, không tốn 50 giây.'), F(['lv', 'o2'], ['f', 'g'], 6, 'Chỉ ghép lại số trình độ từ cache. Cả bộ chạy lại trong vài giây.')];
+    if (k === 0) return start.concat([F(['ic'], ['b'], 3, 'Hỏi <code>is_clo_page</code>: không có tiêu đề bảng, không có hai mã G liên tiếp → <b>không phải trang CLO</b>.'), F(['rp'], ['i'], 9, 'Không chạy PaddleOCR, tiết kiệm ~50 giây. Trang chỉ dùng chữ Tesseract.')]);
+    return start.concat([F(['ic'], ['b'], 3, 'Hỏi <code>is_clo_page</code>: có tiêu đề "chuẩn đầu ra học phần" ở 4 trang đầu → <b>là trang CLO</b>.'),
+      F(['pa', 'ca'], ['d', 'e'], 5, 'PaddleOCR đọc trang CLO (~50 giây) và <b>lưu cache ngay</b>, nên bị ngắt giữa chừng cũng không mất.'),
+      F(['lv'], ['f'], 6, 'PaddleOCR xuất mã CLO và số trình độ <b>mỗi thứ một dòng theo thứ tự hàng</b>. Xem bảng bên phải.'),
+      F(['o2', 'rp'], ['g', 'h'], 9, k === 3 ? 'Số lượng lệch → file <b>.levels rỗng</b>, trang được ghi "chưa ghép" trong báo cáo để sửa tay.' : 'Ghi <b>p-N.levels</b> (mỗi dòng một số trình độ) và dòng "đã ghép" trong clo_pages_report.csv.')]);
+  }
+  makeFlow(root, {
+    intro: 'Đây là cách <b>ocr_run.py --all</b> chạy engine kết hợp trên từng trang. Hai việc dễ nhầm nhất là: máy nhận ra trang CLO bằng cách nào, và số trình độ được ghép vào CLO nào.',
+    hook: 'Tesseract <b>mọi trang</b> → hỏi "<b>có phải trang CLO?</b>" → chỉ trang CLO mới chạy <b>PaddleOCR</b> → ghép số theo thứ tự.',
+    w: 1000, h: 450, nodes: nodes, edges: edges, names: names, code: CODE, build: build,
+    onScenario: (k, root) => levelsView(root, k), onReset: (S, root) => levelsView(root, S.k),
+    detail: '<div class="cols"><div><div class="lab"><span>Chữ PaddleOCR (rút gọn)</span></div><pre class="lv-raw" style="min-height:120px"></pre></div><div><div class="lab"><span>Kết quả paddle_levels</span></div><div class="scroll"><table class="t"><tr><th>CLO</th><th>level</th></tr><tbody class="lv-out"></tbody></table></div></div></div><p class="hint lv-msg"></p>',
+    gloss: [['is_clo_page', 'hàm đoán một trang có bảng CLO không, dựa trên chữ Tesseract.'], ['trang nối tiếp', 'bảng CLO dài sang trang sau; tối đa 2 trang sau tiêu đề, dừng khi gặp tiêu đề mục 5.'], ['.levels', 'file mỗi dòng một số trình độ theo thứ tự CLO; rỗng nghĩa là chưa ghép được.'], ['.tsv', 'bảng tọa độ và độ tin cậy từng từ do Tesseract xuất.'], ['bộ nhớ đệm', 'kết quả đã chạy được lưu để lần sau bỏ qua, kể cả sau khi bị ngắt.'], ['--all', 'chế độ chạy chính thức cho cả 54 môn, luôn dùng engine kết hợp.']],
+    note: 'Quy tắc lấy từ ocr_hybrid.py. Quy tắc nhận trang CLO được chỉnh khi nhìn 5 môn khó, nên kết quả trên môn khác có thể kém hơn.'
+  });
+}
+
+/* =================== TAB 5: LÀM SẠCH =================== */
+const UNI = { 'học': 500, 'phần': 300, 'phân': 80, 'chuẩn': 200, 'đầu': 150, 'ra': 400, 'mục': 120, 'tiêu': 100, 'sinh': 250, 'viên': 250, 'có': 400, 'khả': 90, 'năng': 140, 'tích': 90, 'bài': 200, 'toán': 180, 'và': 800 };
+const BI = { 'học phần': 300, 'phần học': 2, 'phân tích': 90, 'chuẩn đầu': 180, 'đầu ra': 170, 'mục tiêu': 110, 'tiêu học': 3, 'sinh viên': 240, 'viên có': 60, 'có khả': 80, 'khả năng': 85, 'năng phân': 20, 'bài toán': 160 };
+function strip(s) { return s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D'); }
+const GRP = {}; Object.keys(UNI).forEach(w => { (GRP[strip(w)] = GRP[strip(w)] || []).push(w); });
+const CLEAN_TXT = ['Mục tiêu học phần |\n| Chuẩn đầu ra học phần |\n12', 'Sinh viên có khả năng\nphân tích bài toán và\nthiết kế giải pháp.\nChuẩn đầu ra', 'Mục tiêu học phân\nchuẩn đầu ra học phân', 'Sinh viên có khả năng\nphân tích bài toán'];
+function cleanProc(text) {
+  const sc = (a, w, b) => (a ? BI[a + ' ' + w] || 0 : 0) + (b ? BI[w + ' ' + b] || 0 : 0);
+  let L = text.normalize('NFC').split('\n').map(s => s.replace(/[|_]/g, ' ').replace(/\s+/g, ' ').trim()).filter(Boolean);
+  const n0 = L.length; let dropped = 0;
+  while (L.length && /^\d+$/.test(L[L.length - 1])) { L.pop(); dropped++; }
+  const J = []; let joins = 0;
+  for (const l of L) { if (J.length && /^[a-zà-ỹđ]/.test(l) && !/[.:;?!]$/.test(J[J.length - 1])) { J[J.length - 1] += ' ' + l; joins++; } else J.push(l); }
+  const dec = [];
+  const fixed = J.map(l => { const tk = l.split(' '); return tk.map((w, i) => {
+    const lw = w.toLowerCase(), prev = i ? tk[i - 1].toLowerCase() : '', next = tk[i + 1] ? tk[i + 1].toLowerCase() : '';
+    if (w.length < 2 || !GRP[strip(lw)]) return w;
+    let best = lw, bs = sc(prev, lw, next); const old = bs;
+    for (const c of GRP[strip(lw)]) if (c !== lw) { const s = sc(prev, c, next); if (s > 0 && s > bs * 3) { best = c; bs = s; } }
+    if (best !== lw) { dec.push([(prev || '…') + ' <b>' + lw + '</b> ' + (next || '…'), best, old, bs]); return best; }
+    return w; }); });
+  return { raw: text, s1: L, s2: J, s3: fixed, dec: dec, dropped: dropped, joins: joins, n0: n0 };
+}
+function tab5(root) {
+  const nodes = [{ id: 'src', t: 'ocr/…/p-N.txt', s: 'chữ gốc Tesseract', x: 100, y: 90, w: 160, c: 3 }, { id: 's1', t: '1 · Dọn ký tự', s: 'NFC, bỏ |, số trang', x: 310, y: 90, w: 160, c: 0 },
+    { id: 's2', t: '2 · Ghép dòng', s: 'dòng bị ngắt giữa câu', x: 510, y: 90, w: 160, c: 0 }, { id: 's3', t: '3 · Sửa dấu', s: 'theo từ điển', x: 710, y: 90, w: 160, c: 0 }, { id: 'out', t: 'ocr_clean/…/p-N.txt', s: 'chữ đã sạch', x: 910, y: 90, w: 160, c: 3 },
+    { id: 'tsv', t: 'ocr_raw/…/p-N.tsv', s: 'từ + độ tin cậy', x: 310, y: 250, w: 170, c: 3 }, { id: 'vc', t: 'Từ điển', s: 'từ đơn + cặp từ liền nhau', x: 710, y: 250, w: 200, c: 4 }];
+  const edges = [['a', 'src', 's1', ''], ['b', 's1', 's2', ''], ['c', 's2', 's3', ''], ['d', 's3', 'out', ''], ['e', 'tsv', 'vc', 'conf ≥ 90'], ['f', 'vc', 's3', 'tra cặp từ']];
+  const names = ['Dòng nhiễu và số trang', 'Dòng bị ngắt giữa câu', 'Dấu sai: "học phân"', '"phân tích" không bị sửa'];
+  const CODE = ['dựng từ điển: từ & cặp từ Tesseract đọc chắc (conf ≥ 90) của 54 môn', '1. chuẩn hóa NFC; bỏ | _ ; bỏ số trang đầu/cuối trang', '2. dòng sau bắt đầu chữ thường và dòng trước chưa hết câu → nối', '3. với mỗi từ có biến thể cùng chữ cái gốc:', '     điểm ← số lần cặp (trước, từ) + (từ, sau) trong từ điển', '     biến thể điểm > 3 × điểm hiện tại → đổi', 'ghi ocr_clean/'];
+  const S5 = {};
+  function build(k, root) {
+    const r = cleanProc($('.c-in', root).value); S5.r = r;
+    return [F(['src'], [], 0, 'Chữ gốc có <b>' + r.n0 + '</b> dòng (ocr/ luôn giữ nguyên để đối chiếu).', [], 0),
+      F(['tsv', 'vc'], ['e'], 0, 'Từ điển được dựng từ các từ Tesseract đọc với độ tin cậy cao ở 54 môn (ở đây dùng bản mini 17 từ).', [], 0),
+      F(['s1'], ['a'], 1, 'Bước 1: bỏ ký tự kẻ bảng "|", gộp khoảng trắng, bỏ <b>' + r.dropped + '</b> dòng số trang ở cuối. Còn ' + r.s1.length + ' dòng.', [], 1),
+      F(['s2'], ['b'], 2, 'Bước 2: nối <b>' + r.joins + '</b> dòng. Chỉ nối khi dòng sau bắt đầu bằng chữ thường <b>và</b> dòng trước chưa kết thúc câu. Còn ' + r.s2.length + ' dòng.', [], 2),
+      F(['s3'], ['c', 'f'], 4, 'Bước 3: sửa <b>' + r.dec.length + '</b> từ.' + (r.dec.length ? ' Điểm là số lần cặp từ xuất hiện trong từ điển; chỉ đổi khi điểm mới gấp hơn 3 lần.' : ' Không từ nào đủ bằng chứng để sửa.'), [], 3),
+      F(['out'], ['d'], 6, 'Ghi <b>ocr_clean/…/p-N.txt</b>. Đây là chữ extract_clos.py dùng để ghép với khung hàng.', [], 3)];
+  }
+  function render(root, S) {
+    const r = S5.r; if (!r) return; const st = S.stage;
+    let out;
+    if (st === 0) out = esc(r.raw); else if (st === 1) out = esc(r.s1.join('\n')); else if (st === 2) out = esc(r.s2.join('\n'));
+    else out = r.s3.map((tk, i) => { const o = r.s2[i].split(' '); return tk.map((w, k) => o[k] !== w ? '<mark>' + esc(w) + '</mark>' : esc(w)).join(' '); }).join('\n');
+    $('.c-out', root).innerHTML = out; $('.c-lab', root).textContent = ['Chữ gốc', 'Sau bước 1: dọn ký tự', 'Sau bước 2: ghép dòng', 'Sau bước 3: sửa dấu'][st];
+    $('.c-dec', root).innerHTML = st === 3 && r.dec.length ? '<table class="t" style="margin-top:8px"><tr><th>ngữ cảnh</th><th>sửa thành</th><th>điểm cũ → mới</th></tr>' + r.dec.map(d => '<tr><td class="mono">' + d[0] + '</td><td class="mono">' + d[1] + '</td><td class="mono">' + d[2] + ' → ' + d[3] + '</td></tr>').join('') + '</table>' : '';
+  }
+  const fl5 = makeFlow(root, {
+    intro: 'Chữ Tesseract còn ký tự kẻ bảng, dòng bị ngắt giữa câu và dấu tiếng Việt sai. <b>clean_text.py</b> xử lý ba việc theo ba bước.',
+    hook: 'Dọn ký tự → <b>ghép dòng</b> → <b>sửa dấu bằng cặp từ liền nhau</b> ("học phân" → "học phần", nhưng "phân tích" giữ nguyên).',
+    w: 1000, h: 330, nodes: nodes, edges: edges, names: names, code: CODE, build: build,
+    onScenario: (k, root) => { $('.c-in', root).value = CLEAN_TXT[k]; },
+    onFrame: (f, S, root) => render(root, S),
+    detail: '<div><div class="lab"><span>Chữ OCR mẫu (sửa được)</span></div><textarea class="c-in" rows="5" aria-label="Chữ OCR mẫu" style="font-family:var(--mono)">' + esc(CLEAN_TXT[0]) + '</textarea></div>' +
+      '<div><div class="lab"><span class="c-lab">Chữ gốc</span></div><pre class="c-out" style="min-height:70px"></pre><div class="scroll c-dec"></div></div>' +
+      '<p class="hint">Từ điển mini: phần ' + UNI['phần'] + ' · phân ' + UNI['phân'] + ' · "học phần" ' + BI['học phần'] + ' · "phân tích" ' + BI['phân tích'] + ' · "học phân" 0</p>',
+    gloss: [['NFC', 'cách mã hóa chữ có dấu thành một ký tự duy nhất, tránh "ă" thành hai ký tự rời.'], ['ghép dòng', 'nối dòng bị cắt giữa câu; thận trọng vì đề cương có nhiều danh sách mỗi mục một dòng.'], ['từ điển', 'bảng đếm từ và cặp từ liền nhau do chính dữ liệu OCR đọc chắc tạo ra.'], ['cặp từ (bigram)', 'hai từ đứng cạnh nhau, ví dụ "học phần"; dùng để biết dấu nào hợp lý.'], ['conf', 'độ tin cậy 0–100 Tesseract gán cho từng từ.']],
+    note: 'Bản mini đơn giản hơn script thật (từ điển thật xây từ cả 54 môn). Trên 5 môn có đáp án, làm sạch giảm lỗi ký tự bảng CLO từ 7,4% xuống 6,0%.'
+  });
+  $('.c-in', root).oninput = () => fl5.reset();
+}
+
+/* =================== TAB 6: TÁCH CLO =================== */
+const CL = ['Áp dụng kiến thức căn bản về lập trình:', 'khái niệm thuật toán, lệnh nhập/xuất, cấu trúc', 'điều khiển để giải quyết các bài toán.', 'Thực hiện thành thạo ngôn ngữ lập trình.',
+  'Áp dụng kỹ năng phân tích, thiết kế', 'để giải quyết một số vấn đề bài toán.', 'Nghiên cứu tìm một thuật toán hiệu quả.'];
+const MARK = { 1: ['G1', '5'], 3: ['G2', '5'], 5: ['G3', '4'] }, MK = [1, 3, 5];
+const upperStart = l => /^[A-ZÀ-Ỹ]/.test(l);
+const rowsOf = (a, b) => [[0, a], [a, b], [b, 7]];
+const asym = (a, b, m) => Math.abs((m - a) - (b - 1 - m));
+function evalCut(a, b) {
+  let cost = 0, bad = null;
+  rowsOf(a, b).forEach(([x, y], k) => {
+    if (!(MK[k] >= x && MK[k] < y)) bad = bad || 'mã ' + MARK[MK[k]][0] + ' nằm ngoài hàng của nó';
+    else cost += asym(x, y, MK[k]);
+    if (k > 0 && !upperStart(CL[x])) bad = bad || 'hàng ' + (k + 1) + ' mở đầu bằng chữ thường';
+  });
+  return { cost: cost, bad: bad };
+}
+function tab6(root) {
+  let c1 = 2, c2 = 5, timer = null;
+  const ui = shell(root, {
+    intro: 'Máy chỉ thấy một <b>dãy dòng chữ</b>, không thấy ô của bảng. <b>extract_clos.py</b> phải đoán dòng nào thuộc CLO nào. Mẹo: mã G và số trình độ nằm <b>giữa chiều cao hàng</b> của nó, nên số dòng phía trên và phía dưới mã phải xấp xỉ bằng nhau.',
+    hook: 'Chọn <b>vạch cắt</b> sao cho mỗi mã G nằm giữa hàng của nó; dòng bắt đầu bằng <b>chữ thường</b> không được mở một hàng mới.',
+    w: 1000, h: 440,
+    controls: '<div class="row"><div class="lab"><label>Vạch cắt 1 (trước dòng số)</label><b class="v1">2</b></div><input type="range" class="r1" min="1" max="5" value="2" aria-label="Vạch cắt 1"></div>' +
+      '<div class="row"><div class="lab"><label>Vạch cắt 2 (trước dòng số)</label><b class="v2">5</b></div><input type="range" class="r2" min="2" max="6" value="5" aria-label="Vạch cắt 2"></div>' +
+      '<div class="btns"><button class="btn primary t6-auto" type="button">Tìm cách cắt tốt nhất</button><button class="btn t6-bad" type="button">Cắt sai (1,2)</button><button class="btn t6-good" type="button">Cắt đúng (3,4)</button></div>',
+    detail: '<div><div class="lab"><span>Kết quả sau khi cắt</span></div><div class="scroll"><table class="t"><tr><th>clo_id</th><th>text</th><th>level_raw</th><th>đối xứng</th></tr><tbody class="t6-out"></tbody></table></div></div>' +
+      '<div><div class="lab"><span>Hàng sửa tay đè lên kết quả tự động</span></div><pre>course_code,clo_id,text,level_raw,page,action\n841479,G1,"Mô tả CLO gõ lại từ ảnh",,2,</pre><p class="hint">Mỗi lần chạy lại script, file này tự được áp lên nên công sửa tay không mất.</p></div>',
+    gloss: [['CLO / G1, G2…', 'chuẩn đầu ra học phần; mỗi hàng của bảng là một CLO.'], ['level_raw', 'số trình độ in trong đề cương (1–5, có thể 3.5 hay 2,3,4), chưa quy đổi.'], ['đối xứng', 'số dòng phía trên mã G bằng số dòng phía dưới (cho phép lệch 1).'], ['quy hoạch động', 'cách tìm mọi vạch cắt cùng lúc sao cho tổng độ lệch nhỏ nhất; ở đây thử hết vì chỉ có 7 dòng.'], ['clos_manual_fixes.csv', 'nơi lưu hàng sửa tay để chạy lại không mất.']],
+    note: 'Bảng 3 CLO là dữ liệu mẫu rút gọn. Script thật chạy trên 411 CLO và đánh dấu ocr_ok = False khi khung hàng không đối xứng.'
+  });
+  const upd = (msg) => {
+    if (c2 <= c1) c2 = c1 + 1;
+    $('.r1', root).value = c1; $('.r2', root).value = c2; $('.v1', root).textContent = c1; $('.v2', root).textContent = c2;
+    const ev = evalCut(c1, c2);
+    $('.t6-out', root).innerHTML = rowsOf(c1, c2).map(([a, b], k) => { const m = MK[k], ok = m >= a && m < b, as = ok ? asym(a, b, m) : 0, lo = k > 0 && !upperStart(CL[a]);
+      return '<tr><td class="mono">' + MARK[m][0] + '</td><td>' + esc(CL.slice(a, b).join(' ')) + (lo ? ' ' + pill('err', 'mở đầu bằng chữ thường') : '') + '</td><td class="mono">' + MARK[m][1] + '</td><td>' + (!ok ? pill('err', 'mã ngoài hàng') : as === 0 ? pill('ok', 'cân') : pill('warn', 'lệch ' + as)) + '</td></tr>'; }).join('');
+    ui.status(msg || (ev.bad ? 'Cách cắt <b>(' + c1 + ', ' + c2 + ')</b> bị lỗi: ' + ev.bad + '. Kéo lại hoặc bấm tìm tự động.' : 'Cách cắt <b>(' + c1 + ', ' + c2 + ')</b>: tổng độ lệch đối xứng = <b>' + ev.cost + '</b>. ' + (ev.cost === 0 ? 'Đây là cách tốt nhất: mọi mã nằm đúng giữa hàng của nó.' : 'Còn lệch, thử cách khác.')));
+  };
+  const stop = () => { if (timer) { clearInterval(timer); timer = null; $('.t6-auto', root).textContent = 'Tìm cách cắt tốt nhất'; } };
+  $('.r1', root).oninput = e => { stop(); c1 = +e.target.value; upd(); };
+  $('.r2', root).oninput = e => { stop(); c2 = +e.target.value; upd(); };
+  $('.t6-bad', root).onclick = () => { stop(); c1 = 1; c2 = 2; upd(); };
+  $('.t6-good', root).onclick = () => { stop(); c1 = 3; c2 = 4; upd(); };
+  $('.t6-auto', root).onclick = () => {
+    if (timer) { stop(); return; }
+    const pairs = []; for (let a = 1; a < 7; a++) for (let b = a + 1; b < 7; b++) pairs.push([a, b]);
+    let i = 0, best = null; $('.t6-auto', root).textContent = '❚❚ Dừng';
+    timer = setInterval(() => {
+      if (i >= pairs.length) { stop(); c1 = best[1]; c2 = best[2]; upd('Đã thử <b>' + pairs.length + '</b> cách cắt. Tốt nhất là <b>(' + c1 + ', ' + c2 + ')</b> với độ lệch <b>' + best[0] + '</b>.'); return; }
+      const p = pairs[i++]; c1 = p[0]; c2 = p[1]; const ev = evalCut(c1, c2);
+      if (!ev.bad && (!best || ev.cost < best[0])) best = [ev.cost, c1, c2];
+      upd('Thử cách cắt <b>(' + c1 + ', ' + c2 + ')</b> (' + i + '/' + pairs.length + '): ' + (ev.bad ? 'loại vì ' + ev.bad + '.' : 'độ lệch = <b>' + ev.cost + '</b>.') + (best ? ' Tốt nhất đến giờ: (' + best[1] + ', ' + best[2] + ') = ' + best[0] + '.' : ''));
+    }, REDUCE ? 20 : 420);
+  };
+  ui.stage.draw = function (c) {
+    const R = rowsOf(c1, c2), rowOf = i => R.findIndex(([a, b]) => i >= a && i < b), LH = 50, Y0 = 44;
+    txt(c, 'Dãy dòng chữ Tesseract (đã làm sạch)', 20, 18, { size: 12.5, bold: true, color: T.muted, align: 'left' });
+    txt(c, 'Các hàng CLO sau khi cắt', 640, 18, { size: 12.5, bold: true, color: T.muted, align: 'left' });
+    CL.forEach((t, i) => {
+      const y = Y0 + i * LH + 20, r = rowOf(i), col = PAL[[0, 2, 3][r]];
+      rr(c, 20, y - 19, 540, 38, 6); c.fillStyle = T.bg; c.fill(); c.lineWidth = 1.6; c.strokeStyle = T.line; c.stroke();
+      c.fillStyle = col; c.fillRect(20, y - 19, 7, 38);
+      txt(c, i + 1, 40, y, { size: 12, color: T.muted });
+      txt(c, fit(c, t, 400, 13.5), 56, y, { size: 13.5, align: 'left' });
+      if (MARK[i]) badge(c, MARK[i][0] + ' · ' + MARK[i][1], 505, y, PAL[1], true);
+    });
+    [c1, c2].forEach(n => { const y = Y0 + n * LH - 3; c.save(); c.setLineDash([8, 5]); c.strokeStyle = PAL[1]; c.lineWidth = 3; c.beginPath(); c.moveTo(12, y); c.lineTo(568, y); c.stroke(); c.restore(); txt(c, 'vạch cắt', 600, y, { size: 11.5, bold: true, color: PAL[1] }); });
+    R.forEach(([a, b], k) => {
+      const m = MK[k], ok = m >= a && m < b, lo = k > 0 && !upperStart(CL[a]), col = PAL[[0, 2, 3][k]], cy = 100 + k * 110, gy = Y0 + ((a + b) / 2) * LH;
+      arrow(c, [566, gy], [632, cy], { color: col, lw: 2.2 });
+      box(c, 810, cy, 340, 86, { fill: T.bg, stroke: ok && !lo ? col : PAL[1], lw: 2.6, title: MARK[m][0] + '   level ' + MARK[m][1], sub: fit(c, CL.slice(a, b).join(' '), 320, 12), fs: 15 });
+      if (!ok || lo) badge(c, ok ? 'chữ thường' : 'mã ngoài hàng', 940, cy - 36, PAL[1], true);
+      else { const as = asym(a, b, m); badge(c, as === 0 ? 'cân' : 'lệch ' + as, 940, cy - 36, as === 0 ? PAL[2] : PAL[3], true); }
+    });
+  };
+  upd();
+}
+
+/* =================== TAB 7: SCHEMA =================== */
+function tab7(root) {
+  const nodes = [{ id: 'ex', t: 'JSON cần kiểm', s: 'vd: schema_example_841047', x: 150, y: 70, w: 230, c: 5 }, { id: 'sc', t: 'schema_syllabus.json', s: 'luật: trường nào, kiểu gì', x: 150, y: 190, w: 230, c: 4 },
+    { id: 'va', t: 'jsonschema.validate', s: 'so JSON với schema', x: 500, y: 130, w: 220, c: 0 }, { id: 'ok', t: '✔ hợp lệ', s: 'hợp đồng dữ liệu đã chốt', x: 400, y: 280, w: 220, c: 2 }, { id: 'bd', t: '✘ báo lỗi từng trường', s: 'sửa rồi kiểm lại', x: 800, y: 280, w: 220, c: 1 },
+    { id: 't3', t: 'api/schemas.py', s: 'TV3 viết API', x: 180, y: 410, w: 190, c: 2 }, { id: 't4', t: 'app/app.py', s: 'TV4 viết giao diện', x: 480, y: 410, w: 190, c: 2 }, { id: 't1', t: 'docs/decisions.md', s: 'TV1 ghi quyết định', x: 780, y: 410, w: 190, c: 2 }];
+  const edges = [['a', 'ex', 'va', 'JSON'], ['b', 'sc', 'va', 'luật'], ['c', 'va', 'ok', 'đúng'], ['d', 'va', 'bd', 'sai'], ['e', 'ok', 't3', ''], ['f', 'ok', 't4', ''], ['g', 'ok', 't1', '']];
+  const names = ['Ví dụ hợp lệ', 'Thiếu mã môn', 'credits sai kiểu', 'Đổi schema sau mốc'];
+  const CODE = ['schema ← đọc docs/schema_syllabus.json', 'dữ_liệu ← đọc JSON cần kiểm', 'jsonschema.validate(dữ_liệu, schema)', '  hợp lệ → hợp đồng dùng được', '  lỗi → liệt kê từng trường sai', 'TV3, TV4, TV1 đều xây trên cùng một schema', 'đổi schema sau mốc → báo cả nhóm'];
+  const good = { course_code: '841047', course_name: 'Công nghệ phần mềm', credits: 3, clos: [{ clo_id: 'G1', text: 'Áp dụng quy trình phát triển phần mềm', level_raw: '3' }], provenance: { verified: false } };
+  const mk = k => { const o = JSON.parse(JSON.stringify(good)); if (k === 1) delete o.course_code; if (k === 2) o.credits = '3'; return o; };
+  function errs(txt) {
+    let d, E = []; try { d = JSON.parse(txt); } catch (e) { return [null, 'JSON sai cú pháp: ' + e.message]; }
+    if (typeof d.course_code !== 'string' || !/^\d{6}$/.test(d.course_code)) E.push('<code>course_code</code> phải là chuỗi đúng 6 chữ số' + (d.course_code == null ? ' (đang thiếu trường)' : ''));
+    if (typeof d.course_name !== 'string' || !d.course_name) E.push('<code>course_name</code> phải là chuỗi không rỗng');
+    if (!Number.isInteger(d.credits) || d.credits < 1) E.push('<code>credits</code> phải là số nguyên ≥ 1' + (typeof d.credits === 'string' ? ' (đang là chuỗi)' : ''));
+    if (!Array.isArray(d.clos)) E.push('<code>clos</code> phải là danh sách'); else d.clos.forEach((c, i) => { if (!/^G\d+$/.test((c && c.clo_id) || '')) E.push('<code>clos[' + i + '].clo_id</code> phải dạng G + số, đang là "' + esc(c && c.clo_id) + '"'); if (!c || !c.text) E.push('<code>clos[' + i + '].text</code> rỗng'); });
+    if (typeof (d.provenance || {}).verified !== 'boolean') E.push('<code>provenance.verified</code> phải là true hoặc false');
+    return [E, null];
+  }
+  function show(root) {
+    const r = errs($('.js-in', root).value), E = r[0], perr = r[1];
+    $('.js-res', root).innerHTML = perr ? pill('err', perr) : E.length ? pill('err', E.length + ' lỗi') + '<ul style="margin:6px 0 0;padding-left:20px">' + E.map(x => '<li>' + x + '</li>').join('') + '</ul>' : pill('ok', 'Hợp lệ') + ' Mọi trường bắt buộc đều đúng kiểu.';
+    return perr ? 1 : E.length;
+  }
+  function build(k, root) {
+    const n = show(root);
+    const head = [F(['ex', 'sc'], [], 0, 'Có hai thứ: <b>JSON</b> cần kiểm và <b>schema</b> là bản luật mô tả một đề cương hợp lệ.'), F(['va'], ['a', 'b'], 2, 'jsonschema.validate đặt JSON cạnh schema và kiểm từng trường.')];
+    if (k === 3) return [F(['sc'], [], 0, 'Giả sử sau mốc 1 ai đó muốn đổi tên trường <code>course_code</code>.'), F(['ok'], [], 5, 'Schema đã được TV3, TV4 dùng để viết code, nên đổi một chữ là lệch cả ba tầng.'),
+      F(['t3', 't4', 't1'], ['e', 'f', 'g'], 6, 'Quy tắc nhóm: mọi thay đổi schema sau mốc <b>phải báo cả nhóm</b> và ghi vào decisions.md.')];
+    return head.concat(n ? [F(['bd'], ['d'], 4, 'JSON này có <b>' + n + ' lỗi</b>, xem bảng bên phải. Phải sửa JSON rồi kiểm lại.')]
+      : [F(['ok'], ['c'], 3, 'Hợp lệ: mọi trường bắt buộc đều đúng kiểu.'), F(['t3', 't4', 't1'], ['e', 'f', 'g'], 5, 'TV3 (API), TV4 (giao diện) và TV1 (quyết định) cùng dựa trên schema này.')]);
+  }
+  const fl7 = makeFlow(root, {
+    intro: 'Schema là bản mô tả "một đề cương hợp lệ trông thế nào". Nó là <b>hợp đồng giữa các tầng</b>: TV3 viết API, TV4 viết app đều dựa vào nó.',
+    hook: 'JSON + schema → <b>validate</b> → hợp lệ hoặc báo lỗi từng trường. Đổi schema sau mốc → <b>báo cả nhóm</b>.',
+    w: 1000, h: 470, nodes: nodes, edges: edges, names: names, code: CODE, build: build,
+    onScenario: (k, root) => { $('.js-in', root).value = JSON.stringify(mk(k === 3 ? 0 : k), null, 2); },
+    controls: '<p class="hint" style="margin-top:12px">Schema rút gọn: course_code (6 chữ số), course_name, credits (số nguyên ≥ 1), clos[] (clo_id dạng G+số, text), provenance.verified (true/false).</p>',
+    detail: '<div><div class="lab"><span>JSON (sửa được)</span></div><textarea class="js-in" rows="12" aria-label="JSON đề cương mẫu" style="font-family:var(--mono)">' + esc(JSON.stringify(good, null, 2)) + '</textarea></div><div class="js-res"></div>',
+    gloss: [['schema', 'tệp luật mô tả cấu trúc, kiểu và trường bắt buộc của dữ liệu.'], ['JSON', 'định dạng văn bản mô tả dữ liệu dạng khóa–giá trị, lồng nhau.'], ['provenance', 'thông tin nguồn gốc dữ liệu; verified = false nghĩa là chưa ai đối chiếu với PDF.'], ['mốc 1', 'cuối tuần 1; sau mốc này mọi thay đổi schema phải báo cả nhóm.'], ['jsonschema', 'thư viện Python kiểm JSON theo schema.']],
+    note: 'Schema ở đây là bản mini để chơi. Bản thật (docs/schema_syllabus.json) có đủ các mục đề cương và đã được kiểm với ví dụ 841047: hợp lệ.'
+  });
+  $('.js-in', root).oninput = () => fl7.reset();
+}
+
+/* =================== TAB 8: KIỂM TRA TUẦN 1 =================== */
+function tab8(root) {
+  const items = [['Inventory và so sánh OCR', 'inventory.csv 57 dòng · ocr_comparison.md chốt engine kết hợp'], ['OCR toàn bộ', 'ocr/ có đủ 54 môn · 488 trang'], ['Bảng CLO thô', 'clos_raw.csv 411 CLO · 54 môn · đủ cột'], ['Schema JSON và ví dụ 841047', 'schema_syllabus.json + ví dụ · jsonschema: hợp lệ']];
+  const warns = ['Có thêm cặp trùng 63/66 ngoài hai cặp tài liệu nêu', 'stt74, stt80 chưa có mã môn', '12 CLO trống level_raw (841423, 841479); hàng sửa tay chưa ai kiểm', 'Ví dụ 841047 gõ tay, verified = false'];
+  const doneTxt = ['inventory.csv đủ cột, đánh dấu trùng 48/82 và 62/81; ocr_comparison.md ghi engine được chọn (12/10).', 'data/interim/ocr/ có thư mục cho mọi môn không trùng: 54 môn, 488 trang.', 'clos_raw.csv đủ cột, 411 CLO của 54 môn, các CLO bị tách cột đã sửa tay.', 'docs/schema_syllabus.json và schema_example_841047.json; jsonschema báo ví dụ hợp lệ.'];
+  const nodes = [], edges = [];
+  items.forEach((it, i) => { const y = 78 + i * 92;
+    nodes.push({ id: 'i' + i, t: it[0], s: 'hạng mục ' + (i + 1) + ' của TV2', x: 210, y: y, w: 330, c: 0 }); nodes.push({ id: 'v' + i, t: 'Bằng chứng trong repo', s: it[1], x: 690, y: y, w: 440, c: 3 }); edges.push(['k' + i, 'i' + i, 'v' + i, 'đối chiếu']); });
+  const names = ['Đối chiếu bằng chứng', 'Điểm cần báo họp'];
+  const CODE = ['mỗi hạng mục của TV2 trong checklist tuần 1:', '  tìm bằng chứng ở cột "Tiêu chí hoàn thành"', '  có bằng chứng → tick ☒', '  chưa có → ghi lý do và ngày dự kiến', 'báo các điểm còn rủi ro trong buổi họp thứ Hai'];
+  function build(k) {
+    return items.map((it, i) => F(['i' + i, 'v' + i], ['k' + i], k === 0 ? 2 : 3, k === 0 ? '<b>' + it[0] + '</b>: ' + doneTxt[i] + ' → <b>đạt</b>.' : '<b>' + it[0] + '</b>: ' + warns[i] + '.'));
+  }
+  makeFlow(root, {
+    intro: 'Tài liệu nhóm quy định chỉ tick khi <b>có bằng chứng</b>. Tab này đối chiếu từng hạng mục của TV2 với file thật trong repo, rồi chỉ ra những điểm nên báo trong buổi họp.',
+    hook: '4 hạng mục tuần 1 của TV2 <b>đều có bằng chứng</b>. Còn vài rủi ro nhỏ cần báo, và <b>data/ chưa lên git</b> nên phải nén lên Drive.',
+    w: 1000, h: 420, nodes: nodes, edges: edges, names: names, code: CODE, build: build,
+    detail: '<div><div class="lab"><span>Việc nên làm trước buổi họp</span></div><ul style="margin:0;padding-left:20px;font-size:13.5px"><li>Hỏi TV1 mã môn cho stt74, stt80 rồi sửa tên PDF và chạy lại.</li><li>Rà các hàng sửa tay: lọc cột <code>note</code> có chữ "sửa tay" trong clos_raw.csv.</li><li>Đối chiếu mã môn in trên PDF khác tên file: 841073, 841404, 841412.</li><li>Nén <code>data/</code> đưa lên Drive nhóm làm bằng chứng và để các thành viên khỏi chạy OCR lại.</li></ul></div>',
+    gloss: [['bằng chứng', 'một file nằm đúng đường dẫn, một PR đã merge hoặc một con số ghi vào metrics.json.'], ['mốc 1', 'cuối tuần 1: schema JSON, schema API, OCR xong.'], ['ocr_ok', 'cờ trong clos_raw.csv cho biết hàng đủ tin cậy hay cần kiểm tay.']],
+    note: 'Đối chiếu thực hiện ngày 18/10/2026 trên nhánh feature/long-tuan1-data.',
+    extra: (c, S) => { items.forEach((it, i) => { if (S.passed['k' + i] || S.curE.indexOf('k' + i) >= 0) { const y = 78 + i * 92; badge(c, S.k === 0 ? '✔ ĐẠT' : '! LƯU Ý', 960, y - 30, S.k === 0 ? PAL[2] : PAL[3], true); } }); }
+  });
+}
+
+
+/* =================== TUẦN 2 · TAB 9: DÂY CHUYỀN TUẦN 2 =================== */
+function tab9(root) {
+  const nodes = [
+    { id: 'ocrc', t: 'ocr_clean/', s: 'chữ sạch từ tuần 1', x: 100, y: 52, w: 150, c: 5 }, { id: 'clo', t: 'clos_raw.csv', s: '411 CLO', x: 270, y: 52, w: 150, c: 5 },
+    { id: 'inv', t: 'inventory.csv', s: 'bỏ bản trùng', x: 440, y: 52, w: 150, c: 5 }, { id: 'fix', t: 'syllabus_fixes.json', s: 'sửa tay, ghi đè', x: 620, y: 52, w: 170, c: 1 }, { id: 'sch', t: 'schema_syllabus.json', s: 'hợp đồng tuần 1', x: 820, y: 52, w: 170, c: 4 },
+    { id: 'sp', t: 'split_sections.py', s: 'tách 10 mục bằng regex', x: 180, y: 170, w: 210, c: 0 }, { id: 'mk', t: 'make_dataset.py', s: 'trích trường + ghép CLO', x: 560, y: 170, w: 220, c: 0 }, { id: 'va', t: 'validate_json.py', s: 'kiểm theo schema', x: 860, y: 170, w: 170, c: 0 },
+    { id: 'sl', t: 'sections_labeled.csv', s: '5.693 đoạn', x: 110, y: 340, w: 190, c: 3 }, { id: 'rv', t: 'sections_review.csv', s: 'đoạn cần rà', x: 330, y: 340, w: 190, c: 3 },
+    { id: 'js', t: 'syllabi/<mã>.json', s: '54 file', x: 570, y: 340, w: 190, c: 3 }, { id: 'rp', t: 'Báo cáo 54/54', s: 'hợp lệ 100%', x: 860, y: 340, w: 170, c: 3 },
+    { id: 'gd', t: 'Việc của bạn: rà section_gold', s: 'chưa làm', x: 230, y: 450, w: 290, c: 1 }, { id: 'lb', t: 'Việc của bạn: gán nhãn CLO', s: 'chưa làm', x: 590, y: 450, w: 250, c: 1 }, { id: 'nb', t: 'Notebook 1.0', s: 'chạy bằng script', x: 860, y: 450, w: 170, c: 0 }];
+  const edges = [['a1', 'ocrc', 'sp', 'chữ sạch'], ['a2', 'ocrc', 'mk', 'mục 1'], ['a3', 'clo', 'mk', 'CLO'], ['a4', 'inv', 'mk', 'lọc trùng'], ['a5', 'fix', 'mk', 'ghi đè'], ['a6', 'sch', 'va', 'luật'],
+    ['b1', 'sp', 'sl', ''], ['b2', 'sp', 'rv', ''], ['b3', 'mk', 'js', ''], ['b4', 'js', 'va', 'từng file'], ['b5', 'va', 'rp', ''], ['c1', 'rv', 'gd', 'danh sách rà'], ['c2', 'gd', 'sl', 'sửa section_gold'], ['c3', 'js', 'nb', 'dữ liệu']];
+  const names = ['Chạy cả tuần 2', 'Chạy lại không mất công rà', 'Môn thiếu tiêu đề mục', 'Việc của bạn tiếp theo'];
+  const CODE = ['1. split_sections → sections_labeled.csv + sections_review.csv', '2. make_dataset → syllabi/<mã>.json (54 file)', '3. validate_json → báo cáo hợp lệ', '4. rà tay: sửa cột section_gold', '5. gán nhãn CLO phần của mình (Google Sheet của TV1)', '6. notebook 1.0: Restart & Run All', '7. mở PR, báo họp: provenance.verified còn false'];
+  function build(k) {
+    if (k === 0) return [F(['ocrc', 'clo', 'inv', 'fix', 'sch'], [], 0, 'Đầu vào của tuần 2 là sản phẩm tuần 1: chữ sạch, bảng CLO, bảng kê, schema đã chốt, và file sửa tay nếu cần.'),
+      F(['sp', 'sl', 'rv'], ['a1', 'b1', 'b2'], 0, '<b>split_sections.py</b> tách chữ thành <b>5.693 đoạn</b>, mỗi đoạn có nhãn mục do luật gán (<code>section_regex</code>) và một bản sao để bạn rà (<code>section_gold</code>). Đoạn ở ranh giới ghi thêm vào sections_review.csv.'),
+      F(['mk', 'js'], ['a2', 'a3', 'a4', 'a5', 'b3'], 1, '<b>make_dataset.py</b> lấy trường từ mục 1, ghép bảng CLO và 10 mục, ghi <b>54 file JSON</b>. Môn trùng bị bỏ qua.'),
+      F(['va', 'rp'], ['a6', 'b4', 'b5'], 2, '<b>validate_json.py</b> kiểm từng file với schema: <b>54/54 hợp lệ</b>. Đạt hạng mục "JSON đề cương".')];
+    if (k === 1) return [F(['sl'], [], 0, 'Bạn đã rà một phần cột <code>section_gold</code> trong sections_labeled.csv.'),
+      F(['sp', 'sl'], ['a1', 'b1'], 0, 'Chạy lại split_sections: script đọc CSV cũ và <b>giữ section_gold đã sửa</b> của các đoạn trùng <b>cả para_id lẫn nội dung</b>.'),
+      F(['rv'], ['b2'], 0, 'Đoạn nào nội dung đổi (do OCR hay luật đổi) thì mất nhãn đã rà và trở về nhãn của luật, nên vẫn nằm trong danh sách cần rà.')];
+    if (k === 2) return [F(['ocrc'], [], 0, 'Một đề cương OCR hỏng, mất dòng tiêu đề mục 9.'),
+      F(['sp'], ['a1'], 0, 'Lượt khớp chặt không thấy mục 9. Lượt khớp lỏng dò lại giữa mục 8 và mục 10; nếu vẫn không thấy, log in "<b>thiếu tiêu đề</b> [...]".'),
+      F(['sl', 'rv'], ['b1', 'b2'], 0, 'Đoạn của mục bị thiếu bị gộp vào mục đứng trước. Đây là lý do cần rà tay các đoạn ở ranh giới.')];
+    return [F(['gd'], [], 3, '<b>Rà section_gold:</b> mở sections_review.csv, đọc từng đoạn ở ranh giới, sửa nhãn sai trong cột section_gold của sections_labeled.csv. Cần hơn 1.000 đoạn có nhãn đã rà.'),
+      F(['lb'], [], 4, '<b>Gán nhãn CLO phần của mình</b> trên Google Sheet của TV1 (cột annotator, label). Hạn thứ Năm.'),
+      F(['nb'], ['c3'], 5, '<b>Notebook 1.0:</b> mở trong Jupyter, chọn Restart & Run All, xác nhận không lỗi (hiện mới chạy bằng script).'),
+      F(['js'], [], 6, '<b>Báo nhóm:</b> dữ liệu dùng được cho TV4 (soạn câu hỏi) và TV1 (BM25), nhưng <code>provenance.verified</code> vẫn là false. Chưa push, chưa mở PR.')];
+  }
+  makeFlow(root, {
+    intro: 'Tuần 2 của TV2 biến chữ OCR sạch thành <b>dữ liệu có cấu trúc</b>: JSON cho từng môn và bảng đoạn có nhãn mục. Máy làm phần lớn, phần <b>rà tay</b> và <b>gán nhãn</b> là việc của người. Từ tuần 3, mọi tầng khác đều dựa vào dữ liệu này.',
+    hook: 'chữ sạch → <b>tách mục</b> + <b>trích trường</b> → JSON → <b>kiểm schema</b>. Máy ra nhãn nháp, <b>người rà lại</b> cột section_gold.',
+    w: 1000, h: 500, nodes: nodes, edges: edges, names: names, code: CODE, build: build,
+    bands: [['ĐẦU VÀO (từ tuần 1)', 8, 96, 5], ['SCRIPT TUẦN 2', 120, 222, 0], ['DỮ LIỆU RA (data/)', 290, 392, 3], ['VIỆC CỦA NGƯỜI VÀ KIỂM TRA', 410, 490, 1]],
+    gloss: [['section_regex', 'nhãn mục do luật gán tự động.'], ['section_gold', 'nhãn "vàng" đã được người rà; ban đầu là bản sao của section_regex.'], ['sections_review.csv', 'danh sách đoạn dễ sai (đầu/cuối mục hoặc quá ngắn) để rà trước.'], ['provenance.verified', 'cờ cho biết dữ liệu đã được đối chiếu với PDF chưa; hiện là false.'], ['mốc 2', 'cuối tuần 2: đóng băng dữ liệu v1, từ đó sửa dữ liệu phải ra phiên bản mới.']],
+    note: 'Số liệu (54/54 JSON, 5.693 đoạn) lấy từ báo cáo tiến độ tuần 2 của TV2.'
+  });
+}
+
+/* =================== TUẦN 2 · TAB 10: TÁCH MỤC =================== */
+const SEC = ['general_info', 'course_description', 'course_objectives', 'course_learning_outcomes', 'course_content', 'learning_resources', 'teaching_schedule', 'course_policies', 'assessment', 'responsible_unit'];
+const HKEYS = ['thong tin tong', 'mo ta hoc', 'muc tieu', 'chuan dau', 'noi dung chi', 'hoc lieu', 'huon', 'quy dinh', 'phuong phap', 'phu\\W'];
+const HEAD = HKEYS.map((key, i) => new RegExp('^\\W*' + (i + 1) + '\\s*[.,:;)]?\\s*' + key));
+const LKEYS = ['thong .{0,26}hoc phan', 'mo ta .{0,3}hoc', 'muc .{0,5}hoc phan', 'chu.{1,3}n\\W*dau ra', 'noi dung chi', 'hoc\\s*(lieu)?\\s*:?\\s*$', 'huon.{0,3}dan', 'quy\\W{0,2}dinh\\W{0,2}.{0,8}(voi|doi)', 'phuong phap .{0,6}gia', 'phu .{0,6}trach'];
+const LOOSEJ = LKEYS.map(k => new RegExp('^\\W*[^\\W_]{0,2}\\W{0,3}' + k));
+const SPL = [
+  ['ĐỀ CƯƠNG CHI TIẾT HỌC PHẦN', '1. Thông tin tổng quát', 'Tên học phần: Công nghệ phần mềm', '2. Mô tả học phần', 'Môn học giới thiệu quy trình phát triển phần mềm.', '3. Mục tiêu học phần', 'G1: Hiểu quy trình phát triển phần mềm.', '4. Chuẩn đầu ra học phần', 'G1 Áp dụng quy trình Agile'],
+  ['3. Mục tiêu học phần', 'G1: Hiểu quy trình phát triển phần mềm.', '4. Chuẩn đầu ra học phần', 'G1 Áp dụng quy trình Agile', '5. Nội dung chi tiết học phần', 'Chương 1. Tổng quan', '3. Mục tiêu của chương 1', 'Giúp sinh viên nắm khái niệm cơ bản.'],
+  ['8. Quy định đối với học phần', 'Sinh viên đi học đầy đủ.', '3. Phương pháp đánh giá', 'Chuyên cần 10%, giữa kỳ 30%, cuối kỳ 60%.', '10. Phụ trách học phần', 'Khoa Công nghệ thông tin']];
+function findHeads(lines) {
+  const found = {}; let last = 0;
+  lines.forEach((ln, i) => { const f = strip(ln.toLowerCase());
+    for (let k = last + 1; k <= 10; k++) if (HEAD[k - 1].test(f)) { found[i] = { k: k, pass: 1 }; last = k; break; } });
+  const have = () => Object.values(found).map(v => v.k);
+  for (let k = 1; k <= 10; k++) { if (have().indexOf(k) >= 0) continue;
+    const idx = Object.keys(found).map(Number);
+    const lo = Math.max(-1, ...idx.filter(i => found[i].k < k)), hi = Math.min(lines.length, ...idx.filter(i => found[i].k > k));
+    for (let i = lo + 1; i < hi; i++) if (LOOSEJ[k - 1].test(strip(lines[i].toLowerCase()))) { found[i] = { k: k, pass: 2 }; break; } }
+  return found;
+}
+function tab10(root) {
+  const nodes = [{ id: 'ln', t: 'Đọc dòng', s: 'ocr_clean/<môn>/p-N.txt', x: 110, y: 60, w: 170, c: 5 }, { id: 'st', t: 'Lượt 1: khớp chặt', s: 'tiêu đề theo thứ tự 1..10', x: 340, y: 60, w: 190, c: 0 },
+    { id: 'lo', t: 'Lượt 2: khớp lỏng', s: 'cho mục bị lỡ', x: 570, y: 60, w: 190, c: 0 }, { id: 'sp', t: 'Cắt đoạn + gán nhãn', s: 'mỗi đoạn một nhãn mục', x: 800, y: 60, w: 180, c: 0 },
+    { id: 'cv', t: 'sections_labeled.csv', s: 'không chứa dòng tiêu đề', x: 800, y: 180, w: 190, c: 3 }];
+  const edges = [['a', 'ln', 'st', ''], ['b', 'st', 'lo', ''], ['c', 'lo', 'sp', ''], ['d', 'sp', 'cv', 'ghi CSV']];
+  const names = ['Đề cương bình thường', 'Mục con không bị nhận nhầm', 'OCR đọc sai số mục'];
+  const CODE = ['gộp mọi dòng của đề cương theo thứ tự trang', 'lượt 1: với mỗi dòng (đã bỏ dấu):', '    thử tiêu đề mục k = last+1 … 10, khớp "<k>. <tên mục>"', '    khớp → ghi nhận, last ← k   (mỗi mục tối đa một lần)', 'lượt 2: với mỗi mục k còn thiếu:', '    dò các dòng giữa tiêu đề trước và sau bằng mẫu lỏng', 'cắt đoạn khi gặp dòng trống, đổi trang hoặc đổi mục', 'dòng tiêu đề không vào CSV; đoạn trước mục 1 → "other"'];
+  function build(k, root) {
+    const L = SPL[k], h = findHeads(L), n1 = Object.values(h).filter(v => v.pass === 1).length, n2 = Object.values(h).filter(v => v.pass === 2).length;
+    S10.L = L; S10.h = h;
+    return [F(['ln'], [], 0, 'Đọc <b>' + L.length + ' dòng</b> mẫu của đề cương theo thứ tự trang.', [], 0),
+      F(['st'], ['a'], 1, 'Lượt 1 tìm được <b>' + n1 + '</b> tiêu đề. Tiêu đề mục k chỉ được tìm <b>sau</b> tiêu đề mục k−1' + (k === 1 ? ', nên dòng "3. Mục tiêu của chương 1" nằm trong mục 5 bị bỏ qua, không bị nhận nhầm thành mục 3.' : '.'), [], 1),
+      F(['lo'], ['b'], 2, 'Lượt 2 (khớp lỏng) cứu thêm <b>' + n2 + '</b> tiêu đề.' + (k === 2 ? ' OCR đọc "9." thành "3.", nhưng giữa mục 8 và mục 10 chỉ có một dòng giống "Phương pháp đánh giá" nên được nhận là mục 9.' : ' Không mục nào bị lỡ ở mẫu này.'), [], 2),
+      F(['sp'], ['c'], 3, 'Mỗi dòng không phải tiêu đề được gán nhãn của mục đang đứng. Đoạn trước tiêu đề đầu tiên có nhãn <code>other</code>.', [], 3),
+      F(['cv'], ['d'], 3, 'Ghi vào sections_labeled.csv. Dòng tiêu đề <b>không</b> được ghi để mô hình M1 không "đọc lén" nhãn từ tiêu đề.', [], 3)];
+  }
+  const S10 = {};
+  function render(root, S) {
+    const st = S.stage, L = S10.L, h = S10.h; if (!L) return; let cur = 'other';
+    $('.sp-t', root).innerHTML = L.map((ln, i) => { const hd = h[i], vis = hd && ((hd.pass === 1 && st >= 1) || (hd.pass === 2 && st >= 2));
+      if (vis) cur = SEC[hd.k - 1];
+      const m = vis ? pill(hd.pass === 1 ? 'ok' : 'warn', (hd.pass === 1 ? 'chặt' : 'lỏng') + ' → mục ' + hd.k) : '';
+      const lab = st >= 3 ? (vis ? '<span class="hint">(tiêu đề, không vào CSV)</span>' : '<span class="mono">' + cur + '</span>') : '';
+      return '<tr><td class="mono">' + (i + 1) + '</td><td>' + esc(ln) + '</td><td>' + m + '</td><td>' + lab + '</td></tr>'; }).join('');
+  }
+  makeFlow(root, {
+    intro: '<b>split_sections.py</b> cắt đề cương thành các đoạn và gán mỗi đoạn vào một trong <b>10 mục</b> bằng cách tìm dòng tiêu đề "&lt;số&gt;. &lt;tên mục&gt;". Khó nhất là khi OCR đọc sai tiêu đề hoặc một mục con cũng đánh số 1, 2, 3.',
+    hook: 'Tiêu đề mục k chỉ được tìm <b>sau</b> mục k−1 → mục con không bị nhận nhầm. Mục bị lỡ → <b>lượt khớp lỏng</b> cứu lại.',
+    w: 1000, h: 250, nodes: nodes, edges: edges, names: names, code: CODE, build: build,
+    onFrame: (f, S, root) => render(root, S),
+    detail: '<div><div class="lab"><span>Các dòng mẫu và kết quả từng lượt</span></div><div class="scroll"><table class="t"><tr><th>#</th><th>dòng</th><th>tiêu đề tìm thấy</th><th>nhãn mục</th></tr><tbody class="sp-t"></tbody></table></div></div>',
+    gloss: [['tiêu đề mục', 'dòng dạng "4. Chuẩn đầu ra học phần"; đề cương thật có đúng 10 mục.'], ['khớp trên chữ bỏ dấu', 'so sánh sau khi bỏ dấu để chịu được lỗi dấu của OCR.'], ['khớp lỏng', 'mẫu rộng hơn, chỉ dò trong khoảng giữa hai tiêu đề đã biết.'], ['other', 'nhãn cho phần bìa, trước tiêu đề mục 1.'], ['rò nhãn', 'mô hình được thấy đáp án trong dữ liệu vào; tránh bằng cách bỏ dòng tiêu đề.']],
+    note: 'Mẫu rút gọn, nhưng dùng đúng các mẫu regex trong split_sections.py.'
+  });
+}
+
+/* =================== TUẦN 2 · TAB 11: TRÍCH TRƯỜNG VÀ DỰNG JSON =================== */
+function parseLevel(raw) {
+  if (!raw || !raw.trim()) return null; const t = raw.trim().split(/[,;]/);
+  if (t.length === 2 && (t[1] === '0' || t[1] === '5')) { const v = parseFloat(t[0] + '.' + t[1]); return isNaN(v) ? null : v; }
+  const v = t.map(x => (x.trim() === '' ? NaN : Number(x))); return v.some(isNaN) ? null : Math.max.apply(null, v);
+}
+function courseList(v) {
+  const f = strip((v || '').toLowerCase()).replace(/^[ .]+|[ .]+$/g, '');
+  if (!v || ['khong', 'khong co', '-'].indexOf(f) >= 0) return [];
+  const codes = v.match(/\b\d{6}\b/g); if (codes) return codes;
+  return v.split(/[;,]/).map(p => p.replace(/^[ .]+|[ .]+$/g, '')).filter(p => p && strip(p.toLowerCase()).replace(/^[ .]+|[ .]+$/g, '') !== 'khong');
+}
+function tab11(root) {
+  const nodes = [{ id: 'm1', t: 'Mục 1 của đề cương', s: 'thông tin tổng quát', x: 130, y: 60, w: 200, c: 5 }, { id: 'cl', t: 'clos_raw.csv', s: 'CLO của môn', x: 420, y: 60, w: 160, c: 5 }, { id: 'fx', t: 'syllabus_fixes.json', s: 'sửa tay ghi đè sau cùng', x: 720, y: 60, w: 210, c: 1 },
+    { id: 'ex', t: 'Luật trích trường', s: 'mã, tín chỉ, giờ, tiên quyết', x: 130, y: 190, w: 210, c: 0 }, { id: 'mg', t: 'Ghép + parse_level', s: 'CLO + 10 mục', x: 420, y: 190, w: 190, c: 0 }, { id: 'ap', t: 'Áp sửa tay', s: 'ghi đè trường', x: 720, y: 190, w: 170, c: 0 },
+    { id: 'wn', t: 'Cảnh báo', s: 'trường luật không đọc được', x: 130, y: 330, w: 210, c: 1 }, { id: 'js', t: 'syllabi/<mã>.json', s: 'theo schema', x: 720, y: 330, w: 190, c: 3 }];
+  const edges = [['a', 'm1', 'ex', 'dòng chữ'], ['b', 'ex', 'mg', 'trường'], ['c', 'cl', 'mg', 'CLO'], ['d', 'mg', 'ap', ''], ['e', 'fx', 'ap', 'ghi đè'], ['f', 'ap', 'js', 'ghi file'], ['g', 'ex', 'wn', 'không đọc được']];
+  const names = ['Môn bình thường (841047)', 'Trường không đọc được', 'Môn thiếu mã (stt74)', 'Môn trùng'];
+  const CODE = ['bỏ qua môn có duplicate_of trong inventory.csv', 'tách mục 1 → dòng chữ; tìm nhãn "Tên học phần", "Số tín chỉ"…', 'mỗi trường: lấy giá trị sau dấu ":"', '  không đọc được → null / mảng rỗng + in cảnh báo', 'ghép CLO: level_raw → parse_level → số', 'ghép 10 mục đã tách', 'áp syllabus_fixes.json (ghi đè sau cùng)', 'ghi <mã>.json (môn thiếu mã: stt74.json, course_code = null)'];
+  function build(k) {
+    if (k === 3) return [F(['m1'], [], 0, 'Môn "82 - 841407" có <code>duplicate_of</code> trong inventory.csv.'), F(['ex'], [], 0, 'make_dataset <b>bỏ qua</b>: chỉ bản gốc (STT 48) được dựng JSON, nên không có hai file cho cùng một môn.')];
+    const head = [F(['m1', 'ex'], ['a'], 1, k === 2 ? 'Môn "74 - Công nghệ. NET" không có mã trong tên file nên file ra là <b>stt74.json</b>.' : 'Lấy các dòng của <b>mục 1</b> (đã được split_sections tách) rồi tìm trường theo nhãn bỏ dấu.'),
+      F(['ex'], [], 2, k === 1 ? 'Luật không đọc được <b>số tiết thực hành</b> (OCR hỏng dòng đó): trường để theo quy ước schema (null hoặc mảng rỗng).' : 'Đọc: mã môn, tên, <b>tín chỉ</b>, số tiết lý thuyết / thảo luận / thực hành / tự học, môn tiên quyết, song hành.')];
+    const mid = k === 1 ? [F(['wn'], ['g'], 3, '<b>In cảnh báo</b> kèm tên môn và tên trường để bạn biết chỗ cần sửa tay.')] : [];
+    return head.concat(mid, [F(['cl', 'mg'], ['b', 'c'], 4, 'Ghép bảng CLO: <code>level_raw</code> đổi thành số bằng <b>parse_level</b> ("2,5" → 2.5; danh sách "2,3,4,5" → lấy mức cao nhất 5).'),
+      F(['fx', 'ap'], ['d', 'e'], 6, k === 1 ? 'Bạn thêm <code>{"' + '841xxx' + '": {"hours": {"practice": 30}}}</code> vào syllabus_fixes.json: <b>ghi đè sau cùng</b> nên chạy lại không mất.' : 'Nếu có sửa tay trong syllabus_fixes.json thì ghi đè lên kết quả của luật.'),
+      F(['js'], ['f'], 7, 'Ghi <b>' + (k === 2 ? 'stt74.json' : '841047.json') + '</b>. Cờ <code>provenance.verified</code> vẫn là <b>false</b> vì chưa ai đối chiếu với PDF.')]);
+  }
+  const upd = root => {
+    const lv = $('.lv-in', root).value, pr = $('.pr-in', root).value, p = parseLevel(lv), c = courseList(pr);
+    $('.lv-out', root).innerHTML = 'level_raw <code>"' + esc(lv) + '"</code> → ' + (p == null ? pill('warn', 'null (để trống, cần xem lại)') : pill('ok', String(p)));
+    $('.pr-out', root).innerHTML = 'tiên quyết <code>"' + esc(pr) + '"</code> → <code>' + esc(JSON.stringify(c)) + '</code>';
+  };
+  makeFlow(root, {
+    intro: '<b>make_dataset.py</b> dựng một file JSON cho mỗi môn: lấy thông tin chung bằng luật, ghép bảng CLO và 10 mục đã tách, rồi cho bạn <b>ghi đè bằng tay</b> trường nào luật đọc sai. Hai hàm dễ gây hiểu nhầm nhất là <code>parse_level</code> và <code>course_list</code>.',
+    hook: 'Luật đọc trường → không đọc được thì <b>để null + cảnh báo</b> → <b>sửa tay</b> trong syllabus_fixes.json → ghi đè sau cùng.',
+    w: 1000, h: 400, nodes: nodes, edges: edges, names: names, code: CODE, build: build,
+    controls: '<div class="row" style="margin-top:12px"><div class="lab"><label>level_raw thử</label></div><input type="text" class="lv-in" value="2,5" aria-label="level_raw"></div><div class="lv-out" style="margin-bottom:10px"></div>' +
+      '<div class="row"><div class="lab"><label>Môn tiên quyết thử</label></div><input type="text" class="pr-in" value="841020; 841021" aria-label="Môn tiên quyết"></div><div class="pr-out"></div>',
+    gloss: [['parse_level', 'đổi số trình độ in trong đề cương thành số; "2,5" là 2.5, còn "3,4" là danh sách nên lấy mức cao nhất.'], ['course_list', 'đổi chuỗi tiên quyết thành danh sách mã 6 số, hoặc tên môn nếu không có mã; "Không" thành rỗng.'], ['syllabus_fixes.json', 'nơi lưu sửa tay theo mã môn để chạy lại không mất.'], ['null / mảng rỗng', 'quy ước schema cho trường không có dữ liệu.'], ['stt74.json', 'tên file của môn không có mã; course_code trong file là null.']],
+    note: 'Hai hàm parse_level và course_list ở ô thử được viết lại đúng logic của make_dataset.py.'
+  });
+  $('.lv-in', root).oninput = () => upd(root); $('.pr-in', root).oninput = () => upd(root); upd(root);
+}
+
+/* =================== TUẦN 2 · TAB 12: KIỂM VÀ RÀ NHÃN =================== */
+function tab12(root) {
+  const nodes = [{ id: 'js', t: 'syllabi/<mã>.json', s: '54 file', x: 130, y: 60, w: 190, c: 3 }, { id: 'sc', t: 'schema_syllabus.json', s: 'luật', x: 420, y: 60, w: 190, c: 4 },
+    { id: 'va', t: 'validate_json.py', s: 'schema + tên file + clo_id', x: 290, y: 190, w: 210, c: 0 }, { id: 'ok', t: 'In lỗi + tỷ lệ', s: 'thoát mã 1 nếu còn lỗi', x: 290, y: 320, w: 210, c: 2 },
+    { id: 'sl', t: 'sections_labeled.csv', s: 'section_regex / section_gold', x: 740, y: 60, w: 210, c: 3 }, { id: 'rv', t: 'sections_review.csv', s: 'đoạn dễ sai', x: 740, y: 190, w: 200, c: 3 }, { id: 'rt', t: 'Bạn rà tay', s: 'sửa section_gold', x: 740, y: 320, w: 190, c: 1 }];
+  const edges = [['a', 'js', 'va', 'từng file'], ['b', 'sc', 'va', 'luật'], ['c', 'va', 'ok', ''], ['d', 'sl', 'rv', 'chọn đoạn ranh giới'], ['e', 'rv', 'rt', 'danh sách'], ['f', 'rt', 'sl', 'sửa nhãn']];
+  const names = ['Kiểm JSON: đạt 54/54', 'Kiểm JSON: file lỗi', 'Rà nhãn mục', 'Chạy lại vẫn giữ nhãn đã rà'];
+  const CODE = ['với mỗi *.json: kiểm theo schema', 'tên file phải khớp course_code (stt<N> ↔ null)', 'clo_id không được trùng nhau', 'in từng lỗi, tỷ lệ hợp lệ; thoát mã 1 nếu còn lỗi', 'đoạn cần rà: đầu/cuối mục, hoặc dài < 30 ký tự', 'rà: đọc đoạn, sửa section_gold', 'chạy lại: giữ section_gold nếu (para_id, text) trùng'];
+  function build(k) {
+    if (k === 0) return [F(['js', 'sc'], [], 0, 'Có 54 file JSON và schema chốt ở Mốc 1.'), F(['va'], ['a', 'b'], 0, 'validate_json kiểm từng file theo schema, thêm hai luật ngoài schema.'), F(['ok'], ['c'], 3, '<b>54/54 file hợp lệ (100%)</b>. Hạng mục "JSON đề cương" của checklist tuần 2 đạt.')];
+    if (k === 1) return [F(['js'], [], 0, 'Giả sử file <b>841999.json</b> có course_code 841998 và hai CLO cùng mã G2.'), F(['va'], ['a', 'b'], 1, 'Lỗi 1: <code>tên file 841999.json không khớp course_code 841998</code>.'), F(['va'], [], 2, 'Lỗi 2: <code>clos: có clo_id trùng nhau</code>.'), F(['ok'], ['c'], 3, 'In 2 lỗi, tỷ lệ hợp lệ giảm (53/54), <b>thoát mã 1</b>. Sửa file rồi chạy lại đến khi đạt 100%.')];
+    if (k === 2) return [F(['sl'], [], 4, 'sections_labeled.csv có 5.693 đoạn; <code>section_gold</code> ban đầu bằng section_regex nên <b>chưa phải nhãn đã rà</b>.'), F(['rv'], ['d'], 4, 'Script chọn ra các đoạn <b>dễ sai nhất</b>: đầu hoặc cuối mục, hoặc dài dưới 30 ký tự. Rà các đoạn này trước.'), F(['rt'], ['e'], 5, 'Bạn đọc từng đoạn, nếu nhãn sai thì sửa ở cột <b>section_gold</b> của sections_labeled.csv.'), F(['sl'], ['f'], 5, 'Hạng mục "Nhãn mục" chỉ đạt khi section_gold đã rà và có ≥ 1.000 đoạn. <b>Hiện chưa đạt.</b>')];
+    return [F(['rt', 'sl'], ['f'], 5, 'Bạn đã sửa một số section_gold.'), F(['sl'], [], 6, 'Chạy lại split_sections: đoạn nào <b>trùng cả para_id lẫn nội dung</b> thì giữ nhãn đã sửa.'), F(['rv'], ['d'], 6, 'Đoạn nội dung đổi thì quay về nhãn của luật. Vì vậy sau khi sửa luật, hãy rà lại những đoạn đó.')];
+  }
+  function upd(root) {
+    const len = +$('.len', root).value, a = $('.fst', root).checked, b = $('.lst', root).checked, need = a || b || len < 30;
+    $('.rv-out', root).innerHTML = 'Đoạn dài <b>' + len + '</b> ký tự' + (a ? ', đầu mục' : '') + (b ? ', cuối mục' : '') + ' → ' + (need ? pill('warn', 'cần rà trước') : pill('ok', 'ở giữa mục, rà sau'));
+    $('.lenv', root).textContent = len;
+  }
+  makeFlow(root, {
+    intro: 'Hai việc kiểm tra cuối: <b>validate_json.py</b> bảo đảm mọi JSON đúng schema, còn <b>rà nhãn</b> là phần máy không tự làm được. Không rà thì nhãn mục chỉ là nhãn nháp của luật.',
+    hook: 'JSON: <b>máy kiểm</b> đến 100%. Nhãn mục: <b>người rà</b> cột section_gold, ưu tiên đoạn ở ranh giới.',
+    w: 1000, h: 400, nodes: nodes, edges: edges, names: names, code: CODE, build: build,
+    controls: '<div class="row" style="margin-top:12px"><div class="lab"><label>Độ dài đoạn (ký tự)</label><b class="lenv">120</b></div><input type="range" class="len" min="5" max="400" step="5" value="120" aria-label="Độ dài đoạn"></div>' +
+      '<label class="chk"><input type="checkbox" class="fst"><span>Đoạn đầu của mục</span></label><label class="chk"><input type="checkbox" class="lst"><span>Đoạn cuối của mục</span></label><div class="rv-out"></div>',
+    gloss: [['validate_json', 'script kiểm mọi JSON theo schema, thêm hai luật ngoài schema.'], ['section_gold', 'cột nhãn mục để người sửa; ban đầu là bản sao của section_regex.'], ['đoạn ranh giới', 'đoạn đầu/cuối của một mục, dễ bị gán sai nhất.'], ['(para_id, text)', 'cặp khóa dùng để giữ lại nhãn đã rà khi chạy lại script.'], ['jsonschema', 'thư viện kiểm JSON; chưa có trong requirements.txt, đang chờ nhóm đồng ý.']],
+    note: 'Luật chọn đoạn cần rà lấy từ split_sections.py.'
+  });
+  $('.len', root).oninput = () => upd(root); $('.fst', root).onchange = () => upd(root); $('.lst', root).onchange = () => upd(root); upd(root);
+}
+
+/* =================== TUẦN 2 · TAB 13: TIẾN ĐỘ VÀ VIỆC TIẾP THEO =================== */
+function tab13(root) {
+  const items = [['JSON đề cương', 'Đạt', 'mọi môn có file, validate 54/54', 2], ['Nhãn mục (sections_labeled.csv)', 'Chưa đạt', '5.693 đoạn nhưng section_gold chưa rà', 1], ['Notebook 1.0', 'Đạt có điều kiện', 'mới chạy bằng script, chưa Restart & Run All', 3],
+    ['Gán nhãn CLO phần của bạn', 'Chưa làm', 'việc của bạn, ưu tiên xong trước thứ Năm', 1], ['clos_labeled.csv và folds.csv', 'Của TV1', 'hạn thứ Bảy, TV2 chưa đụng tới', 4]];
+  const nodes = [], edges = [];
+  items.forEach((it, i) => { const y = 66 + i * 76; nodes.push({ id: 'i' + i, t: it[0], s: it[1], x: 240, y: y, w: 400, c: it[3] === 2 ? 2 : it[3] === 1 ? 1 : it[3] === 3 ? 3 : 4 }); nodes.push({ id: 'v' + i, t: it[2], s: '', x: 760, y: y, w: 400, h: 50, c: 5 }); edges.push(['k' + i, 'i' + i, 'v' + i, '']); });
+  const names = ['Đối chiếu checklist tuần 2', 'Thứ tự việc cần làm tiếp'];
+  const CODE = ['mỗi hạng mục của TV2 trong checklist tuần 2:', '  có bằng chứng ở cột "Tiêu chí hoàn thành" → đạt', '  chưa có → ghi việc còn lại và người làm', 'ưu tiên: việc khác chờ mình trước, việc cần người rà sau', 'trước họp: push, mở PR, báo điều nhóm cần biết'];
+  const steps = [['Rà section_gold', 'Mở sections_review.csv, sửa nhãn sai trong sections_labeled.csv, mục tiêu ≥ 1.000 đoạn đã rà. Đây là việc chặn hạng mục "Nhãn mục" và chặn các thí nghiệm tuần 3.'],
+    ['Gán nhãn CLO phần của mình', 'Làm trên Google Sheet của TV1, ưu tiên xong trước thứ Năm vì TV1 cần cả hai vòng để tính kappa.'],
+    ['Restart & Run All notebook 1.0', 'Mở trong Jupyter, chạy lại từ đầu, xác nhận không lỗi với seed cố định rồi mới tick hạng mục.'],
+    ['Push và mở PR', 'Đẩy nhánh feature, mở pull request vào main, chờ một người duyệt và TV1 merge. Chưa merge thì chưa tính là hoàn thành.'],
+    ['Báo nhóm', 'Dữ liệu dùng được cho TV4 (soạn câu hỏi) và TV1 (BM25), nhưng provenance.verified vẫn là false; clos_labeled.csv và folds.csv là việc của TV1.']];
+  function build(k) {
+    if (k === 0) return items.map((it, i) => F(['i' + i, 'v' + i], ['k' + i], i === 3 ? 4 : i === 4 ? 3 : 2, '<b>' + it[0] + '</b>: ' + it[1] + ' - ' + it[2] + '.'));
+    return steps.map((s, i) => F([['i1', 'i3', 'i2', 'i0', 'i4'][i]], [], [3, 4, 2, 2, 4][i], '<b>' + (i + 1) + '. ' + s[0] + '.</b> ' + s[1]));
+  }
+  makeFlow(root, {
+    intro: 'Tab này đối chiếu báo cáo tiến độ tuần 2 với checklist của nhóm. Code và dữ liệu của TV2 đã xong, còn <b>việc của người</b> và <b>việc chưa đẩy lên GitHub</b>. Theo quy ước nhóm, chỉ tick khi có bằng chứng.',
+    hook: 'Máy đã làm xong phần của máy. Còn lại: <b>rà nhãn</b>, <b>gán nhãn CLO</b>, <b>Restart & Run All</b>, <b>push + PR</b>, <b>báo nhóm</b>.',
+    w: 1000, h: 420, nodes: nodes, edges: edges, names: names, code: CODE, build: build,
+    detail: '<div><div class="lab"><span>Thứ tự nên làm</span></div><ol style="margin:0;padding-left:20px;font-size:13.5px">' + steps.map(s => '<li><b>' + s[0] + '.</b> ' + s[1] + '</li>').join('') + '</ol></div>',
+    gloss: [['Restart & Run All', 'lệnh của Jupyter chạy lại notebook từ ô đầu tiên để chắc chắn kết quả không phụ thuộc trạng thái cũ.'], ['PR', 'pull request: đề nghị gộp nhánh của bạn vào main, cần người duyệt và TV1 merge.'], ['kappa', 'chỉ số mức đồng ý giữa hai người gán nhãn; dưới 0,6 thì họp lại về các câu bất đồng.'], ['provenance.verified', 'false nghĩa là dữ liệu chưa được đối chiếu với PDF gốc.']],
+    note: 'Đối chiếu theo báo cáo tiến độ tuần 2 của TV2 và checklist tuần 2 trong tài liệu nhóm.',
+    extra: (c, S) => { items.forEach((it, i) => { if ((S.passed['k' + i] || S.curE.indexOf('k' + i) >= 0) && S.k === 0) { const y = 66 + i * 76; badge(c, it[1], 960, y - 28, it[3] === 2 ? PAL[2] : it[3] === 1 ? PAL[1] : PAL[3], true); } }); }
+  });
+}
+
+/* =================== TAB 14: KHUNG LÀM VIỆC MỖI TUẦN =================== */
+function tab14(root) {
+  const nodes = [{ id: 'a', t: '1. Đọc checklist tuần', s: 'tài liệu nhóm', x: 130, y: 70, w: 210, c: 5 }, { id: 'b', t: '2. Tìm bằng chứng cần có', s: 'file, con số, PR', x: 420, y: 70, w: 220, c: 5 }, { id: 'c', t: '3. Chạy script theo thứ tự', s: 'đầu ra bước trước = đầu vào', x: 720, y: 70, w: 230, c: 0 },
+    { id: 'd', t: '4. Đọc log và số đo', s: 'đếm, tỷ lệ, cảnh báo', x: 720, y: 200, w: 230, c: 0 }, { id: 'e', t: '5. Rà tay phần máy không làm được', s: 'nhãn, sửa tay', x: 420, y: 200, w: 260, c: 1 }, { id: 'f', t: '6. Notebook Restart & Run All', s: 'seed cố định', x: 130, y: 200, w: 220, c: 0 },
+    { id: 'g', t: '7. Ghi số liệu, tài liệu', s: 'metrics.json, docs/', x: 130, y: 330, w: 210, c: 3 }, { id: 'h', t: '8. Push, PR, báo họp', s: 'TV1 merge', x: 420, y: 330, w: 220, c: 3 }];
+  const edges = [['1', 'a', 'b', ''], ['2', 'b', 'c', ''], ['3', 'c', 'd', ''], ['4', 'd', 'e', ''], ['5', 'e', 'f', ''], ['6', 'f', 'g', ''], ['7', 'g', 'h', '']];
+  const names = ['Khung chung', 'Áp dụng cho tuần 1', 'Áp dụng cho tuần 2'];
+  const CODE = ['đọc checklist: hạng mục nào của mình', 'với mỗi hạng mục: bằng chứng là gì?', 'chạy script theo thứ tự phụ thuộc', 'đọc log: số lượng, cảnh báo, lỗi', 'rà tay các chỗ máy không chắc', 'notebook: Restart & Run All, seed cố định', 'ghi số vào metrics.json và docs/', 'push, mở PR, báo họp thứ Hai'];
+  const T3 = [['Mở tài liệu nhiệm vụ 5 tuần, đọc phần tuần này và lọc dòng của TV2.', 'Bảng "TV2 - Tầng dữ liệu" và checklist tuần 1.', 'Bảng "TV2 - Tầng dữ liệu" và checklist tuần 2.'],
+    ['Mỗi hạng mục có cột "Tiêu chí hoàn thành / bằng chứng". Chỉ tick khi có đúng thứ đó.', 'inventory.csv, ocr/ đủ môn, clos_raw.csv, schema + ví dụ 841047.', 'JSON mọi môn, sections_labeled.csv ≥ 1.000 đoạn đã rà, notebook chạy lại được.'],
+    ['Thứ tự do phụ thuộc: bước sau cần đầu ra của bước trước.', 'make_inventory → pdf_to_images → ocr_run → clean_text → extract_clos.', 'split_sections → make_dataset → validate_json.'],
+    ['Log cho biết bước nào hỏng; con số đối chiếu với kỳ vọng.', 'Số môn, số trang, số CLO, trang CLO chưa ghép được.', '54/54 JSON hợp lệ, 5.693 đoạn, cảnh báo thiếu tiêu đề.'],
+    ['Phần máy không chắc thì người quyết định.', 'Sửa tay CLO bị tách cột, ghi vào clos_manual_fixes.csv.', 'Rà section_gold ở đoạn ranh giới; gán nhãn CLO.'],
+    ['Chạy lại từ đầu, không lỗi, seed cố định mới tính là xong.', 'Chưa có notebook bắt buộc.', 'Notebook 1.0: mới chạy bằng script, cần Restart & Run All trong Jupyter.'],
+    ['Con số nào mới thì ghi vào results/metrics.json; quyết định ghi vào docs/decisions.md.', 'ocr_comparison.md, decisions.md D1, schema.', 'Số đoạn, số môn cho báo cáo; ghi chú provenance.verified = false.'],
+    ['PR vào main, một người duyệt, TV1 merge. Ngày họp báo việc chưa xong kèm lý do và ngày dự kiến.', 'Đã push nhánh feature/long-tuan1-data.', 'Chưa push, chưa mở PR; báo TV4 và TV1 rằng dữ liệu dùng được nhưng chưa verified.']];
+  function build(k) { return nodes.map((n, i) => F([n.id], i ? [String(i)] : [], i, '<b>' + n.t.slice(3) + '.</b> ' + T3[i][k])); }
+  makeFlow(root, {
+    intro: 'Mỗi tuần của đồ án có cùng một nhịp. Khi gặp nhiệm vụ mới có quy trình giống thế này, hãy đi qua tám bước dưới đây trước khi bắt tay vào code. Ba kịch bản cho thấy cùng một khung áp dụng thế nào ở tuần 1 và tuần 2.',
+    hook: 'Checklist → <b>bằng chứng</b> → chạy script → <b>rà tay</b> → Restart & Run All → ghi số → <b>PR + báo họp</b>.',
+    w: 1000, h: 400, nodes: nodes, edges: edges, names: names, code: CODE, build: build,
+    detail: '<div><div class="lab"><span>Câu hỏi nên tự hỏi ở mỗi bước</span></div><table class="t"><tr><th>bước</th><th>câu hỏi</th></tr><tr><td>1–2</td><td>Hạng mục này của mình hay của người khác? Bằng chứng là file nào, con số nào?</td></tr><tr><td>3–4</td><td>Script nào chạy trước? Log báo bao nhiêu, đúng kỳ vọng chưa?</td></tr><tr><td>5</td><td>Phần nào máy không chắc và chỉ người mới quyết được?</td></tr><tr><td>6–8</td><td>Chạy lại từ đầu có ra đúng kết quả không? Đã ghi, đã push, đã báo ai chờ mình?</td></tr></table></div>',
+    gloss: [['bằng chứng', 'file đúng đường dẫn, PR đã merge hoặc con số đã ghi vào metrics.json.'], ['định nghĩa hoàn thành', 'mã nằm trong src/, PR đã merge, notebook chạy lại không lỗi, metric đã ghi.'], ['nhịp tuần', 'thứ Hai họp đồng bộ, thứ Sáu hạn mở PR, Chủ nhật duyệt mốc.']],
+    note: 'Khung rút ra từ phần "Cách dùng tài liệu" và "Định nghĩa hoàn thành" trong tài liệu nhiệm vụ 5 tuần.'
+  });
+}
+
+const TABS = [['tong', '0. Tuần 1: dây chuyền', tab0], ['bangke', '1. Bảng kê', tab1], ['anh', '2. PDF → ảnh', tab2], ['engine', '3. OCR: chọn engine', tab3], ['ocr', '4. OCR: chạy kết hợp', tab4],
+  ['sach', '5. Làm sạch chữ', tab5], ['clo', '6. Tách CLO', tab6], ['schema', '7. Schema JSON', tab7], ['kiem', '8. Kiểm tra tuần 1', tab8],
+  ['t2tong', '9. Tuần 2: dây chuyền', tab9], ['t2muc', '10. Tách mục', tab10], ['t2json', '11. Dựng JSON', tab11], ['t2kiem', '12. Kiểm JSON và rà nhãn', tab12], ['t2tiep', '13. Tuần 2: việc tiếp theo', tab13], ['khung', '14. Khung mỗi tuần', tab14]];
+
+const tabsEl = $('#tabs'), panelsEl = $('#panels'), built = {};
+readTheme();
+TABS.forEach(function (t, i) {
+  const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.id = 'tab-' + t[0]; b.textContent = t[1]; b.setAttribute('aria-controls', 'panel-' + t[0]);
+  b.onclick = () => select(t[0]);
+  b.onkeydown = e => { if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return; const j = (i + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length; select(TABS[j][0]); $('#tab-' + TABS[j][0]).focus(); };
+  tabsEl.appendChild(b);
+  const p = document.createElement('div'); p.id = 'panel-' + t[0]; p.setAttribute('role', 'tabpanel'); p.setAttribute('aria-labelledby', b.id); p.hidden = true; panelsEl.appendChild(p);
+});
+function select(id) {
+  TABS.forEach(function (t) {
+    const on = t[0] === id;
+    $('#tab-' + t[0]).setAttribute('aria-selected', on ? 'true' : 'false'); $('#tab-' + t[0]).tabIndex = on ? 0 : -1; $('#panel-' + t[0]).hidden = !on;
+    if (on && !built[id]) { built[id] = true; t[2]($('#panel-' + id)); }
+  });
+  try { history.replaceState(null, '', '#' + id); } catch (e) { /* trang nhúng có thể không cho đổi hash */ }
+}
+$('#themeBtn').onclick = function () {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark'); this.textContent = dark ? 'Nền tối' : 'Nền sáng'; readTheme();
+};
+/* Nút Back/Next cố định hai bên + phím ← →: chuyển sang tab trước/sau */
+function nav(d) {
+  const i = TABS.findIndex(t => $('#tab-' + t[0]).getAttribute('aria-selected') === 'true'), j = i + d;
+  if (j >= 0 && j < TABS.length) { select(TABS[j][0]); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+}
+[['navPrev', '‹', 'Tab trước (←)', -1], ['navNext', '›', 'Tab sau (→)', 1]].forEach(a => {
+  const b = document.createElement('button'); b.type = 'button'; b.id = a[0]; b.className = 'navfix'; b.textContent = a[1]; b.title = a[2]; b.setAttribute('aria-label', a[2]);
+  b.onclick = () => nav(a[3]); document.body.appendChild(b);
+});
+document.addEventListener('keydown', e => {
+  if ((e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+  if (e.target.closest && e.target.closest('input,select,textarea,[role=tab]')) return;   // để ô nhập/thanh trượt/thanh tab tự xử lý
+  nav(e.key === 'ArrowRight' ? 1 : -1);
+});
+select(TABS.some(t => t[0] === location.hash.slice(1)) ? location.hash.slice(1) : 'tong');
+
+</script>
