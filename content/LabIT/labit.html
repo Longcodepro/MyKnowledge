@@ -1,0 +1,730 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workflow</title>
+<style>
+:root{--vl-bg:#fff;--vl-panel:#f6f7f9;--vl-fg:#14181d;--vl-muted:#5d6670;--vl-line:#d9dde3;--vl-accent:#2563eb;
+  --vl-axis:#9aa3ad;--vl-hl:#fff3bf;--vl-hl-fg:#5c4600;--warn-bg:#fffbeb;--warn-fg:#92400e;--vl-warn:#b45309;}
+:root[data-theme=dark]{--vl-bg:#13161a;--vl-panel:#1b1f25;--vl-fg:#e8ecf1;--vl-muted:#9aa5b1;--vl-line:#2b323b;
+  --vl-accent:#5b9dff;--vl-axis:#5d6670;--vl-hl:#3a3414;--vl-hl-fg:#ffe79a;--warn-bg:#2a2210;--warn-fg:#fcd34d;--vl-warn:#fbbf24;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--vl-bg);color:var(--vl-fg);font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+.bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--vl-line);background:var(--vl-panel);position:sticky;top:0;z-index:20;}
+@media (max-width:700px){.bar{position:static;}}
+.bar h1{font-size:16px;margin:0 8px 0 0;}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;flex:1;}
+button,select{font:inherit;font-size:13px;padding:6px 12px;border-radius:7px;cursor:pointer;border:1px solid var(--vl-line);background:var(--vl-bg);color:var(--vl-fg);}
+select{width:100%;cursor:pointer;}
+button:hover{border-color:var(--vl-accent);}
+.tab[aria-selected=true],.primary{background:var(--vl-accent);border-color:var(--vl-accent);color:#fff;}
+.warn{overflow-wrap:anywhere;margin:12px 16px 0;padding:8px 12px;border-radius:8px;background:var(--warn-bg);color:var(--warn-fg);font-size:13px;}
+.panel{display:none;padding:16px 16px 96px;}
+.panel.on{display:block;}
+.summary{color:var(--vl-muted);margin:0 0 12px;}
+.main{display:grid;grid-template-columns:minmax(0,1fr) clamp(300px,28vw,440px);gap:16px;align-items:start;}
+.col{min-width:0;}
+@media (max-width:1000px){.main{display:flex;flex-direction:column;gap:0;}.col{display:contents;}.card{order:var(--o,5);}}
+.card{border:1px solid var(--vl-line);border-radius:10px;background:var(--vl-panel);padding:12px;margin-bottom:12px;}
+.card h3{margin:0 0 8px;font-size:12.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--vl-muted);}
+.stage{border:1px solid var(--vl-line);border-radius:10px;background:var(--vl-panel);padding:8px;margin-bottom:12px;}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+pre,code{font:12.5px/1.5 ui-monospace,"Cascadia Code",Consolas,monospace;}
+pre{margin:6px 0 0;padding:8px;background:var(--vl-bg);border:1px solid var(--vl-line);border-radius:7px;white-space:pre-wrap;overflow-wrap:anywhere;}
+.steps{overflow-wrap:anywhere;}
+.steps div{padding:5px 8px;border-radius:6px;font-size:13.5px;cursor:pointer;color:var(--vl-muted);}
+.steps div.on{background:var(--vl-hl);color:var(--vl-hl-fg);font-weight:600;}
+.steps div.fail b{color:#dc2626;} .steps div.ok b{color:#16a34a;}
+.badge{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid currentColor;}
+.ok{color:#15803d;} .bad{color:#b91c1c;} .inf{color:#b45309;}
+.chip{display:inline-block;padding:1px 8px;margin:0 4px 4px 0;border-radius:6px;background:var(--vl-bg);border:1px solid var(--vl-line);font-size:12px;}
+a.ref{color:var(--vl-accent);cursor:pointer;text-decoration:underline dotted;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;}
+table{border-collapse:collapse;width:100%;font-size:13px;table-layout:fixed;} td,th{border-bottom:1px solid var(--vl-line);padding:4px 6px;text-align:left;vertical-align:top;overflow-wrap:anywhere;}
+th:first-child,td:first-child{width:34%;}
+select{max-width:100%;min-height:36px;} button{min-height:36px;}
+a.ref{overflow-wrap:anywhere;}
+.stage{overflow:hidden;}
+.fab{position:fixed;bottom:18px;z-index:30;padding:10px 16px;border-radius:999px;font-weight:600;font-size:14px;box-shadow:0 2px 10px rgba(0,0,0,.25);display:none;background:var(--vl-accent);color:#fff;border-color:var(--vl-accent);}
+.fab.back{left:18px;background:var(--vl-bg);color:var(--vl-accent);} .fab.next{right:18px;} .fab.show{display:block;} .fab:disabled{opacity:.4;cursor:not-allowed;}
+.hint{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);font-size:12px;background:var(--vl-bg);padding:3px 10px;border-radius:999px;border:1px solid var(--vl-line);color:var(--vl-muted);z-index:25;}
+@media (max-width:700px){.hint{display:none;}}
+</style>
+</head>
+<body>
+<script>
+/* ============================================================================
+   Flow v2 — sơ đồ nút + dây KIỂU MẠCH ĐIỆN (dây vuông góc, không đè nhau)
+   ----------------------------------------------------------------------------
+   Độc lập với base.js (chỉ cần biến CSS --vl-*, đã có giá trị dự phòng).
+
+   KHÁC BẢN CŨ
+   - Dây đi vuông góc, do bộ định tuyến A* tìm đường trên lưới: KHÔNG xuyên qua nút,
+     KHÔNG chạy trùng lên dây khác. Chỗ hai dây buộc phải cắt nhau thì dây ngang
+     "nhảy" qua bằng một nhịp cung nhỏ (như sơ đồ mạch điện).
+   - Chữ KHÔNG BAO GIỜ bị cắt: tên nút, file:dòng, công nghệ tự xuống dòng; nút cao lên.
+   - Nhãn trên dây tự tìm chỗ trống (không đè nút/dây khác/nhãn khác); không có chỗ thì
+     tự nới khoảng cách rồi thử lại.
+   - Vừa 100% chiều rộng khung chứa, KHÔNG có thanh cuộn ngang:
+       màn rộng  → các tầng xếp thành cột trái→phải
+       màn hẹp   → các tầng xếp thành hàng trên→dưới (điện thoại)
+     Tự dựng lại khi đổi kích thước cửa sổ; trạng thái (tô sáng, ✓ ✗) được giữ nguyên.
+
+   DÙNG
+     const fl = Flow.create(host, {
+       layers: [{id:'api', label:'API'}],               // thứ tự = thứ tự cột/hàng
+       nodes:  [{id:'a', layer:'api', label:'POST /login', sub:'auth.py:10', tech:'FastAPI', badge:'suy luận'}],
+       edges:  [{from:'a', to:'b', label:'validate'}],
+       onNodeClick(node){}
+     });
+     fl.setActive(['a']); fl.mark('a','ok'|'fail'|null); fl.highlightEdge('a','b'); fl.clear();
+     await fl.sendPacket('a','b',{label:'{email}'});   Flow.fast = true → bỏ hoạt ảnh (kiểm thử)
+   ========================================================================== */
+(function (global) {
+  'use strict';
+  const NS = 'http://www.w3.org/2000/svg';
+  const C = 10;                         // kích thước ô lưới định tuyến (px)
+  const PAD = 20, FONT = 'system-ui,-apple-system,"Segoe UI",Roboto,sans-serif', MONO = 'ui-monospace,Consolas,monospace';
+  const LAYER_COLORS = { client: '#0072B2', frontend: '#56B4E9', api: '#009E73', dto: '#8a6d00', service: '#CC79A7',
+    security: '#E69F00', repo: '#D55E00', db: '#5d4037', external: '#607d8b', infra: '#455a64' };
+  const FALLBACK = ['#0072B2', '#009E73', '#CC79A7', '#D55E00', '#E69F00', '#56B4E9'];
+  const DX = [1, 0, -1, 0], DY = [0, 1, 0, -1];          // 0 phải, 1 xuống, 2 trái, 3 lên
+
+  function s(tag, attrs, parent, text) {
+    const e = document.createElementNS(NS, tag);
+    for (const k in (attrs || {})) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+
+  /* ---------- đo & xuống dòng chữ (không bao giờ cắt bớt chữ) ---------- */
+  let mctx = null;
+  function measure(t, size, weight, mono) {
+    if (!mctx) { try { mctx = document.createElement('canvas').getContext('2d'); } catch (e) { mctx = false; } }
+    if (!mctx) return String(t).length * size * (mono ? 0.62 : 0.58);
+    mctx.font = (weight || 400) + ' ' + size + 'px ' + (mono ? MONO : FONT);
+    return mctx.measureText(t).width;
+  }
+  function wrap(text, maxW, size, weight, mono) {
+    text = String(text == null ? '' : text);
+    if (!text) return [];
+    const toks = text.match(/[^\s\/_.\-:,(){}\[\]]+[\/_.\-:,(){}\[\]]?|[\/_.\-:,(){}\[\]]|\s+/g) || [text];
+    const lines = []; let cur = '';
+    const fits = function (t) { return measure(t, size, weight, mono) <= maxW; };
+    toks.forEach(function (tok) {
+      if (/^\s+$/.test(tok)) { if (cur) cur += ' '; return; }
+      if (fits(cur + tok)) { cur += tok; return; }
+      if (cur.trim()) { lines.push(cur.trim()); cur = ''; }
+      while (!fits(tok) && tok.length > 1) {              // token quá dài: bẻ theo ký tự
+        let k = tok.length - 1; while (k > 1 && !fits(tok.slice(0, k))) k--;
+        lines.push(tok.slice(0, k)); tok = tok.slice(k);
+      }
+      cur = tok;
+    });
+    if (cur.trim()) lines.push(cur.trim());
+    return lines;
+  }
+  const ceilC = function (v) { return Math.ceil(v / C) * C; };
+
+  /* ---------- tạo nút: chia dòng, tính chiều cao ---------- */
+  function sizeNode(n, NW) {
+    const inner = NW - 14 - 10;
+    const L = [];
+    wrap(n.label, inner, 12.5, 700).forEach(function (t) { L.push({ t: t, size: 12.5, w: 700, c: 'fg' }); });
+    wrap(n.sub, inner, 11, 400, true).forEach(function (t) { L.push({ t: t, size: 11, w: 400, mono: true, c: 'muted', gap: L.length ? 2 : 0 }); });
+    wrap(n.tech, inner, 11, 700).forEach(function (t, i) { L.push({ t: t, size: 11, w: 700, c: 'fg', gap: i === 0 ? 2 : 0 }); });
+    wrap(n.badge, inner, 10.5, 700).forEach(function (t, i) { L.push({ t: t, size: 10.5, w: 700, c: 'warn', gap: i === 0 ? 2 : 0 }); });
+    let y = 10;
+    L.forEach(function (l) { y += (l.gap || 0); l.y = y + l.size; y += Math.round(l.size * 1.32); });
+    n._lines = L; n.w = NW; n.h = Math.max(5 * C, ceilC(y + 8));
+  }
+
+  /* ---------- bố cục ---------- */
+  function layout(cfg, Wc, attempt, forceTb) {
+    const layers = (cfg.layers || []).slice();
+    cfg.nodes.forEach(function (n) { if (!layers.some(function (l) { return l.id === n.layer; })) layers.push({ id: n.layer, label: n.layer }); });
+    const used = layers.filter(function (l) { return cfg.nodes.some(function (n) { return n.layer === l.id; }); });
+    const cols = used.length, byLayer = {};
+    used.forEach(function (l) { byLayer[l.id] = cfg.nodes.filter(function (n) { return n.layer === l.id; }).map(function (n) { return Object.assign({}, n); }); });
+    let tokW = 0;
+    cfg.nodes.forEach(function (n) { String(n.label || '').split(/[\s\/_.\-:]+/).forEach(function (w) { tokW = Math.max(tokW, measure(w, 12.5, 700)); }); });
+    const MINW = Math.min(190, Math.max(120, Math.ceil((tokW + 32) / C) * C)), MINGX = 60;
+    const inner = Wc - 2 * PAD;
+    const lr = !forceTb && inner >= cols * MINW + (cols - 1) * MINGX;
+    const titles = [], nodes = [];
+    let H = 0;
+    if (lr) {
+      let NW = Math.min(190, Math.floor((inner - (cols - 1) * MINGX) / cols / C) * C);
+      NW = Math.max(MINW, NW - attempt * 20);
+      const GX = Math.floor((inner - cols * NW) / (cols - 1 || 1) / C) * C;
+      const total = cols * NW + (cols - 1) * (cols > 1 ? GX : 0);
+      const x0 = Math.max(PAD, Math.floor((Wc - total) / 2 / C) * C);
+      const GY = 50 + attempt * 30, TOP = 50;
+      const colsN = used.map(function (l) { byLayer[l.id].forEach(function (n) { sizeNode(n, NW); }); return byLayer[l.id]; });
+      /* sắp thứ tự trong cột theo trung bình hàng của nút kề (giảm dây chéo) */
+      const idx = {}; colsN.forEach(function (c) { c.forEach(function (n, i) { idx[n.id] = i; }); });
+      const colOf = {}; colsN.forEach(function (c, ci) { c.forEach(function (n) { colOf[n.id] = ci; }); });
+      for (let pass = 0; pass < 4; pass++) {
+        (pass % 2 ? colsN.slice().reverse() : colsN).forEach(function (c) {
+          const rank = {};
+          c.forEach(function (n, i) {
+            const nb = []; (cfg.edges || []).forEach(function (e) {
+              if (e.from === n.id && colOf[e.to] !== undefined && colOf[e.to] !== colOf[n.id]) nb.push(idx[e.to]);
+              if (e.to === n.id && colOf[e.from] !== undefined && colOf[e.from] !== colOf[n.id]) nb.push(idx[e.from]);
+            });
+            rank[n.id] = nb.length ? nb.reduce(function (a, b) { return a + b; }, 0) / nb.length : i;
+          });
+          c.sort(function (a, b) { return rank[a.id] - rank[b.id]; });
+          c.forEach(function (n, i) { idx[n.id] = i; });
+        });
+      }
+      const colH = colsN.map(function (c) { return c.reduce(function (a, n) { return a + n.h; }, 0) + (c.length - 1) * GY; });
+      const maxH = Math.max.apply(null, colH);
+      colsN.forEach(function (c, ci) {
+        let y = TOP + ceilC((maxH - colH[ci]) / 2);
+        const x = x0 + ci * (NW + (cols > 1 ? GX : 0));
+        c.forEach(function (n) { n.x = x; n.y = y; y += n.h + GY; nodes.push(n); });
+        titles.push({ layer: used[ci], x: x, w: NW, y: 10, center: true });
+      });
+      H = TOP + maxH + 50;
+    } else {
+      /* màn hẹp: mỗi lần thử chừa thêm làn đi dây hai bên (lane) và khoảng trống giữa các nút;
+         từ lần thử 4 trở đi mỗi hàng chỉ một nút để dây có đường vòng */
+      const lane = Math.min(90, 20 + attempt * 10), GXs = 40 + attempt * 10, MINWT = 120;
+      const innerT = inner - 2 * lane;
+      const maxIn = Math.max.apply(null, used.map(function (l) { return byLayer[l.id].length; }));
+      const per = attempt >= 4 ? 1 : Math.max(1, Math.min(maxIn, Math.floor((innerT + GXs) / (MINWT + GXs))));
+      const NW = Math.max(100, Math.min(per === 1 ? Math.max(120, Math.floor(innerT * 0.9 / C) * C) : 240, Math.floor((innerT - (per - 1) * GXs) / per / C) * C));
+      const GY = 60 + attempt * 40;
+      let y = 10;
+      used.forEach(function (l) {
+        const list = byLayer[l.id]; list.forEach(function (n) { sizeNode(n, NW); });
+        titles.push({ layer: l, x: PAD, w: inner, y: y, center: false });
+        y += 30;
+        for (let i = 0; i < list.length; i += per) {
+          const row = list.slice(i, i + per), rh = Math.max.apply(null, row.map(function (n) { return n.h; }));
+          const rw = row.length * NW + (row.length - 1) * GXs;
+          let x = Math.max(PAD, Math.floor((Wc - rw) / 2 / C) * C);
+          row.forEach(function (n) { n.x = x; n.y = y; x += NW + GXs; nodes.push(n); });
+          y += rh + 30;
+        }
+        y += GY - 30;
+      });
+      H = y;
+    }
+    H = ceilC(H);
+    titles.forEach(function (t) {
+      const w = measure(t.layer.label || t.layer.id, 12, 700) + 18;
+      t.tw = w; t.tx = t.center ? t.x + (t.w - w) / 2 : t.x; t.th = 20;
+    });
+    return { nodes: nodes, titles: titles, W: Wc, H: H, lr: lr };
+  }
+
+  /* ---------- bộ định tuyến A* vuông góc ---------- */
+  function binHeap() {
+    const a = [];
+    return {
+      size: function () { return a.length; },
+      push: function (f, v) { a.push([f, v]); let i = a.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (a[p][0] <= a[i][0]) break; const t = a[p]; a[p] = a[i]; a[i] = t; i = p; } },
+      pop: function () {
+        const top = a[0], last = a.pop();
+        if (a.length) { a[0] = last; let i = 0; for (;;) { let l = 2 * i + 1, r = l + 1, m = i; if (l < a.length && a[l][0] < a[m][0]) m = l; if (r < a.length && a[r][0] < a[m][0]) m = r; if (m === i) break; const t = a[m]; a[m] = a[i]; a[i] = t; i = m; } }
+        return top;
+      }
+    };
+  }
+
+  function route(lay, edges) {
+    const gw = Math.ceil(lay.W / C) + 1, gh = Math.ceil(lay.H / C) + 1;
+    const BLOCK = 4, occ = new Uint8Array(gw * gh), pen = new Uint8Array(gw * gh);
+    const at = function (x, y) { return y * gw + x; };
+    const nodeById = {}; lay.nodes.forEach(function (n) { nodeById[n.id] = n; });
+    /* chặn ô của nút (+ một ô "vòng" quanh nút chỉ để cắm dây) và tiêu đề tầng */
+    const block = function (x0, y0, x1, y1) { for (let y = Math.max(0, y0); y <= Math.min(gh - 1, y1); y++) for (let x = Math.max(0, x0); x <= Math.min(gw - 1, x1); x++) occ[at(x, y)] |= BLOCK; };
+    lay.nodes.forEach(function (n) {
+      n.x = Math.round(n.x / C) * C; n.y = Math.round(n.y / C) * C;
+      n.cx0 = n.x / C; n.cy0 = n.y / C; n.cx1 = (n.x + n.w) / C - 1; n.cy1 = (n.y + n.h) / C - 1;
+      block(n.cx0 - 1, n.cy0 - 1, n.cx1 + 1, n.cy1 + 1);              // nút + vòng
+    });
+    lay.titles.forEach(function (t) { block(Math.floor((t.tx - 4) / C), Math.floor((t.y - 4) / C), Math.ceil((t.tx + t.tw + 4) / C), Math.ceil((t.y + t.th + 4) / C)); });
+    const usedPort = {};
+    /* các cổng của một nút: ô vòng (ring) sát nút và ô ngoài (outer) cách một ô */
+    const ports = function (n) {
+      const P = [], rows = n.cy1 - n.cy0 + 1 > 3 ? [1, 1] : [0, 0], cl = n.cx1 - n.cx0 + 1 > 3 ? [1, 1] : [0, 0];
+      for (let y = n.cy0 + rows[0]; y <= n.cy1 - rows[1]; y++) {
+        P.push({ side: 0, rx: n.cx1 + 1, ry: y, ox: n.cx1 + 2, oy: y, dir: 0 });
+        P.push({ side: 2, rx: n.cx0 - 1, ry: y, ox: n.cx0 - 2, oy: y, dir: 2 });
+      }
+      for (let x = n.cx0 + cl[0]; x <= n.cx1 - cl[1]; x++) {
+        P.push({ side: 3, rx: x, ry: n.cy0 - 1, ox: x, oy: n.cy0 - 2, dir: 3 });
+        P.push({ side: 1, rx: x, ry: n.cy1 + 1, ox: x, oy: n.cy1 + 2, dir: 1 });
+      }
+      return P.filter(function (p) { return p.ox >= 0 && p.oy >= 0 && p.ox < gw && p.oy < gh; });
+    };
+    const key = function (p) { return p.rx + ',' + p.ry; };
+    const out = [];
+    let failed = 0;
+    const order = edges.map(function (e, i) { return { e: e, i: i }; }).sort(function (a, b) {
+      const A = nodeById[a.e.from], B = nodeById[a.e.to], A2 = nodeById[b.e.from], B2 = nodeById[b.e.to];
+      return (Math.abs(A.x - B.x) + Math.abs(A.y - B.y)) - (Math.abs(A2.x - B2.x) + Math.abs(A2.y - B2.y));
+    });
+    order.forEach(function (o) {
+      const e = o.e, A = nodeById[e.from], B = nodeById[e.to];
+      if (!A || !B || A === B) { out[o.i] = null; return; }
+      const SP = ports(A).filter(function (p) { return !usedPort[A.id + key(p)] && !(occ[at(p.ox, p.oy)] & BLOCK); });
+      const EP = ports(B).filter(function (p) { return !usedPort[B.id + key(p)] && !(occ[at(p.ox, p.oy)] & BLOCK); });
+      const goal = {}; EP.forEach(function (p) { goal[at(p.ox, p.oy)] = p; });
+      const N = gw * gh * 4, g = new Float64Array(N).fill(Infinity), from = new Int32Array(N).fill(-1);
+      const heap = binHeap();
+      const h = function (x, y) { let m = 1e9; for (let i = 0; i < EP.length; i++) { const d = Math.abs(EP[i].ox - x) + Math.abs(EP[i].oy - y); if (d < m) m = d; } return m; };
+      SP.forEach(function (p) {
+        const st = at(p.ox, p.oy) * 4 + p.dir; g[st] = 0; from[st] = -2; p._st = st;
+        heap.push(h(p.ox, p.oy), st);
+      });
+      let endSt = -1;
+      while (heap.size()) {
+        const top = heap.pop(), st = top[1], d = st & 3, cell = st >> 2, x = cell % gw, y = (cell / gw) | 0, gc = g[st];
+        if (top[0] - h(x, y) > gc + 1e-9) continue;
+        if (goal[cell]) { endSt = st; break; }
+        const crossing = occ[cell] & 3;
+        for (let nd = 0; nd < 4; nd++) {
+          if (nd === ((d + 2) & 3)) continue;
+          if (crossing && nd !== d) continue;                     // đang cắt dây khác: phải đi thẳng
+          const nx = x + DX[nd], ny = y + DY[nd];
+          if (nx < 0 || ny < 0 || nx >= gw || ny >= gh) continue;
+          const nc = at(nx, ny), ov = occ[nc];
+          if (ov & BLOCK) continue;
+          const horiz = (nd & 1) === 0;
+          let cost = 1 + (nd !== d ? 5 : 0) + pen[nc] * 3;
+          if (ov & 3) {                                           // ô đã có dây
+            const same = horiz ? (ov & 1) : (ov & 2);
+            const cross = horiz ? (ov & 2) : (ov & 1);
+            if (same) continue;                                   // cấm chạy trùng
+            if (cross && !(nd === d)) continue;                   // chỉ cắt khi đi thẳng
+            if ((ov & 3) === 3) continue;                         // góc rẽ của dây khác
+            cost += 12;
+          }
+          const ns = nc * 4 + nd, ng = gc + cost;
+          if (ng < g[ns]) { g[ns] = ng; from[ns] = st; heap.push(ng + h(nx, ny), ns); }
+        }
+      }
+      if (endSt < 0) { failed++; out[o.i] = null; return; }
+      const cells = []; let st = endSt;
+      while (st !== -2 && st !== -1) { cells.push(st >> 2); st = from[st]; }
+      cells.reverse();
+      const gp = goal[cells[cells.length - 1]];
+      const sp = SP.filter(function (p) { return at(p.ox, p.oy) === cells[0] && (p._st & 3) === p.dir; })[0] || SP[0];
+      [[A, sp], [B, gp]].forEach(function (pr) {
+        const n = pr[0], p = pr[1], hzSide = p.side === 0 || p.side === 2;
+        for (let d = -1; d <= 1; d++) usedPort[n.id + (hzSide ? p.rx + ',' + (p.ry + d) : (p.rx + d) + ',' + p.ry)] = 1;
+      });
+      /* điểm đường gấp khúc (tọa độ px) */
+      const cc = function (c) { return [((c % gw) + 0.5) * C, (((c / gw) | 0) + 0.5) * C]; };
+      const border = function (n, p) {
+        const cx = (p.ry + 0.5) * C, cxx = (p.rx + 0.5) * C;
+        if (p.side === 0) return [n.x + n.w, cx]; if (p.side === 2) return [n.x, cx];
+        if (p.side === 3) return [cxx, n.y]; return [cxx, n.y + n.h];
+      };
+      const ringPt = function (p) { return [(p.rx + 0.5) * C, (p.ry + 0.5) * C]; };
+      let pts = [border(A, sp), ringPt(sp)].concat(cells.map(cc)).concat([ringPt(gp), border(B, gp)]);
+      /* bỏ điểm trùng/thẳng hàng */
+      const q = [];
+      pts.forEach(function (pt) {
+        if (q.length && q[q.length - 1][0] === pt[0] && q[q.length - 1][1] === pt[1]) return;
+        q.push(pt);
+        while (q.length >= 3) {
+          const a = q[q.length - 3], b = q[q.length - 2], c = q[q.length - 1];
+          if ((a[0] === b[0] && b[0] === c[0]) || (a[1] === b[1] && b[1] === c[1])) q.splice(q.length - 2, 1); else break;
+        }
+      });
+      pts = q;
+      /* ghi nhận ô đã dùng */
+      const mark = function (x, y, bit) { occ[at(x, y)] |= bit; };
+      const seq = [[sp.rx, sp.ry]].concat(cells.map(function (c) { return [c % gw, (c / gw) | 0]; })).concat([[gp.rx, gp.ry]]);
+      mark(sp.rx, sp.ry, 3); mark(gp.rx, gp.ry, 3);
+      for (let i = 1; i < seq.length; i++) {
+        const a = seq[i - 1], b = seq[i], hz = a[1] === b[1];
+        mark(a[0], a[1], hz ? 1 : 2); mark(b[0], b[1], hz ? 1 : 2);
+        const nb = hz ? [[0, -1], [0, 1]] : [[-1, 0], [1, 0]];
+        nb.forEach(function (d) { [a, b].forEach(function (c) { const X = c[0] + d[0], Y = c[1] + d[1]; if (X >= 0 && Y >= 0 && X < gw && Y < gh && pen[at(X, Y)] < 4) pen[at(X, Y)] += 2; const X2 = X + d[0], Y2 = Y + d[1]; if (X2 >= 0 && Y2 >= 0 && X2 < gw && Y2 < gh && pen[at(X2, Y2)] < 4) pen[at(X2, Y2)]++; }); });
+      }
+      for (let i = 1; i < seq.length - 1; i++) {                  // ô rẽ góc: chặn hẳn
+        const a = seq[i - 1], b = seq[i], c = seq[i + 1];
+        if ((a[0] === b[0]) !== (b[0] === c[0])) mark(b[0], b[1], 3);
+      }
+      out[o.i] = { pts: pts, e: e };
+    });
+    return { routes: out, failed: failed };
+  }
+
+  /* ---------- vẽ ---------- */
+  const inter = function (a, b, m) { m = m || 0; return a.x < b.x + b.w - m && a.x + a.w > b.x + m && a.y < b.y + b.h - m && a.y + a.h > b.y + m; };
+  function segRect(p, q, r, m) {                                  // đoạn thẳng ngang/dọc cắt hình chữ nhật?
+    const x0 = Math.min(p[0], q[0]), x1 = Math.max(p[0], q[0]), y0 = Math.min(p[1], q[1]), y1 = Math.max(p[1], q[1]);
+    return x1 > r.x - m && x0 < r.x + r.w + m && y1 > r.y - m && y0 < r.y + r.h + m;
+  }
+
+  function placeLabels(lay, routes) {
+    const rects = []; const nodeR = lay.nodes.map(function (n) { return { x: n.x, y: n.y, w: n.w, h: n.h }; })
+      .concat(lay.titles.map(function (t) { return { x: t.tx, y: t.y, w: t.tw, h: t.th }; }));
+    let dropped = 0;
+    routes.forEach(function (r) { if (r && r.label) rects.push(r.label); });
+    routes.forEach(function (r, ri) {
+      const text = r && (r.badgeText || (r.e.label && !r.label ? r.e.label : null));
+      if (!r || !text || r.label) { return; }
+      const full = measure(text, 11, 600);
+      const variants = [[text]];
+      if (!r.badgeText) [0.6, 0.45].forEach(function (k) { const L = wrap(text, Math.max(24, full * k), 11, 600); if (L.length > 1 && L.length <= 3 && L.join(' ').split(/\s+/).length === text.split(/\s+/).length) variants.push(L); });
+      let got = null;
+      for (let vi = 0; vi < variants.length && !got; vi++) {
+        const lines = variants[vi];
+        const tw = Math.max.apply(null, lines.map(function (t) { return measure(t, 11, 600); })) + (r.badgeText ? 8 : 12), th = 6 + lines.length * 13 + (lines.length > 1 ? 2 : 0);
+        const cands = [];
+        for (let i = 1; i < r.pts.length; i++) {
+          const p = r.pts[i - 1], q = r.pts[i], len = Math.abs(p[0] - q[0]) + Math.abs(p[1] - q[1]);
+          if (len < 4) continue;
+          const stub = (i === 1 || i === r.pts.length - 1);
+          const hz = p[1] === q[1];
+          [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8, 0.1, 0.9, 0.05, 0.95, 0.15, 0.85, 0.25, 0.75].forEach(function (f, k) {
+            const cx = p[0] + (q[0] - p[0]) * f, cy = p[1] + (q[1] - p[1]) * f;
+            cands.push({ cx: cx, cy: cy, score: -len + k * 10 + (stub ? 150 : 0) });          // nằm ngay trên dây
+            const off = hz ? [[0, -(th / 2 + 5)], [0, th / 2 + 5]] : [[-(tw / 2 + 5), 0], [tw / 2 + 5, 0]];
+            off.forEach(function (o) { cands.push({ cx: cx + o[0], cy: cy + o[1], score: 400 - len + k * 10 }); });   // sát bên cạnh dây
+          });
+        }
+        cands.sort(function (a, b) { return a.score - b.score; });
+        const ok = function (rc) {
+          const why = function (m) { if (placeLabels.debug) placeLabels.debug.push(r.e.label + ': ' + m + ' @' + Math.round(rc.x) + ',' + Math.round(rc.y)); return false; };
+          if (rc.x < 2 || rc.y < 2 || rc.x + rc.w > lay.W - 2 || rc.y + rc.h > lay.H - 2) return why('ngoài khung');
+          const tight = !!r.badgeText;
+          for (let i = 0; i < nodeR.length; i++) if (inter(rc, nodeR[i], tight ? 0 : -2)) return why('nút/tiêu đề ' + i);
+          for (let i = 0; i < rects.length; i++) if (inter(rc, rects[i], tight ? 0 : -2)) return why('nhãn khác');
+          for (let k = 0; k < routes.length; k++) {
+            if (k === ri || !routes[k]) continue;
+            const pp = routes[k].pts;
+            for (let i = 1; i < pp.length; i++) if (segRect(pp[i - 1], pp[i], rc, tight ? 0.5 : 3)) return why('dây ' + routes[k].e.from + '>' + routes[k].e.to);
+          }
+          return true;
+        };
+        for (let i = 0; i < cands.length && !got; i++) {
+          const rc = { x: cands[i].cx - tw / 2, y: cands[i].cy - th / 2, w: tw, h: th, lines: lines };
+          if (ok(rc)) got = rc;
+        }
+      }
+      if (got) { r.label = got; rects.push(got); } else { dropped++;  }
+    });
+    return dropped;
+  }
+
+  const Flow = {
+    n: 0, fast: false, speed: 1,
+    create: function (host, cfg) {
+      host.innerHTML = '';
+      host.style.position = 'relative';
+      const uid = 'fl' + (++Flow.n);
+      let svg = null, pkt = null, wires = [], boxes = {}, lastW = 0, drawn = null;
+      const state = { active: {}, marks: {}, hi: null };
+      const colorOf = function (layerId) { return LAYER_COLORS[layerId] || FALLBACK[Math.abs(String(layerId).length) % FALLBACK.length]; };
+
+      function build() {
+        const hcs = getComputedStyle(host);
+        const cw = (host.clientWidth || host.getBoundingClientRect().width || 960) - (parseFloat(hcs.paddingLeft) || 0) - (parseFloat(hcs.paddingRight) || 0);
+        const Wc = Math.max(260, Math.floor(cw));
+        lastW = Wc;
+        let best = null;
+        /* 6 lần thử kiểu cột (nút hẹp dần, dây thưa dần), rồi 8 lần kiểu hàng (khoảng cách dọc rộng dần) */
+        for (let attempt = 0; attempt < 14; attempt++) {
+          const lay = layout(cfg, Wc, attempt < 6 ? attempt : attempt - 6, attempt >= 6);
+          const res = route(lay, cfg.edges || []);
+          let dropped = placeLabels(lay, res.routes);
+          /* nhãn không có chỗ → thay bằng số trên dây + chú thích bên dưới sơ đồ (chữ vẫn đọc được đầy đủ) */
+          const lost = res.routes.filter(function (r) { return r && r.e.label && !r.label; });
+          lost.forEach(function (r, i) { r.badgeText = String(i + 1); r.badge = true; });
+          if (lost.length) dropped = placeLabels(lay, res.routes);
+          lay.legend = lost.map(function (r) { return r.badgeText + ' = ' + r.e.label + '  (' + r.e.from + ' → ' + r.e.to + ')'; });
+          if (lay.legend.length) lay.H += 14 + lay.legend.length * 18;
+          const score = res.failed * 100 + dropped;
+          if (!best || score < best.score) best = { lay: lay, res: res, score: score, dropped: dropped };
+          if (score === 0) break;
+        }
+        draw(best);
+      }
+
+      function draw(best) {
+        const lay = best.lay, routes = best.res.routes;
+        if (svg) svg.remove();
+        svg = s('svg', { viewBox: '0 0 ' + lay.W + ' ' + lay.H, width: '100%', height: lay.H, role: 'img', 'data-flow': lay.lr ? 'lr' : 'tb',
+          'data-failed': best.res.failed, 'data-dropped': best.dropped, style: 'display:block;font-family:' + FONT }, host);
+        const defs = s('defs', null, svg);
+        const mk = s('marker', { id: uid + 'a', viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto' }, defs);
+        s('path', { d: 'M0 0L10 5L0 10z', fill: 'var(--vl-axis,#6b7480)' }, mk);
+        const mka = s('marker', { id: uid + 'h', viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto' }, defs);
+        s('path', { d: 'M0 0L10 5L0 10z', fill: 'var(--vl-accent,#2563eb)' }, mka);
+        const gWires = s('g', null, svg), gNodes = s('g', null, svg), gLab = s('g', null, svg), gMark = s('g', null, svg);
+        pkt = s('g', null, svg);
+        /* tiêu đề tầng: chấm màu + chữ (không dùng màu làm thông tin duy nhất) */
+        lay.titles.forEach(function (t) {
+          s('rect', { x: t.tx, y: t.y + 5, width: 9, height: 9, rx: 2, fill: colorOf(t.layer.id) }, svg);
+          s('text', { x: t.tx + 15, y: t.y + 15, 'font-size': 12, 'font-weight': 700, fill: 'var(--vl-fg,#14181d)', class: 'fl-t fl-title' }, svg, t.layer.label || t.layer.id);
+        });
+        /* dây: cạnh nào có dây ngang cắt dây dọc của cạnh khác thì vẽ "nhảy" */
+        const vsegs = [];
+        routes.forEach(function (r, ri) { if (!r) return; for (let i = 1; i < r.pts.length; i++) { const p = r.pts[i - 1], q = r.pts[i]; if (p[0] === q[0]) vsegs.push({ x: p[0], y0: Math.min(p[1], q[1]), y1: Math.max(p[1], q[1]), ri: ri }); } });
+        wires = [];
+        routes.forEach(function (r, ri) {
+          const e = (cfg.edges || [])[ri];
+          if (!r) {                                               // không tìm được đường: vẽ thẳng + đánh dấu để bị bắt khi kiểm tra
+            const A = lay.nodes.filter(function (n) { return n.id === e.from; })[0], B = lay.nodes.filter(function (n) { return n.id === e.to; })[0];
+            if (!A || !B) return;
+            const p = s('path', { d: 'M' + (A.x + A.w / 2) + ' ' + (A.y + A.h / 2) + 'L' + (B.x + B.w / 2) + ' ' + (B.y + B.h / 2), fill: 'none', stroke: '#dc2626', 'stroke-dasharray': '4 3', 'data-unrouted': '1', class: 'fl-wire' }, gWires);
+            wires[ri] = { path: p, e: e }; return;
+          }
+          let d = 'M' + r.pts[0][0] + ' ' + r.pts[0][1];
+          for (let i = 1; i < r.pts.length; i++) {
+            const p = r.pts[i - 1], q = r.pts[i];
+            if (p[1] === q[1]) {                                  // đoạn ngang: tìm chỗ cắt dây dọc khác
+              const dir = q[0] > p[0] ? 1 : -1, hops = [];
+              vsegs.forEach(function (v) { if (v.ri !== ri && v.y0 < p[1] && v.y1 > p[1] && v.x > Math.min(p[0], q[0]) + 6 && v.x < Math.max(p[0], q[0]) - 6) hops.push(v.x); });
+              hops.sort(function (a, b) { return dir * (a - b); });
+              hops.forEach(function (x) { d += 'L' + (x - dir * 5) + ' ' + p[1] + 'A5 5 0 0 ' + (dir > 0 ? 1 : 0) + ' ' + (x + dir * 5) + ' ' + p[1]; });
+            }
+            d += 'L' + q[0] + ' ' + q[1];
+          }
+          const path = s('path', { d: d, fill: 'none', stroke: 'var(--vl-axis,#6b7480)', 'stroke-width': 1.7, 'marker-end': 'url(#' + uid + 'a)', class: 'fl-wire',
+            'data-edge': e.from + '>' + e.to, 'data-pts': JSON.stringify(r.pts) }, gWires);
+          wires[ri] = { path: path, e: e, r: r };
+        });
+        /* nút */
+        boxes = {};
+        lay.nodes.forEach(function (n) {
+          const col = colorOf(n.layer);
+          const g = s('g', { transform: 'translate(' + n.x + ',' + n.y + ')', tabindex: 0, style: 'cursor:pointer', 'data-id': n.id, role: 'button', 'aria-label': n.label }, gNodes);
+          const rect = s('rect', { width: n.w, height: n.h, rx: 8, fill: 'var(--vl-panel,#f6f7f9)', stroke: col, 'stroke-width': 2, class: 'fl-box' }, g);
+          s('rect', { x: 0, y: 8, width: 5, height: n.h - 16, rx: 2.5, fill: col }, g);
+          n._lines.forEach(function (l) {
+            s('text', { x: 14, y: l.y, 'font-size': l.size, 'font-weight': l.w, 'font-family': l.mono ? MONO : FONT, class: 'fl-t',
+              fill: l.c === 'muted' ? 'var(--vl-muted,#4b5560)' : l.c === 'warn' ? 'var(--vl-warn,#b45309)' : 'var(--vl-fg,#14181d)' }, g, l.t);
+          });
+          const badge = s('g', { transform: 'translate(' + (n.w - 8) + ',0)', style: 'display:none', class: 'fl-mark' }, g);
+          const bc = s('circle', { r: 9, fill: 'var(--vl-bg,#fff)', 'stroke-width': 2 }, badge);
+          const tag = s('text', { y: 5, 'text-anchor': 'middle', 'font-size': 13, 'font-weight': 700 }, badge, '');
+          const act = function () { if (cfg.onNodeClick) cfg.onNodeClick(cfg.nodes.filter(function (x) { return x.id === n.id; })[0]); };
+          g.addEventListener('click', act);
+          g.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); act(); } });
+          boxes[n.id] = { g: g, rect: rect, tag: tag, badge: badge, bc: bc, col: col };
+        });
+        /* nhãn trên dây */
+        routes.forEach(function (r) {
+          if (!r || !r.label) return;
+          const g = s('g', { class: 'fl-lab', 'data-edge': r.e.from + '>' + r.e.to }, gLab);
+          s('rect', { x: r.label.x, y: r.label.y, width: r.label.w, height: r.label.h, rx: 8, fill: 'var(--vl-bg,#fff)', stroke: 'var(--vl-line,#d9dde3)', class: 'fl-lab-bg' }, g);
+          r.label.lines.forEach(function (ln, li) {
+            s('text', { x: r.label.x + r.label.w / 2, y: r.label.y + 3 + 13 * li + 10, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 600, fill: 'var(--vl-fg,#14181d)', class: 'fl-t fl-lt' }, g, ln);
+          });
+        });
+        lay.legend.forEach(function (t, i) {
+          const names = t.replace(/  \(.*\)$/, '');
+          s('text', { x: PAD, y: lay.H - 10 - (lay.legend.length - 1 - i) * 18, 'font-size': 12, fill: 'var(--vl-fg,#14181d)', class: 'fl-t fl-legend' }, svg, names);
+        });
+        applyState();
+      }
+
+      function applyState() {
+        for (const id in boxes) {
+          const on = !!state.active[id], m = state.marks[id] || '';
+          boxes[id].rect.setAttribute('stroke-width', on ? 4 : 2);
+          boxes[id].rect.setAttribute('fill', on ? 'var(--vl-hl,#fff3bf)' : 'var(--vl-panel,#f6f7f9)');
+          boxes[id].g.setAttribute('data-active', on ? '1' : '0');
+          boxes[id].g.setAttribute('data-mark', m);
+          boxes[id].tag.textContent = m === 'ok' ? '✓' : m === 'fail' ? '✗' : '';
+          boxes[id].badge.style.display = m ? '' : 'none';
+          const mc = m === 'fail' ? '#dc2626' : '#15803d';
+          boxes[id].tag.setAttribute('fill', mc); boxes[id].bc.setAttribute('stroke', mc);
+        }
+        wires.forEach(function (w) {
+          if (!w || !w.r) return;
+          const on = state.hi && w.e.from === state.hi[0] && w.e.to === state.hi[1];
+          w.path.setAttribute('stroke', on ? 'var(--vl-accent,#2563eb)' : 'var(--vl-axis,#6b7480)');
+          w.path.setAttribute('stroke-width', on ? 3.2 : 1.7);
+          w.path.setAttribute('marker-end', 'url(#' + uid + (on ? 'h' : 'a') + ')');
+        });
+      }
+
+      const api = {
+        get svg() { return svg; },
+        node: function (id) { return cfg.nodes.filter(function (n) { return n.id === id; })[0]; },
+        setActive: function (ids) { state.active = {}; (ids || []).forEach(function (i) { state.active[i] = 1; }); applyState(); },
+        mark: function (id, st) { if (st) state.marks[id] = st; else delete state.marks[id]; applyState(); },
+        highlightEdge: function (a, b) { state.hi = a ? [a, b] : null; applyState(); },
+        clear: function () { state.active = {}; state.marks = {}; state.hi = null; if (pkt) pkt.innerHTML = ''; applyState(); },
+        relayout: function () { build(); },
+        sendPacket: function (from, to, o) {
+          o = o || {};
+          api.highlightEdge(from, to);
+          const w = wires.filter(function (x) { return x && x.r && x.e.from === from && x.e.to === to; })[0];
+          if (Flow.fast || !w || !w.path.getTotalLength) return Promise.resolve();
+          const len = w.path.getTotalLength(), col = o.color || 'var(--vl-accent,#2563eb)';
+          const g = s('g', null, pkt);
+          s('circle', { r: 7, fill: col, stroke: '#fff', 'stroke-width': 2 }, g);
+          const ms = (o.ms || 800) / (Flow.speed || 1);
+          return new Promise(function (res) {
+            const t0 = performance.now();
+            (function tick(t) {
+              const k = Math.min(1, (t - t0) / ms), pt = w.path.getPointAtLength(len * k);
+              g.setAttribute('transform', 'translate(' + pt.x + ',' + pt.y + ')');
+              if (k < 1) requestAnimationFrame(tick); else { g.remove(); res(); }
+            })(t0);
+          });
+        }
+      };
+      build();
+      if (global.ResizeObserver) {
+        let tm = null;
+        new ResizeObserver(function () {
+          const w = Math.floor(host.clientWidth);
+          if (!w || Math.abs(w - lastW) < 6) return;
+          clearTimeout(tm); tm = setTimeout(build, 80);
+        }).observe(host);
+      }
+      return api;
+    }
+  };
+  Flow._internals = { layout: layout, route: route, placeLabels: placeLabels };
+  global.Flow = Flow;
+})(window);
+
+</script>
+<script>
+const SPEC = {"schema":1,"project":"LabIT","disclaimer":"Mô phỏng dựng từ việc đọc labit.py. Chưa chạy hệ thống thật. Mỗi nút trỏ tới file:dòng thật; nhãn 'suy luận' là phần không có dòng mã riêng.","nodes":[{"id":"user","layer":"client","name":"Người dùng","inferred":true,"tech":["terminal + tmux"],"role":"Gõ lệnh trong terminal hoặc trong dòng lệnh của hub."},{"id":"boss","layer":"client","name":"Sếp (Claude Code)","inferred":true,"tech":["Claude Code","MCP client"],"role":"Chạy trong tab manager; gọi các công cụ assign, wait_report, review, reassign, restart_worker."},{"id":"cli","layer":"api","name":"labit \u003clệnh>","file":"labit.py","line":1204,"snippet":"CLI[cmd](*a)","tech":["Python sys.argv"],"role":"Điểm vào: đọc tên lệnh (up, mcp, web, logs, console...) rồi gọi hàm tương ứng trong bảng CLI."},{"id":"mcp_srv","layer":"api","name":"mcp()","file":"labit.py","line":1040,"snippet":"def mcp():","tech":["MCP (JSON-RPC qua stdin/stdout)"],"role":"Máy chủ công cụ cho Claude Code: nhận tools/call, gọi hàm trong bảng FN, trả văn bản kết quả. Lúc initialize còn gửi cẩm nang MANAGER.md làm hướng dẫn cho sếp."},{"id":"up_fn","layer":"service","name":"up()","file":"labit.py","line":338,"snippet":"def up():","tech":["tmux","os.execvp"],"role":"Tạo phòng tmux (hub + web) nếu chưa có, đặt hook đổi tab, rồi gắn terminal vào phòng."},{"id":"init_fn","layer":"service","name":"init()","file":"labit.py","line":125,"snippet":"def init(quiet=False):","tech":["pathlib","json"],"role":"Tạo .labit/ (tasks, reports, guide), workers.json, boss.json, keys.env và ghi .mcp.json để Claude Code thấy công cụ LabIT. Không ghi đè file đã có."},{"id":"tmux_ext","layer":"external","name":"tmux","file":"labit.py","line":60,"snippet":"return subprocess.run([\"tmux\", *a], capture_output=True, text=True)","tech":["tmux","subprocess"],"role":"Mọi thao tác với cửa sổ/pane (tạo tab, gõ phím, đọc màn hình) đi qua hàm tmux(). Thiếu tmux thì trả mã 127."},{"id":"logs_pane","layer":"infra","name":"logs()","file":"labit.py","line":793,"snippet":"def logs():","tech":["ANSI màu","đọc file theo dõi"],"role":"Pane trên của hub: in 25 sự kiện gần nhất rồi theo dõi events.jsonl và in sự kiện mới."},{"id":"console_pane","layer":"infra","name":"console()","file":"labit.py","line":983,"snippet":"def console():","tech":["readline","input()"],"role":"Pane dưới của hub: dòng lệnh labit>. Nhận /changeWorker, /manager, /loginLabit, /usageLabit... và in kết quả ra khung log."},{"id":"web_fn","layer":"infra","name":"web()","file":"labit.py","line":784,"snippet":"def web(p=None):","tech":["threading","http.server"],"role":"Cửa sổ web nền: bật luồng giám sát (monitor_loop) rồi chạy máy chủ HTTP của trang 2D."},{"id":"events","layer":"db","name":".labit/events.jsonl","file":"labit.py","line":112,"snippet":"app(\"events.jsonl\", {\"t\": time.time(), \"level\": level, \"msg\": msg, \"worker\": worker})","tech":["JSON Lines"],"role":"Nhật ký sự kiện dùng chung: mọi nơi gọi emit() ghi vào đây; khung log ở hub và tab Nhật ký trên web đọc từ đây."},{"id":"assign_fn","layer":"service","name":"assign()","file":"labit.py","line":461,"snippet":"def assign(worker, task):","tech":["Python"],"role":"Giao một việc: kiểm tra, ghi brief, gõ lệnh vào tab worker, ghi sổ task, báo sự kiện."},{"id":"blocked_fn","layer":"security","name":"blocked()","file":"labit.py","line":422,"snippet":"def blocked(worker, ignore=None):","tech":["Python"],"role":"Cổng kiểm tra trước khi giao: có worker đó không, đang nghỉ không, người dùng đang thao tác trực tiếp không, đang bận không, đã đủ giới hạn ngày chưa."},{"id":"send_fn","layer":"service","name":"send() + start()","file":"labit.py","line":453,"snippet":"pid = start(worker)","tech":["tmux send-keys","wait_ready"],"role":"send() gọi start(): mở tab worker nếu chưa có (dựng lệnh qua launch(), chờ màn hình đứng yên 2 giây, từ chối nếu CLI đòi đăng nhập), rồi gõ câu lệnh vào pane và bấm Enter."},{"id":"launch_fn","layer":"security","name":"launch()","file":"labit.py","line":239,"snippet":"def launch(c):","tech":["bash","keys.env"],"role":"Dựng lệnh khởi động tab: nạp keys.env, đặt env riêng của worker, rồi bỏ mọi khóa worker không được cấp trước khi chạy CLI."},{"id":"brief","layer":"db","name":".labit/tasks/Txxx.md","file":"labit.py","line":466,"snippet":"brief.write_text(task + FOOT.format(id=tid))","tech":["Markdown file"],"role":"File brief: nội dung việc cộng phần quy tắc và mẫu báo cáo. Worker được bảo 'đọc file này'."},{"id":"tasks_jsonl","layer":"db","name":".labit/tasks.jsonl","file":"labit.py","line":473,"snippet":"app(\"tasks.jsonl\", {\"id\": tid, \"worker\": worker, \"t\": time.time()})","tech":["JSON Lines"],"role":"Sổ task: mỗi dòng là một lần giao (id, worker, thời điểm). Giao lại ghi thêm dòng mới cùng id."},{"id":"worker_cli","layer":"infra","name":"CLI của worker","inferred":true,"tech":["opencode","agy"],"role":"AI chạy trong tab tmux: đọc brief, làm việc, rồi tạo file báo cáo."},{"id":"report","layer":"db","name":".labit/reports/Txxx.md","file":"labit.py","line":101,"snippet":"return S / \"reports\" / f'{t[\"id\"]}.md'","tech":["Markdown file"],"role":"File báo cáo do worker tạo ở bước cuối. Sự tồn tại của file này là dấu hiệu task đã xong; không có thì task coi là đang chạy."},{"id":"delivered","layer":"db","name":".labit/delivered","file":"labit.py","line":537,"snippet":"with open(S / \"delivered\", \"a\") as f:","tech":["text file"],"role":"Danh sách id báo cáo đã trao cho sếp, để mỗi báo cáo chỉ giao một lần."},{"id":"reviews_jsonl","layer":"db","name":".labit/reviews.jsonl","file":"labit.py","line":555,"snippet":"app(\"reviews.jsonl\", {\"id\": task_id, \"verdict\": verdict, \"note\": note, \"t\": time.time()})","tech":["JSON Lines"],"role":"Sổ đánh giá của sếp (ok, retry, redo kèm ghi chú). Nguồn để tính tỉ lệ đạt và tổng hợp skill sau này."},{"id":"wait_report_fn","layer":"service","name":"wait_report()","file":"labit.py","line":530,"snippet":"def wait_report(timeout=50):","tech":["vòng chờ 1 giây"],"role":"Chờ tối đa timeout giây: trả báo cáo mới (chưa giao) trước, rồi sự cố chưa báo; hết giờ thì báo chưa có gì."},{"id":"review_fn","layer":"service","name":"review()","file":"labit.py","line":552,"snippet":"def review(task_id, verdict, note=\"\"):","tech":["Python"],"role":"Ghi đánh giá của sếp sau khi kiểm tra báo cáo; chỉ nhận ok, retry hoặc redo."},{"id":"tick","layer":"service","name":"monitor_tick()","file":"labit.py","line":657,"snippet":"def monitor_tick(mem):","tech":["Python"],"role":"Được monitor_loop gọi mỗi 2 giây. Mỗi lượt: thấy báo cáo mới, báo cáo đã giao, đánh giá mới thì phát sự kiện (lần quét đầu chỉ ghi nhớ), rồi gọi health() kiểm tra worker."},{"id":"health_fn","layer":"infra","name":"health()","file":"labit.py","line":682,"snippet":"def health(mem, now):","tech":["tmux capture-pane","pgrep","regex (re)"],"role":"Được monitor_tick gọi mỗi 2 giây. Với mỗi worker: đọc màn hình tab, đo thời gian đứng yên, xem CLI còn chạy không. Có việc đang chạy mà bất thường thì gọi classify() (khớp mẫu theo thứ tự auth, quota, network, prompt) rồi báo sự cố."},{"id":"raise_inc","layer":"infra","name":"raise_incident()","file":"labit.py","line":410,"snippet":"def raise_incident(t, kind, detail):","tech":["Python"],"role":"Ghi sự cố (mỗi task + loại chỉ một lần khi còn mở), cho worker nghỉ nếu là quota hoặc auth, và phát sự kiện đỏ/vàng."},{"id":"incidents","layer":"db","name":".labit/incidents.jsonl","file":"labit.py","line":414,"snippet":"app(\"incidents.jsonl\", {\"k\": k, \"task\": t[\"id\"]","tech":["JSON Lines"],"role":"Sổ sự cố: dòng mở sự cố và dòng resolved. Sự cố đang mở = dòng chưa có resolved."},{"id":"cooldown","layer":"db","name":".labit/cooldown.json","file":"labit.py","line":382,"snippet":"jwrite(\"cooldown.json\", d)","tech":["JSON"],"role":"Thời điểm worker được dùng lại. Trong lúc nghỉ, blocked() từ chối giao việc cho worker đó."},{"id":"reassign_fn","layer":"service","name":"reassign()","file":"labit.py","line":478,"snippet":"def reassign(task_id, worker, note=\"\"):","tech":["Python"],"role":"Giao lại task chưa có báo cáo cho cùng worker hoặc worker khác; nếu đổi worker thì khởi động lại worker cũ để dừng bản đang kẹt."},{"id":"restart_fn","layer":"service","name":"restart_worker()","file":"labit.py","line":501,"snippet":"def restart_worker(worker, quiet=False):","tech":["tmux respawn-pane"],"role":"Khởi động lại CLI trong tab (hoặc mở tab mới nếu tab đã mất), xóa trạng thái nghỉ và gỡ sự cố của worker đó."}],"features":[{"id":"up","title":"Mở phòng (labit up)","summary":"Từ lệnh labit up tới hub (khung log, dòng lệnh) và cửa sổ web nền.","nodes":["user","cli","up_fn","init_fn","tmux_ext","logs_pane","console_pane","web_fn"],"edges":[{"from":"user","to":"cli","label":"up"},{"from":"cli","to":"up_fn","label":"up()"},{"from":"up_fn","to":"init_fn","label":"init"},{"from":"init_fn","to":"up_fn","label":"xong"},{"from":"up_fn","to":"tmux_ext","label":"tạo"},{"from":"tmux_ext","to":"up_fn","label":"mã"},{"from":"tmux_ext","to":"logs_pane","label":"log"},{"from":"tmux_ext","to":"console_pane","label":"lệnh"},{"from":"tmux_ext","to":"web_fn","label":"web"},{"from":"cli","to":"user","label":"lỗi"}],"scenarios":[{"id":"first_log","title":"Lần đầu mở phòng: khung log","request":{"method":"CLI","path":"labit up"},"steps":[{"from":"user","to":"cli","packet":"up","text":"Người dùng gõ labit up trong thư mục project."},{"from":"cli","to":"up_fn","packet":"up()","text":"Bảng CLI gọi hàm up()."},{"from":"up_fn","to":"init_fn","packet":"init(quiet)","text":"Bảo đảm .labit/, cấu hình và .mcp.json đã có (không ghi đè)."},{"from":"init_fn","to":"up_fn","packet":"OK","text":"Khởi tạo xong."},{"from":"up_fn","to":"tmux_ext","packet":"new-session","text":"Chưa có phòng nên tạo session tmux, cửa sổ hub chạy labit logs ở pane trên."},{"from":"tmux_ext","to":"logs_pane","packet":"labit logs","text":"Pane trên chạy logs(): in 25 sự kiện gần nhất rồi theo dõi events.jsonl.","mark":"ok"}],"outcome":{"status":200,"text":"Khung log hiện thông báo theo thời gian thực."},"conditions":[{"text":"Chỉ tạo phòng khi tmux has-session trả mã khác 0","file":"labit.py","line":341},{"text":"Cửa sổ hub được tạo bằng new-session, pane trên chạy labit logs","file":"labit.py","line":342}]},{"id":"first_console","title":"Lần đầu mở phòng: dòng lệnh","request":{"method":"CLI","path":"labit up"},"steps":[{"from":"user","to":"cli","packet":"up","text":"Người dùng gõ labit up trong thư mục project."},{"from":"cli","to":"up_fn","packet":"up()","text":"Bảng CLI gọi hàm up()."},{"from":"up_fn","to":"init_fn","packet":"init(quiet)","text":"Bảo đảm .labit/, cấu hình và .mcp.json đã có (không ghi đè)."},{"from":"init_fn","to":"up_fn","packet":"OK","text":"Khởi tạo xong."},{"from":"up_fn","to":"tmux_ext","packet":"split-window","text":"Chia pane dưới cao 4 dòng chạy labit console."},{"from":"tmux_ext","to":"console_pane","packet":"labit console","text":"Pane dưới chạy console(): dòng lệnh labit>. Chữ trả lời hiện ở khung log phía trên.","mark":"ok"}],"outcome":{"status":200,"text":"Dòng lệnh sẵn sàng (/changeWorker, /manager, /loginLabit, /usageLabit...)."},"conditions":[{"text":"Pane dưới cao 4 dòng","file":"labit.py","line":344}]},{"id":"first_web","title":"Lần đầu mở phòng: cửa sổ web nền","request":{"method":"CLI","path":"labit up"},"steps":[{"from":"user","to":"cli","packet":"up","text":"Người dùng gõ labit up trong thư mục project."},{"from":"cli","to":"up_fn","packet":"up()","text":"Bảng CLI gọi hàm up()."},{"from":"up_fn","to":"init_fn","packet":"init(quiet)","text":"Bảo đảm .labit/, cấu hình và .mcp.json đã có (không ghi đè)."},{"from":"init_fn","to":"up_fn","packet":"OK","text":"Khởi tạo xong."},{"from":"up_fn","to":"tmux_ext","packet":"new-window","text":"Mở cửa sổ nền tên web chạy labit web."},{"from":"tmux_ext","to":"web_fn","packet":"labit web","text":"Cửa sổ web chạy web(): bật luồng giám sát rồi máy chủ trang 2D (chỉ nghe 127.0.0.1).","mark":"ok"}],"outcome":{"status":200,"text":"Giám sát nền và trang 2D cùng chạy."},"conditions":[{"text":"Cổng web = 8700 + crc32(đường dẫn project) % 100","file":"labit.py","line":120},{"text":"web() bật luồng giám sát nền trước khi chạy máy chủ","file":"labit.py","line":787}]},{"id":"reattach","title":"Phòng đã mở sẵn: chỉ gắn lại","request":{"method":"CLI","path":"labit up (lần 2)"},"steps":[{"from":"user","to":"cli","packet":"up","text":"Người dùng gõ labit up trong thư mục project."},{"from":"cli","to":"up_fn","packet":"up()","text":"Bảng CLI gọi hàm up()."},{"from":"up_fn","to":"init_fn","packet":"init(quiet)","text":"Bảo đảm .labit/, cấu hình và .mcp.json đã có (không ghi đè)."},{"from":"init_fn","to":"up_fn","packet":"OK","text":"Khởi tạo xong."},{"from":"up_fn","to":"tmux_ext","packet":"has-session","text":"Hỏi tmux phòng này đã có chưa."},{"from":"tmux_ext","to":"up_fn","packet":"mã 0","text":"Đã có: bỏ qua bước tạo, chỉ chọn tab hub rồi attach. Mọi tab AI và hội thoại trong đó còn nguyên.","mark":"ok"}],"outcome":{"status":200,"text":"Gắn lại đúng phòng cũ."},"conditions":[{"text":"Chỉ tạo phòng khi tmux has-session trả mã khác 0","file":"labit.py","line":341}]},{"id":"no_tmux","title":"Máy chưa cài tmux (lỗi môi trường)","request":{"method":"CLI","path":"labit up (không có tmux)"},"steps":[{"from":"user","to":"cli","packet":"up","text":"Người dùng gõ labit up trong thư mục project."},{"from":"cli","to":"up_fn","packet":"up()","text":"Bảng CLI gọi hàm up()."},{"from":"up_fn","to":"init_fn","packet":"init(quiet)","text":"Bảo đảm .labit/, cấu hình và .mcp.json đã có (không ghi đè)."},{"from":"init_fn","to":"up_fn","packet":"OK","text":"Khởi tạo xong."},{"from":"up_fn","to":"tmux_ext","packet":"has-session","text":"Gọi tmux()."},{"from":"tmux_ext","to":"up_fn","packet":"mã 127","text":"FileNotFoundError được bắt, trả mã 127. up() vẫn đi tiếp và cuối cùng execvp tmux không tìm thấy (phần crash là suy luận).","mark":"fail","inferred":true}],"outcome":{"status":127,"text":"Không mở được phòng; cần cài tmux."},"conditions":[{"text":"tmux() trả CompletedProcess mã 127 khi thiếu tmux","file":"labit.py","line":62}]},{"id":"no_project","title":"Chạy lệnh khi thư mục chưa có .labit (lỗi đầu vào)","request":{"method":"CLI","path":"labit usage (thư mục chưa chạy labit up)"},"steps":[{"from":"user","to":"cli","packet":"usage","text":"Gõ một lệnh khác up, init, key trong thư mục chưa có .labit/workers.json."},{"from":"cli","to":"user","packet":"lỗi","text":"Hàm main thoát với thông báo: chưa có .labit, hãy chạy labit up hoặc labit init trong thư mục project.","mark":"fail"}],"outcome":{"status":1,"text":"Thoát với mã lỗi 1, không làm gì thêm."},"conditions":[{"text":"Chỉ init, up, selftest, key được chạy khi chưa có .labit/workers.json","file":"labit.py","line":1202},{"text":"Thông báo lỗi và thoát bằng sys.exit","file":"labit.py","line":1203}]}]},{"id":"assign","title":"Giao việc cho worker","summary":"Từ lúc sếp gọi assign tới khi worker nhận brief trong tab của nó.","nodes":["boss","mcp_srv","assign_fn","send_fn","blocked_fn","launch_fn","brief","tasks_jsonl","tmux_ext","worker_cli"],"edges":[{"from":"boss","to":"mcp_srv","label":"assign"},{"from":"mcp_srv","to":"boss","label":"trả"},{"from":"mcp_srv","to":"assign_fn","label":"FN"},{"from":"assign_fn","to":"mcp_srv","label":"giao"},{"from":"assign_fn","to":"blocked_fn","label":"blocked"},{"from":"blocked_fn","to":"assign_fn","label":"chặn"},{"from":"assign_fn","to":"brief","label":"ghi"},{"from":"assign_fn","to":"tasks_jsonl","label":"ghi sổ"},{"from":"assign_fn","to":"send_fn","label":"send"},{"from":"send_fn","to":"assign_fn","label":"xong"},{"from":"send_fn","to":"launch_fn","label":"launch"},{"from":"launch_fn","to":"send_fn","label":"lệnh"},{"from":"send_fn","to":"tmux_ext","label":"tab, phím"},{"from":"tmux_ext","to":"send_fn","label":"pane"},{"from":"tmux_ext","to":"worker_cli","label":"gõ"}],"scenarios":[{"id":"cold","title":"Giao việc khi tab chưa mở (thành công)","request":{"method":"MCP tools/call","path":"assign","body":{"worker":"9router","task":"Viết hàm cộng, test pytest phải pass"}},"steps":[{"from":"boss","to":"mcp_srv","packet":"assign","text":"Sếp gọi công cụ assign với worker và nội dung việc."},{"from":"mcp_srv","to":"assign_fn","packet":"assign(...)","text":"Máy chủ MCP gọi hàm assign()."},{"from":"assign_fn","to":"blocked_fn","packet":"blocked()","text":"Hỏi cổng kiểm tra có được giao không."},{"from":"blocked_fn","to":"assign_fn","packet":"None","text":"Không bị chặn (không nghỉ, không bận, người dùng không thao tác trực tiếp). Ngay sau đó assign() ghi file brief (xem kịch bản \"Ghi file brief\")."},{"from":"assign_fn","to":"send_fn","packet":"send()","text":"Gửi câu 'Đọc file .labit/tasks/Txxx.md và làm theo'."},{"from":"send_fn","to":"launch_fn","packet":"launch()","text":"start() dựng lệnh khởi động tab."},{"from":"launch_fn","to":"send_fn","packet":"lệnh shell","text":"Nạp keys.env, đặt env riêng rồi unset mọi khóa worker không được cấp."},{"from":"send_fn","to":"tmux_ext","packet":"new-window","text":"Tab chưa có nên mở tab mới rồi chờ màn hình đứng yên 2 giây."},{"from":"tmux_ext","to":"send_fn","packet":"pane id","text":"CLI đã khởi động, không đòi đăng nhập."},{"from":"send_fn","to":"tmux_ext","packet":"send-keys","text":"Gõ câu lệnh vào pane, chờ 0,3 giây rồi Enter."},{"from":"tmux_ext","to":"worker_cli","packet":"brief","text":"Worker nhận lệnh và bắt đầu đọc brief.","mark":"ok"}],"outcome":{"status":200,"text":"Worker đã nhận brief. Ghi sổ và trả kết quả ở hai kịch bản kế tiếp."},"conditions":[{"text":"launch() bỏ mọi khóa trong keys.env mà worker không được cấp","file":"labit.py","line":244},{"text":"Câu gõ vào pane là 'Đọc file .labit/tasks/\u003cid>.md và làm đúng theo hướng dẫn trong đó.'","file":"labit.py","line":468}]},{"id":"brief","title":"Ghi file brief (trước khi gửi)","request":{"method":"MCP tools/call","path":"assign (phần ghi brief)"},"steps":[{"from":"assign_fn","to":"brief","packet":"Txxx.md","text":"Tạo id mới (lớn nhất + 1) và ghi file brief: nội dung việc kèm quy tắc worker và mẫu báo cáo.","mark":"ok"}],"outcome":{"status":200,"text":"File .labit/tasks/Txxx.md đã có. Nếu gửi lỗi, assign() sẽ xóa nó."},"conditions":[{"text":"assign() xóa brief khi gửi lỗi","file":"labit.py","line":470}]},{"id":"book","title":"Ghi sổ task sau khi gửi xong","request":{"method":"MCP tools/call","path":"assign (phần sau khi tab nhận brief)"},"steps":[{"from":"send_fn","to":"assign_fn","packet":"xong","text":"send() chạy xong không lỗi."},{"from":"assign_fn","to":"tasks_jsonl","packet":"{id, worker, t}","text":"Chỉ bây giờ mới ghi sổ task (rồi phát sự kiện \"Giao Txxx\"), nên gửi lỗi thì không có dòng task nào.","mark":"ok"}],"outcome":{"status":200,"text":"Task đã vào sổ tasks.jsonl."},"conditions":[]},{"id":"reply","title":"Trả kết quả cho sếp","request":{"method":"MCP tools/call","path":"assign (kết thúc)"},"steps":[{"from":"assign_fn","to":"mcp_srv","packet":"Đã giao Txxx","text":"assign() trả chuỗi kết quả."},{"from":"mcp_srv","to":"boss","packet":"Đã giao","text":"Sếp nhận kết quả và chuyển sang chờ báo cáo.","mark":"ok"}],"outcome":{"status":200,"text":"Đã giao Txxx cho worker."},"conditions":[]},{"id":"warm","title":"Tab đã mở sẵn: gửi ngay","request":{"method":"MCP tools/call","path":"assign","body":{"worker":"opencode","task":"Đổi tên biến x thành count"}},"steps":[{"from":"boss","to":"mcp_srv","packet":"assign","text":"Sếp gọi công cụ assign với worker và nội dung việc."},{"from":"mcp_srv","to":"assign_fn","packet":"assign(...)","text":"Máy chủ MCP gọi hàm assign()."},{"from":"assign_fn","to":"blocked_fn","packet":"blocked()","text":"Hỏi cổng kiểm tra có được giao không."},{"from":"blocked_fn","to":"assign_fn","packet":"None","text":"Không bị chặn (không nghỉ, không bận, người dùng không thao tác trực tiếp). Ngay sau đó assign() ghi file brief (xem kịch bản \"Ghi file brief\")."},{"from":"assign_fn","to":"send_fn","packet":"send()","text":"Gửi câu 'Đọc file .labit/tasks/Txxx.md và làm theo'."},{"from":"send_fn","to":"tmux_ext","packet":"send-keys","text":"Pane còn sống nên không launch, không chờ khởi động: lần giao này nhanh hơn. Gõ câu lệnh vào pane."},{"from":"tmux_ext","to":"worker_cli","packet":"brief","text":"Tin nhắn mới nối vào cùng hội thoại đang có trong tab (ngữ cảnh dồn lên theo từng task).","mark":"ok"}],"outcome":{"status":200,"text":"Worker nhận brief trong hội thoại hiện có."},"conditions":[{"text":"Chỉ chờ khởi động khi tab vừa được mở (fresh)","file":"labit.py","line":444}]},{"id":"denied","title":"Bị từ chối: worker bận, nghỉ hoặc người dùng đang thao tác","request":{"method":"MCP tools/call","path":"assign","body":{"worker":"gemini","task":"..."}},"steps":[{"from":"boss","to":"mcp_srv","packet":"assign","text":"Sếp gọi công cụ assign với worker và nội dung việc."},{"from":"mcp_srv","to":"assign_fn","packet":"assign(...)","text":"Máy chủ MCP gọi hàm assign()."},{"from":"assign_fn","to":"blocked_fn","packet":"blocked()","text":"Kiểm tra theo thứ tự: có worker, đang nghỉ, người dùng đang làm trực tiếp, đang bận, đủ giới hạn ngày."},{"from":"blocked_fn","to":"assign_fn","packet":"lý do","text":"Trả một câu lý do từ chối.","mark":"fail"},{"from":"assign_fn","to":"mcp_srv","packet":"lý do","text":"assign() trả thẳng lý do, chưa ghi file nào."},{"from":"mcp_srv","to":"boss","packet":"lý do","text":"Sếp đọc lý do và chọn worker khác hoặc chờ.","mark":"fail"}],"outcome":{"status":409,"text":"Không giao được: worker không sẵn sàng."},"conditions":[{"text":"Worker đang nghỉ (cooldown)","file":"labit.py","line":426},{"text":"Người dùng đang làm việc trực tiếp với worker (tab đang mở là tab đó)","file":"labit.py","line":429},{"text":"Worker đang bận một task chưa có báo cáo","file":"labit.py","line":431},{"text":"Đã đủ giới hạn task trong ngày","file":"labit.py","line":434}]},{"id":"needs_login","title":"CLI đòi đăng nhập: hủy giao","request":{"method":"MCP tools/call","path":"assign","body":{"worker":"antigravity","task":"..."}},"steps":[{"from":"boss","to":"mcp_srv","packet":"assign","text":"Sếp gọi công cụ assign với worker và nội dung việc."},{"from":"mcp_srv","to":"assign_fn","packet":"assign(...)","text":"Máy chủ MCP gọi hàm assign()."},{"from":"assign_fn","to":"blocked_fn","packet":"blocked()","text":"Hỏi cổng kiểm tra có được giao không."},{"from":"blocked_fn","to":"assign_fn","packet":"None","text":"Không bị chặn (không nghỉ, không bận, người dùng không thao tác trực tiếp). Ngay sau đó assign() ghi file brief (xem kịch bản \"Ghi file brief\")."},{"from":"assign_fn","to":"send_fn","packet":"send()","text":"Gửi câu 'Đọc file .labit/tasks/Txxx.md và làm theo'."},{"from":"send_fn","to":"launch_fn","packet":"launch()","text":"start() dựng lệnh khởi động."},{"from":"launch_fn","to":"send_fn","packet":"lệnh shell","text":"Lệnh đã lọc khóa."},{"from":"send_fn","to":"tmux_ext","packet":"new-window","text":"Mở tab và chờ khởi động."},{"from":"tmux_ext","to":"send_fn","packet":"màn hình","text":"Màn hình có dòng kiểu 'please log in': start() ném RuntimeError, worker cần đăng nhập, người dùng chạy /loginLabit.","mark":"fail"},{"from":"send_fn","to":"assign_fn","packet":"lỗi","text":"Lỗi nổi lên tới assign(): xóa file brief vừa ghi và phát sự kiện lỗi; không có dòng nào trong tasks.jsonl."},{"from":"assign_fn","to":"mcp_srv","packet":"Không gửi được","text":"Trả lỗi cho máy chủ MCP."},{"from":"mcp_srv","to":"boss","packet":"lỗi","text":"Sếp được báo; việc cần người dùng đăng nhập.","mark":"fail"}],"outcome":{"status":401,"text":"Hủy giao vì worker chưa đăng nhập."},"conditions":[{"text":"Màn hình sau khi mở tab được phân loại là auth thì từ chối","file":"labit.py","line":447},{"text":"assign() xóa brief khi gửi lỗi","file":"labit.py","line":470}]}]},{"id":"report","title":"Báo cáo, sếp nhận, đánh giá","summary":"Từ file báo cáo của worker tới wait_report và review.","nodes":["boss","mcp_srv","wait_report_fn","review_fn","report","delivered","reviews_jsonl","worker_cli","tick","events"],"edges":[{"from":"worker_cli","to":"report","label":"tạo"},{"from":"report","to":"tick","label":"stat"},{"from":"tick","to":"events","label":"emit"},{"from":"delivered","to":"tick","label":"đã giao?"},{"from":"reviews_jsonl","to":"tick","label":"đã chấm?"},{"from":"boss","to":"mcp_srv","label":"gọi"},{"from":"mcp_srv","to":"boss","label":"trả"},{"from":"mcp_srv","to":"wait_report_fn","label":"FN"},{"from":"wait_report_fn","to":"report","label":"tìm"},{"from":"report","to":"wait_report_fn","label":"nội dung"},{"from":"wait_report_fn","to":"delivered","label":"ghi"},{"from":"delivered","to":"wait_report_fn","label":"xong"},{"from":"wait_report_fn","to":"mcp_srv","label":"báo cáo"},{"from":"mcp_srv","to":"review_fn","label":"FN"},{"from":"review_fn","to":"reviews_jsonl","label":"ghi"},{"from":"review_fn","to":"mcp_srv","label":"Đã ghi"}],"scenarios":[{"id":"done","title":"Worker báo cáo xong, hệ thống thông báo","request":{"method":"FILE","path":".labit/reports/T001.md"},"steps":[{"from":"worker_cli","to":"report","packet":"T001.md","text":"Worker tạo file báo cáo ở bước cuối (theo mẫu trong brief)."},{"from":"report","to":"tick","packet":"mtime > 2s","text":"Lượt quét thấy file tồn tại và đã yên hơn 2 giây (chờ ghi xong)."},{"from":"tick","to":"events","packet":"báo cáo xong","text":"Phát sự kiện 'worker báo cáo xong Txxx' lên khung log và web.","mark":"ok"}],"outcome":{"status":200,"text":"Người dùng thấy thông báo ngay, kể cả khi sếp chưa gọi wait_report."},"conditions":[{"text":"Phải đợi file yên hơn 2 giây mới coi là xong","file":"labit.py","line":670}]},{"id":"receive","title":"Sếp nhận báo cáo (wait_report)","request":{"method":"MCP tools/call","path":"wait_report","body":{"timeout":50}},"steps":[{"from":"boss","to":"mcp_srv","packet":"wait_report","text":"Sếp chờ báo cáo, tối đa 50 giây mỗi lần gọi."},{"from":"mcp_srv","to":"wait_report_fn","packet":"wait_report()","text":"Gọi hàm chờ."},{"from":"wait_report_fn","to":"report","packet":"tìm","text":"Mỗi giây duyệt các task: file báo cáo có chưa, đã giao chưa."},{"from":"report","to":"wait_report_fn","packet":"nội dung","text":"Thấy báo cáo chưa giao và đã yên hơn 2 giây."},{"from":"wait_report_fn","to":"delivered","packet":"Txxx","text":"Ghi id vào delivered để không giao lần nữa."},{"from":"delivered","to":"wait_report_fn","packet":"OK","text":"Đã ghi."},{"from":"wait_report_fn","to":"mcp_srv","packet":"[Txxx từ worker]","text":"Trả tên task, tên worker và nguyên văn báo cáo."},{"from":"mcp_srv","to":"boss","packet":"báo cáo","text":"Sếp nhận. Báo cáo chỉ là lời khai nên phải tự kiểm tra lại.","mark":"ok"}],"outcome":{"status":200,"text":"Sếp có báo cáo trong tay."},"conditions":[{"text":"Mỗi lần chờ tối đa 300 giây (mặc định 50)","file":"labit.py","line":531}]},{"id":"review_ok","title":"Sếp đánh giá (thành công)","request":{"method":"MCP tools/call","path":"review","body":{"task_id":"T001","verdict":"ok","note":"cause=; lesson=nêu rõ tên file test"}},"steps":[{"from":"boss","to":"mcp_srv","packet":"review","text":"Sếp sau khi tự chạy lại test và đọc diff thì ghi đánh giá."},{"from":"mcp_srv","to":"review_fn","packet":"review(...)","text":"Gọi review()."},{"from":"review_fn","to":"reviews_jsonl","packet":"{id, verdict, note}","text":"Thêm một dòng vào sổ đánh giá."},{"from":"reviews_jsonl","to":"tick","packet":"đã đánh giá","text":"Lượt quét sau đọc thấy đánh giá mới."},{"from":"tick","to":"events","packet":"Sếp đánh giá Txxx: ok","text":"Phát sự kiện lên khung log và web; /usageLabit cộng vào tỉ lệ đạt.","mark":"ok"}],"outcome":{"status":200,"text":"Đã ghi đánh giá."},"conditions":[]},{"id":"review_bad","title":"Đánh giá sai giá trị (lỗi đầu vào)","request":{"method":"MCP tools/call","path":"review","body":{"task_id":"T001","verdict":"tot"}},"steps":[{"from":"boss","to":"mcp_srv","packet":"review","text":"Sếp gửi verdict không hợp lệ."},{"from":"mcp_srv","to":"review_fn","packet":"review(...)","text":"Gọi review()."},{"from":"review_fn","to":"mcp_srv","packet":"verdict phải là ok|retry|redo","text":"Từ chối, không ghi gì vào sổ.","mark":"fail"},{"from":"mcp_srv","to":"boss","packet":"lỗi","text":"Sếp được nhắc dùng ok, retry hoặc redo.","mark":"fail"}],"outcome":{"status":400,"text":"Không ghi đánh giá."},"conditions":[{"text":"Chỉ nhận ok, retry, redo","file":"labit.py","line":553}]},{"id":"nothing","title":"Chưa có báo cáo: hết thời gian chờ","request":{"method":"MCP tools/call","path":"wait_report","body":{"timeout":50}},"steps":[{"from":"boss","to":"mcp_srv","packet":"wait_report","text":"Sếp chờ."},{"from":"mcp_srv","to":"wait_report_fn","packet":"wait_report()","text":"Gọi hàm chờ."},{"from":"wait_report_fn","to":"report","packet":"tìm","text":"Duyệt mỗi giây: chưa file nào."},{"from":"report","to":"wait_report_fn","packet":"không có","text":"Không có báo cáo mới và không có sự cố mới."},{"from":"wait_report_fn","to":"mcp_srv","packet":"Chưa có","text":"Hết giờ thì trả câu 'Chưa có báo cáo hoặc sự cố mới'.","mark":"fail"},{"from":"mcp_srv","to":"boss","packet":"Chưa có","text":"Sếp gọi lại wait_report nếu còn task đang chạy."}],"outcome":{"status":204,"text":"Chưa có gì mới."},"conditions":[{"text":"Hết giờ trả thông báo chờ lại","file":"labit.py","line":548}]}]},{"id":"incident","title":"Sự cố: phát hiện và xử lý","summary":"Luồng nền phát hiện worker bất thường, ghi sự cố và cách sếp xử lý.","nodes":["boss","mcp_srv","wait_report_fn","reassign_fn","restart_fn","incidents","cooldown","health_fn","raise_inc"],"edges":[{"from":"health_fn","to":"raise_inc","label":"raise"},{"from":"health_fn","to":"incidents","label":"resolve"},{"from":"raise_inc","to":"incidents","label":"ghi"},{"from":"raise_inc","to":"cooldown","label":"nghỉ"},{"from":"incidents","to":"wait_report_fn","label":"chưa báo"},{"from":"wait_report_fn","to":"mcp_srv","label":"SỰ CỐ"},{"from":"mcp_srv","to":"boss","label":"trả"},{"from":"boss","to":"mcp_srv","label":"lệnh"},{"from":"mcp_srv","to":"reassign_fn","label":"FN"},{"from":"mcp_srv","to":"restart_fn","label":"FN"},{"from":"reassign_fn","to":"restart_fn","label":"restart"},{"from":"restart_fn","to":"cooldown","label":"xóa"},{"from":"restart_fn","to":"incidents","label":"gỡ"}],"scenarios":[{"id":"exited","title":"CLI thoát giữa chừng: khởi động lại","request":{"method":"BACKGROUND","path":"monitor_loop → monitor_tick → health() (mỗi 2 giây): worker đang có việc, CLI đã thoát"},"steps":[{"from":"health_fn","to":"raise_inc","packet":"exited","text":"Tab sống nhưng không còn tiến trình con (CLI đã thoát): báo sự cố exited.","mark":"fail"},{"from":"raise_inc","to":"incidents","packet":"sự cố mở","text":"Ghi một dòng sự cố và phát sự kiện đỏ."},{"from":"incidents","to":"wait_report_fn","packet":"chưa báo","text":"Lần sếp gọi wait_report kế tiếp thấy sự cố chưa báo."},{"from":"wait_report_fn","to":"mcp_srv","packet":"[SỰ CỐ exited]","text":"Trả đoạn mô tả sự cố kèm hướng xử lý trong MANAGER.md."},{"from":"mcp_srv","to":"boss","packet":"sự cố","text":"Sếp nhận tin."},{"from":"boss","to":"mcp_srv","packet":"restart_worker","text":"Sếp yêu cầu khởi động lại worker."},{"from":"mcp_srv","to":"restart_fn","packet":"restart_worker()","text":"Gọi restart_worker()."},{"from":"restart_fn","to":"incidents","packet":"resolved","text":"Gỡ sự cố của worker và mở lại CLI trong tab.","mark":"ok"}],"outcome":{"status":200,"text":"Worker chạy lại; sếp giao lại task bằng reassign."},"conditions":[{"text":"CLI coi là đã thoát khi tab không còn tiến trình con","file":"labit.py","line":700}]},{"id":"quota","title":"Hết hạn mức: worker nghỉ 30 phút","request":{"method":"BACKGROUND","path":"monitor_loop → monitor_tick → health() (mỗi 2 giây): màn hình có '429 rate limit'"},"steps":[{"from":"health_fn","to":"raise_inc","packet":"quota","text":"Màn hình đứng yên từ 45 giây; classify() khớp mẫu rate limit / 429 / quota nên báo sự cố quota."},{"from":"raise_inc","to":"cooldown","packet":"+30 phút","text":"Ghi thời điểm worker được dùng lại; trong lúc đó assign() từ chối worker này.","mark":"fail"}],"outcome":{"status":429,"text":"Worker nghỉ 30 phút; sếp giao việc cho worker khác."},"conditions":[{"text":"Bắt đầu phân loại lỗi khi màn hình đứng yên 45 giây","file":"labit.py","line":20},{"text":"Quota nghỉ 1800 giây, auth nghỉ 43200 giây","file":"labit.py","line":21},{"text":"Phân loại theo thứ tự auth, quota, network, prompt (kiểu đầu tiên khớp thắng)","file":"labit.py","line":22}]},{"id":"recover","title":"Mạng chập chờn rồi tự hoạt động lại","request":{"method":"BACKGROUND","path":"monitor_loop → monitor_tick → health() (mỗi 2 giây): sự cố network đang mở, màn hình đổi"},"steps":[{"from":"health_fn","to":"incidents","packet":"resolved","text":"Màn hình tab khác lần trước nên worker đã chạy lại: sự cố network, silent hoặc prompt được gỡ tự động và phát \"hoạt động trở lại\".","mark":"ok"}],"outcome":{"status":200,"text":"Sự cố tự gỡ, sếp không cần can thiệp."},"conditions":[{"text":"Chỉ network, silent, prompt tự gỡ; quota và auth thì không","file":"labit.py","line":695}]},{"id":"auth","title":"Mất đăng nhập: cần người dùng","request":{"method":"BACKGROUND","path":"monitor_loop → monitor_tick → health() (mỗi 2 giây): màn hình có 'please log in'"},"steps":[{"from":"health_fn","to":"raise_inc","packet":"auth","text":"Màn hình đứng yên; classify() khớp mẫu cần đăng nhập nên báo sự cố auth, worker nghỉ 12 giờ."},{"from":"raise_inc","to":"incidents","packet":"sự cố mở","text":"Ghi sổ sự cố."},{"from":"incidents","to":"wait_report_fn","packet":"chưa báo","text":"wait_report thấy sự cố chưa báo."},{"from":"wait_report_fn","to":"mcp_srv","packet":"[SỰ CỐ auth]","text":"Trả mô tả sự cố."},{"from":"mcp_srv","to":"boss","packet":"sự cố","text":"Sếp không tự đăng nhập được; phải báo người dùng chạy /loginLabit rồi giao việc cho worker khác.","mark":"fail"}],"outcome":{"status":401,"text":"Cần người dùng đăng nhập lại worker."},"conditions":[{"text":"Mẫu nhận diện auth đứng đầu bảng PATTERNS","file":"labit.py","line":22}]},{"id":"reassign","title":"Giao lại sang worker khác","request":{"method":"MCP tools/call","path":"reassign","body":{"task_id":"T003","worker":"gemini","note":"worker cũ bị kẹt"}},"steps":[{"from":"boss","to":"mcp_srv","packet":"reassign","text":"Sếp giao lại task chưa có báo cáo cho worker khác."},{"from":"mcp_srv","to":"reassign_fn","packet":"reassign(...)","text":"Gọi reassign(): kiểm tra task chưa có báo cáo và worker mới rảnh."},{"from":"reassign_fn","to":"restart_fn","packet":"worker cũ","text":"Khác worker thì khởi động lại worker cũ để dừng bản đang kẹt."},{"from":"restart_fn","to":"cooldown","packet":"xóa nghỉ","text":"Xóa trạng thái nghỉ của worker cũ.","mark":"ok"}],"outcome":{"status":200,"text":"Worker cũ dừng; task được gửi sang worker mới và ghi thêm dòng trong tasks.jsonl."},"conditions":[{"text":"Chỉ khởi động lại worker cũ khi đổi sang worker khác","file":"labit.py","line":487}]}]}]};
+(function () {
+  'use strict';
+  const NODES = {}; SPEC.nodes.forEach(function (n) { NODES[n.id] = n; });
+  const $ = function (s, r) { return (r || document).querySelector(s); };
+  const esc = function (t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  const ref = function (file, line) { return file ? '<a class="ref" data-copy="' + esc(file + ':' + line) + '" title="Bấm để chép đường dẫn">' + esc(file + ':' + line) + '</a>' : '<span class="badge inf">suy luận</span>'; };
+
+  document.title = 'Workflow — ' + SPEC.project;
+  document.body.insertAdjacentHTML('afterbegin',
+    '<div class="bar"><h1>' + esc(SPEC.project) + ' · workflow</h1><div class="tabs" role="tablist"></div>' +
+    '<button id="theme">Sáng/Tối</button></div>' +
+    '<div class="warn">⚠ ' + esc(SPEC.disclaimer || 'Đây là mô phỏng dựa trên đọc code, không phải hệ thống chạy thật. Nút ghi "suy luận" không có bằng chứng trực tiếp trong code.') + '</div>');
+  document.body.insertAdjacentHTML('beforeend',
+    '<button class="fab back">← Back</button><button class="fab next">Next →</button><div class="hint">Phím ← → để lùi/tiến · Shift+← → để đổi chức năng</div>');
+  $('#theme').onclick = function () {
+    const d = document.documentElement; d.setAttribute('data-theme', d.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+    try { localStorage.setItem('cf-theme', d.getAttribute('data-theme')); } catch (e) {}
+  };
+  try { if (localStorage.getItem('cf-theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark'); } catch (e) {}
+  document.addEventListener('click', function (e) {
+    const a = e.target.closest && e.target.closest('[data-copy]'); if (!a) return;
+    try { navigator.clipboard.writeText(a.getAttribute('data-copy')); a.textContent = 'đã chép ✓'; setTimeout(function () { a.textContent = a.getAttribute('data-copy'); }, 900); } catch (er) {}
+  });
+
+  const tabs = [];
+  let cur = -1;
+  function techTable(f) {
+    const m = {};
+    f.nodes.forEach(function (id) { const n = NODES[id]; (n.tech || []).forEach(function (t) { (m[t] = m[t] || []).push(n); }); });
+    return '<table><tr><th>Công nghệ</th><th>Dùng ở</th></tr>' + Object.keys(m).map(function (t) {
+      return '<tr><td><b>' + esc(t) + '</b></td><td>' + m[t].map(function (n) { return esc(n.name) + ' ' + ref(n.file, n.line); }).join('<br>') + '</td></tr>';
+    }).join('') + '</table>';
+  }
+  function build(f, panel) {
+    panel.innerHTML = '<p class="summary">' + esc(f.summary || '') + '</p><div class="stage"><div class="fl"></div></div><div class="main"><div class="col">' +
+      '<div class="card" style="--o:4"><h3>Các bước của kịch bản</h3><div class="steps"></div></div>' +
+      '<div class="card" style="--o:7"><h3>Công nghệ trong chức năng này</h3>' + techTable(f) + '</div></div>' +
+      '<div class="col"><div class="card" style="--o:1"><h3>Chọn request để gửi</h3><select class="sc"></select><pre class="req"></pre>' +
+      '<div class="row"><button class="primary send">▶ Gửi (chạy hoạt ảnh)</button><button class="reset">Làm lại</button></div></div>' +
+      '<div class="card" style="--o:2"><h3>Kết quả</h3><div class="out">Chưa gửi.</div></div>' +
+      '<div class="card" style="--o:5"><h3>Điều kiện (đọc từ code)</h3><div class="cond"></div></div>' +
+      '<div class="card" style="--o:6"><h3>Nút đang chọn</h3><div class="det">Bấm vào một nút trên sơ đồ để xem file, công nghệ và đoạn mã.</div></div></div></div>';
+    const sel = $('.sc', panel);
+    f.scenarios.forEach(function (s, i) { const o = document.createElement('option'); o.value = i; o.textContent = s.title; sel.appendChild(o); });
+    const layers = []; const seen = {};
+    ['client', 'frontend', 'api', 'dto', 'service', 'security', 'repo', 'db', 'external', 'infra'].forEach(function (l) {
+      if (f.nodes.some(function (id) { return NODES[id].layer === l; })) layers.push({ id: l, label: ({ client: 'Client', frontend: 'Frontend', api: 'API / Router', dto: 'DTO / Schema', service: 'Service', security: 'Bảo mật', repo: 'Repository', db: 'CSDL', external: 'Dịch vụ ngoài', infra: 'Hạ tầng' })[l] });
+    });
+    const fl = Flow.create($('.fl', panel), {
+      layers: layers,
+      nodes: f.nodes.map(function (id) { const n = NODES[id]; return { id: id, layer: n.layer, label: n.name, sub: n.file ? n.file.split('/').slice(-1)[0] + ':' + n.line : '', tech: (n.tech || [])[0], badge: n.inferred ? 'suy luận' : '' }; }),
+      edges: f.edges,
+      onNodeClick: function (nn) {
+        const n = NODES[nn.id];
+        $('.det', panel).innerHTML = '<b>' + esc(n.name) + '</b> <span class="chip">' + esc(n.layer) + '</span>' + (n.inferred ? ' <span class="badge inf">suy luận</span>' : ' <span class="badge ok">✓ đã xác thực</span>') +
+          '<div style="margin:6px 0">' + ref(n.file, n.line) + '</div><div>' + (n.tech || []).map(function (t) { return '<span class="chip">' + esc(t) + '</span>'; }).join('') + '</div>' +
+          '<p style="margin:6px 0">' + esc(n.role) + '</p>' + (n.snippet ? '<pre>' + esc(n.snippet) + '</pre>' : '');
+      }
+    });
+    let idx = -1, busy = false;
+    const sc = function () { return f.scenarios[Number(sel.value)]; };
+    function showReq() {
+      const s = sc(), r = s.request;
+      $('.req', panel).textContent = r.method + ' ' + r.path + (r.headers && Object.keys(r.headers).length ? '\n' + Object.keys(r.headers).map(function (k) { return k + ': ' + r.headers[k]; }).join('\n') : '') + (r.body ? '\n\n' + JSON.stringify(r.body, null, 2) : '');
+      $('.cond', panel).innerHTML = (s.conditions || []).length ? (s.conditions).map(function (c) { return '<div style="margin-bottom:6px">• ' + esc(c.text) + '<br>' + ref(c.file, c.line) + '</div>'; }).join('') : '<span style="color:var(--vl-muted)">Không có điều kiện riêng.</span>';
+    }
+    function render() {
+      fl.clear(); showReq();
+      const s = sc(), steps = s.steps;
+      $('.steps', panel).innerHTML = steps.map(function (st, i) {
+        return '<div data-i="' + i + '" class="' + (i === idx ? 'on ' : '') + (st.mark || '') + '"><b>' + (i + 1) + '.</b> ' + esc(NODES[st.from].name) + ' → ' + esc(NODES[st.to].name) + ' — ' + esc(st.text) + (st.inferred ? ' <span class="badge inf">suy luận</span>' : '') + '</div>';
+      }).join('');
+      if (idx < 0) { $('.out', panel).innerHTML = 'Chưa gửi. Bấm <b>Gửi</b> hoặc <b>Next →</b>.'; sync(); return; }
+      const st = steps[idx];
+      fl.setActive([st.to]); fl.highlightEdge(st.from, st.to);
+      steps.slice(0, idx + 1).forEach(function (p) { if (p.mark) fl.mark(p.to, p.mark); });
+      const last = idx === steps.length - 1, good = s.outcome.status < 400;
+      $('.out', panel).innerHTML = last ? '<span class="badge ' + (good ? 'ok' : 'bad') + '">' + (good ? '✓ ' : '✗ ') + s.outcome.status + '</span> ' + esc(s.outcome.text) : 'Đang chạy: bước ' + (idx + 1) + '/' + steps.length + '…';
+      
+      sync();
+    }
+    sel.addEventListener('change', function () { idx = -1; render(); });
+    $('.reset', panel).addEventListener('click', function () { idx = -1; render(); });
+    $('.steps', panel).addEventListener('click', function (e) { const d = e.target.closest('[data-i]'); if (d && !busy) { idx = Number(d.getAttribute('data-i')); render(); } });
+    $('.send', panel).addEventListener('click', async function () {
+      if (busy) return; busy = true; idx = -1; render();
+      const steps = sc().steps;
+      for (let i = 0; i < steps.length; i++) { await fl.sendPacket(steps[i].from, steps[i].to, { label: steps[i].packet }); idx = i; render(); }
+      busy = false; sync();
+    });
+    return {
+      render: render,
+      stepper: { next: function () { if (!busy) { idx++; render(); } }, back: function () { if (!busy) { idx--; render(); } },
+        canNext: function () { return !busy && idx < sc().steps.length - 1; }, canBack: function () { return !busy && idx >= 0; } }
+    };
+  }
+  function sync() {
+    const t = tabs[cur]; const st = t && t.api && t.api.stepper;
+    $('.fab.back').classList.toggle('show', !!st); $('.fab.next').classList.toggle('show', !!st);
+    if (st) { $('.fab.back').disabled = !st.canBack(); $('.fab.next').disabled = !st.canNext(); }
+  }
+  function show(i) {
+    if (i < 0 || i >= tabs.length) return; cur = i;
+    tabs.forEach(function (t, k) { t.btn.setAttribute('aria-selected', k === i ? 'true' : 'false'); t.panel.classList.toggle('on', k === i); });
+    const t = tabs[i]; if (!t.api) { t.api = build(t.f, t.panel); t.api.render(); }
+    try { history.replaceState(null, '', '#' + t.f.id); } catch (e) {}
+    sync();
+  }
+  SPEC.features.forEach(function (f, i) {
+    const b = document.createElement('button'); b.className = 'tab'; b.textContent = f.title; b.setAttribute('role', 'tab'); b.onclick = function () { show(i); };
+    $('.tabs').appendChild(b);
+    const p = document.createElement('div'); p.className = 'panel'; document.body.appendChild(p);
+    tabs.push({ f: f, btn: b, panel: p, api: null });
+  });
+  $('.fab.back').onclick = function () { const s = tabs[cur].api.stepper; if (s.canBack()) { s.back(); } };
+  $('.fab.next').onclick = function () { const s = tabs[cur].api.stepper; if (s.canNext()) { s.next(); } };
+  document.addEventListener('keydown', function (e) {
+    const n = (e.target.tagName || '').toLowerCase();
+    if (n === 'input' || n === 'select' || n === 'textarea' || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    const d = e.key === 'ArrowRight' ? 1 : -1;
+    if (e.shiftKey) { show(Math.max(0, Math.min(tabs.length - 1, cur + d))); e.preventDefault(); return; }
+    const s = tabs[cur] && tabs[cur].api && tabs[cur].api.stepper; if (!s) return;
+    if (d > 0 && s.canNext()) s.next(); if (d < 0 && s.canBack()) s.back(); e.preventDefault();
+  });
+  let start = Math.max(0, SPEC.features.findIndex(function (f) { return '#' + f.id === location.hash; }));
+  show(start);
+})();
+</script>
+</body>
+</html>
