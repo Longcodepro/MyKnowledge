@@ -166,6 +166,23 @@ td code,.mono{font-family:var(--f-mono);font-size:12.5px}
 .ed.fire .ln,.ed.fire .dc{stroke:var(--signal)}
 .ed.fire .dc.fill{fill:var(--signal)}
 
+/* sequence: combined fragment */
+.frm{fill:var(--accent-soft);fill-opacity:.28;stroke:none}
+.frb{fill:none;stroke:var(--draw);stroke-width:1.5}
+.frt{fill:var(--panel);stroke:var(--draw);stroke-width:1.2}
+.frd{stroke:var(--draw);stroke-width:1.2;stroke-dasharray:7 4}
+.opb{fill:transparent;stroke:none}
+.opb.taken{fill:var(--dyn-soft);fill-opacity:.65}
+.opb.skip{fill:var(--line2);fill-opacity:.9}
+.opbd{opacity:0}
+.opbd.taken{opacity:1;fill:var(--static)}
+.opbd.skip{opacity:1;fill:var(--mute)}
+.fr.hit .frb{stroke:var(--signal);stroke-width:2.2}
+.fr.hit .frt{stroke:var(--signal)}
+.fr.skip .frb{stroke:var(--mute);stroke-dasharray:5 4}
+.fr.skip .frt{stroke:var(--mute)}
+.new .frb,.new .frt,.new .frd{stroke:var(--accent)}
+.tcov table{min-width:0}.tcov th,.tcov td{padding:7px 6px;font-size:12px;white-space:normal;overflow-wrap:anywhere;word-break:break-word}.tcov td.k{width:auto;min-width:92px}
 @media (max-width:640px){
   .exs{grid-template-columns:1fr}
   .card{padding:16px 14px}
@@ -1139,16 +1156,124 @@ const ENG = (function () {
     return { svg: o, w: 900, h: d.h };
   };
 
-  /* ===== 3. SEQUENCE ===== */
+  /* ===== 3. SEQUENCE (có combined fragment: alt, opt, loop, par, break) ===== */
   R.seq = function (d) {
-    const W = 900, n = d.parts.length, P = {};
-    const left = d.left || 80, right = W - (d.right || 80);
-    d.parts.forEach((p, i) => { p.x = n > 1 ? left + (right - left) * i / (n - 1) : W / 2; P[p.id] = p; p.hw = p.kind === 'actor' ? 0 : Math.max(96, Math.min(146, String(p.label).length * 7.4 + 22)); });
+    const W0 = 900, n = d.parts.length, P = {};
+    const left = d.left || 80, right = W0 - (d.right || 80);
+    d.parts.forEach((p, i) => { p.x = n > 1 ? left + (right - left) * i / (n - 1) : W0 / 2; P[p.id] = p; p.hw = p.kind === 'actor' ? 0 : Math.max(96, Math.min(146, String(p.label).length * 7.4 + 22)); });
+    const msgs = d.msgs, IX = {};
+    msgs.forEach((m, i) => { IX[m.id] = i; });
+    const SYM = '①②③④⑤⑥';
+    const sym = j => SYM.charAt(j);
+
+    /* --- 1. Đọc combined fragment, tìm quan hệ lồng nhau --- */
+    const frs = (d.frags || []).map((f, fi) => {
+      const ops = f.ops.map(o => ({ g: o.g || '', from: o.from, to: o.to, a: IX[o.from], b: IX[o.to] }));
+      ops.forEach((o, j) => {
+        if (o.a == null || o.b == null || o.a > o.b) throw new Error('Fragment ' + f.id + ': khoảng thông điệp sai');
+        if (j && o.a !== ops[j - 1].b + 1) throw new Error('Fragment ' + f.id + ': các operand phải nối liền nhau');
+      });
+      return Object.assign({}, f, { fi, ops, a: ops[0].a, b: ops[ops.length - 1].b, s: f.s || 6, kids: [] });
+    });
+    const fo = frs.slice().sort((x, y) => x.a - y.a || y.b - x.b || x.fi - y.fi);   // ngoài → trong
+    const stk = [];
+    fo.forEach(f => {
+      while (stk.length && stk[stk.length - 1].b < f.a) stk.pop();
+      const t = stk[stk.length - 1];
+      if (t && t.b < f.b) throw new Error('Fragment ' + f.id + ' cắt ngang ' + t.id);
+      f.parent = t || null; f.depth = stk.length; f.parentOp = -1;
+      if (t) {
+        f.parentOp = t.ops.findIndex(o => f.a >= o.a && f.a <= o.b);
+        if (f.parentOp < 0 || f.b > t.ops[f.parentOp].b) throw new Error('Fragment ' + f.id + ' phải nằm trọn trong một operand của ' + t.id);
+        t.kids.push(f);
+      }
+      stk.push(f);
+    });
+    for (let i = fo.length - 1; i >= 0; i--) { const f = fo[i]; f.h = 1 + Math.max(0, ...f.kids.map(k => k.h)); }
+
+    /* --- 2. Xếp tung độ: chừa chỗ cho đỉnh khung, vạch ngăn operand và đáy khung --- */
     const top = 14; let y = d.y0 || 132; const Y = {};
-    d.msgs.forEach(m => { Y[m.id] = y; y += m.kind === 'self' ? 58 : 42; });
+    const startAt = {}, divAt = {}, endAt = {};
+    const put = (M, k, v) => { (M[k] || (M[k] = [])).push(v); };
+    fo.forEach(f => { put(startAt, f.a, f); put(endAt, f.b, f); });
+    frs.forEach(f => f.ops.forEach((o, j) => { if (j) put(divAt, o.a, { f, j }); }));
+    let lastBottom = -1e9;
+    msgs.forEach((m, i) => {
+      const items = [];
+      (divAt[i] || []).slice().sort((p, q) => p.f.depth - q.f.depth).forEach(x => items.push({ t: 'div', x }));
+      (startAt[i] || []).forEach(f => items.push({ t: 'st', f }));
+      items.forEach((it, k) => {
+        const prev = items[k - 1];
+        const base = it.t === 'div' ? 44 : 52;                       // từ cuối mục tới vạch / đỉnh khung
+        let h = it.t === 'div' ? 28 : (!prev ? 26 : prev.t === 'st' ? 24 : 38);
+        if (k === 0) { const need = lastBottom + 8 - (y + h - base); if (need > 0) h += need; }   // không chồng đáy khung trước
+        y += h;
+        if (it.t === 'div') it.x.f.ops[it.x.j].divY = y - base; else it.f.y1 = y - base;
+      });
+      Y[m.id] = y;
+      const step = m.kind === 'self' ? 58 : 42;
+      y += step;
+      const en = (endAt[i] || []).slice().sort((p, q) => q.depth - p.depth);   // trong ra ngoài
+      if (en.length) {
+        const baseB = m.kind === 'create' ? 38 : m.kind === 'self' ? 34 : m.kind === 'ret' ? 8 : m.guard ? 24 : 28;
+        let b = Y[m.id] + baseB;
+        en.forEach((f, k) => { if (k) b += 10; f.y2 = b; });
+        lastBottom = b;
+        y += Math.max(6, (b - Y[m.id]) + 24 - step);
+      } else lastBottom = m.kind === 'create' ? Y[m.id] + 40 : -1e9;
+    });
     const yEnd = y, H = yEnd + 24;
+
+    /* --- 3. Toạ độ ngang của khung: bao các đối tượng tham gia + lề theo độ sâu lồng --- */
+    const xr = (i0, i1) => {
+      let lo = 1e9, hi = -1e9;
+      for (let i = i0; i <= i1; i++) {
+        const m = msgs[i], F = P[m.f], T = P[m.t];
+        [F, T].forEach(p => { const w = p.kind === 'actor' ? 18 : 8; lo = Math.min(lo, p.x - w); hi = Math.max(hi, p.x + w); });
+        if (m.kind === 'create') { lo = Math.min(lo, T.x - T.hw / 2 - 4); hi = Math.max(hi, T.x + T.hw / 2 + 4); }
+        if (m.kind === 'self') hi = Math.max(hi, F.x + 52 + String(m.label).length * 6.6);
+      }
+      return [lo, hi];
+    };
+    frs.forEach(f => {
+      const r = xr(f.a, f.b), pad = 14 + 8 * (f.h - 1);
+      f.x1 = r[0] - pad; f.x2 = r[1] + pad;
+      f.tw = Math.round(14 + 7.2 * f.op.length);
+      let need = f.tw + 14 + f.ops[0].g.length * 6.4 + 100;
+      f.ops.forEach((o, j) => { if (j) need = Math.max(need, 16 + o.g.length * 6.4 + 100); });
+      need = Math.max(need, 130);
+      if (f.x2 - f.x1 < need) f.x2 = f.x1 + need;
+    });
+    for (let i = fo.length - 1; i >= 0; i--) { const f = fo[i], p = f.parent; if (p) { p.x1 = Math.min(p.x1, f.x1 - 8); p.x2 = Math.max(p.x2, f.x2 + 8); } }
+    const W = Math.max(W0, Math.ceil(Math.max(0, ...frs.map(f => f.x2)) + 6));
+
     const ls = p => p.created ? Y[p.created] + 18 : (p.kind === 'actor' ? top + 84 : (p.stereo ? top + 56 : top + 52));
     let o = '';
+
+    /* --- 4. Vẽ khung: lớp nền + viền nằm dưới cùng, nhãn + guard + huy hiệu nằm trên cùng --- */
+    let front = '';
+    fo.forEach(f => {
+      const w = f.x2 - f.x1, hh = f.y2 - f.y1, X = f1(f.x1), Yt = f1(f.y1);
+      let b = `<rect class="frm" x="${X}" y="${Yt}" width="${f1(w)}" height="${f1(hh)}" rx="3"/>`;
+      f.ops.forEach((q, j) => {
+        const ya = j ? q.divY : f.y1, yb = j < f.ops.length - 1 ? f.ops[j + 1].divY : f.y2;
+        b += `<rect class="opb" data-op="${j}" x="${X}" y="${f1(ya)}" width="${f1(w)}" height="${f1(yb - ya)}"/>`;
+      });
+      b += `<rect class="frb" x="${X}" y="${Yt}" width="${f1(w)}" height="${f1(hh)}" rx="3"/>`;
+      f.ops.forEach((q, j) => { if (j) b += `<line class="frd" x1="${X}" y1="${f1(q.divY)}" x2="${f1(f.x2)}" y2="${f1(q.divY)}"/>`; });
+      const lab = esc('khung ' + f.op + (f.title ? ' · ' + f.title : ''));
+      o += `<g class="fr el" data-s="${f.s}" data-frag="${f.id}" data-l="${lab}">${b}</g>`;
+      let t = `<path class="frt" d="M${X},${Yt} H${f1(f.x1 + f.tw)} V${f1(f.y1 + 11)} L${f1(f.x1 + f.tw - 7)},${f1(f.y1 + 18)} H${X} Z"/>` +
+        txt(f.x1 + (f.tw - 3) / 2, f.y1 + 9, f.op, { cls: 'sm b', mid: true });
+      f.ops.forEach((q, j) => {
+        const ly = j ? q.divY + 13 : f.y1 + 9;
+        if (q.g) t += txt(j ? f.x1 + 8 : f.x1 + f.tw + 8, ly, q.g, { cls: 'sm b hl', a: 'start', mid: true });
+        t += `<text class="tx sm b hl opbd" data-op="${j}" x="${f1(f.x2 - 8)}" y="${f1(ly)}" text-anchor="end" dominant-baseline="central"></text>`;
+      });
+      front += `<g class="fr frf el" data-s="${f.s}" data-frag="${f.id}" data-l="${lab}">${t}</g>`;
+    });
+
+    /* --- 5. Đối tượng, lifeline, vùng hoạt động, thông điệp (giữ nguyên cách vẽ cũ) --- */
     d.parts.forEach(p => {
       let inner = '';
       if (p.kind === 'actor') inner = actorSVG(p.x, top + 34, p.label);
@@ -1166,10 +1291,10 @@ const ENG = (function () {
       o += grp('ll', ps, null, '', ll);
     });
     const bars = [];
-    d.msgs.forEach(m => {
+    msgs.forEach(m => {
       if (m.kind === 'ret' || m.kind === 'destroy') return;
       const y1 = Y[m.id]; let y2;
-      const r = d.msgs.find(q => q.kind === 'ret' && q.ref === m.id);
+      const r = msgs.find(q => q.kind === 'ret' && q.ref === m.id);
       if (m.end) y2 = Y[m.end]; else if (r) y2 = Y[r.id]; else y2 = y1 + (m.kind === 'self' ? 28 : 22);
       bars.push(m.kind === 'create' ? { p: m.t, y1: y1 + 18, y2: y1 + 36, s: m.s || 3 } : { p: m.t, y1: y1 - 3, y2: y2 + 4, s: m.s || 3 });
     });
@@ -1178,8 +1303,8 @@ const ENG = (function () {
       const x = P[b.p].x - 5 + b.dp * 6;
       o += grp('bar', b.s, b.p, '', `<rect class="actb" x="${f1(x)}" y="${f1(b.y1)}" width="10" height="${f1(b.y2 - b.y1)}"/>`);
     });
-    const edges = {}, order = [];
-    d.msgs.forEach(m => {
+    const edges = {}, all = [];
+    msgs.forEach(m => {
       const yy = Y[m.id], F = P[m.f], T = P[m.t], k = m.kind || 'sync';
       let pts, mx, lab = L1(m.label);
       if (k === 'self') {
@@ -1193,9 +1318,66 @@ const ENG = (function () {
         o += edgeSVG({ pts, id: m.id, s: m.s || 3, end: (k === 'sync' || k === 'destroy') ? 'filled' : 'open', dash: k === 'ret' || k === 'create', label: m.label, lx: mx, ly: yy - 9, lcls: k === 'ret' ? 'it' : '', lab });
         if (m.guard) o += grp('gd', m.gs || 5, null, 'điều kiện ' + m.guard, txt(mx, yy + 14, m.guard, { cls: 'sm b gdt', mid: true }));
       }
-      edges[m.id] = { from: m.f, to: m.t }; order.push([m.id]);
+      edges[m.id] = { from: m.f, to: m.t }; all.push([m.id]);
     });
-    return { svg: o, w: W, h: H, edges, scen: [{ n: 'Kịch bản chính', steps: order }] };
+
+    o += front;
+
+    /* --- 6. Kịch bản chạy luồng: kiểm tra mã thông điệp có thật --- */
+    const scen = d.scen || [{ n: 'Kịch bản chính', steps: all }];
+    scen.forEach(sc => sc.steps.forEach(g => g.forEach(id => { if (!(id in IX)) throw new Error('Kịch bản "' + sc.n + '": không có thông điệp ' + id); })));
+
+    /* --- 7. Hỗ trợ chạy luồng: tô khung nào chạy, khung nào bị bỏ qua --- */
+    const lblOf = (f, j) => f.op + (f.ops.length > 1 ? sym(j) : '');
+    function onFlow(sv, fired, done) {
+      const cnt = {}; fired.forEach(id => { cnt[id] = (cnt[id] || 0) + 1; });
+      const last = fired.length ? IX[fired[fired.length - 1]] : -1;
+      const ok = [], no = [];
+      frs.forEach(f => {
+        const gs = sv.querySelectorAll('.fr[data-frag="' + f.id + '"]'); if (!gs.length) return;
+        const any = f.ops.some(q => cnt[q.from]), passed = done || last > f.b;
+        gs.forEach(g => { g.classList.toggle('hit', any); g.classList.toggle('skip', !any && passed); });
+        f.ops.forEach((q, j) => {
+          const k = cnt[q.from] || 0;
+          const s = k ? 'taken' : ((f.op === 'alt' && any) || passed) ? 'skip' : 'pend';
+          const sel = '.fr[data-frag="' + f.id + '"] ';
+          const bg = sv.querySelector(sel + '.opb[data-op="' + j + '"]'), bd = sv.querySelector(sel + '.opbd[data-op="' + j + '"]');
+          bg.classList.toggle('taken', s === 'taken'); bg.classList.toggle('skip', s === 'skip');
+          bd.classList.toggle('taken', s === 'taken'); bd.classList.toggle('skip', s === 'skip');
+          bd.textContent = s === 'taken' ? (f.op === 'loop' ? '✓ ' + k + ' vòng' : '✓ chạy' + (k > 1 ? ' ×' + k : ''))
+            : s === 'skip' ? (f.op === 'loop' ? '✗ 0 vòng' : f.op === 'alt' ? '✗ không chọn' : '✗ bỏ qua') : '';
+          if (done) (s === 'taken' ? ok : no).push('<b>' + f.op + '</b> ' + esc(q.g || (f.title + (f.ops.length > 1 ? ' ' + sym(j) : ''))) + (f.op === 'loop' ? ' (×' + k + ')' : ''));
+        });
+      });
+      let note = '';
+      if (last >= 0) {
+        const path = fo.filter(f => last >= f.a && last <= f.b).map(f => {
+          const j = f.ops.findIndex(q => last >= q.a && last <= q.b), q = f.ops[j];
+          return '<b>' + lblOf(f, j) + '</b>' + (q.g ? ' ' + esc(q.g) : '') + (f.op === 'loop' ? ' (vòng ' + (cnt[q.from] || 0) + ')' : '');
+        });
+        note = '<br>▸ ' + (path.length ? 'Đang trong: ' + path.join(' › ') : 'Đang ở ngoài mọi khung fragment');
+      }
+      if (done) note += '<br>✓ Đã chạy: ' + (ok.join(', ') || '—') + '<br>✗ Bỏ qua: ' + (no.join(', ') || '—');
+      return note;
+    }
+    function onFlowClear(sv) {
+      sv.querySelectorAll('.fr').forEach(g => g.classList.remove('hit', 'skip'));
+      sv.querySelectorAll('.opb,.opbd').forEach(e => e.classList.remove('taken', 'skip'));
+      sv.querySelectorAll('.opbd').forEach(e => { e.textContent = ''; });
+    }
+
+    /* --- 8. Dữ liệu cho các bảng mô tả --- */
+    const fragPath = i => fo.filter(f => i >= f.a && i <= f.b).map(f => lblOf(f, f.ops.findIndex(q => i >= q.a && i <= q.b))).join(' › ');
+    function cover(ids) {
+      const cnt = {}; ids.forEach(id => { cnt[id] = (cnt[id] || 0) + 1; });
+      const res = {};
+      fo.forEach(f => {
+        const nn = f.ops.map(q => cnt[q.from] || 0);
+        res[f.id] = { n: nn, reached: !f.parent || res[f.parent.id].n[f.parentOp] > 0 };
+      });
+      return res;
+    }
+    return { svg: o, w: W, h: H, maxH: 1250, edges, scen, onFlow, onFlowClear, frags: fo, fragPath, cover, sym, lbl: lblOf };
   };
 
   /* ===== 4. COLLABORATION ===== */
@@ -1422,7 +1604,7 @@ const NORM = {
   act(d) { const S = {}; d.nodes.forEach(n => { n.s = n.type === 'dec' ? 4 : n.type === 'bar' ? 5 : 2; S[n.id] = n.s; });
     d.edges.forEach(e => { e.s = Math.max(3, S[e.f], S[e.t]); }); return d; },
   seq(d) { d.parts.forEach(p => { p.s = p.kind === 'actor' ? 1 : (p.created ? 5 : 2); });
-    d.msgs.forEach(m => { const k = m.kind || 'sync'; m.s = k === 'ret' ? 4 : (k === 'create' || k === 'destroy' || k === 'self') ? 5 : 3; m.gs = 5; }); return d; },
+    d.msgs.forEach(m => { const k = m.kind || 'sync'; m.s = k === 'ret' ? 4 : (k === 'create' || k === 'destroy' || k === 'self') ? 5 : 3; m.gs = 5; }); (d.frags || []).forEach(f => { f.s = 6; }); return d; },
   col(d) { d.objs.forEach(o => o.s = 1); d.links.forEach(l => l.s = 2);
     d.msgs.forEach(m => { m.s = /^\d+\.\d/.test(m.label) ? 4 : 3; }); return d; },
   st(d) { const sup = {}; d.nodes.forEach(n => { n.s = (n.type === 'start' || n.type === 'end') ? 1 : n.type === 'super' ? 4 : 2; if (n.type === 'super') sup[n.id] = 1; });
@@ -1441,6 +1623,16 @@ const GL = (function () {
   return { G, T, S, L, D, box, lbl };
 })();
 const { S: gS, T: gT, L: gL, D: gD, box: gB, lbl: gLb, G: gG } = GL;
+/* ký hiệu nhỏ cho combined fragment (chỉ dùng ở tab Sequence) */
+const gFr = (op, guard, div) => {
+  const tw = Math.round(10 + 6.6 * op.length);
+  return gS(`<rect class="sh bnd" x="5" y="3" width="76" height="38"/>`,
+    `<path class="sh" d="M5,3 H${5 + tw} V13 L${5 + tw - 5},19 H5 Z"/>`,
+    gT(5 + (tw - 2) / 2, 11, op, { cls: 'sm b', mid: true }),
+    guard ? gT(5 + tw + 4, 11, guard, { cls: 'sm', a: 'start', mid: true }) : '',
+    div ? `<path class="ln dash thin" d="M5,26 H81"/>` + (typeof div === 'string' ? gT(9, 33, div, { cls: 'sm', a: 'start', mid: true }) : '') : '');
+};
+const SQ = (...parts) => [].concat(...parts.map(p => p.map(g => Array.isArray(g) ? g : [g])));   // ghép các đoạn id thành các bước chạy luồng
 
 const DIAGRAMS = [
   /* ------------------------------------------------------------ 1 */
@@ -1497,9 +1689,9 @@ const DIAGRAMS = [
   {
     id: 'seq', name: 'Sequence', tag: 'd', src: 'Chương 4 · Mô hình hóa yêu cầu',
     lead: 'Sơ đồ Sequence cho thấy các đối tượng gửi thông điệp cho nhau theo thứ tự thời gian, trong một kịch bản cụ thể của một use case.',
-    why: 'Activity cho biết việc gì xảy ra, còn Sequence cho biết đối tượng nào gọi đối tượng nào. Từ các mũi tên này, bạn rút ra được lớp nào cần có và lớp đó cần phương thức gì.',
+    why: 'Activity cho biết việc gì xảy ra, còn Sequence cho biết đối tượng nào gọi đối tượng nào. Từ các mũi tên này, bạn rút ra được lớp nào cần có và lớp đó cần phương thức gì. Khi kịch bản có rẽ nhánh hay lặp, combined fragment cho phép gom tất cả vào một sơ đồ thay vì vẽ mỗi nhánh một hình.',
     when: 'Sau Activity: mỗi kịch bản (luồng chính, luồng lỗi) của một use case vẽ thành một sơ đồ sequence.',
-    pitfall: 'Trục dọc là thời gian (trên xuống dưới), trục ngang chỉ là chỗ xếp đối tượng, vị trí trái phải không mang ý nghĩa. Mũi tên đi tới đối tượng nào thì đối tượng đó phải có phương thức tên đó.',
+    pitfall: 'Trục dọc là thời gian (trên xuống dưới), trục ngang chỉ là chỗ xếp đối tượng. Slide chương 4 chỉ ghi điều kiện [guard] trên từng mũi tên; UML 2 dùng combined fragment (khung alt, opt, loop, par, break) để gom cả đoạn rẽ nhánh hoặc lặp. Mỗi alt phải có đủ nhánh (kể cả else), mỗi loop phải có điều kiện dừng, break chỉ có nghĩa khi nằm trong một khung để thoát.',
     symbols: [
       { g: gS(gG.actor(42, 24)), n: 'Tác nhân', d: 'Bên khởi đầu kịch bản, đứng ngoài cùng bên trái.' },
       { g: gS(gB(10, 6, 64, 20, 3), gT(42, 16, ':Sách', { cls: 'sm ul', mid: true }), gL(42, 26, 42, 42, 1)), n: 'Đối tượng + lifeline', d: 'Hộp tên “:Lớp” có gạch chân, bên dưới là đường đứt nét biểu diễn sự tồn tại của đối tượng theo thời gian.' },
@@ -1508,7 +1700,13 @@ const DIAGRAMS = [
       { g: gS(gL(78, 22, 14, 22, 1), gD('open', 8, 22, Math.PI), gT(42, 12, 'true', { cls: 'sm it' })), n: 'Thông điệp trả về', d: 'Mũi tên đứt nét, đầu hở, quay về người gọi kèm kết quả.' },
       { g: gS(gL(8, 22, 66, 22, 1), gD('open', 78, 22, 0), gT(42, 12, '«create»', { cls: 'sm' })), n: 'Tạo đối tượng', d: 'Mũi tên đứt nét chỉ thẳng vào hộp đối tượng mới, hộp nằm thấp hơn các hộp khác.' },
       { g: gS(`<path class="ln x" d="M30,12 L54,36 M54,12 L30,36"/>`), n: 'Hủy đối tượng', d: 'Dấu X ở cuối lifeline: đối tượng chấm dứt tồn tại.' },
-      { g: gS(gT(42, 22, '[còn rảnh]', { cls: 'sm b' })), n: 'Điều kiện [guard]', d: 'Chỉ gửi thông điệp khi biểu thức trong ngoặc vuông đúng.' }
+      { g: gS(gT(42, 22, '[còn rảnh]', { cls: 'sm b' })), n: 'Điều kiện [guard]', d: 'Chỉ gửi thông điệp khi biểu thức trong ngoặc vuông đúng.' },
+      { g: gFr('op', '[đk]'), n: 'Combined fragment (khung kết hợp)', d: 'Khung chữ nhật bọc một đoạn của sơ đồ. Góc trên trái ghi toán tử (alt, opt, loop, par, break), bên cạnh là điều kiện [guard] cho biết đoạn đó chạy khi nào.' },
+      { g: gFr('alt', '[đk]', '[else]'), n: 'alt: chọn một nhánh', d: 'Giống if–else: đúng một nhánh được chạy. Các nhánh ngăn nhau bằng đường đứt nét, mỗi nhánh có guard riêng, nhánh cuối thường là [else].' },
+      { g: gFr('opt', '[đk]'), n: 'opt: tùy chọn', d: 'Giống if không có else: guard đúng thì chạy đoạn bên trong, sai thì bỏ qua cả đoạn.' },
+      { g: gFr('loop', '[n lần]'), n: 'loop: lặp', d: 'Lặp đoạn bên trong khi guard còn đúng. Luôn ghi điều kiện dừng hoặc số lần tối đa để vòng lặp không chạy mãi.' },
+      { g: gFr('par', '', true), n: 'par: song song', d: 'Các operand chạy song song, thứ tự giữa chúng không quan trọng. Đường đứt nét ngăn các luồng.' },
+      { g: gFr('break', '[đk]'), n: 'break: thoát sớm', d: 'Guard đúng thì chạy đoạn bên trong rồi thoát khung bao ngoài (thường là loop); phần còn lại của khung đó bị bỏ qua.' }
     ],
     steps: [
       { t: 'Xác định tác nhân khởi đầu', d: 'Ai bắt đầu kịch bản? Đặt tác nhân ở ngoài cùng bên trái.' },
@@ -1516,7 +1714,8 @@ const DIAGRAMS = [
       { t: 'Vẽ thông điệp theo thời gian', d: 'Đi từ trên xuống: mỗi hành động trong kịch bản là một mũi tên từ người gọi tới người nhận, tên mũi tên là phương thức.' },
       { t: 'Vẽ thông điệp trả về', d: 'Với mỗi lời gọi có kết quả, kéo mũi tên đứt nét ngược lại. Phần nằm giữa hai mũi tên chính là activation bar.' },
       { t: 'Tạo, hủy đối tượng và điều kiện', d: 'Đối tượng sinh ra giữa chừng thì hộp của nó nằm thấp xuống. Thông điệp có điều kiện thì gắn guard.' },
-      { t: 'Rà soát', d: 'Mỗi mũi tên đã có phương thức tương ứng ở lớp nhận chưa? Mọi lời gọi đã được trả về chưa?' }
+      { t: 'Bọc đoạn rẽ nhánh, lặp, song song bằng combined fragment', d: 'Đoạn nào chỉ chạy có điều kiện thì bọc khung: alt (chọn một trong nhiều nhánh), opt (có hoặc không), loop (lặp), par (song song), break (thoát sớm). Ghi guard trong ngoặc vuông, các nhánh alt ngăn nhau bằng đường đứt nét.' },
+      { t: 'Rà soát', d: 'Mỗi mũi tên đã có phương thức tương ứng ở lớp nhận chưa? Mọi lời gọi đã được trả về chưa? Mỗi alt đủ nhánh chưa, mỗi loop có điều kiện dừng chưa, break có nằm trong khung cần thoát không?' }
     ]
   },
   /* ------------------------------------------------------------ 4 */
@@ -1693,20 +1892,50 @@ const EX_LIB = {
       { n: 'Đã mượn đủ 3 sách', steps: [['e1'], ['e2'], ['e3'], ['e4'], ['e5'], ['e8'], ['e17']] }
     ]
   }),
-  seq: NORM.seq({
-    parts: [
-      { id: 'tg', kind: 'actor', label: 'Thủ thư' }, { id: 'ui', label: ':MànHìnhMượn', stereo: 'boundary' }, { id: 'ct', label: ':QuảnLýMượn', stereo: 'control' },
-      { id: 'th', label: ':ThẻĐộcGiả', stereo: 'entity' }, { id: 'sa', label: ':Sách', stereo: 'entity' }, { id: 'pm', label: ':PhiếuMượn', created: 'm7' }
-    ],
-    msgs: [
-      { id: 'm1', f: 'tg', t: 'ui', label: 'quétThẻ(mãThẻ)' }, { id: 'm2', f: 'ui', t: 'ct', label: 'kiểmTraThẻ(mãThẻ)' },
-      { id: 'm3', f: 'ct', t: 'th', label: 'cònHạn()' }, { id: 'm3r', f: 'th', t: 'ct', label: 'true', kind: 'ret', ref: 'm3' }, { id: 'm2r', f: 'ct', t: 'ui', label: 'thẻHợpLệ', kind: 'ret', ref: 'm2' },
-      { id: 'm4', f: 'tg', t: 'ui', label: 'nhậpSách(mãSách)' }, { id: 'm5', f: 'ui', t: 'ct', label: 'mượnSách(mãSách)' },
-      { id: 'm6', f: 'ct', t: 'sa', label: 'đangRảnh()' }, { id: 'm6r', f: 'sa', t: 'ct', label: 'true', kind: 'ret', ref: 'm6' },
-      { id: 'm7', f: 'ct', t: 'pm', label: 'tạoPhiếu()', kind: 'create', guard: '[sách đang rảnh]' }, { id: 'm8', f: 'ct', t: 'sa', label: 'đặtTrạngThái(đãMượn)' },
-      { id: 'm5r', f: 'ct', t: 'ui', label: 'thànhCông', kind: 'ret', ref: 'm5' }, { id: 'm4r', f: 'ui', t: 'tg', label: 'inPhiếuMượn', kind: 'ret', ref: 'm4' }
-    ]
-  }),
+  seq: (function () {
+    const pre = ['m1', 'm2', 'm3', 'm3r', 'm2r'];                      // quét thẻ → kiểm tra thẻ
+    const ok = ['m4', 'm5', 'm6', 'm6r', 'm10'];                       // một vòng mượn thành công
+    const bad = ['m4', 'm5', 'm6', 'm6r', 'm9'];                       // một vòng gặp sách đang bị mượn (break)
+    const par = [['m11', 'm12']];                                      // in phiếu ‖ cập nhật hạn mức
+    return NORM.seq({
+      left: 100, right: 110,
+      parts: [
+        { id: 'tg', kind: 'actor', label: 'Thủ thư' }, { id: 'ui', label: ':MànHìnhMượn', stereo: 'boundary' }, { id: 'ct', label: ':QuảnLýMượn', stereo: 'control' },
+        { id: 'th', label: ':ThẻĐộcGiả', stereo: 'entity' }, { id: 'sa', label: ':Sách', stereo: 'entity' }, { id: 'pm', label: ':PhiếuMượn', created: 'm7' }
+      ],
+      msgs: [
+        { id: 'm1', f: 'tg', t: 'ui', label: 'quétThẻ(mãThẻ)', end: 'm2r' }, { id: 'm2', f: 'ui', t: 'ct', label: 'kiểmTraThẻ(mãThẻ)' },
+        { id: 'm3', f: 'ct', t: 'th', label: 'cònHạn()' }, { id: 'm3r', f: 'th', t: 'ct', label: 'hạnThẻ', kind: 'ret', ref: 'm3' }, { id: 'm2r', f: 'ct', t: 'ui', label: 'trạngThẻ', kind: 'ret', ref: 'm2' },
+        { id: 'm7', f: 'ct', t: 'pm', label: 'tạoPhiếu()', kind: 'create' },
+        { id: 'm4', f: 'tg', t: 'ui', label: 'nhậpSách(mãSách)', end: 'm10' }, { id: 'm5', f: 'ui', t: 'ct', label: 'mượnSách(mãSách)', end: 'm10' },
+        { id: 'm6', f: 'ct', t: 'sa', label: 'đangRảnh()' }, { id: 'm6r', f: 'sa', t: 'ct', label: 'tìnhTrạng', kind: 'ret', ref: 'm6' },
+        { id: 'm9', f: 'ct', t: 'ui', label: 'báoSáchĐãMượn()' },
+        { id: 'm10', f: 'ct', t: 'pm', label: 'thêmChiTiết(mãSách)' },
+        { id: 'm11', f: 'ct', t: 'pm', label: 'inPhiếuMượn()' }, { id: 'm12', f: 'ct', t: 'th', label: 'cậpNhậtHạnMức()' },
+        { id: 'm13', f: 'ui', t: 'tg', label: 'báoThẻHếtHạn()', kind: 'ret' }
+      ],
+      frags: [
+        { id: 'f_alt', op: 'alt', title: 'thẻ hợp lệ?', note: 'Thẻ còn hạn thì cho mượn, hết hạn thì chỉ báo lỗi. Hai nhánh loại trừ nhau: mỗi lần chạy chỉ đi một nhánh.',
+          ops: [{ g: '[thẻ còn hạn]', from: 'm7', to: 'm12' }, { g: '[thẻ hết hạn]', from: 'm13', to: 'm13' }] },
+        { id: 'f_loop', op: 'loop', title: 'từng cuốn sách', note: 'Thủ thư nhập lần lượt từng cuốn. Mỗi phiếu mượn tối đa 2 cuốn nên vòng lặp có chặn trên.',
+          ops: [{ g: '[còn sách cần mượn, tối đa 2 cuốn]', from: 'm4', to: 'm10' }] },
+        { id: 'f_brk', op: 'break', title: 'sách bị mượn', note: 'Gặp sách đang được người khác mượn thì báo lỗi và thoát hẳn vòng lặp, không nhập thêm cuốn nào nữa.',
+          ops: [{ g: '[sách đang được mượn]', from: 'm9', to: 'm9' }] },
+        { id: 'f_opt', op: 'opt', title: 'đã mượn ≥ 1 cuốn', note: 'Chỉ in phiếu và cập nhật hạn mức khi đã mượn được ít nhất một cuốn. Không có cuốn nào thì bỏ qua cả đoạn.',
+          ops: [{ g: '[đã mượn được ≥ 1 cuốn]', from: 'm11', to: 'm12' }] },
+        { id: 'f_par', op: 'par', title: 'in ‖ cập nhật', note: 'In phiếu mượn và cập nhật hạn mức thẻ không phụ thuộc nhau nên có thể chạy song song, không quan trọng việc nào xong trước.',
+          ops: [{ g: '', from: 'm11', to: 'm11' }, { g: '', from: 'm12', to: 'm12' }] }
+      ],
+      scen: [
+        { n: 'Mượn trót lọt 2 cuốn', steps: SQ(pre, ['m7'], ok, ok, par) },
+        { n: 'Mượn 1 cuốn rồi dừng', steps: SQ(pre, ['m7'], ok, par) },
+        { n: 'Thẻ hết hạn', steps: SQ(pre, ['m13']) },
+        { n: 'Cuốn thứ 2 đang bị mượn', steps: SQ(pre, ['m7'], ok, bad, par) },
+        { n: 'Cuốn đầu đang bị mượn', steps: SQ(pre, ['m7'], bad) },
+        { n: 'Không mượn cuốn nào', steps: SQ(pre, ['m7']) }
+      ]
+    });
+  })(),
   col: NORM.col({
     h: 440,
     objs: [
@@ -1874,21 +2103,53 @@ const EX_ATM = {
       { n: 'Tài khoản không đủ tiền', steps: [['e1'], ['e2'], ['e3'], ['e4'], ['e5'], ['e7'], ['e9'], ['e10'], ['e11'], ['e20']] }
     ]
   }),
-  seq: NORM.seq({
-    parts: [
-      { id: 'kh', kind: 'actor', label: 'Khách hàng' }, { id: 'ui', label: ':MànHìnhATM', stereo: 'boundary' }, { id: 'ct', label: ':ĐiềuKhiểnGiaoDịch', stereo: 'control' },
-      { id: 'tk', label: ':TàiKhoản', stereo: 'entity' }, { id: 'gd', label: ':GiaoDịch', created: 'm7' }
-    ],
-    msgs: [
-      { id: 'm1', f: 'kh', t: 'ui', label: 'nhậpPIN(pin)' }, { id: 'm2', f: 'ui', t: 'ct', label: 'xácThựcPIN(pin)' },
-      { id: 'm3', f: 'ct', t: 'tk', label: 'kiểmTraPIN(pin)' }, { id: 'm3r', f: 'tk', t: 'ct', label: 'hợpLệ', kind: 'ret', ref: 'm3' }, { id: 'm2r', f: 'ct', t: 'ui', label: 'chophépGiaoDịch', kind: 'ret', ref: 'm2' },
-      { id: 'm4', f: 'kh', t: 'ui', label: 'nhậpSốTiền(n)' }, { id: 'm5', f: 'ui', t: 'ct', label: 'rútTiền(n)' },
-      { id: 'm6', f: 'ct', t: 'tk', label: 'đủSốDư(n)' }, { id: 'm6r', f: 'tk', t: 'ct', label: 'true', kind: 'ret', ref: 'm6' },
-      { id: 'm7', f: 'ct', t: 'gd', label: 'tạoGiaoDịch(n)', kind: 'create', guard: '[đủ số dư]' },
-      { id: 'm8', f: 'ct', t: 'tk', label: 'trừTiền(n)' }, { id: 'm9', f: 'ct', t: 'ct', label: 'điềuKhiểnNhảTiền()', kind: 'self' },
-      { id: 'm5r', f: 'ct', t: 'ui', label: 'xongGiaoDịch', kind: 'ret', ref: 'm5' }, { id: 'm4r', f: 'ui', t: 'kh', label: 'tiền + biênLai', kind: 'ret', ref: 'm4' }
-    ]
-  }),
+  seq: (function () {
+    const good = ['m1', 'm2', 'm3', 'm3r', 'm4'];                      // một lần nhập PIN đúng (break)
+    const wrong = ['m1', 'm2', 'm3', 'm3r', 'm5'];                     // một lần nhập PIN sai
+    const amt = ['m6', 'm7', 'm8', 'm8r'];                             // nhập số tiền, kiểm tra số dư
+    const take = ['m9', 'm10', [ 'm11', 'm12' ]];                      // tạo giao dịch, trừ tiền, nhả tiền ‖ lưu biên lai
+    return NORM.seq({
+      left: 100, right: 110,
+      parts: [
+        { id: 'kh', kind: 'actor', label: 'Khách hàng' }, { id: 'ui', label: ':MànHìnhATM', stereo: 'boundary' }, { id: 'ct', label: ':ĐiềuKhiểnGiaoDịch', stereo: 'control' },
+        { id: 'tk', label: ':TàiKhoản', stereo: 'entity' }, { id: 'gd', label: ':GiaoDịch', created: 'm9' }
+      ],
+      msgs: [
+        { id: 'm1', f: 'kh', t: 'ui', label: 'nhậpPIN(pin)', end: 'm5' }, { id: 'm2', f: 'ui', t: 'ct', label: 'xácThựcPIN(pin)', end: 'm5' },
+        { id: 'm3', f: 'ct', t: 'tk', label: 'kiểmTraPIN(pin)' }, { id: 'm3r', f: 'tk', t: 'ct', label: 'đúngHaySai', kind: 'ret', ref: 'm3' },
+        { id: 'm4', f: 'ct', t: 'ui', label: 'chophépGiaoDịch()' },
+        { id: 'm5', f: 'ct', t: 'ui', label: 'báoSaiPIN()' },
+        { id: 'm6', f: 'kh', t: 'ui', label: 'nhậpSốTiền(n)', end: 'm14' }, { id: 'm7', f: 'ui', t: 'ct', label: 'rútTiền(n)', end: 'm14' },
+        { id: 'm8', f: 'ct', t: 'tk', label: 'đủSốDư(n)' }, { id: 'm8r', f: 'tk', t: 'ct', label: 'đủHayThiếu', kind: 'ret', ref: 'm8' },
+        { id: 'm9', f: 'ct', t: 'gd', label: 'tạoGiaoDịch(n)', kind: 'create' }, { id: 'm10', f: 'ct', t: 'tk', label: 'trừTiền(n)' },
+        { id: 'm11', f: 'ct', t: 'ct', label: 'điềuKhiểnNhảTiền()', kind: 'self' }, { id: 'm12', f: 'ct', t: 'gd', label: 'lưuBiênLai()' },
+        { id: 'm13', f: 'ct', t: 'ui', label: 'inBiênLai()' },
+        { id: 'm14', f: 'ct', t: 'ui', label: 'báoKhôngĐủTiền()' },
+        { id: 'm15', f: 'ct', t: 'ui', label: 'giữThẻ()' }
+      ],
+      frags: [
+        { id: 'f_loop', op: 'loop', title: 'nhập PIN', note: 'Cho khách nhập lại PIN nếu sai, nhưng tối đa 3 lần để chặn kẻ đoán mò.',
+          ops: [{ g: '[PIN chưa đúng, tối đa 3 lần]', from: 'm1', to: 'm5' }] },
+        { id: 'f_brk', op: 'break', title: 'PIN đúng', note: 'PIN đúng thì cho phép giao dịch và thoát luôn vòng lặp, không hỏi lại PIN và không báo sai.',
+          ops: [{ g: '[PIN đúng]', from: 'm4', to: 'm4' }] },
+        { id: 'f_alt1', op: 'alt', title: 'qua được PIN?', note: 'Sau vòng nhập PIN: đúng thì cho rút tiền, sai đủ 3 lần thì máy giữ thẻ.',
+          ops: [{ g: '[PIN đúng]', from: 'm6', to: 'm14' }, { g: '[sai PIN 3 lần]', from: 'm15', to: 'm15' }] },
+        { id: 'f_alt2', op: 'alt', title: 'đủ số dư?', note: 'Đủ tiền thì tạo giao dịch và nhả tiền, thiếu tiền thì báo lỗi. Đây là alt nằm trong một nhánh của alt ngoài.',
+          ops: [{ g: '[đủ số dư]', from: 'm9', to: 'm13' }, { g: '[không đủ số dư]', from: 'm14', to: 'm14' }] },
+        { id: 'f_par', op: 'par', title: 'nhả tiền ‖ lưu biên lai', note: 'Nhả tiền mặt (thiết bị) và lưu biên lai (dữ liệu) độc lập nhau nên chạy song song.',
+          ops: [{ g: '', from: 'm11', to: 'm11' }, { g: '', from: 'm12', to: 'm12' }] },
+        { id: 'f_opt', op: 'opt', title: 'in biên lai', note: 'Chỉ in biên lai giấy khi khách bấm chọn; không chọn thì bỏ qua.',
+          ops: [{ g: '[khách chọn in biên lai]', from: 'm13', to: 'm13' }] }
+      ],
+      scen: [
+        { n: 'Rút tiền, có in biên lai', steps: SQ(good, amt, take, ['m13']) },
+        { n: 'Rút tiền, không in biên lai', steps: SQ(good, amt, take) },
+        { n: 'Không đủ số dư', steps: SQ(good, amt, ['m14']) },
+        { n: 'Sai PIN 1 lần rồi đúng', steps: SQ(wrong, good, amt, take) },
+        { n: 'Sai PIN 3 lần, máy giữ thẻ', steps: SQ(wrong, wrong, wrong, ['m15']) }
+      ]
+    });
+  })(),
   col: NORM.col({
     h: 440,
     objs: [
@@ -2046,20 +2307,52 @@ const EX_BUS = {
       { n: 'Thanh toán thất bại', steps: [['e1'], ['e2'], ['e3'], ['e5'], ['e7'], ['e8'], ['e9'], ['e10'], ['e18']] }
     ]
   }),
-  seq: NORM.seq({
-    parts: [
-      { id: 'hk', kind: 'actor', label: 'Hành khách' }, { id: 'ui', label: ':MànHìnhĐặtVé', stereo: 'boundary' }, { id: 'ct', label: ':QuảnLýĐặtVé', stereo: 'control' },
-      { id: 'cx', label: ':ChuyếnXe', stereo: 'entity' }, { id: 'cg', label: ':CổngThanhToán', stereo: 'entity' }, { id: 've', label: ':Vé', created: 'm7' }
-    ],
-    msgs: [
-      { id: 'm1', f: 'hk', t: 'ui', label: 'chọnGhế(mãChuyến, ghế)' }, { id: 'm2', f: 'ui', t: 'ct', label: 'đặtVé(mãChuyến, ghế)' },
-      { id: 'm3', f: 'ct', t: 'cx', label: 'ghếTrống(ghế)' }, { id: 'm3r', f: 'cx', t: 'ct', label: 'true', kind: 'ret', ref: 'm3' },
-      { id: 'm4', f: 'ct', t: 'cx', label: 'giữGhế(ghế, 10 phút)' },
-      { id: 'm5', f: 'ct', t: 'cg', label: 'thanhToán(số tiền)' }, { id: 'm5r', f: 'cg', t: 'ct', label: 'thànhCông', kind: 'ret', ref: 'm5' },
-      { id: 'm7', f: 'ct', t: 've', label: 'tạoVé()', kind: 'create', guard: '[thanh toán thành công]' },
-      { id: 'm2r', f: 'ct', t: 'ui', label: 'mãVé', kind: 'ret', ref: 'm2' }, { id: 'm1r', f: 'ui', t: 'hk', label: 'hiểnThịVé', kind: 'ret', ref: 'm1' }
-    ]
-  }),
+  seq: (function () {
+    const pre = ['m1', 'm2', 'm3', 'm3r'];                             // chọn ghế → kiểm tra ghế trống
+    const payOK = ['m6', 'm6r', 'm7', ['m8', 'm9']];                   // thanh toán được → tạo vé → hiển thị vé ‖ bán ghế
+    const payFail = ['m6', 'm6r', 'm10'];                              // thanh toán lỗi → báo lỗi, quay lại vòng
+    return NORM.seq({
+      left: 100, right: 110,
+      parts: [
+        { id: 'hk', kind: 'actor', label: 'Hành khách' }, { id: 'ui', label: ':MànHìnhĐặtVé', stereo: 'boundary' }, { id: 'ct', label: ':QuảnLýĐặtVé', stereo: 'control' },
+        { id: 'cx', label: ':ChuyếnXe', stereo: 'entity' }, { id: 'cg', label: ':CổngThanhToán', stereo: 'entity' }, { id: 've', label: ':Vé', created: 'm7' }
+      ],
+      msgs: [
+        { id: 'm1', f: 'hk', t: 'ui', label: 'chọnGhế(chuyến, ghế)', end: 'm12' }, { id: 'm2', f: 'ui', t: 'ct', label: 'đặtVé(chuyến, ghế)', end: 'm12' },
+        { id: 'm3', f: 'ct', t: 'cx', label: 'ghếTrống(ghế)' }, { id: 'm3r', f: 'cx', t: 'ct', label: 'trốngHayKhông', kind: 'ret', ref: 'm3' },
+        { id: 'm4', f: 'ct', t: 'cx', label: 'khóaGhế(ghế, 10 phút)' },
+        { id: 'm5', f: 'ct', t: 'ct', label: 'ápMãGiảm(mã)', kind: 'self' },
+        { id: 'm6', f: 'ct', t: 'cg', label: 'thanhToán(soTien)' }, { id: 'm6r', f: 'cg', t: 'ct', label: 'kếtQuả', kind: 'ret', ref: 'm6' },
+        { id: 'm7', f: 'ct', t: 've', label: 'tạoVé()', kind: 'create' },
+        { id: 'm8', f: 'ct', t: 'ui', label: 'hiểnThịVé(mãVé)' }, { id: 'm9', f: 'ct', t: 'cx', label: 'bánGhế(ghế)' },
+        { id: 'm10', f: 'ct', t: 'ui', label: 'báoLỗiThanhToán()' },
+        { id: 'm11', f: 'ct', t: 'cx', label: 'nhảGhế(ghế)' },
+        { id: 'm12', f: 'ct', t: 'ui', label: 'báoGhếĐãBán()' }
+      ],
+      frags: [
+        { id: 'f_alt', op: 'alt', title: 'ghế còn trống?', note: 'Ghế còn trống thì giữ ghế và đi tiếp tới thanh toán; ghế đã có người đặt thì chỉ báo lỗi.',
+          ops: [{ g: '[ghế còn trống]', from: 'm4', to: 'm11' }, { g: '[ghế đã có người đặt]', from: 'm12', to: 'm12' }] },
+        { id: 'f_opt1', op: 'opt', title: 'mã giảm giá', note: 'Chỉ tính lại giá khi khách có nhập mã giảm giá. Đây là use case mở rộng, không bắt buộc.',
+          ops: [{ g: '[có mã giảm giá]', from: 'm5', to: 'm5' }] },
+        { id: 'f_loop', op: 'loop', title: 'thử thanh toán', note: 'Cho thử thanh toán lại nếu lỗi, tối đa 2 lần, trong lúc ghế đang bị khóa tạm 10 phút.',
+          ops: [{ g: '[chưa thanh toán được, tối đa 2 lần]', from: 'm6', to: 'm10' }] },
+        { id: 'f_brk', op: 'break', title: 'thanh toán xong', note: 'Thanh toán thành công thì tạo vé rồi thoát vòng lặp. Phần báo lỗi ở cuối vòng bị bỏ qua.',
+          ops: [{ g: '[thanh toán thành công]', from: 'm7', to: 'm9' }] },
+        { id: 'f_par', op: 'par', title: 'hiển thị ‖ bán ghế', note: 'Hiển thị vé cho khách và chuyển ghế từ khóa tạm sang đã bán là hai việc độc lập nên chạy song song.',
+          ops: [{ g: '', from: 'm8', to: 'm8' }, { g: '', from: 'm9', to: 'm9' }] },
+        { id: 'f_opt2', op: 'opt', title: 'hết lượt thử', note: 'Nếu dùng hết lượt mà vẫn chưa thanh toán được thì nhả ghế cho người khác đặt.',
+          ops: [{ g: '[hết lượt thanh toán]', from: 'm11', to: 'm11' }] }
+      ],
+      scen: [
+        { n: 'Đặt vé có mã giảm giá', steps: SQ(pre, ['m4', 'm5'], payOK) },
+        { n: 'Đặt vé không mã giảm giá', steps: SQ(pre, ['m4'], payOK) },
+        { n: 'Ghế đã có người đặt', steps: SQ(pre, ['m12']) },
+        { n: 'Lỗi 1 lần rồi thành công', steps: SQ(pre, ['m4'], payFail, payOK) },
+        { n: 'Lỗi cả 2 lần, nhả ghế', steps: SQ(pre, ['m4'], payFail, payFail, ['m11']) },
+        { n: 'Mã giảm giá, lỗi 1 lần, thành công', steps: SQ(pre, ['m4', 'm5'], payFail, payOK) }
+      ]
+    });
+  })(),
   col: NORM.col({
     h: 460,
     objs: [
@@ -2184,7 +2477,7 @@ const EX_BUS = {
   const NS = 'http://www.w3.org/2000/svg';
   const EXS = { lib: EX_LIB, atm: EX_ATM, bus: EX_BUS };
   const SIMPL = {
-    seq: 'Lab chỉ vẽ kịch bản chính. Sơ đồ thật có thể thêm khung alt/opt/loop cho các nhánh rẽ và vòng lặp.',
+    seq: 'Lab vẽ 5 toán tử alt, opt, loop, par, break; chưa vẽ neg, critical, ref. Số vòng lặp và nhánh được chọn là cố định theo từng kịch bản chứ không tính guard thật. Trong par, các thông điệp bắn cùng lúc khi chạy luồng nhưng trên hình xếp nối nhau theo chiều dọc.',
     act: 'Lab gom thông báo lỗi vào một hành động và dùng hai điểm kết thúc cho dễ đọc; bạn có thể tách nhỏ hơn.',
     st: 'Lab chỉ vẽ các sự kiện chính, chưa vẽ đầy đủ hành vi do / exit và lịch sử trạng thái.'
   };
@@ -2266,6 +2559,33 @@ const EX_BUS = {
     }).join('');
     return `<table><thead><tr><th>#</th><th>Từ</th><th>Đến</th><th>Thông điệp</th><th>Loại</th></tr></thead><tbody>${rows}</tbody></table>`;
   }
+  /* bảng mô tả riêng cho Sequence: combined fragment, thông điệp, độ phủ của các kịch bản */
+  function seqTables(r, data) {
+    const lab = {}; data.parts.forEach(p => { lab[p.id] = p.label.replace(/\n/g, ' '); });
+    const T = (head, rows, cls) => `<div class="tbl-wrap${cls ? ' ' + cls : ''}"><table><thead><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
+    const fr = r.frags.map(f => `<tr><td class="k">${esc(f.op)}</td><td>${esc(f.title || '')}</td><td>${f.parent ? esc(r.lbl(f.parent, f.parentOp)) : 'ngoài cùng'}</td>` +
+      `<td>${f.ops.map((o, j) => esc((f.ops.length > 1 ? r.sym(j) + ' ' : '') + (o.g || '(luồng song song ' + (j + 1) + ')'))).join('<br>')}</td>` +
+      `<td class="mono">#${f.a + 1} → #${f.b + 1}</td><td>${esc(f.note || '')}</td></tr>`).join('');
+    const kn = { ret: 'trả về', create: 'tạo đối tượng', self: 'gọi chính nó', sync: 'đồng bộ', async: 'bất đồng bộ', destroy: 'hủy' };
+    const ms = data.msgs.map((m, i) => `<tr><td class="mono">${i + 1}</td><td>${esc(lab[m.f])}</td><td>${esc(lab[m.t])}</td><td class="mono">${esc(m.label)}</td><td>${kn[m.kind || 'sync']}</td><td class="mono">${esc(r.fragPath(i) || '—')}</td></tr>`).join('');
+    const cell = (f, c) => {
+      if (!c.reached) return '—';
+      if (f.op === 'alt') { const t = c.n.map((k, j) => k ? r.sym(j) : '').join(''); return t ? 'nhánh ' + t : '✗'; }
+      if (f.op === 'loop') return '×' + c.n[0] + ' vòng';
+      if (f.op === 'par') return c.n.every(k => k) ? '✓ cả 2 luồng' : '✗';
+      return c.n[0] ? '✓ chạy' : '✗ bỏ qua';
+    };
+    const seen = r.frags.map(() => new Set());
+    const cv = r.scen.map(sc => {
+      const c = r.cover(sc.steps.reduce((a, g) => a.concat(g), []));
+      return `<tr><td class="k">${esc(sc.n)}</td><td class="mono">${sc.steps.length}</td>${r.frags.map((f, i) => { const t = cell(f, c[f.id]); if (t !== '—') seen[i].add(t); return `<td>${esc(t)}</td>`; }).join('')}</tr>`;
+    }).join('');
+    const sum = `<tr><td class="k">Kết cục đã thử</td><td></td>${seen.map(s => `<td>${esc(Array.from(s).sort().join(' · '))}</td>`).join('')}</tr>`;
+    return `<h2>Bảng combined fragment</h2>${T(['Toán tử', 'Tên', 'Nằm trong', 'Điều kiện / nhánh', 'Bao thông điệp', 'Ý nghĩa'], fr, 'tcov')}` +
+      `<h2 style="margin-top:20px">Danh sách thông điệp</h2>${T(['#', 'Từ', 'Đến', 'Thông điệp', 'Loại', 'Nằm trong fragment'], ms, 'tcov')}` +
+      `<h2 style="margin-top:20px">Độ phủ của các kịch bản chạy luồng</h2>${T(['Kịch bản', 'Số bước'].concat(r.frags.map(f => esc(f.op) + '<br><span class="src">' + esc(f.title || '') + '</span>')), cv + sum, 'tcov')}` +
+      `<p class="src" style="margin:8px 0 0">— : khung cha không chạy nên chưa tới khung này · ✗ : tới nơi nhưng bị bỏ qua · ① ②: nhánh được chọn · ×n: số vòng lặp</p>`;
+  }
   function renderText() {
     const d = cur.d;
     const idx = DIAGRAMS.indexOf(d) + 1;
@@ -2281,7 +2601,8 @@ const EX_BUS = {
     else if (ST.tab === 'cls' || ST.tab === 'st') {
       const t = sp[ST.tab];
       bot = `<h2>${ST.tab === 'cls' ? 'Danh sách lớp chính' : 'Bảng chuyển trạng thái'}</h2><div class="tbl-wrap"><table><thead><tr>${t.head.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${t.rows.map(r => `<tr>${r.map((c, i) => `<td${i === 0 ? ' class="k"' : ''}>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
-    } else if (ST.tab === 'seq' || ST.tab === 'col') bot = `<h2>Danh sách thông điệp</h2><div class="tbl-wrap">${msgTable(cur.data, ST.tab)}</div>`;
+    } else if (ST.tab === 'seq') bot = seqTables(cur.r, cur.data);
+    else if (ST.tab === 'col') bot = `<h2>Danh sách thông điệp</h2><div class="tbl-wrap">${msgTable(cur.data, ST.tab)}</div>`;
     $('#botSec').innerHTML = bot ? `<div class="card">${bot}</div>` : '';
   }
 
@@ -2309,7 +2630,7 @@ const EX_BUS = {
   function fitHost() {
     if (!svg) return;
     const w = host.clientWidth || 700;
-    host.style.height = Math.round(Math.min(860, Math.max(300, w * cur.r.h / cur.r.w))) + 'px';
+    host.style.height = Math.round(Math.min(cur.r.maxH || 860, Math.max(300, w * cur.r.h / cur.r.w))) + 'px';
   }
   window.addEventListener('resize', fitHost);
 
@@ -2387,6 +2708,7 @@ const EX_BUS = {
   function clearFlow() {
     token++;
     if (!svg) return;
+    if (cur && cur.r && cur.r.onFlowClear) cur.r.onFlowClear(svg);
     svg.classList.remove('playing');
     svg.querySelectorAll('.seen,.cur,.on,.fire').forEach(e => e.classList.remove('seen', 'cur', 'on', 'fire'));
     svg.querySelectorAll('.tr').forEach(t => { t.style.strokeDasharray = ''; t.style.strokeDashoffset = ''; });
@@ -2433,7 +2755,8 @@ const EX_BUS = {
     const arrive = () => { if (tk === token) setCur(Array.from(new Set(grp.map(e => cur.edges[e].to)))); };
     dur ? setTimeout(arrive, dur) : arrive();
     app.highlight(ST.idx - 1);
-    app.status(`<b>Bước ${ST.idx}/${steps.length} · ${esc(sc.n)}</b><br>${esc(groupText(grp))}`);
+    const extra = cur.r.onFlow ? cur.r.onFlow(svg, steps.slice(0, ST.idx).reduce((a, g) => a.concat(g), []), ST.idx >= steps.length) : '';
+    app.status(`<b>Bước ${ST.idx}/${steps.length} · ${esc(sc.n)}</b><br>${esc(groupText(grp))}${extra}`);
     return ST.idx < steps.length;
   }
 
