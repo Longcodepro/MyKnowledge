@@ -9,6 +9,7 @@
 <style>
 .navfix{position:fixed;top:50%;transform:translateY(-50%);z-index:50;width:44px;height:72px;border:1px solid var(--line);background:var(--panel);color:var(--fg);font-size:30px;line-height:1;cursor:pointer;opacity:.85;box-shadow:0 2px 8px rgba(0,0,0,.2)}
 .navfix:hover,.navfix:focus-visible{opacity:1;outline:2px solid var(--accent)}
+.navfix:disabled{opacity:.2;cursor:not-allowed}
 #navPrev{left:0;border-radius:0 10px 10px 0}#navNext{right:0;border-radius:10px 0 0 10px}
 @media (max-width:600px){.navfix{width:32px;height:56px;font-size:24px}}
 /* Bố cục: thanh tab ngang; mỗi tab là bảng điều khiển bên trái + kết quả bên phải + chú giải thuật ngữ bên dưới. */
@@ -104,7 +105,7 @@ table.t th{background:var(--code-bg);font-weight:650}
   <header>
     <h1>Bản đồ workflow backend: nhìn là nhớ</h1>
     <button class="btn" id="themeBtn" type="button">Nền tối</button>
-    <p>Chín tab, mỗi tab một sơ đồ chạy được. Bấm nút bên dưới sơ đồ để xem dữ liệu đi qua từng bước. Phần có nhãn "mô phỏng" minh họa đúng logic code thật của dự án.</p>
+    <p>Mười sáu tab, mỗi tab một sơ đồ chạy được, xếp từ tổng quan (1, 2, 3, 4...) đến chi tiết (1.1, 1.2, 2.1...). Phần có nhãn "mô phỏng" minh họa đúng logic code thật của dự án.</p>
   </header>
   <div class="tabs" role="tablist" id="tabs" aria-label="Chức năng"></div>
   <div id="panels"></div>
@@ -355,7 +356,7 @@ function tab0(root) {
     '  giải mã JWT; so token_version với DB', 'ALEMBIC  upgrade head', '  chạy migration chưa áp dụng'];
 
   const ui = shell(root, {
-    intro: 'Đây là bản đồ tổng: một request đi từ Postman qua các tầng Clean Architecture đến MySQL rồi quay lại. Chọn kịch bản rồi bấm <b>Bước tiếp</b>; chấm sáng chạy dọc đường dữ liệu đang đi.',
+    intro: 'Đây là bản đồ tổng: một request đi từ Postman qua các tầng Clean Architecture đến MySQL rồi quay lại. Chấm sáng chạy dọc đường dữ liệu đang đi.',
     hook: 'Client → <b>Uvicorn</b> → <b>Router</b> (Pydantic) → <b>AuthService</b> → <b>Port</b> → <b>Repository</b> → PyMySQL → <b>MySQL</b>, rồi trả ngược về.',
     w: 1000, h: 700,
     controls: '<div class="lab"><span>Kịch bản</span></div><div class="scn" id="s0-scn" style="margin-bottom:12px"></div>' +
@@ -376,7 +377,7 @@ function tab0(root) {
   function reset() {
     pause(); S.frames = build(S.k); S.idx = 0; S.cur = []; S.curE = []; S.passed = {};
     nodes.forEach(n => { n.st = 'cho'; }); hl(-1);
-    ui.status('Kịch bản <b>' + NAMES[S.k] + '</b> gồm ' + S.frames.length + ' bước. Bấm <b>Bước tiếp</b> hoặc <b>Chạy</b>.');
+    ui.status('Kịch bản <b>' + NAMES[S.k] + '</b>: ' + S.frames.length + ' bước.');
   }
   function step() {
     if (S.idx >= S.frames.length) { pause(); return; }
@@ -1143,9 +1144,613 @@ function tab8(root) {
   ui.status('Tick một bug (ví dụ <b>m7</b>: /auth/me không đòi token), bấm <b>Chạy pytest</b>, rồi nhìn hàng nào đỏ.');
 }
 
+/* =================== TAB 9: MAPPED & REPOSITORY (ORM theo từng bước) =================== */
+function tab9(root) {
+  const NW = 190, NH = 54;
+  const nodes = [
+    { id: 'uc',      t: 'AuthService',          s: 'use case · application',     x: 115, y: 50,  L: 'app' },
+    { id: 'port',    t: 'Port (Protocol)',      s: 'hợp đồng, không có code',    x: 420, y: 50,  L: 'app' },
+    { id: 'repo',    t: 'SqlAccountRepository', s: 'infrastructure',             x: 115, y: 150, L: 'infra' },
+    { id: 'entity',  t: 'Account',              s: 'entity · domain',            x: 420, y: 150, L: 'dom' },
+    { id: 'session', t: 'Session',              s: 'SQLAlchemy · identity map',  x: 115, y: 250, L: 'infra' },
+    { id: 'model',   t: 'AccountModel',         s: 'Mapped · 1 object = 1 dòng', x: 420, y: 250, L: 'infra' },
+    { id: 'driver',  t: 'PyMySQL',              s: 'driver · gửi SQL',           x: 115, y: 350, L: 'infra' },
+    { id: 'mysql',   t: 'MySQL 8',              s: 'bảng accounts',              x: 115, y: 450, L: 'db' }
+  ];
+  nodes.forEach(n => { n.w = NW; n.h = NH; });
+  const byId = {}; nodes.forEach(n => { byId[n.id] = n; });
+  const E = [['uc-port', 'uc', 'port', 'gọi hàm của'], ['port-repo', 'port', 'repo', 'được cài đặt bởi'],['repo-sess', 'repo', 'session', 'db.get / select / add'], ['repo-ent', 'repo', 'entity', '_to_entity'],
+    ['repo-mod', 'repo', 'model', 'gán thuộc tính'], ['sess-mod', 'session', 'model', 'Mapped ↔ cột'], ['sess-drv', 'session', 'driver', 'SQL + tham số'], ['drv-db', 'driver', 'mysql', 'TCP :3306']]
+    .map(e => ({ id: e[0], a: byId[e[1]], b: byId[e[2]], label: e[3] }));
+  const eById = {}; E.forEach(e => { eById[e.id] = e; });
+
+  const FIELDS = ['id', 'phone', 'failed_login_count', 'status'];   // 4 trong 12 cột của accounts, đủ để thấy cơ chế
+  const ACC = { id: 1, phone: '0912345678', failed_login_count: 0, status: 'HOAT_DONG' };
+  const A = o => Object.assign({}, ACC, o);
+  const NEW = { id: null, phone: '0987654321', failed_login_count: 0, status: 'HOAT_DONG' };
+  const NEW7 = Object.assign({}, NEW, { id: 7 });
+  const JOIN = 'FROM accounts LEFT OUTER JOIN roles AS roles_1 ON roles_1.id = accounts.role_id\n';
+  const SQL = {
+    sel: 'SELECT accounts.id, accounts.phone, ..., roles_1.name\n' + JOIN + 'WHERE accounts.phone = %s\n-- tham số: ("0912345678",)',
+    role: 'SELECT roles.id FROM roles WHERE roles.name = %s\n-- tham số: ("KHACH_HANG",)',
+    ins: 'INSERT INTO accounts (role_id, phone, password_hash, full_name, ..., created_at)\nVALUES (%s, %s, %s, %s, ..., %s)\n-- MySQL tự cấp id (AUTO_INCREMENT) = 7',
+    ref: 'SELECT accounts.id, accounts.phone, ..., roles_1.name\n' + JOIN + 'WHERE accounts.id = %s\n-- tham số: (7,)',
+    id1: 'SELECT accounts.id, accounts.phone, ..., roles_1.name\n' + JOIN + 'WHERE accounts.id = %s\n-- tham số: (1,)',
+    upd: 'UPDATE accounts SET failed_login_count=%s WHERE accounts.id = %s\n-- tham số: (1, 1)',
+    del: 'DELETE FROM accounts WHERE accounts.id = %s\n-- tham số: (1,)'
+  };
+  const F = (n, e, l, h, p, rev) => ({ n: n, e: e, l: l, h: h, p: p || {}, rev: rev || [] });
+  const SC = [
+    { name: 'Truy vấn', title: 'get_by_phone(phone) → SELECT',
+      code: ['def get_by_phone(self, phone):', '  stmt = select(AccountModel).where(AccountModel.phone == phone)', '  m = self.db.scalar(stmt)', '  return _to_entity(m) if m else None'],
+      init: { ent: null, mod: null, row: ACC },
+      why: 'Mapped cho phép viết truy vấn bằng thuộc tính Python (<code>AccountModel.phone</code>) thay vì chuỗi SQL, và biến dòng DB thành object. Repository lại đổi object đó thành entity để tầng trên không dính SQLAlchemy. Đơn giản hóa: SQL rút gọn danh sách cột.',
+      frames: [
+        F(['uc'], [], -1, '<b>AuthService.login()</b> cần tài khoản nên gọi <code>self.accounts.get_by_phone("0912345678")</code> qua Port. Use case không biết bên dưới là SQL hay gì khác.'),
+        F(['repo'], ['uc-repo'], 1, 'Repository dựng truy vấn bằng Python: <code>select(AccountModel).where(AccountModel.phone == phone)</code>. <b>AccountModel.phone</b> là cột <code>Mapped[str]</code>, nên gõ sai tên cột là editor báo ngay, chưa cần chạy.'),
+        F(['repo', 'session'], ['repo-sess'], 2, '<code>db.scalar(stmt)</code> giao cho <b>Session</b>. Session xem <b>identity map</b> (sổ ghi các object đã nạp trong request này): chưa có tài khoản này nên phải hỏi DB.'),
+        F(['session', 'driver'], ['sess-drv'], 2, 'SQLAlchemy biên dịch truy vấn thành câu SQL. Vì <code>role</code> khai báo <code>lazy="joined"</code> nên có thêm LEFT JOIN roles. Giá trị đi bằng tham số <code>%s</code>, không ghép vào chuỗi (chống SQL injection).', { sql: SQL.sel }),
+        F(['driver', 'mysql'], ['drv-db'], 2, '<b>PyMySQL</b> gửi SQL qua TCP :3306. MySQL trả về <b>1 dòng</b> (id=1, phone=0912345678...). Đây mới là dữ liệu thô: số và chuỗi.'),
+        F(['session', 'model'], ['sess-mod'], 2, '<b>Đây là lúc Mapped làm việc</b>: Session tạo object <code>AccountModel</code> và gắn từng cột của dòng vào thuộc tính cùng tên (cột phone → <code>m.phone</code>). Object được ghi vào identity map, kèm bản gốc (snapshot) để sau này biết chỗ nào đã đổi.', { mod: ACC, ms: 'persistent (đã gắn với một dòng DB)' }),
+        F(['repo', 'entity'], ['repo-ent'], 3, '<code>_to_entity(m)</code> chép từng thuộc tính sang <b>Account</b> (dataclass thuần của domain). Từ đây trở lên không còn dính SQLAlchemy; model vẫn nằm lại trong Session.', { ent: ACC }),
+        F(['uc'], ['uc-repo'], 3, 'Use case nhận <b>Account</b> và dùng quy tắc nghiệp vụ của nó (<code>is_temporarily_locked()</code>...). Nó chưa từng nhìn thấy AccountModel.', {}, ['uc-repo'])
+      ] },
+    { name: 'Thêm', title: 'add(account) → INSERT',
+      code: ['def add(self, account):', '  role_id = self.db.scalar(select(RoleModel.id)...)', '  m = AccountModel(role_id=role_id, phone=..., ...)', '  self.db.add(m)', '  self.db.commit()', '  self.db.refresh(m)', '  return _to_entity(m)'],
+      init: { ent: null, mod: null, row: null },
+      why: 'Thêm một dòng đi qua ba trạng thái của object: <b>transient</b> (mới tạo) → <b>pending</b> (đã add, chưa ghi) → <b>persistent</b> (đã có dòng trong DB). SQL chỉ chạy ở lúc commit, nên nhiều thay đổi được gom lại thành ít câu lệnh. Đơn giản hóa: bỏ cột password_hash, full_name... khỏi bảng minh họa.',
+      frames: [
+        F(['uc'], [], -1, 'Đăng ký xong: use case có <b>Account</b> mới nhưng <b>chưa có id</b> (DB mới là nơi cấp id). Gọi <code>self.accounts.add(account)</code>.', { ent: NEW }),
+        F(['repo', 'session', 'driver', 'mysql'], ['uc-repo', 'repo-sess', 'sess-drv', 'drv-db'], 1, 'Repository cần <code>role_id</code> (khóa ngoại) nên hỏi trước: <code>SELECT roles.id ... WHERE name = "KHACH_HANG"</code>. Một truy vấn nhỏ trước khi thêm.', { sql: SQL.role }),
+        F(['repo', 'model'], ['repo-mod'], 2, '<code>AccountModel(role_id=..., phone=..., ...)</code>: chép trường từ entity sang model. Lúc này model chỉ là object Python bình thường (<b>transient</b>): chưa thuộc Session, chưa có id, DB chưa biết gì.', { mod: NEW, ms: 'transient (mới tạo, chưa vào Session)' }),
+        F(['repo', 'session', 'model'], ['repo-sess', 'sess-mod'], 3, '<code>db.add(m)</code> đưa object vào Session: trạng thái <b>pending</b>. <b>Chưa có câu SQL nào chạy</b>: Session chỉ ghi nhớ "lát nữa phải INSERT object này".', { ms: 'pending (Session đã biết, chưa ghi DB)' }),
+        F(['session', 'driver', 'mysql'], ['sess-drv', 'drv-db'], 4, '<code>db.commit()</code> → Session <b>flush</b> (sinh INSERT) rồi <b>COMMIT</b>. MySQL cấp <b>id = 7</b> và ghi dòng; SQLAlchemy tự gán id đó vào <code>m.id</code>.', { sql: SQL.ins, row: NEW7, mod: NEW7, ms: 'persistent (đã có dòng trong DB)' }),
+        F(['repo', 'session', 'driver', 'mysql'], ['repo-sess', 'sess-drv', 'drv-db'], 5, '<code>db.refresh(m)</code> đọc lại dòng bằng SELECT theo id, để lấy các giá trị DB tự điền (ví dụ created_at). Phải gọi tường minh vì Session được tạo với <code>expire_on_commit=False</code>.', { sql: SQL.ref }),
+        F(['repo', 'entity'], ['repo-ent'], 6, '<code>_to_entity(m)</code> trả về <b>Account có id = 7</b>.', { ent: NEW7 }),
+        F(['uc'], ['uc-repo'], 6, 'Use case nhận Account đã đủ id và tiếp tục (ví dụ phát token đăng nhập).', {}, ['uc-repo'])
+      ] },
+    { name: 'Sửa', title: 'save(account) → UPDATE',
+      code: ['def save(self, account):', '  m = self.db.get(AccountModel, account.id)', '  m.role_id = self.db.scalar(select(RoleModel.id)...)', '  m.phone = ...; m.status = ...   (gán MỌI trường)', '  m.failed_login_count = account.failed_login_count', '  self.db.commit()'],
+      init: { ent: ACC, mod: null, row: ACC },
+      why: 'Repository gán mọi trường nhưng chỉ cột thật sự khác mới được ghi: đó là nhờ <b>dirty tracking</b> của Mapped (so với bản gốc đã nhớ). Ghi cả hàng mỗi lần sẽ chậm và dễ đè dữ liệu của người khác. Đơn giản hóa: giả sử tài khoản đã được nạp ở bước tìm theo SĐT trong cùng request (đúng với luồng đăng nhập).',
+      frames: [
+        F(['uc'], [], -1, 'Khách nhập sai mật khẩu. <code>account.record_failed_login()</code> đổi <b>entity</b> trong bộ nhớ: failed_login_count 0 → 1. <b>DB chưa biết gì</b>. Use case gọi <code>self.accounts.save(account)</code>.', { ent: A({ failed_login_count: 1 }) }),
+        F(['repo', 'session', 'model'], ['uc-repo', 'repo-sess', 'sess-mod'], 1, '<code>db.get(AccountModel, 1)</code>: Session tra identity map trước. Trong cùng request, bước tìm theo SĐT đã nạp tài khoản này nên object có sẵn → <b>không tốn SELECT nào</b>. (Session mới thì mới phải hỏi DB.)', { mod: ACC, ms: 'persistent (lấy từ identity map)' }),
+        F(['repo', 'session', 'driver', 'mysql'], ['repo-sess', 'sess-drv', 'drv-db'], 2, 'Dòng <code>m.role_id = self.db.scalar(select(RoleModel.id)...)</code> chạy thêm <b>1 SELECT</b> lấy role_id. Giá trị trùng giá trị cũ nên không bị tính là thay đổi. Chi phí nhỏ nhưng mỗi lần save() đều trả.', { sql: SQL.role }),
+        F(['repo', 'model'], ['repo-mod'], 3, 'Repository gán <b>mọi</b> trường của entity vào model. Mapped so từng thuộc tính với bản gốc: chỉ <b>failed_login_count</b> khác (0 → 1), nên chỉ cột đó bị đánh dấu <b>dirty</b>.', { mod: A({ failed_login_count: 1 }), dirty: ['failed_login_count'], ms: 'dirty (có thuộc tính đã đổi, chưa ghi DB)' }),
+        F(['session', 'driver', 'mysql'], ['sess-drv', 'drv-db'], 5, '<code>db.commit()</code> → flush: Session chỉ viết <b>cột dirty</b>: <code>UPDATE accounts SET failed_login_count=%s WHERE id = %s</code>. Cột không đổi không xuất hiện. Nếu không có gì dirty thì <b>không có UPDATE nào</b>.', { sql: SQL.upd, row: A({ failed_login_count: 1 }), dirty: [], ms: 'persistent (đã đồng bộ với DB)' }),
+        F(['uc'], ['uc-repo'], 5, 'save() trả về None. Vì <code>expire_on_commit=False</code>, model giữ giá trị mới, không tự SELECT lại sau commit. Bảng DB, model và entity đã khớp nhau.', {}, ['uc-repo'])
+      ] },
+    { name: 'Xóa (minh họa)', title: 'db.delete(m) → DELETE',
+      code: ['def delete(self, account_id):   # ví dụ minh họa', '  m = self.db.get(AccountModel, account_id)', '  self.db.delete(m)', '  self.db.commit()'],
+      init: { ent: ACC, mod: null, row: ACC },
+      why: 'Xóa cũng theo nguyên tắc "đánh dấu trước, ghi sau": <code>db.delete(m)</code> chỉ đánh dấu, DELETE chạy lúc commit. <b>Dự án thật không có lệnh xóa cứng nào</b> trong các repository (ví dụ tài khoản được khóa bằng status), nên tab này chỉ minh họa cách ORM hoạt động; mã giả không phải code có sẵn.',
+      frames: [
+        F(['uc'], [], -1, 'Use case muốn xóa tài khoản id = 1. <b>Lưu ý:</b> dự án thật không có lệnh xóa nào trong repository; đây là ví dụ minh họa cách ORM xử lý việc xóa.'),
+        F(['repo', 'session', 'driver', 'mysql', 'model'], ['uc-repo', 'repo-sess', 'sess-drv', 'drv-db', 'sess-mod'], 1, '<code>db.get(AccountModel, 1)</code>: identity map chưa có → <b>SELECT ... WHERE id = %s</b>; Mapped gắn dòng vào object model.', { sql: SQL.id1, mod: ACC, ms: 'persistent (đã gắn với một dòng DB)' }),
+        F(['repo', 'session', 'model'], ['repo-sess'], 2, '<code>db.delete(m)</code> chỉ <b>đánh dấu</b> object là "sẽ xóa". Chưa có DELETE nào chạy, dòng trong DB còn nguyên.', { ms: 'deleted (đánh dấu xóa, chờ commit)' }),
+        F(['session', 'driver', 'mysql'], ['sess-drv', 'drv-db'], 3, '<code>db.commit()</code> → flush sinh <code>DELETE FROM accounts WHERE id = %s</code>. Nếu dòng còn bảng khác trỏ tới (ví dụ đơn đặt vé của tài khoản), MySQL từ chối (lỗi 1451), SQLAlchemy ném <code>IntegrityError</code> và không xóa gì.', { sql: SQL.del, row: null, mod: null, ms: '' }),
+        F(['uc'], ['uc-repo'], 3, 'Xong: dòng biến mất khỏi MySQL, object model bị gỡ khỏi Session. Entity Account trong bộ nhớ use case vẫn còn cho đến khi bị bỏ.', {}, ['uc-repo'])
+      ] }
+  ];
+
+  const ui = shell(root, {
+    intro: 'Tab này mở hộp <b>Mapped</b> (ORM của SQLAlchemy) ra xem: khi repository truy vấn, thêm, sửa hay xóa, object <code>AccountModel</code> trong Session và dòng trong MySQL thay đổi thế nào từng bước.',
+    hook: 'Entity <b>Account</b> (domain) ⇄ <b>Repository</b> ⇄ model <b>AccountModel</b> (Mapped) trong <b>Session</b> ⇄ PyMySQL ⇄ <b>MySQL</b>. SQL chỉ chạy ở lúc cần (select, commit).',
+    w: 1000, h: 530,
+    controls: '<div class="lab"><span>Thao tác của repository</span></div><div class="scn" id="s9-scn" style="margin-bottom:12px"></div>' +
+      '<div class="btns" style="margin-bottom:10px"><button class="btn primary" id="s9-play">▶ Chạy</button><button class="btn" id="s9-back">‹ Bước trước</button><button class="btn" id="s9-step">Bước sau ›</button><button class="btn" id="s9-reset">Làm lại</button></div>' +
+      '<div class="row"><div class="lab"><label for="s9-spd">Tốc độ chạy tự động (bước/giây, chậm = bên trái)</label><b id="s9-spdv">0.5</b></div><input id="s9-spd" type="range" min="0.25" max="4" step="0.25" value="0.5"></div>',
+    detail: '<div><div class="lab"><span>Mã giả repository (dòng đang chạy được tô sáng)</span></div><div class="codeL" id="s9-code"></div></div>' +
+      '<div><div class="lab"><span>Câu SQL SQLAlchemy sinh ra (rút gọn danh sách cột)</span></div><pre class="code" id="s9-sql"></pre></div>' +
+      '<div><div class="lab"><span>Vì sao?</span></div><div class="hint" id="s9-why" style="margin-top:0"></div></div>',
+    gloss: [['ORM', 'Object-Relational Mapping: đổi qua lại giữa object Python và dòng trong bảng.'], ['Mapped[T]', 'khai báo một thuộc tính của model là một cột kiểu T; nhờ nó lớp ↔ bảng, object ↔ dòng.'],
+      ['Session', '"phiên làm việc" với DB: giữ các object đã nạp, gom thay đổi và ghi một lần lúc commit.'], ['Identity map', 'sổ trong Session: mỗi dòng (bảng + khóa chính) chỉ có đúng 1 object; hỏi lại cùng id thì lấy từ sổ, không SELECT.'],
+      ['Dirty tracking', 'Session nhớ bản gốc của object, so với hiện tại để biết cột nào đổi → UPDATE đúng cột đó.'], ['flush / commit', 'flush = gửi SQL cho DB (còn trong giao dịch); commit = flush rồi chốt giao dịch.'],
+      ['transient / pending / persistent', 'vòng đời object: mới tạo (chưa thuộc Session) / đã add nhưng chưa ghi / đã có dòng trong DB.'], ['expire_on_commit=False', 'sau commit không coi object là "cũ"; giữ nguyên giá trị, không tự SELECT lại.'],
+      ['lazy="joined"', 'nạp luôn bảng liên quan (role) bằng JOIN trong cùng một SELECT.'], ['Tham số %s', 'giá trị gửi tách khỏi câu SQL, chống SQL injection.'],
+      ['Port (Protocol)', 'hợp đồng ở tầng application: use case chỉ gọi các hàm khai báo ở đây; bản cài đặt thật (SqlAccountRepository) nằm ở infrastructure và được deps.py tiêm vào. Nhờ vậy use case không import SQLAlchemy.'],
+      ['Transaction / rollback', 'một nhóm thay đổi được ghi trọn vẹn hoặc hủy hết; lỗi giữa chừng thì rollback, DB không nửa vời.']],
+    note: 'Mô phỏng theo backend/app/infrastructure/db/models/auth.py và repositories/auth.py. Đơn giản hóa: chỉ hiện 4 trong 12 cột; SQL rút gọn danh sách cột; "Xóa" là ví dụ minh họa vì dự án không xóa cứng dòng nào. Không gọi DB thật.'
+  });
+  const S = { k: 0, idx: 0, running: false, timer: null, spd: 0.5 };
+  const sc = () => SC[S.k];
+  SC.push({ name: 'Lỗi → rollback', title: 'add() vi phạm UNIQUE → IntegrityError',
+    code: ['def add(self, account):', '  m = AccountModel(...); self.db.add(m)', '  self.db.commit()   # INSERT vi phạm UNIQUE(phone)', '  → IntegrityError → giao dịch bị hủy (rollback)'],
+    init: { ent: null, mod: null, row: A({ phone: '0987654321' }) },
+    why: 'Giao dịch (transaction) bảo đảm "được hết hoặc không được gì": lỗi giữa chừng không để lại dữ liệu nửa vời. Ở dự án này use case kiểm tra số trùng trước (PhoneAlreadyRegistered), nên ràng buộc UNIQUE chỉ là lưới an toàn cuối cùng; repository không bắt lỗi này.',
+    frames: [
+      F(['uc'], [], -1, 'Use case gọi <code>add(account)</code> với số <b>0987654321</b>, nhưng số này đã có trong DB (thực tế use case đã kiểm tra trước; đây là tình huống lọt qua, ví dụ hai request cùng lúc).', { ent: NEW }),
+      F(['repo', 'model'], ['repo-mod'], 2, 'Tạo <code>AccountModel(...)</code> từ entity: object <b>transient</b>.', { mod: NEW, ms: 'transient (mới tạo, chưa vào Session)' }),
+      F(['repo', 'session', 'model'], ['repo-sess', 'sess-mod'], 3, '<code>db.add(m)</code>: object <b>pending</b>, chưa có SQL nào chạy.', { ms: 'pending (Session đã biết, chưa ghi DB)' }),
+      F(['session', 'driver', 'mysql'], ['sess-drv', 'drv-db'], 4, '<code>db.commit()</code> → flush gửi INSERT. MySQL <b>từ chối</b>: <code>Duplicate entry \'0987654321\' for key \'phone\'</code> (lỗi 1062) vì cột phone là UNIQUE.', { sql: SQL.ins }),
+      F(['session', 'model'], ['sess-mod'], 4, 'SQLAlchemy ném <code>IntegrityError</code>. Giao dịch bị <b>rollback</b>: dòng mới không được ghi, object model không dùng tiếp được. DB vẫn y như trước.', { mod: null, ms: '' }),
+      F(['repo', 'uc'], ['uc-repo'], 3, 'Repository không bắt lỗi nên ngoại lệ nổi lên. <code>get_db</code> đóng Session ở cuối request nên giao dịch chắc chắn được dọn. <code>IntegrityError</code> không phải <code>AppError</code> nên nếu lọt tới đây thì thành lỗi 500.', {}, ['uc-repo'])
+    ] });
+  SC.forEach(s => s.frames.forEach(f => {   // Port nằm giữa use case và repository: một đường uc-repo được vẽ thành hai chặng
+    const i = f.e.indexOf('uc-repo'); if (i < 0) return;
+    f.e.splice(i, 1, 'uc-port', 'port-repo'); if (f.n.indexOf('port') < 0) f.n.push('port');
+    const r = f.rev.indexOf('uc-repo'); if (r >= 0) f.rev.splice(r, 1, 'uc-port', 'port-repo');
+  }));
+  const stateAt = i => { const s = Object.assign({ sql: '', ms: '', dirty: [] }, sc().init); for (let j = 0; j < i; j++) Object.assign(s, sc().frames[j].p); return s; };
+  const codeEl = $('#s9-code', root);
+
+  function render() {
+    const s = sc(), fr = S.idx > 0 ? s.frames[S.idx - 1] : null, st = stateAt(S.idx);
+    codeEl.innerHTML = s.code.map(l => '<div>' + esc(l) + '</div>').join('');
+    $$('div', codeEl).forEach((d, j) => d.classList.toggle('on', fr ? j === fr.l : false));
+    $('#s9-sql', root).textContent = st.sql || '(chưa có câu SQL nào được gửi)';
+    $('#s9-why', root).innerHTML = s.why;
+    ui.status(fr ? '<b>Bước ' + S.idx + '/' + s.frames.length + '.</b> ' + fr.h
+      : '<b>' + esc(s.name) + '</b> · ' + esc(s.title) + ': ' + s.frames.length + ' bước.');
+    $('#s9-back', root).disabled = S.idx <= 0; $('#s9-step', root).disabled = S.idx >= s.frames.length;
+    syncNav();
+  }
+  function go(d) {
+    const s = sc(), ni = S.idx + d;
+    if (ni < 0 || ni > s.frames.length) return false;
+    S.idx = ni;
+    if (d > 0) { const f = s.frames[ni - 1]; f.e.forEach(id => { const e = eById[id], p = edgePts(e.a, e.b); ui.stage.packet(f.rev.indexOf(id) >= 0 ? [p[1], p[0]] : p, { color: PAL[1], dur: 520 }); }); }
+    render(); return true;
+  }
+  function pause() { S.running = false; $('#s9-play', root).textContent = '▶ Chạy'; clearTimeout(S.timer); }
+  function play() {
+    if (S.running) return;
+    if (S.idx >= sc().frames.length) { S.idx = 0; render(); }
+    S.running = true; $('#s9-play', root).textContent = '❚❚ Tạm dừng';
+    const tick = () => { if (!S.running) return; go(1); if (S.idx >= sc().frames.length) { pause(); return; } S.timer = setTimeout(tick, 1000 / S.spd); };
+    tick();
+  }
+  function reset() { pause(); S.idx = 0; render(); }
+  const scn = $('#s9-scn', root);
+  SC.forEach((o, i) => {
+    const b = document.createElement('button'); b.className = 'btn'; b.textContent = i + '. ' + o.name; b.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
+    b.onclick = () => { S.k = i; $$('button', scn).forEach((x, j) => x.setAttribute('aria-pressed', j === i ? 'true' : 'false')); reset(); };
+    scn.appendChild(b);
+  });
+  $('#s9-play', root).onclick = () => S.running ? pause() : play();
+  $('#s9-back', root).onclick = () => { pause(); go(-1); };
+  $('#s9-step', root).onclick = () => { pause(); go(1); };
+  $('#s9-reset', root).onclick = reset;
+  $('#s9-spd', root).oninput = e => { S.spd = parseFloat(e.target.value); $('#s9-spdv', root).textContent = S.spd; };
+  STEPPERS.mapped = { pause: pause, next: () => { pause(); go(1); }, back: () => { pause(); go(-1); }, canNext: () => S.idx < sc().frames.length, canBack: () => S.idx > 0 };
+
+  function table(c, x, y, w, title, col, obj, prev, o) {
+    o = o || {}; const h = 26 + FIELDS.length * 22 + 6;
+    if (!obj) { box(c, x + w / 2, y + h / 2, w, h, { fill: T.bg, stroke: col, dash: [6, 5], lw: 1.6, r: 8, title: title, sub: '(chưa có hoặc đã bị xóa)', fs: 12.5, ss: 12 }); return; }
+    c.save(); rr(c, x, y, w, h, 8); c.fillStyle = T.bg; c.fill(); c.lineWidth = (!prev && o.isNew) ? 3.4 : 1.8; c.strokeStyle = col; c.stroke();
+    c.globalAlpha = 0.14; c.fillStyle = col; rr(c, x, y, w, 26, 8); c.fill(); c.restore();
+    txt(c, title, x + 10, y + 13, { size: 12.5, bold: true, color: col, align: 'left' });
+    FIELDS.forEach((f, i) => {
+      const yy = y + 26 + i * 22 + 11, v = obj[f], changed = !!(prev && prev[f] !== v) || (o.dirty && o.dirty.indexOf(f) >= 0);
+      if (changed) { c.save(); c.fillStyle = T['warn-bg']; c.fillRect(x + 4, yy - 10, w - 8, 20); c.restore(); }
+      txt(c, f, x + 10, yy, { size: 12, color: T.muted, align: 'left' });
+      txt(c, (v === null ? '?' : String(v)) + (changed ? '  ✎' : ''), x + 160, yy, { size: 12.5, bold: changed, color: changed ? T.warn : T.fg, align: 'left' });
+    });
+  }
+  ui.stage.draw = function (c) {
+    const s = sc(), fr = S.idx > 0 ? s.frames[S.idx - 1] : null, st = stateAt(S.idx), pv = S.idx > 0 ? stateAt(S.idx - 1) : st;
+    const doneN = {}, doneE = {};
+    for (let j = 0; j < S.idx - 1; j++) { s.frames[j].n.forEach(i => { doneN[i] = 1; }); s.frames[j].e.forEach(i => { doneE[i] = 1; }); }
+    const curN = fr ? fr.n : [], curE = fr ? fr.e : [];
+    E.forEach(e => {
+      const p = edgePts(e.a, e.b), on = curE.indexOf(e.id) >= 0, done = doneE[e.id];
+      arrow(c, p[0], p[1], { color: on ? PAL[1] : done ? PAL[0] : T.line, lw: on ? 4 : done ? 2.6 : 1.6, head: false });
+    });
+    nodes.forEach(n => {
+      const col = PAL[LC[n.L]], on = curN.indexOf(n.id) >= 0, dn = doneN[n.id];
+      if (on) box(c, n.x, n.y, n.w, n.h, { fill: col, stroke: col, lw: 3.5, title: n.t, sub: n.s, tc: '#fff', sc: '#fff', fs: 14, ss: 11.5 });
+      else box(c, n.x, n.y, n.w, n.h, { fill: T.bg, stroke: col, lw: dn ? 3 : 2, tint: dn ? [col, 0.2] : null, title: n.t, sub: n.s, fs: 14, ss: 11.5 });
+    });
+    curE.forEach(id => { const e = eById[id], m = [(e.a.x + e.b.x) / 2, (e.a.y + e.b.y) / 2]; badge(c, e.label, m[0], m[1], PAL[1]); });
+    const tx = 590, tw = 390;
+    table(c, tx, 20, tw, 'Entity Account · domain · RAM', PAL[LC.dom], st.ent, pv.ent, { isNew: !!st.ent });
+    table(c, tx, 160, tw, 'AccountModel trong Session · RAM', PAL[LC.infra], st.mod, pv.mod, { isNew: !!st.mod, dirty: st.dirty });
+    if (st.mod && st.ms) txt(c, 'Trạng thái: ' + st.ms, tx + 4, 160 + 26 + FIELDS.length * 22 + 20, { size: 12, bold: true, color: T.accent, align: 'left' });
+    table(c, tx, 310, tw, 'Dòng trong bảng accounts · MySQL · đĩa', PAL[LC.db], st.row, pv.row, { isNew: !!st.row });
+    txt(c, '✎ + ô vàng = giá trị vừa đổi ở bước này', tx + 4, 458, { size: 12, color: T.muted, align: 'left' });
+    [['Đang xử lý (nền đặc)', 0], ['Đã đi qua (nền nhạt)', 1], ['Chưa tới (nền trắng)', 2]].forEach((it, i) => {
+      const y = 480 + i * 18; c.beginPath(); c.arc(tx + 10, y, 6, 0, 7); c.fillStyle = i === 0 ? PAL[0] : T.bg; c.fill();
+      if (i === 1) { c.globalAlpha = 0.25; c.fillStyle = PAL[0]; c.fill(); c.globalAlpha = 1; } c.lineWidth = 2; c.strokeStyle = PAL[0]; c.stroke();
+      txt(c, it[0], tx + 24, y, { size: 12.5, align: 'left' });
+    });
+  };
+  render();
+}
+
+/* =================== KHUNG DÙNG CHUNG CHO CÁC TAB TỪNG BƯỚC (stepLab) ===================
+   Mỗi tab khai báo: nodes (hộp), edges (đường), panels (bảng trạng thái bên phải), scenarios (các kịch bản, mỗi kịch bản là danh sách bước). */
+const SF = (n, e, l, h, p, rev) => ({ n: n, e: e, l: l, h: h, p: p || {}, rev: rev || [] });   // một bước: hộp sáng, đường sáng, dòng mã, lời giải, thay đổi trạng thái, đường chạy ngược
+function stepLab(root, C) {
+  const P = C.pre;
+  const nodes = C.nodes.map(n => Object.assign({ w: 190, h: 54 }, n));
+  const byId = {}; nodes.forEach(n => { byId[n.id] = n; });
+  const E = C.edges.map(e => ({ id: e[0], a: byId[e[1]], b: byId[e[2]], label: e[3] }));
+  const eById = {}; E.forEach(e => { eById[e.id] = e; });
+  const SC = C.scenarios;
+  const ui = shell(root, {
+    intro: C.intro, hook: C.hook, w: 1000, h: C.h,
+    controls: '<div class="lab"><span>Kịch bản</span></div><div class="scn" id="' + P + '-scn" style="margin-bottom:12px"></div>' +
+      '<div class="btns" style="margin-bottom:10px"><button class="btn primary" id="' + P + '-play">▶ Chạy</button><button class="btn" id="' + P + '-back">‹ Bước trước</button><button class="btn" id="' + P + '-step">Bước sau ›</button><button class="btn" id="' + P + '-reset">Làm lại</button></div>' +
+      '<div class="row"><div class="lab"><label for="' + P + '-spd">Tốc độ chạy tự động (bước/giây)</label><b id="' + P + '-spdv">0.5</b></div><input id="' + P + '-spd" type="range" min="0.25" max="4" step="0.25" value="0.5"></div>',
+    detail: '<div><div class="lab"><span>Mã giả (dòng đang chạy được tô sáng)</span></div><div class="codeL" id="' + P + '-code"></div></div>' +
+      '<div><div class="lab"><span>' + C.outLabel + '</span></div><pre class="code" id="' + P + '-out"></pre></div>' +
+      '<div><div class="lab"><span>Vì sao?</span></div><div class="hint" id="' + P + '-why" style="margin-top:0"></div></div>',
+    gloss: C.gloss, note: C.note
+  });
+  const S = { k: 0, idx: 0, running: false, timer: null, spd: 0.5 };
+  const sc = () => SC[S.k], q = id => $('#' + P + '-' + id, root);
+  const stateAt = i => { const s = Object.assign({ out: '' }, sc().init); for (let j = 0; j < i; j++) Object.assign(s, sc().frames[j].p); return s; };
+  function render() {
+    const s = sc(), fr = S.idx > 0 ? s.frames[S.idx - 1] : null, st = stateAt(S.idx), codeEl = q('code');
+    codeEl.innerHTML = s.code.map(l => '<div>' + esc(l) + '</div>').join('');
+    $$('div', codeEl).forEach((d, j) => d.classList.toggle('on', !!fr && j === fr.l));
+    q('out').textContent = st.out || '(chưa có)'; q('why').innerHTML = s.why;
+    ui.status(fr ? '<b>Bước ' + S.idx + '/' + s.frames.length + '.</b> ' + fr.h : '<b>' + esc(s.name) + '</b>: ' + s.frames.length + ' bước. ' + s.start);
+    q('back').disabled = S.idx <= 0; q('step').disabled = S.idx >= s.frames.length;
+    syncNav();
+  }
+  function go(d) {
+    const s = sc(), ni = S.idx + d;
+    if (ni < 0 || ni > s.frames.length) return false;
+    S.idx = ni;
+    if (d > 0) { const f = s.frames[ni - 1]; f.e.forEach(id => { const e = eById[id], p = edgePts(e.a, e.b); ui.stage.packet(f.rev.indexOf(id) >= 0 ? [p[1], p[0]] : p, { color: PAL[1], dur: 520 }); }); }
+    render(); return true;
+  }
+  function pause() { S.running = false; q('play').textContent = '▶ Chạy'; clearTimeout(S.timer); }
+  function play() {
+    if (S.running) return;
+    if (S.idx >= sc().frames.length) { S.idx = 0; render(); }
+    S.running = true; q('play').textContent = '❚❚ Tạm dừng';
+    const tick = () => { if (!S.running) return; go(1); if (S.idx >= sc().frames.length) { pause(); return; } S.timer = setTimeout(tick, 1000 / S.spd); };
+    tick();
+  }
+  function reset() { pause(); S.idx = 0; render(); }
+  const scn = q('scn');
+  SC.forEach((o, i) => {
+    const b = document.createElement('button'); b.className = 'btn'; b.textContent = (i + 1) + '. ' + o.name; b.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
+    b.onclick = () => { S.k = i; $$('button', scn).forEach((x, j) => x.setAttribute('aria-pressed', j === i ? 'true' : 'false')); reset(); };
+    scn.appendChild(b);
+  });
+  q('play').onclick = () => S.running ? pause() : play();
+  q('back').onclick = () => { pause(); go(-1); };
+  q('step').onclick = () => { pause(); go(1); };
+  q('reset').onclick = reset;
+  q('spd').oninput = e => { S.spd = parseFloat(e.target.value); q('spdv').textContent = S.spd; };
+  STEPPERS[C.id] = { pause: pause, next: () => { pause(); go(1); }, back: () => { pause(); go(-1); }, canNext: () => S.idx < sc().frames.length, canBack: () => S.idx > 0 };
+
+  ui.stage.draw = function (c) {
+    const s = sc(), fr = S.idx > 0 ? s.frames[S.idx - 1] : null, st = stateAt(S.idx), pv = S.idx > 0 ? stateAt(S.idx - 1) : st;
+    const doneN = {}, doneE = {};
+    for (let j = 0; j < S.idx - 1; j++) { s.frames[j].n.forEach(i => { doneN[i] = 1; }); s.frames[j].e.forEach(i => { doneE[i] = 1; }); }
+    const curN = fr ? fr.n : [], curE = fr ? fr.e : [];
+    E.forEach(e => {
+      const p = edgePts(e.a, e.b), on = curE.indexOf(e.id) >= 0;
+      arrow(c, p[0], p[1], { color: on ? PAL[1] : doneE[e.id] ? PAL[0] : T.line, lw: on ? 4 : doneE[e.id] ? 2.6 : 1.6, head: false });
+    });
+    nodes.forEach(n => {
+      const col = PAL[LC[n.L]], on = curN.indexOf(n.id) >= 0, dn = doneN[n.id];
+      if (on) box(c, n.x, n.y, n.w, n.h, { fill: col, stroke: col, lw: 3.5, title: n.t, sub: n.s, tc: '#fff', sc: '#fff', fs: 14, ss: 11.5 });
+      else box(c, n.x, n.y, n.w, n.h, { fill: T.bg, stroke: col, lw: dn ? 3 : 2, tint: dn ? [col, 0.2] : null, title: n.t, sub: n.s, fs: 14, ss: 11.5 });
+    });
+    curE.forEach(id => { const e = eById[id], m = [(e.a.x + e.b.x) / 2, (e.a.y + e.b.y) / 2]; badge(c, e.label, m[0], m[1], PAL[1]); });
+    let y = 12; const x = 590, w = 400;
+    C.panels.forEach(pn => {
+      const rows = st[pn.k] || [], prv = pv[pn.k] || [], h = 24 + 20 + Math.max(rows.length, 1) * 21 + 6, col = PAL[LC[pn.L]];
+      const fr2 = pn.fr || pn.cols.map(() => 1 / pn.cols.length), cw = fr2.map(f => f * (w - 16)), cx = []; cw.reduce((a, b, i) => { cx[i] = a; return a + b; }, x + 8);
+      c.save(); rr(c, x, y, w, h, 8); c.fillStyle = T.bg; c.fill(); c.lineWidth = 1.8; c.strokeStyle = col; c.stroke(); c.globalAlpha = 0.14; c.fillStyle = col; rr(c, x, y, w, 24, 8); c.fill(); c.restore();
+      txt(c, pn.title, x + 10, y + 12, { size: 12.5, bold: true, color: col, align: 'left' });
+      pn.cols.forEach((cn, j) => txt(c, cn, cx[j], y + 34, { size: 11.5, color: T.muted, align: 'left' }));
+      if (!rows.length) txt(c, '(trống)', cx[0], y + 54, { size: 12, color: T.muted, align: 'left' });
+      rows.forEach((r, i) => r.forEach((v, j) => {
+        const yy = y + 54 + i * 21, chg = S.idx > 0 && (!prv[i] || prv[i][j] !== v);
+        if (chg) { c.save(); c.fillStyle = T['warn-bg']; c.fillRect(cx[j] - 3, yy - 10, cw[j] - 2, 20); c.restore(); }
+        txt(c, fit(c, String(v) + (chg ? ' ✎' : ''), cw[j] - 6, 12, chg), cx[j], yy, { size: 12, bold: chg, color: chg ? T.warn : T.fg, align: 'left' });
+      }));
+      y += h + 12;
+    });
+    txt(c, '✎ + ô vàng = vừa đổi ở bước này', x + 4, C.h - 80, { size: 12, color: T.muted, align: 'left' });
+    [['Đang xử lý (nền đặc)', 0], ['Đã đi qua (nền nhạt)', 1], ['Chưa tới (nền trắng)', 2]].forEach((it, i) => {
+      const yy = C.h - 58 + i * 18; c.beginPath(); c.arc(x + 10, yy, 6, 0, 7); c.fillStyle = i === 0 ? PAL[0] : T.bg; c.fill();
+      if (i === 1) { c.globalAlpha = 0.25; c.fillStyle = PAL[0]; c.fill(); c.globalAlpha = 1; } c.lineWidth = 2; c.strokeStyle = PAL[0]; c.stroke();
+      txt(c, it[0], x + 24, yy, { size: 12.5, align: 'left' });
+    });
+  };
+  render();
+}
+
+/* =================== TAB 1.4: PHÂN QUYỀN (RBAC) =================== */
+function tabRbac(root) {
+  const R = [['route', 'POST /trips/{id}/hold'], ['vai trò được phép', 'KHACH_HANG, NHAN_VIEN_BAN_VE']];
+  const OK = [['vai trò', 'KHACH_HANG'], ['trạng thái', 'HOAT_DONG']];
+  const head = [
+    SF(['client'], [], -1, 'Client gọi route kèm (hoặc không kèm) header <code>Authorization: Bearer &lt;token&gt;</code>.'),
+    SF(['router', 'check'], ['c-r', 'r-ch'], 0, 'Route khai báo <code>account = Depends(sellers)</code>, trong đó <code>sellers = require_roles(CUSTOMER, TICKET_CLERK)</code>. FastAPI chạy hàm <b>check()</b> này trước khi vào thân route.'),
+    SF(['check', 'cur'], ['ch-cur'], 3, '<b>check()</b> cần một <code>account</code>, nên FastAPI chạy tiếp <b>get_current_account</b> (Depends lồng nhau). Hai việc tách riêng: "bạn là ai" và "bạn được làm gì".')];
+  const authOk = SF(['cur', 'auth'], ['cur-au'], 1, '<b>get_current_account</b> lấy token từ header (HTTPBearer) rồi gọi <b>AuthService.authenticate</b>: kiểm chữ ký, hạn dùng, và so token_version với DB (xem tab 1.2). Trả về <code>Account</code>.', { who: OK });
+  return stepLab(root, {
+    id: 'rbac', pre: 'sa', h: 440, outLabel: 'Phản hồi HTTP',
+    intro: 'Xác thực trả lời "bạn là ai", phân quyền trả lời "bạn được làm gì". Cả hai đều là <code>Depends</code> ở tầng Presentation, nên route nghiệp vụ không phải tự kiểm tra.',
+    hook: '<b>401</b> = không biết bạn là ai (thiếu/sai token) · <b>403</b> = biết rồi nhưng bạn không đủ quyền.',
+    nodes: [
+      { id: 'client', t: 'Client', s: 'Postman / Swagger', x: 115, y: 50, L: 'ngoai' }, { id: 'router', t: 'Route', s: 'Depends(sellers)', x: 115, y: 150, L: 'pres' },
+      { id: 'check', t: 'require_roles(...)', s: 'check() · deps.py', x: 115, y: 250, L: 'pres' }, { id: 'uc', t: 'Use case', s: 'SeatHoldService', x: 115, y: 350, L: 'app' },
+      { id: 'cur', t: 'get_current_account', s: 'đọc Bearer token', x: 420, y: 150, L: 'pres' }, { id: 'auth', t: 'AuthService', s: 'authenticate()', x: 420, y: 250, L: 'app' },
+      { id: 'err', t: 'Error handler', s: 'AppError → mã HTTP', x: 420, y: 350, L: 'pres' }],
+    edges: [['c-r', 'client', 'router', 'HTTP + Bearer'], ['r-ch', 'router', 'check', 'Depends'], ['ch-cur', 'check', 'cur', 'Depends'], ['cur-au', 'cur', 'auth', 'authenticate(token)'],
+      ['ch-uc', 'check', 'uc', 'đủ quyền → gọi'], ['cur-er', 'cur', 'err', 'InvalidToken'], ['ch-er', 'check', 'err', 'Forbidden']],
+    panels: [{ k: 'who', title: 'Tài khoản đang gọi', L: 'app', cols: ['trường', 'giá trị'] }, { k: 'rule', title: 'Route yêu cầu', L: 'pres', cols: ['trường', 'giá trị'] }, { k: 'res', title: 'Kết quả', L: 'ngoai', cols: ['mã', 'ý nghĩa'], fr: [0.2, 0.8] }],
+    gloss: [['RBAC', 'Role-Based Access Control: quyền gắn với vai trò (KHACH_HANG, NHAN_VIEN_BAN_VE, ADMIN) thay vì gắn từng người.'], ['Depends lồng nhau', 'một dependency có thể đòi dependency khác; FastAPI chạy theo thứ tự từ trong ra ngoài.'],
+      ['require_roles(*roles)', 'hàm trả về một dependency kiểm tra account.role có thuộc danh sách; nếu không thì ném Forbidden.'], ['401 vs 403', '401: chưa xác thực (không rõ là ai). 403: đã xác thực nhưng không đủ quyền.'],
+      ['Kiểm tra quyền sở hữu', 'vai trò đúng chưa đủ: khách A không được xem đơn của khách B. Việc này nằm ở use case (BookingService._authorize), vì cần dữ liệu đơn.']],
+    note: 'Mô phỏng theo presentation/deps.py (get_current_account, require_roles) và presentation/routers/holds.py. Đơn giản hóa: route quản trị chỉ ghi "route quản trị (Role.ADMIN)" thay vì một đường dẫn cụ thể.',
+    scenarios: [
+      { name: 'Khách giữ ghế (đủ quyền)', start: 'Đủ quyền thì route chạy bình thường.', init: { who: [], rule: R, res: [] },
+        code: ['sellers = require_roles(CUSTOMER, TICKET_CLERK)', 'def get_current_account(token) → AuthService.authenticate', '  không có token → InvalidToken (401)', 'def check(account = Depends(get_current_account)):', '  nếu account.role không thuộc roles → Forbidden (403)', '  trả account → route chạy → gọi use case'],
+        why: 'Route nghiệp vụ chỉ nhận một <code>account</code> đã được kiểm tra, nên không phải lặp lại logic đăng nhập hay vai trò ở từng route. Muốn đổi ai được vào chỉ sửa đúng một chỗ là danh sách vai trò.',
+        frames: head.concat([authOk, SF(['check'], [], 4, '<b>check()</b>: <code>account.role = KHACH_HANG</code> thuộc danh sách được phép → cho qua.'),
+          SF(['check', 'uc'], ['ch-uc'], 5, 'Route chạy và gọi use case. Từ đây không còn chuyện token hay vai trò ở tầng route.', { res: [['200', 'Giữ chỗ thành công']], out: 'HTTP 200  { "trip_id": 5, "seats": [...], "seconds_left": 300 }' })]) },
+      { name: 'Không gửi token → 401', start: 'Thiếu token: dừng ngay từ get_current_account.', init: { who: [], rule: R, res: [] },
+        code: ['sellers = require_roles(CUSTOMER, TICKET_CLERK)', 'def get_current_account(token) → AuthService.authenticate', '  không có token → InvalidToken (401)', 'def check(account = Depends(get_current_account)):', '  nếu account.role không thuộc roles → Forbidden (403)', '  trả account → route chạy → gọi use case'],
+        why: 'Chưa biết người gọi là ai thì chưa thể nói họ có quyền hay không, nên 401 xảy ra trước 403. Route và use case không chạy.',
+        frames: [head[0], head[1], head[2], SF(['cur'], [], 2, 'Không có header Authorization nên <code>cred</code> là None → <code>raise InvalidToken</code>.'),
+          SF(['cur', 'err'], ['cur-er'], 2, 'Error handler đổi InvalidToken thành <b>401</b>. Route và use case không được chạy.', { res: [['401', 'Chưa xác thực: không biết bạn là ai']], out: 'HTTP 401  { "detail": "Phiên đăng nhập không hợp lệ hoặc đã hết hạn" }' })] },
+      { name: 'Khách vào route Admin → 403', start: 'Token đúng nhưng vai trò sai.', init: { who: [], rule: [['route', 'route quản trị (Role.ADMIN)'], ['vai trò được phép', 'ADMIN']], res: [] },
+        code: ['sellers = require_roles(CUSTOMER, TICKET_CLERK)', 'def get_current_account(token) → AuthService.authenticate', '  không có token → InvalidToken (401)', 'def check(account = Depends(get_current_account)):', '  nếu account.role không thuộc roles → Forbidden (403)', '  trả account → route chạy → gọi use case'],
+        why: 'Phân quyền dựa trên vai trò lưu trong tài khoản, không dựa vào việc client "tự xưng". Đổi token sang vai trò khác không có tác dụng vì vai trò đọc lại từ DB qua authenticate().',
+        frames: head.concat([authOk, SF(['check'], [], 4, '<b>check()</b>: <code>KHACH_HANG</code> không thuộc [ADMIN] → <code>raise Forbidden</code>.'),
+          SF(['check', 'err'], ['ch-er'], 4, 'Error handler đổi Forbidden thành <b>403</b>. Use case không bao giờ được gọi.', { res: [['403', 'Đã xác thực nhưng không đủ quyền']], out: 'HTTP 403  { "detail": "Bạn không có quyền thực hiện thao tác này" }' })]) },
+      { name: 'Đúng vai trò nhưng đơn của người khác', start: 'Lớp kiểm tra thứ hai nằm ở use case.', init: { who: [], rule: [['route', 'GET /orders/101 (đơn của khách 7)'], ['vai trò được phép', 'KHACH_HANG, ...']], res: [] },
+        code: ['require_roles cho qua: khách 8 có vai trò KHACH_HANG', 'BookingService.load(order_id, actor)', '  _authorize(actor, đơn):', '    không phải chủ đơn (và không phải nhân viên/Admin) → Forbidden', '    "Bạn không có quyền với đơn này"'],
+        why: 'Vai trò chỉ trả lời "loại người dùng nào". Câu hỏi "đơn này của ai" cần dữ liệu đơn, nên do use case quyết định. Đây là lý do có hai lớp: route lọc theo vai trò, use case lọc theo quyền sở hữu.',
+        frames: [SF(['client'], [], -1, 'Khách 8 gọi <b>GET /orders/101</b>, đơn này của khách 7.', { who: [['vai trò', 'KHACH_HANG'], ['id', '8']] }), SF(['router', 'check'], ['c-r', 'r-ch'], 0, 'Route chỉ đòi vai trò khách hàng trở lên: khách 8 thỏa, <b>check() cho qua</b>.'),
+          SF(['check', 'uc'], ['ch-uc'], 1, 'Route gọi <code>BookingService.load(101, khách 8)</code>.'), SF(['uc'], [], 3, '<code>_authorize</code> thấy khách 8 không phải chủ đơn → <code>raise Forbidden("Bạn không có quyền với đơn này")</code>.'),
+          SF(['uc', 'check', 'err'], ['ch-uc', 'ch-er'], 4, 'Ngoại lệ <code>Forbidden</code> đi ngược lên, Error handler đổi thành <b>403</b>.', { res: [['403', 'Đúng vai trò, sai quyền sở hữu']], out: 'HTTP 403  { "detail": "Bạn không có quyền với đơn này" }' }, ['ch-uc'])] }
+    ] });
+}
+
+/* =================== TAB 3.1: GIỮ CHỖ VÀ TRANH CHẤP ĐỒNG THỜI =================== */
+function tabRace(root) {
+  const U = 'UPDATE trip_seats\nSET status = "TAM_KHOA", held_by = %s, hold_until = %s\nWHERE trip_id = %s AND seat_id = %s\n  AND (status = "TRONG"\n       OR (status = "TAM_KHOA" AND hold_until < %s))\n-- rowcount = số dòng thật sự bị đổi (0 hoặc 1)';
+  const CODE = ['for sid in seat_ids:', '  res = UPDATE ... SET TAM_KHOA ... WHERE ghế còn TRONG hoặc đã hết hạn', '  nếu res.rowcount == 0:', '    nếu chính mình đang giữ ghế này thì bỏ qua', '    ngược lại: ghi sid vào danh sách bad', 'nếu bad: db.rollback(); trả bad', 'db.commit()'];
+  return stepLab(root, {
+    id: 'race', pre: 'sh', h: 440, outLabel: 'Câu SQL chạy ở bước này',
+    intro: 'Hai người cùng chọn một ghế cùng lúc là tình huống cốt lõi của backend: nhiều người dùng song song. Tab này cho thấy hệ thống bảo đảm đúng một người giữ được ghế, mà không cần khóa thủ công trong code.',
+    hook: 'Không "xem còn trống không rồi mới chiếm" (hở giữa hai bước). Điều kiện và việc ghi nằm trong <b>một câu UPDATE</b>, DB xếp hàng các câu cùng ghế.',
+    nodes: [
+      { id: 'a', t: 'Khách A', s: 'request 1', x: 115, y: 50, L: 'ngoai' }, { id: 'b', t: 'Khách B', s: 'request 2', x: 420, y: 50, L: 'ngoai' },
+      { id: 'svc', t: 'SeatHoldService', s: 'use case · hold()', x: 115, y: 150, L: 'app' }, { id: 'repo', t: 'SqlSeatHoldRepository', s: 'infrastructure', x: 115, y: 250, L: 'infra' },
+      { id: 'mysql', t: 'MySQL', s: 'bảng trip_seats', x: 115, y: 350, L: 'db' }, { id: 'lock', t: 'Khóa dòng (InnoDB)', s: 'xếp hàng UPDATE', x: 420, y: 350, L: 'db' }],
+    edges: [['a-s', 'a', 'svc', 'POST hold'], ['b-s', 'b', 'svc', 'POST hold'], ['s-r', 'svc', 'repo', 'hold()'], ['r-m', 'repo', 'mysql', 'UPDATE có điều kiện'], ['m-l', 'mysql', 'lock', 'khóa dòng']],
+    panels: [{ k: 'seat', title: 'Ghế trong trip_seats', L: 'db', cols: ['ghế', 'trạng thái', 'giữ bởi', 'hết hạn'], fr: [0.14, 0.34, 0.26, 0.26] }, { k: 'res', title: 'Kết quả từng request', L: 'infra', cols: ['khách', 'ghế', 'rowcount', 'kết quả'], fr: [0.16, 0.16, 0.24, 0.44] }],
+    gloss: [['Race condition', 'kết quả phụ thuộc thứ tự chạy của các request song song; ở đây là hai người cùng giữ một ghế.'], ['Check-then-act', 'cách sai: SELECT xem còn trống rồi mới UPDATE. Giữa hai lệnh người khác kịp chiếm.'],
+      ['UPDATE có điều kiện', 'gộp việc kiểm tra và ghi trong một câu; rowcount cho biết có ghi được hay không.'], ['rowcount', 'số dòng mà câu UPDATE thật sự thay đổi. 0 nghĩa là điều kiện WHERE không khớp (ghế đã bị chiếm).'],
+      ['Khóa dòng (row lock)', 'khi một giao dịch đang UPDATE một dòng, MySQL InnoDB bắt giao dịch khác muốn ghi cùng dòng phải chờ.'], ['Rollback', 'hủy mọi thay đổi chưa commit của giao dịch; dùng để giữ "được hết hoặc không được gì".'],
+      ['Kiểm tra lười (lazy)', 'không có tiến trình chạy nền dọn ghế hết hạn; chỉ dọn khi có request cần.']],
+    note: 'Mô phỏng theo infrastructure/db/repositories/holds.py và application/use_cases/holds.py. Đơn giản hóa: thứ tự thời gian được dàn dựng để dễ nhìn; thực tế hai request đến cách nhau mili giây và InnoDB quyết định ai trước. Con số 5 phút là mặc định, đọc từ bảng settings.',
+    scenarios: [
+      { name: 'Hai khách cùng giữ ghế A1', start: 'Một người thắng, một người nhận 409.', init: { seat: [['A1', 'TRONG', '—', '—']], res: [] }, code: CODE,
+        why: 'Đảm bảo "chỉ một người thắng" được giao cho DB bằng một câu lệnh nguyên tử, thay vì giao cho code Python (dễ hở và không dùng được khi chạy nhiều tiến trình). Đơn giản hóa: cách InnoDB xếp hàng được vẽ gọn.',
+        frames: [
+          SF(['a', 'b'], [], -1, 'Khách A và khách B cùng bấm giữ ghế A1 gần như cùng lúc. Hai request chạy song song trên hai kết nối DB khác nhau.'),
+          SF(['a', 'svc', 'b'], ['a-s', 'b-s'], -1, 'Mỗi request qua cùng các kiểm tra: chuyến còn mở bán, ghế thuộc chuyến, không quá 10 ghế mỗi lần, giải phóng ghế hết hạn. Rồi tới repository.'),
+          SF(['svc', 'repo', 'mysql'], ['s-r', 'r-m'], 1, 'Request của A gửi <b>UPDATE có điều kiện</b>. Điều kiện "ghế còn trống" và việc ghi nằm trong <b>cùng một câu</b>, nên không có khoảng hở giữa "xem" và "chiếm".', { out: U }),
+          SF(['mysql', 'lock'], ['m-l'], 1, 'MySQL <b>khóa dòng A1</b> cho giao dịch của A. Request của B gửi cùng câu UPDATE nên phải <b>xếp hàng chờ</b>.', { res: [['B', 'A1', 'đang chờ', '—']] }),
+          SF(['mysql'], [], 6, 'A commit: ghế A1 thành TAM_KHOA, giữ bởi A, hết hạn sau 5 phút. <b>rowcount = 1</b> nên A thành công.', { seat: [['A1', 'TAM_KHOA', 'khách A', '+5 phút']], res: [['A', 'A1', '1', 'thành công'], ['B', 'A1', 'đang chờ', '—']] }),
+          SF(['repo', 'mysql', 'lock'], ['r-m', 'm-l'], 1, 'B được chạy tiếp: MySQL <b>đánh giá lại điều kiện WHERE</b> trên dòng đã đổi. Ghế đang TAM_KHOA và chưa hết hạn nên không khớp. <b>rowcount = 0</b>, không ghi gì.', { res: [['A', 'A1', '1', 'thành công'], ['B', 'A1', '0', 'không khớp']] }),
+          SF(['repo'], [], 3, 'rowcount = 0 nên repository hỏi thêm: có phải <b>chính B</b> đang giữ ghế này không? Không phải → ghi A1 vào danh sách <code>bad</code>.'),
+          SF(['repo', 'svc', 'b'], ['s-r', 'b-s'], 5, 'Có <code>bad</code> nên <b>rollback</b>, use case ném <code>Conflict</code>. Error handler trả <b>409</b> kèm <code>unavailable_seat_ids = [A1]</code>.', { res: [['A', 'A1', '1', 'thành công'], ['B', 'A1', '0', '409 Conflict']] }, ['s-r', 'b-s'])] },
+      { name: 'Giữ 2 ghế, 1 ghế bị chiếm', start: 'Được hết hoặc không được gì.', init: { seat: [['A1', 'TAM_KHOA', 'khách A', '+3 phút'], ['A2', 'TRONG', '—', '—']], res: [] }, code: CODE,
+        why: 'Nếu cho phép "được một ghế, mất một ghế" thì khách bị kẹt với đơn lẻ và ghế bị giữ oan. Rollback đảm bảo kết quả chỉ có hai khả năng: giữ đủ hoặc không đổi gì.',
+        frames: [
+          SF(['b', 'svc'], ['b-s'], -1, 'Khách B xin cả <b>A1 và A2</b>. A1 đang do khách A giữ, A2 còn trống.'),
+          SF(['svc', 'repo', 'mysql'], ['s-r', 'r-m'], 1, 'UPDATE ghế A1: ghế đang TAM_KHOA chưa hết hạn nên <b>rowcount = 0</b>. B không phải người giữ → A1 vào <code>bad</code>.', { out: U, res: [['B', 'A1', '0', 'bị chiếm']] }),
+          SF(['repo', 'mysql'], ['r-m'], 1, 'UPDATE ghế A2: còn trống nên <b>rowcount = 1</b>. A2 tạm thời thuộc B, <b>nhưng chưa commit</b>.', { seat: [['A1', 'TAM_KHOA', 'khách A', '+3 phút'], ['A2', 'TAM_KHOA', 'khách B', 'chưa commit']], res: [['B', 'A1', '0', 'bị chiếm'], ['B', 'A2', '1', 'tạm giữ']] }),
+          SF(['repo'], [], 5, '<code>bad</code> không rỗng → <b>db.rollback()</b>: mọi thay đổi chưa commit bị hủy. A2 quay về TRONG như chưa có gì xảy ra.', { seat: [['A1', 'TAM_KHOA', 'khách A', '+3 phút'], ['A2', 'TRONG', '—', '—']], res: [['B', 'A1', '0', 'bị chiếm'], ['B', 'A2', 'đã hủy', 'rollback']] }),
+          SF(['repo', 'svc', 'b'], ['s-r', 'b-s'], 5, 'Use case ném <code>Conflict</code>, trả <b>409</b> với <code>unavailable_seat_ids = [A1]</code>. Khách B chọn lại ghế khác.', {}, ['s-r', 'b-s'])] },
+      { name: 'Ghế hết hạn được chiếm lại', start: 'Không có scheduler dọn ghế.', init: { seat: [['A1', 'TAM_KHOA', 'khách A', 'đã quá hạn']], res: [] }, code: CODE,
+        why: 'Không cần tiến trình chạy nền hay lịch hẹn giờ: hết hạn chỉ là một điều kiện so sánh thời gian, kiểm tra khi có người cần ghế. Đổi lại ghế quá hạn nằm trong DB đến khi có request đụng tới (không sao vì mọi truy vấn đều coi nó là trống).',
+        frames: [
+          SF(['a'], [], -1, 'Khách A giữ ghế A1 rồi bỏ đi. 5 phút trôi qua. Không có tiến trình nào chạy nền để mở lại ghế.'),
+          SF(['b', 'svc', 'repo'], ['b-s', 's-r'], -1, 'Khách B xin giữ A1. Use case gọi <code>release_expired_holds(now)</code> trước: ghế TAM_KHOA có hết hạn nhỏ hơn bây giờ về lại TRONG. Gọi là <b>kiểm tra lười</b>: chỉ dọn khi có người cần.', { seat: [['A1', 'TRONG', '—', '—']] }),
+          SF(['repo', 'mysql'], ['r-m'], 1, 'UPDATE có điều kiện chạy. Dù chưa dọn, câu này vẫn có nhánh "<b>TAM_KHOA và đã hết hạn</b>" nên vẫn chiếm được ghế quá hạn.', { out: U }),
+          SF(['mysql'], [], 6, 'rowcount = 1: A1 thuộc khách B, hết hạn sau 5 phút nữa.', { seat: [['A1', 'TAM_KHOA', 'khách B', '+5 phút']], res: [['B', 'A1', '1', 'thành công']] })] }
+    ] });
+}
+
+/* =================== TAB 3: LUỒNG ĐẶT VÉ (tổng quan) =================== */
+function tabBooking(root) {
+  const free = [['A1', 'TRONG', '—'], ['A2', 'TRONG', '—']], held = [['A1', 'TAM_KHOA', 'khách 7'], ['A2', 'TAM_KHOA', 'khách 7']], sold = [['A1', 'DA_BAN', '—'], ['A2', 'DA_BAN', '—']];
+  const ord = s => [['101', s, '600.000đ']], tk = s => [['A1', s, '—'], ['A2', s, '—']];
+  const CODE = ['POST /trips/{id}/hold      → SeatHoldService.hold', 'POST /orders             → BookingService.create_order', 'POST /orders/{id}/pay     → BookingService.pay', '  đơn không còn CHO_THANH_TOAN hoặc hết hạn giữ → 409', '  cổng.charge(...) → THANH_CONG | DANG_XU_LY | THAT_BAI', '  THANH_CONG → _finalize: vé CHUA_DI + mã QR, ghế DA_BAN, đơn DA_THANH_TOAN, gửi SMS'];
+  const HOLD = 'UPDATE trip_seats SET status = "TAM_KHOA", held_by = 7, ...\nWHERE ... AND (status = "TRONG" OR (status = "TAM_KHOA" AND hold_until < now))';
+  const s1 = SF(['client', 'router', 'hold'], ['c-r', 'r-h'], -1, 'Khách 7 chọn ghế A1, A2 và giữ chỗ: <b>POST /trips/5/hold</b>. Route kiểm tra token và vai trò (tab 1.4), rồi gọi <b>SeatHoldService</b>.');
+  const s2 = SF(['hold', 'repo', 'mysql'], ['h-r', 'r-m'], -1, 'Giữ chỗ chạy UPDATE có điều kiện cho từng ghế (tab 3.1). Thành công: hai ghế <b>TAM_KHOA</b> trong 5 phút (mặc định).', { seat: held, out: HOLD });
+  const s3 = SF(['router', 'book', 'repo'], ['r-b', 'b-r'], 1, '<b>POST /orders</b> → <code>create_order</code>: kiểm tra chuyến còn mở bán, mỗi ghế chọn một lần, ghế chưa có vé khác, điểm đón/trả thuộc chuyến, mã giảm giá hợp lệ (nếu có). Tạo đơn và vé ở trạng thái chờ thanh toán.', { order: ord('CHO_THANH_TOAN'), tk: tk('CHO_THANH_TOAN') });
+  const fin = [SF(['book', 'repo', 'mysql'], ['b-r', 'r-m'], 5, '<b>_finalize</b>: vé thành CHUA_DI kèm mã QR ngẫu nhiên, ghế thành DA_BAN, đơn thành DA_THANH_TOAN.', { seat: sold, order: ord('DA_THANH_TOAN'), tk: [['A1', 'CHUA_DI', 'QR…a1'], ['A2', 'CHUA_DI', 'QR…b2']] }),
+    SF(['book', 'sms'], ['b-s'], 5, 'Gửi vé qua SMS (mock: chỉ ghi log, không gửi thật).'), SF(['book', 'router', 'client'], ['r-b', 'c-r'], 5, 'Trả <code>THANH_CONG</code> kèm vé. Khách nhận vé có mã QR.', {}, ['r-b', 'c-r'])];
+  return stepLab(root, {
+    id: 'booking', pre: 'sb', h: 540, outLabel: 'Dữ liệu đi qua ở bước này',
+    intro: 'Đây là luồng nghiệp vụ chính của hệ thống: chọn ghế, giữ chỗ, tạo đơn, thanh toán, phát vé. Mỗi chặng quan trọng có một tab chi tiết riêng (3.1 giữ chỗ, 3.2 thanh toán và webhook, 3.3 hủy vé và hoàn tiền).',
+    hook: '<b>Giữ chỗ</b> (ghế TAM_KHOA, 5 phút) → <b>tạo đơn</b> (CHO_THANH_TOAN) → <b>thanh toán</b> → <b>phát vé</b> (CHUA_DI + QR, ghế DA_BAN).',
+    nodes: [
+      { id: 'client', t: 'Client', s: 'web / Postman', x: 115, y: 50, L: 'ngoai' }, { id: 'router', t: 'Router + Depends', s: 'tầng Presentation', x: 115, y: 150, L: 'pres' },
+      { id: 'hold', t: 'SeatHoldService', s: 'giữ chỗ', x: 420, y: 150, L: 'app' }, { id: 'book', t: 'BookingService', s: 'đơn · thanh toán · vé', x: 115, y: 250, L: 'app' },
+      { id: 'gw', t: 'Cổng thanh toán', s: 'Port → MockPaymentGateway', x: 420, y: 250, L: 'infra' }, { id: 'repo', t: 'Repository', s: 'SQLAlchemy', x: 115, y: 350, L: 'infra' },
+      { id: 'sms', t: 'MockSmsSender', s: 'ghi log, không gửi', x: 420, y: 350, L: 'infra' }, { id: 'mysql', t: 'MySQL 8', s: 'trip_seats · orders · tickets · payments', x: 115, y: 450, L: 'db' }],
+    edges: [['c-r', 'client', 'router', 'HTTP'], ['r-h', 'router', 'hold', 'giữ chỗ'], ['r-b', 'router', 'book', 'đơn / thanh toán'], ['b-g', 'book', 'gw', 'charge()'], ['b-r', 'book', 'repo', 'lưu'], ['b-s', 'book', 'sms', 'gửi vé'], ['h-r', 'hold', 'repo', 'UPDATE ghế'], ['r-m', 'repo', 'mysql', 'SQL']],
+    panels: [{ k: 'seat', title: 'Ghế chuyến (trip_seats)', L: 'db', cols: ['ghế', 'trạng thái', 'giữ bởi'] }, { k: 'order', title: 'Đơn (orders)', L: 'infra', cols: ['id', 'trạng thái', 'tổng (ví dụ)'] },
+      { k: 'pay', title: 'Thanh toán (payments)', L: 'app', cols: ['id', 'phương thức', 'trạng thái'] }, { k: 'tk', title: 'Vé (tickets)', L: 'dom', cols: ['ghế', 'trạng thái', 'mã QR'] }],
+    gloss: [['Giữ chỗ', 'ghế chuyển TRONG → TAM_KHOA cho một khách trong thời hạn; hết hạn thì coi như trống (tab 3.1).'], ['Đơn (order)', 'gói các vé của một lần đặt; có trạng thái CHO_THANH_TOAN, DA_THANH_TOAN, THAT_BAI, DA_HUY.'],
+      ['Cổng thanh toán (Port)', 'use case chỉ biết hợp đồng charge()/refund(); hiện cài bằng MockPaymentGateway, muốn dùng cổng thật chỉ viết adapter mới.'], ['_finalize', 'bước cuối khi tiền đã về: phát vé có mã QR, bán ghế, đóng đơn, gửi SMS.'],
+      ['Mock', 'bản giả của dịch vụ ngoài (thanh toán, SMS) để chạy và test không cần dịch vụ thật.']],
+    note: 'Mô phỏng theo application/use_cases/booking.py và holds.py. Đơn giản hóa: số tiền, mã QR và id là ví dụ; bỏ qua mã giảm giá và điểm đón/trả.',
+    scenarios: [
+      { name: 'Thanh toán thẻ thành công', start: 'Luồng đầy đủ từ chọn ghế đến nhận vé.', init: { seat: free, order: [], pay: [], tk: [] }, code: CODE,
+        why: 'Mỗi chặng đổi đúng một trạng thái và chỉ đi tiếp khi chặng trước thành công. Nhờ vậy lỗi ở giữa (hết hạn, thanh toán hỏng) luôn có chỗ dừng rõ ràng thay vì để dữ liệu nửa vời.',
+        frames: [s1, s2, s3, SF(['client', 'router', 'book'], ['c-r', 'r-b'], 2, 'Khách thanh toán bằng thẻ: <b>POST /orders/101/pay</b>. <code>pay()</code> kiểm tra đơn còn CHO_THANH_TOAN và giữ chỗ chưa hết hạn.'),
+          SF(['book', 'gw'], ['b-g'], 4, 'Gọi cổng thanh toán (qua Port): <code>charge(...)</code> trả <b>THANH_CONG</b>. Một dòng thanh toán THANH_CONG được ghi lại.', { pay: [['1', 'THE', 'THANH_CONG']], out: 'GatewayResult(status="SUCCESS", transaction_id="MOCK-9F2A...")' })].concat(fin) },
+      { name: 'Thanh toán thất bại rồi thử lại', start: 'Thất bại không hủy đơn.', init: { seat: free, order: [], pay: [], tk: [] }, code: CODE,
+        why: 'Thất bại thanh toán là chuyện bình thường (hết tiền, nhập sai). Hệ thống giữ nguyên đơn và ghế trong thời gian giữ chỗ để khách thử lại, thay vì bắt chọn lại từ đầu.',
+        frames: [s1, s2, s3, SF(['book', 'gw'], ['b-g'], 4, 'Khách thanh toán nhưng cổng từ chối: <b>THAT_BAI</b>. Dòng thanh toán ghi THAT_BAI.', { pay: [['1', 'THE', 'THAT_BAI']], out: 'GatewayResult(status="FAILED", message="Giao dịch bị từ chối (mô phỏng)")' }),
+          SF(['book', 'router', 'client'], ['r-b', 'c-r'], 4, 'Trả <code>THAT_BAI</code>. <b>Đơn vẫn CHO_THANH_TOAN, ghế vẫn TAM_KHOA</b>: khách còn thời gian thử lại.', {}, ['r-b', 'c-r']),
+          SF(['client', 'book', 'gw'], ['c-r', 'r-b', 'b-g'], 4, 'Khách thử lại (thẻ khác): lần này cổng trả <b>THANH_CONG</b>.', { pay: [['1', 'THE', 'THAT_BAI'], ['2', 'THE', 'THANH_CONG']], out: 'GatewayResult(status="SUCCESS", transaction_id="MOCK-77C1...")' })].concat(fin) },
+      { name: 'Hết hạn giữ chỗ trước khi trả', start: 'Quá 5 phút thì đơn bị đóng.', init: { seat: free, order: [], pay: [], tk: [] }, code: CODE,
+        why: 'Ghế không thể bị giữ vô hạn. Khi quay lại thanh toán, hệ thống kiểm tra khách còn giữ ghế không (kiểm tra lười); nếu không, đơn thất bại và khách đặt lại.',
+        frames: [s1, s2, s3, SF(['mysql'], [], -1, 'Khách rời đi. <b>5 phút trôi qua</b> mà không thanh toán. Không có tiến trình nào chạy nền xử lý chuyện này.', { seat: [['A1', 'TAM_KHOA', 'khách 7 (quá hạn)'], ['A2', 'TAM_KHOA', 'khách 7 (quá hạn)']] }),
+          SF(['client', 'router', 'book'], ['c-r', 'r-b'], 3, 'Khách quay lại bấm thanh toán. <code>pay()</code> gọi <code>load()</code>, rồi <code>expire_if_needed</code>: khách <b>không còn giữ</b> các ghế này nữa.'),
+          SF(['book', 'repo', 'mysql'], ['b-r', 'r-m'], 3, 'Đơn và vé chuyển THAT_BAI/DA_HUY (đóng đơn), ghế được giải phóng.', { order: ord('THAT_BAI'), tk: tk('DA_HUY'), seat: free }),
+          SF(['book', 'router', 'client'], ['r-b', 'c-r'], 3, 'Trả <b>409</b> "Đã hết thời gian giữ chỗ, đơn bị hủy. Vui lòng chọn ghế và đặt lại".', { out: 'HTTP 409  { "detail": "Đã hết thời gian giữ chỗ, đơn bị hủy. ..." }' }, ['r-b', 'c-r'])] }
+    ] });
+}
+
+/* =================== TAB 3.2: THANH TOÁN VÀ WEBHOOK =================== */
+function tabPay(root) {
+  const CODE = ['pay(đơn, phương_thức):', '  cổng.charge(...) → DANG_XU_LY: lưu thanh toán DANG_XU_LY, trả mã QR', 'handle_webhook(mã_giao_dịch, trạng_thái):', '  tìm thanh toán theo mã; không phải DANG_XU_LY → bỏ qua (idempotent)', '  SUCCESS và đơn còn hạn → _finalize (phát vé)', '  SUCCESS mà đơn hết hạn/giao dịch đã hủy → _refund_late_payment (hoàn 100%)', '_refund_late_payment: cổng.refund(...) → DA_HOAN hoặc CHO_XU_LY_THU_CONG'];
+  const P0 = [['1', 'VIETQR', 'DANG_XU_LY']];
+  const RF = 'cổng.refund(transaction_id, số_tiền)';
+  const a1 = SF(['client', 'router', 'book'], ['c-b'], 0, 'Khách chọn <b>VietQR</b>: <b>POST /orders/101/pay</b>. VietQR cần khách quét mã rồi mới có tiền, nên kết quả đến <b>muộn</b>.');
+  const a2 = SF(['book', 'gw'], ['b-g'], 1, 'Cổng trả <b>DANG_XU_LY</b> kèm nội dung mã QR. Hệ thống ghi một dòng thanh toán DANG_XU_LY; đơn vẫn CHO_THANH_TOAN, ghế vẫn đang giữ.', { pay: P0, order: [['101', 'CHO_THANH_TOAN', '600.000đ']], out: 'GatewayResult(status="PROCESSING", transaction_id="MOCK-9F2A", qr="MOCKQR|MOCK-9F2A|600000")' });
+  return stepLab(root, {
+    id: 'pay', pre: 'sp', h: 500, outLabel: 'Dữ liệu đi qua ở bước này',
+    intro: 'Một số phương thức (VietQR, ví) báo kết quả muộn qua <b>webhook</b>: cổng thanh toán tự gọi lại backend khi có tiền. Tab này cho thấy hệ thống xử lý các tình huống khó: gọi lặp, tiền về quá muộn, cổng từ chối hoàn.',
+    hook: 'Webhook phải <b>idempotent</b> (gọi lại không phát vé hai lần) và <b>không bao giờ giữ tiền khi không còn đơn</b> (tự hoàn 100%).',
+    nodes: [
+      { id: 'client', t: 'Khách / Cổng', s: 'gọi pay và webhook', x: 115, y: 50, L: 'ngoai' }, { id: 'router', t: 'Router', s: 'pay · webhook', x: 115, y: 150, L: 'pres' },
+      { id: 'book', t: 'BookingService', s: 'pay · handle_webhook', x: 115, y: 250, L: 'app' }, { id: 'gw', t: 'Cổng thanh toán', s: 'charge · refund (mock)', x: 420, y: 250, L: 'infra' },
+      { id: 'repo', t: 'Repository', s: 'SQLAlchemy', x: 115, y: 350, L: 'infra' }, { id: 'adm', t: 'Hàng đợi Admin', s: 'refunds CHO_XU_LY_THU_CONG', x: 420, y: 350, L: 'app' }, { id: 'mysql', t: 'MySQL 8', s: 'payments · orders · refunds', x: 115, y: 450, L: 'db' }],
+    edges: [['c-r', 'client', 'router', 'HTTP'], ['c-b', 'router', 'book', 'gọi use case'], ['b-g', 'book', 'gw', 'charge / refund'], ['b-r', 'book', 'repo', 'lưu'], ['r-m', 'repo', 'mysql', 'SQL'], ['b-a', 'book', 'adm', 'hoàn lỗi → thủ công']],
+    panels: [{ k: 'pay', title: 'Thanh toán (payments)', L: 'app', cols: ['id', 'phương thức', 'trạng thái'] }, { k: 'order', title: 'Đơn (orders)', L: 'infra', cols: ['id', 'trạng thái', 'tổng (ví dụ)'] },
+      { k: 'rf', title: 'Hoàn tiền (refunds)', L: 'dom', cols: ['lý do', 'trạng thái', 'số tiền'], fr: [0.4, 0.38, 0.22] }],
+    gloss: [['Webhook', 'cổng thanh toán chủ động gọi lại backend để báo kết quả giao dịch (thay vì backend hỏi liên tục).'], ['Idempotent', 'gọi nhiều lần cho cùng một kết quả: hệ thống chỉ xử lý lần đầu. Cần vì cổng có thể gửi webhook lặp.'],
+      ['DANG_XU_LY', 'thanh toán đang chờ khách trả (ví dụ chưa quét QR).'], ['THANH_TOAN_QUA_HAN', 'lý do hoàn tiền khi tiền về sau lúc đơn đã hết hạn hoặc giao dịch đã bị hủy.'],
+      ['CHO_XU_LY_THU_CONG', 'cổng từ chối lệnh hoàn; Admin xử lý lại ở chức năng quản lý đơn (UC18).']],
+    note: 'Mô phỏng theo BookingService.pay / handle_webhook / _refund_late_payment và MockPaymentGateway (có tham số simulate để thử mọi nhánh). Số tiền và mã giao dịch là ví dụ.',
+    scenarios: [
+      { name: 'VietQR chờ rồi webhook thành công', start: 'Gồm cả việc webhook bị gọi lặp.', init: { pay: [], order: [['101', 'CHO_THANH_TOAN', '600.000đ']], rf: [] }, code: CODE,
+        why: 'Kết quả muộn làm hệ thống phải phân biệt "đang chờ" với "xong". Kiểm tra trạng thái thanh toán trước khi xử lý giúp webhook gọi lặp (rất hay gặp) không phát vé hai lần.',
+        frames: [a1, a2, SF(['client', 'router', 'book'], ['c-r', 'c-b'], 2, 'Khách quét mã và trả tiền. Cổng gọi <b>webhook</b> về backend: giao dịch MOCK-9F2A, <b>SUCCESS</b>.'),
+          SF(['book', 'repo', 'mysql'], ['b-r', 'r-m'], 4, 'Tìm thanh toán theo mã giao dịch: đang DANG_XU_LY, đơn còn CHO_THANH_TOAN và chưa hết hạn → ghi THANH_CONG và chạy <b>_finalize</b> (phát vé, bán ghế).', { pay: [['1', 'VIETQR', 'THANH_CONG']], order: [['101', 'DA_THANH_TOAN', '600.000đ']] }),
+          SF(['client', 'router', 'book'], ['c-r', 'c-b'], 3, 'Cổng <b>gọi lại webhook lần hai</b> (rất hay gặp).'),
+          SF(['book'], [], 3, 'Thanh toán không còn DANG_XU_LY → <b>return ngay</b>. Không phát vé lần hai: đây là <b>idempotent</b>.')] },
+      { name: 'Tiền về muộn: tự hoàn 100%', start: 'Đơn đã hết hạn trước khi tiền về.', init: { pay: [], order: [['101', 'CHO_THANH_TOAN', '600.000đ']], rf: [] }, code: CODE,
+        why: 'Khi tiền về mà đơn không còn, không thể phát vé (ghế có thể đã bán cho người khác) và cũng không được giữ tiền của khách. Giải pháp: hoàn đủ 100%, không tính phí.',
+        frames: [a1, a2, SF(['mysql'], [], -1, 'Khách chưa trả. <b>5 phút giữ chỗ trôi qua</b>; ghế có thể đã sang người khác.'),
+          SF(['client', 'router', 'book'], ['c-r', 'c-b'], 2, 'Khách trả tiền muộn. Cổng gọi webhook: giao dịch MOCK-9F2A, <b>SUCCESS</b>.'),
+          SF(['book', 'repo', 'mysql'], ['b-r', 'r-m'], 5, '<code>expire_if_needed</code> thấy hết hạn giữ chỗ → đơn bị đóng (THAT_BAI). Thanh toán ghi THANH_CONG kèm ghi chú "tự động hoàn tiền".', { pay: [['1', 'VIETQR', 'THANH_CONG']], order: [['101', 'THAT_BAI', '600.000đ']] }),
+          SF(['book', 'gw'], ['b-g'], 6, '<code>_refund_late_payment</code>: gọi <b>' + RF + '</b>. Cổng đồng ý.', { out: 'GatewayResult(status="SUCCESS", transaction_id="RF-31B...")' }),
+          SF(['book', 'repo', 'mysql'], ['b-r', 'r-m'], 6, 'Ghi lệnh hoàn: lý do THANH_TOAN_QUA_HAN, <b>phí 0</b>, số tiền 100%, trạng thái DA_HOAN.', { rf: [['THANH_TOAN_QUA_HAN', 'DA_HOAN', '600.000đ']] })] },
+      { name: 'Cổng từ chối hoàn → Admin xử lý', start: 'Có đường lui khi hoàn tiền tự động thất bại.', init: { pay: [], order: [['101', 'THAT_BAI', '600.000đ']], rf: [] }, code: CODE,
+        why: 'Không phải lúc nào việc hoàn tiền cũng thành công. Thay vì mất dấu, lệnh hoàn được ghi lại ở trạng thái chờ xử lý thủ công để Admin thấy và làm lại, nên tiền của khách không bị bỏ quên.',
+        frames: [SF(['client', 'router', 'book'], ['c-r', 'c-b'], 2, 'Tiền về muộn như kịch bản trước (đơn đã hết hạn). Hệ thống chuẩn bị hoàn 100%.', { pay: [['1', 'VIETQR', 'THANH_CONG']] }),
+          SF(['book', 'gw'], ['b-g'], 6, 'Gọi <b>' + RF + '</b> nhưng cổng <b>từ chối</b> lệnh hoàn (mô phỏng <code>fail_refund</code>).', { out: 'GatewayResult(status="FAILED", message="Cổng từ chối lệnh hoàn (mô phỏng)")' }),
+          SF(['book', 'repo', 'mysql'], ['b-r', 'r-m'], 6, 'Vẫn ghi lệnh hoàn, nhưng trạng thái <b>CHO_XU_LY_THU_CONG</b> kèm ghi chú lỗi.', { rf: [['THANH_TOAN_QUA_HAN', 'CHO_XU_LY_THU_CONG', '600.000đ']] }),
+          SF(['book', 'adm'], ['b-a'], 6, 'Lệnh này hiện trong <b>hàng đợi Admin</b> (UC18). Admin bấm xử lý lại (retry); khi cổng đồng ý thì thành DA_HOAN.', { rf: [['THANH_TOAN_QUA_HAN', 'DA_HOAN (sau retry)', '600.000đ']] })] },
+      { name: 'Đổi phương thức khi đang chờ QR', start: 'Mã QR cũ bị vô hiệu.', init: { pay: [], order: [['101', 'CHO_THANH_TOAN', '600.000đ']], rf: [] }, code: CODE,
+        why: 'Nếu cho phép hai mã QR cùng sống, khách có thể trả hai lần cho một đơn. Hủy giao dịch cũ khi đổi phương thức là cách chặn rủi ro đó; nếu tiền vẫn về qua mã cũ thì hệ thống hoàn lại.',
+        frames: [a1, a2, SF(['client', 'router', 'book'], ['c-b'], 1, 'Khách đổi ý, chọn <b>thẻ</b>: gọi <b>pay</b> lần nữa. Với mỗi thanh toán đang DANG_XU_LY, hệ thống đặt thành <b>DA_HUY</b> (mã QR cũ vô hiệu).', { pay: [['1', 'VIETQR', 'DA_HUY']] }),
+          SF(['book', 'gw'], ['b-g'], 4, 'Thanh toán bằng thẻ: cổng trả THANH_CONG, đơn được phát vé bình thường.', { pay: [['1', 'VIETQR', 'DA_HUY'], ['2', 'THE', 'THANH_CONG']], order: [['101', 'DA_THANH_TOAN', '600.000đ']] }),
+          SF(['client', 'router', 'book'], ['c-r', 'c-b'], 2, 'Nhưng khách đã lỡ quét mã QR cũ: cổng gọi webhook <b>SUCCESS</b> cho giao dịch MOCK-9F2A (đã DA_HUY).'),
+          SF(['book', 'gw', 'repo'], ['b-g', 'b-r'], 5, 'Thanh toán DA_HUY mà nhận SUCCESS → ghi THANH_CONG và <b>tự hoàn tiền</b> (khoản này không còn đơn nào để gán).', { pay: [['1', 'VIETQR', 'THANH_CONG'], ['2', 'THE', 'THANH_CONG']], rf: [['THANH_TOAN_QUA_HAN', 'DA_HOAN', '600.000đ']] })] }
+    ] });
+}
+
+/* =================== TAB 3.3: HỦY VÉ VÀ HOÀN TIỀN =================== */
+function tabCancel(root) {
+  const CODE = ['quote(vé): giờ_còn = giờ_đi - bây_giờ', '  hạn = settings.HAN_HUY_VE_GIO (mặc định 24)', '  phần_trăm = settings.PHI_HUY_PHAN_TRAM (mặc định 15)', '  phí = cancellation_fee(số_tiền, phần_trăm)   # domain', '  giờ_còn < hạn → không cho hủy (BusinessRule)', 'cancel_ticket: hoàn = số_tiền - phí → cổng.refund → ghi refunds'];
+  return stepLab(root, {
+    id: 'cancel', pre: 'sc', h: 480, outLabel: 'Dữ liệu đi qua ở bước này',
+    intro: 'Hủy vé có ba điều cần hiểu: ai được hủy và khi nào, tính phí ra sao, tiền hoàn đi đâu. Tab này dùng một vé 300.000đ làm ví dụ (con số minh họa).',
+    hook: 'Quy tắc tính phí nằm ở <b>domain</b> (<code>cancellation_fee</code>); ngưỡng giờ và phần trăm lấy từ <b>bảng settings</b> nên Admin chỉnh được mà không sửa code.',
+    nodes: [
+      { id: 'client', t: 'Khách / Admin', s: 'quote · cancel', x: 115, y: 50, L: 'ngoai' }, { id: 'svc', t: 'RefundService', s: 'use case', x: 115, y: 150, L: 'app' },
+      { id: 'cfg', t: 'Bảng settings', s: 'HAN_HUY_VE_GIO · PHI_HUY_PHAN_TRAM', x: 420, y: 150, L: 'infra' }, { id: 'rule', t: 'cancellation_fee', s: 'quy tắc · domain', x: 420, y: 250, L: 'dom' },
+      { id: 'repo', t: 'Repository', s: 'SQLAlchemy', x: 115, y: 250, L: 'infra' }, { id: 'gw', t: 'Cổng thanh toán', s: 'refund (mock)', x: 420, y: 350, L: 'infra' }, { id: 'mysql', t: 'MySQL 8', s: 'tickets · refunds', x: 115, y: 350, L: 'db' }],
+    edges: [['c-s', 'client', 'svc', 'quote / cancel'], ['s-c', 'svc', 'cfg', 'đọc ngưỡng'], ['s-ru', 'svc', 'rule', 'tính phí'], ['s-g', 'svc', 'gw', 'refund()'], ['s-r', 'svc', 'repo', 'lưu'], ['r-m', 'repo', 'mysql', 'SQL']],
+    panels: [{ k: 'calc', title: 'Tính toán', L: 'dom', cols: ['mục', 'giá trị'], fr: [0.6, 0.4] }, { k: 'tk', title: 'Vé (tickets)', L: 'infra', cols: ['vé', 'trạng thái'] }, { k: 'rf', title: 'Hoàn tiền (refunds)', L: 'app', cols: ['lý do', 'phí', 'hoàn', 'trạng thái'], fr: [0.34, 0.16, 0.2, 0.3] }],
+    gloss: [['quote', 'báo trước cho khách: có hủy được không, phí bao nhiêu, sẽ hoàn bao nhiêu (chưa thực hiện).'], ['cancellation_fee', 'hàm thuần trong domain: số tiền × phần trăm ÷ 100, làm tròn 2 chữ số.'],
+      ['Hạn hủy', 'chỉ được hủy khi còn ít nhất N giờ trước giờ đi (mặc định 24); N đọc từ bảng settings.'], ['KHACH_HUY_VE / NHA_XE_HUY_CHUYEN', 'hai lý do hoàn tiền: khách tự hủy (có phí) và nhà xe hủy chuyến (hoàn 100%).'],
+      ['Làm tròn', 'ROUND_HALF_UP: 0,5 làm tròn lên, đúng cách tính tiền thông thường.']],
+    note: 'Mô phỏng theo application/use_cases/refunds.py (quote, cancel_ticket) và domain/rules/pricing.py. Số liệu là ví dụ. Hủy chuyến hoàn 100% theo quy tắc đã chốt của đồ án; tab không mô phỏng từng bước nội bộ của cancel_trip.',
+    scenarios: [
+      { name: 'Hủy khi còn 30 giờ (được hủy)', start: 'Phí 15% trên số tiền vé.', init: { calc: [], tk: [['A1', 'CHUA_DI']], rf: [] }, code: CODE,
+        why: 'Tách thành hai bước (quote rồi cancel) để khách thấy phí trước khi quyết định. Quy tắc phí để ở domain để test được mà không cần DB, còn con số 24 giờ và 15% để ở settings để đổi không cần sửa code.',
+        frames: [SF(['client', 'svc'], ['c-s'], 0, 'Khách xem trước phí hủy vé A1 (<b>quote</b>). Vé 300.000đ, giờ đi còn 30 giờ.'),
+          SF(['svc', 'cfg'], ['s-c'], 1, 'Use case đọc ngưỡng từ bảng settings: hạn hủy <b>24 giờ</b>, phí <b>15%</b>.', { calc: [['giờ còn lại', '30'], ['hạn hủy', '24 giờ'], ['phí %', '15']] }),
+          SF(['svc', 'rule'], ['s-ru'], 3, '<code>cancellation_fee(300.000, 15)</code> = 45.000. Giờ còn (30) ≥ hạn (24) nên <b>được hủy</b>.', { calc: [['giờ còn lại', '30'], ['hạn hủy', '24 giờ'], ['phí %', '15'], ['phí', '45.000đ'], ['hoàn lại', '255.000đ']] }),
+          SF(['client', 'svc'], ['c-s'], 5, 'Khách đồng ý, gọi <b>cancel_ticket</b>. Số hoàn = 300.000 - 45.000 = <b>255.000đ</b>.'),
+          SF(['svc', 'gw'], ['s-g'], 5, 'Gọi cổng thanh toán hoàn 255.000đ.', { out: 'GatewayResult(status="SUCCESS", transaction_id="RF-...")' }),
+          SF(['svc', 'repo', 'mysql'], ['s-r', 'r-m'], 5, 'Vé thành DA_HUY, ghế được trả về trống, ghi lệnh hoàn.', { tk: [['A1', 'DA_HUY']], rf: [['KHACH_HUY_VE', '45.000đ', '255.000đ', 'DA_HOAN']] })] },
+      { name: 'Hủy khi còn 10 giờ (bị từ chối)', start: 'Quá gần giờ đi.', init: { calc: [], tk: [['A1', 'CHUA_DI']], rf: [] }, code: CODE,
+        why: 'Hủy sát giờ khiến nhà xe không kịp bán lại ghế. Đây là quy tắc nghiệp vụ nên báo lỗi 400 (BusinessRule) kèm lý do, không phải lỗi hệ thống.',
+        frames: [SF(['client', 'svc'], ['c-s'], 0, 'Khách xem phí hủy vé A1, giờ đi còn <b>10 giờ</b>.'),
+          SF(['svc', 'cfg'], ['s-c'], 1, 'Hạn hủy 24 giờ, phí 15%.', { calc: [['giờ còn lại', '10'], ['hạn hủy', '24 giờ'], ['phí %', '15']] }),
+          SF(['svc'], [], 4, 'Giờ còn (10) &lt; hạn (24) → báo <b>không được hủy</b>: "Chỉ được hủy khi còn ít nhất 24 giờ trước giờ khởi hành (còn 10.0 giờ)".', { calc: [['giờ còn lại', '10'], ['hạn hủy', '24 giờ'], ['phí %', '15'], ['kết quả', 'từ chối']] }),
+          SF(['svc', 'client'], ['c-s'], 4, 'Trả <b>400</b> (BusinessRule). Vé và tiền không đổi.', { out: 'HTTP 400  { "detail": "Chỉ được hủy khi còn ít nhất 24 giờ ..." }' }, ['c-s'])] },
+      { name: 'Nhà xe hủy chuyến (hoàn 100%)', start: 'Lỗi của nhà xe nên khách không chịu phí.', init: { calc: [], tk: [['A1', 'CHUA_DI'], ['A2', 'CHUA_DI']], rf: [] }, code: CODE,
+        why: 'Phí hủy chỉ áp dụng khi khách tự hủy. Khi nhà xe hủy chuyến, mỗi vé được hoàn đủ số tiền đã trả, bất kể còn bao nhiêu giờ.',
+        frames: [SF(['client', 'svc'], ['c-s'], -1, 'Admin hủy một chuyến đã bán 2 vé (mỗi vé 300.000đ). Lý do: <b>NHA_XE_HUY_CHUYEN</b>.'),
+          SF(['svc', 'rule'], ['s-ru'], 3, 'Với lý do này phí luôn <b>0</b>, không phụ thuộc hạn hủy.', { calc: [['lý do', 'NHA_XE_HUY_CHUYEN'], ['phí', '0đ'], ['hoàn mỗi vé', '300.000đ']] }),
+          SF(['svc', 'gw'], ['s-g'], 5, 'Hoàn 300.000đ cho từng vé qua cổng thanh toán.', { out: 'refund(...)  × 2 vé' }),
+          SF(['svc', 'repo', 'mysql'], ['s-r', 'r-m'], 5, 'Các vé thành DA_HUY và có hai lệnh hoàn đủ 100%.', { tk: [['A1', 'DA_HUY'], ['A2', 'DA_HUY']], rf: [['NHA_XE_HUY_CHUYEN', '0đ', '300.000đ', 'DA_HOAN'], ['NHA_XE_HUY_CHUYEN', '0đ', '300.000đ', 'DA_HOAN']] })] }
+    ] });
+}
+
+/* =================== TAB 4: CÔNG THỨC DỰNG MỘT CHỨC NĂNG MỚI =================== */
+function tabRecipe(root) {
+  const rows = (a, n) => a.slice(0, n);
+  const NEWF = [['1', 'domain/entities/trip.py', 'domain'], ['2', 'application/ports/holds.py', 'application'], ['3', 'application/use_cases/holds.py', 'application'], ['4', 'infrastructure/db/models/trip.py + alembic', 'infrastructure'],
+    ['5', 'infrastructure/db/repositories/holds.py', 'infrastructure'], ['6', 'presentation/schemas + routers/holds.py', 'presentation'], ['7', 'presentation/deps.py + main.py', 'presentation'], ['8', 'tests/test_holds.py', 'tests']];
+  const CODE0 = ['1. Entity + quy tắc thuần (domain)', '2. Port: hợp đồng repository (application/ports)', '3. Use case gọi qua Port (application/use_cases)', '4. Model + migration (infrastructure)', '5. Repository cài đặt Port (infrastructure)', '6. Schema + router (presentation)', '7. deps.py nối dây, main.py đăng ký router', '8. Test gọi API thật'];
+  const st = (i, h) => SF(i[0], i[1], i[2], h, { files: rows(NEWF, i[3]) });
+  return stepLab(root, {
+    id: 'recipe', pre: 'sr', h: 520, outLabel: 'Quy tắc nhớ',
+    intro: 'Mọi chức năng backend theo Clean Architecture đều dựng theo cùng một công thức. Tab này lấy chức năng <b>giữ chỗ</b> có thật trong dự án làm ví dụ, để bạn mang sang project khác. Thứ tự là gợi ý, không phải lịch sử commit.',
+    hook: 'Viết từ <b>trong ra ngoài</b>: thứ ít thay đổi nhất (nghiệp vụ) trước, thứ hay thay đổi nhất (web, DB) sau. Mũi tên import luôn trỏ vào trong.',
+    nodes: [
+      { id: 'dom', t: 'domain', s: 'entity · quy tắc thuần', x: 115, y: 50, L: 'dom' }, { id: 'port', t: 'application/ports', s: 'Protocol = hợp đồng', x: 115, y: 150, L: 'app' },
+      { id: 'uc', t: 'application/use_cases', s: 'quy tắc use case', x: 115, y: 250, L: 'app' }, { id: 'repo', t: 'infrastructure/repositories', s: 'cài đặt Port bằng SQLAlchemy', x: 115, y: 350, L: 'infra' },
+      { id: 'model', t: 'models + alembic', s: 'bảng và migration', x: 115, y: 450, L: 'infra' }, { id: 'router', t: 'presentation/routers', s: 'schemas · route', x: 420, y: 150, L: 'pres' },
+      { id: 'deps', t: 'presentation/deps.py', s: 'composition root', x: 420, y: 250, L: 'pres' }, { id: 'test', t: 'tests', s: 'gọi API thật', x: 420, y: 350, L: 'ngoai' }],
+    edges: [['p-d', 'port', 'dom', 'import'], ['u-p', 'uc', 'port', 'chỉ biết Port'], ['u-d', 'uc', 'dom', 'dùng entity'], ['r-p', 'repo', 'port', 'cài đặt'], ['r-m', 'repo', 'model', 'dùng'], ['ro-u', 'router', 'uc', 'gọi'], ['de-u', 'deps', 'uc', 'dựng'], ['de-r', 'deps', 'repo', 'tiêm'], ['t-ro', 'test', 'router', 'HTTP']],
+    panels: [{ k: 'files', title: 'File đã tạo (theo thứ tự)', L: 'app', cols: ['#', 'file', 'tầng'], fr: [0.08, 0.64, 0.28] }],
+    gloss: [['Composition root', 'nơi duy nhất biết hết các lớp cụ thể và nối chúng lại (ở đây là deps.py).'], ['Port / Adapter', 'Port: hợp đồng ở tầng trong. Adapter: bản cài đặt ở tầng ngoài (repository, cổng thanh toán).'],
+      ['Từ trong ra ngoài', 'viết phần nghiệp vụ trước vì nó không phụ thuộc gì; phần ngoài viết sau và có thể thay mà không đụng nghiệp vụ.'], ['Autogenerate', 'Alembic so model với DB để sinh migration; luôn đọc lại file sinh ra trước khi chạy.']],
+    note: 'Các tên file lấy từ chức năng giữ chỗ có thật trong dự án. Tên entity/model có thể nằm chung file với chức năng liên quan (ví dụ SeatState trong domain/entities/trip.py).',
+    scenarios: [
+      { name: 'Thêm chức năng mới (giữ chỗ)', start: 'Chín bước, mỗi bước một tầng.', init: { files: [], out: '' }, code: CODE0,
+        why: 'Thứ tự này giúp mọi bước kiểm tra được ngay: domain và use case test được khi chưa có DB hay web; repository test được khi chưa có route. Làm từ ngoài vào (route trước) thường dẫn tới nghiệp vụ bị viết lẫn trong route.',
+        frames: [st([['dom'], [], 0, 1], '<b>domain</b>: viết entity và quy tắc thuần (ví dụ <code>SeatState</code>: TRONG, TAM_KHOA, DA_BAN). Chỉ Python thuần, không import SQLAlchemy hay FastAPI.'),
+          st([['port', 'dom'], ['p-d'], 1, 2], '<b>Port</b>: khai báo <code>SeatHoldRepository</code> bằng <code>Protocol</code>: chỉ chữ ký hàm như <code>hold()</code>, <code>release()</code>, <code>my_holds()</code>. Chưa có code bên trong.'),
+          st([['uc', 'port', 'dom'], ['u-p', 'u-d'], 2, 3], '<b>Use case</b>: <code>SeatHoldService</code> chứa quy tắc (tối đa 10 ghế, giữ 5 phút...) và chỉ gọi repository qua Port. Ném <code>BusinessRule</code>, <code>Conflict</code>... khi vi phạm.'),
+          st([['model'], [], 3, 4], '<b>Model + migration</b>: viết <code>TripSeatModel</code> (Mapped), chạy <code>alembic revision --autogenerate</code>, <b>đọc lại file sinh ra</b>, rồi <code>upgrade head</code>.'),
+          st([['repo', 'port', 'model'], ['r-p', 'r-m'], 4, 5], '<b>Repository</b>: <code>SqlSeatHoldRepository</code> cài đặt Port bằng SQLAlchemy và đổi qua lại giữa model và entity.'),
+          st([['router', 'uc'], ['ro-u'], 5, 6], '<b>Presentation</b>: schema Pydantic (<code>HoldRequest</code>, <code>HoldOut</code>) và route <code>/trips/{id}/hold</code> với <code>Depends(sellers)</code>. Route mỏng: nhận, gọi use case, trả.'),
+          st([['deps', 'uc', 'repo'], ['de-u', 'de-r'], 6, 7], '<b>deps.py</b>: viết <code>get_hold_service</code> dựng Session → repository → service. Đăng ký router trong <code>main.py</code>. Đây là chỗ duy nhất biết lớp cụ thể.'),
+          st([['test', 'router'], ['t-ro'], 7, 8], '<b>Test</b>: gọi API thật (200, 409, 403...) để kiểm cả chuỗi route → use case → repository → DB.')].concat([SF(['dom', 'uc', 'repo', 'router'], [], -1, 'Xong. Hãy nhìn các mũi tên import: tất cả trỏ vào trong. Không có file nào ở tầng trong import tầng ngoài.', { out: 'Mũi tên import: presentation → application → domain; infrastructure → application/domain.' })]) },
+      { name: 'Đổi mock thanh toán sang cổng thật', start: 'Chỉ viết adapter mới.', init: { files: [], out: '' }, code: ['Port PaymentGateway: charge(...), refund(...)', 'Adapter hiện tại: MockPaymentGateway', 'Adapter mới: viết lớp có cùng hai hàm', 'deps.py: đổi MockPaymentGateway() thành lớp mới'],
+        why: 'Đây là lợi ích thực tế của đảo phụ thuộc: use case và domain không đổi một dòng. Test vẫn dùng bản mock nên không tốn tiền thật.',
+        frames: [SF(['port'], [], 0, '<b>Port</b> <code>PaymentGateway</code> (application/ports/payments.py) <b>giữ nguyên</b>: <code>charge()</code> và <code>refund()</code>.', { files: [['—', 'application/ports/payments.py', 'không đổi']] }),
+          SF(['repo', 'port'], ['r-p'], 2, '<b>Adapter mới</b> trong infrastructure: lớp gọi API cổng thật, trả cùng kiểu kết quả như MockPaymentGateway (cùng hai hàm).', { files: [['—', 'application/ports/payments.py', 'không đổi'], ['1', 'infrastructure/<cổng thật>.py', 'infrastructure']] }),
+          SF(['deps'], [], 3, '<b>deps.py</b>: đổi một chỗ dựng <code>MockPaymentGateway()</code> sang lớp mới (có thể chọn theo biến môi trường).', { files: [['—', 'application/ports/payments.py', 'không đổi'], ['1', 'infrastructure/<cổng thật>.py', 'infrastructure'], ['2', 'presentation/deps.py', 'đổi 1 dòng']] }),
+          SF(['uc', 'dom'], [], -1, '<b>Use case và domain không đổi</b>. Test vẫn dùng mock nên không gọi cổng thật.', { out: 'application/ và domain/: 0 dòng thay đổi.' })] },
+      { name: 'Thêm một cột vào bảng', start: 'Model, migration, repository, rồi entity.', init: { files: [], out: '' }, code: ['1. Thêm Mapped vào model', '2. alembic revision --autogenerate (đọc lại file!)', '3. alembic upgrade head', '4. Repository: _to_entity, add, save', '5. Entity thêm trường (nếu nghiệp vụ dùng)', '6. Schema trả ra API (nếu cần) + chạy test'],
+        why: 'Nếu chỉ sửa DB hoặc chỉ sửa model thì hai bên lệch nhau (xem tab 2.2 và 2.3). Repository là chỗ chép giữa model và entity, nên quên cập nhật nó thì cột mới không đi vào ứng dụng mà không báo lỗi.',
+        frames: [SF(['model'], [], 0, '<b>Model</b>: thêm một thuộc tính <code>Mapped[...]</code>.', { files: [['1', 'infrastructure/db/models/...', 'infrastructure']] }),
+          SF(['model'], [], 1, '<b>Migration</b>: <code>alembic revision --autogenerate</code>, <b>đọc lại</b> file sinh ra, rồi <code>alembic upgrade head</code>.', { files: [['1', 'infrastructure/db/models/...', 'infrastructure'], ['2', 'alembic/versions/NNNN_....py', 'infrastructure']] }),
+          SF(['repo', 'model'], ['r-m'], 3, '<b>Repository</b>: bổ sung cột mới vào <code>_to_entity</code>, <code>add</code>, <code>save</code>. Quên bước này thì entity nhận giá trị mặc định mà không báo lỗi.', { files: [['1', 'infrastructure/db/models/...', 'infrastructure'], ['2', 'alembic/versions/NNNN_....py', 'infrastructure'], ['3', 'infrastructure/db/repositories/...', 'infrastructure']] }),
+          SF(['dom'], [], 4, '<b>Entity</b>: thêm trường nếu quy tắc nghiệp vụ cần dùng cột này.', { files: [['1', 'infrastructure/db/models/...', 'infrastructure'], ['2', 'alembic/versions/NNNN_....py', 'infrastructure'], ['3', 'infrastructure/db/repositories/...', 'infrastructure'], ['4', 'domain/entities/...', 'domain']] }),
+          SF(['router', 'test'], ['t-ro'], 5, '<b>Schema và test</b>: thêm trường vào schema trả ra API nếu cần, rồi chạy lại bộ test để bắt chỗ sót.', { files: [['1', 'infrastructure/db/models/...', 'infrastructure'], ['2', 'alembic/versions/NNNN_....py', 'infrastructure'], ['3', 'infrastructure/db/repositories/...', 'infrastructure'], ['4', 'domain/entities/...', 'domain'], ['5', 'presentation/schemas + tests', 'presentation']] })] }
+    ] });
+}
+
 /* =================== KHỞI ĐỘNG: thanh tab =================== */
-const TABS = [['journey', '0. Hành trình request', tab0], ['migration', '1. Migration', tab1], ['hash', '2. Băm mật khẩu', tab2], ['jwt', '3. JWT & đăng xuất', tab3], ['api', '4. Pydantic & mã HTTP', tab4],
-  ['lock', '5. Khóa tài khoản', tab5], ['arch', '6. Kiến trúc & Depends', tab6], ['docker', '7. Docker Compose', tab7], ['test', '8. pytest & ruff', tab8]];
+/* Thứ tự: tổng quan trước, chi tiết sau. x.1, x.2... là chi tiết của tab tổng quan số x. */
+const TABS = [['journey', '1. Hành trình request', tab0], ['hash', '1.1 Băm mật khẩu', tab2], ['jwt', '1.2 JWT & đăng xuất', tab3], ['lock', '1.3 Khóa tài khoản', tab5], ['rbac', '1.4 Phân quyền (RBAC)', tabRbac],
+  ['arch', '2. Kiến trúc & Depends', tab6], ['api', '2.1 Pydantic & mã HTTP', tab4], ['mapped', '2.2 Mapped & Repository', tab9], ['migration', '2.3 Migration', tab1],
+  ['booking', '3. Luồng đặt vé', tabBooking], ['race', '3.1 Giữ chỗ & tranh chấp', tabRace], ['pay', '3.2 Thanh toán & webhook', tabPay], ['cancel', '3.3 Hủy vé & hoàn tiền', tabCancel],
+  ['recipe', '4. Công thức dựng chức năng mới', tabRecipe], ['docker', '5. Docker Compose', tab7], ['test', '6. pytest & ruff', tab8]];
+const STEPPERS = {};   // tab nào có bước thì đăng ký ở đây; nút ‹ › và phím ← → đi theo bước của tab đó thay vì đổi tab
 const tabsEl = $('#tabs'), panelsEl = $('#panels'), built = {};
 readTheme();
 TABS.forEach(function (t, i) {
@@ -1156,31 +1761,58 @@ TABS.forEach(function (t, i) {
   const p = document.createElement('div'); p.id = 'panel-' + t[0]; p.setAttribute('role', 'tabpanel'); p.setAttribute('aria-labelledby', b.id); p.hidden = true; panelsEl.appendChild(p);
 });
 function select(id) {
+  Object.keys(STEPPERS).forEach(k => { if (k !== id) STEPPERS[k].pause(); });   // rời tab thì tab cũ ngừng tự chạy
   TABS.forEach(function (t) {
     const on = t[0] === id;
     $('#tab-' + t[0]).setAttribute('aria-selected', on ? 'true' : 'false'); $('#tab-' + t[0]).tabIndex = on ? 0 : -1; $('#panel-' + t[0]).hidden = !on;
     if (on && !built[id]) { built[id] = true; t[2]($('#panel-' + id)); }
   });
   try { history.replaceState(null, '', '#' + id); } catch (e) { /* trang nhúng có thể không cho đổi hash */ }
+  syncNav();
 }
 $('#themeBtn').onclick = function () {
   const dark = document.documentElement.getAttribute('data-theme') === 'dark';
   document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark'); this.textContent = dark ? 'Nền tối' : 'Nền sáng'; readTheme();
 };
-/* Nút Back/Next cố định hai bên + phím ← →: chuyển sang tab trước/sau */
-function nav(d) {
-  const i = TABS.findIndex(t => $('#tab-' + t[0]).getAttribute('aria-selected') === 'true'), j = i + d;
+/* Nút Back/Next cố định hai bên + phím ← →: tab nào đăng ký STEPPERS thì đi theo bước, còn lại chuyển sang tab trước/sau (Shift + ← → luôn đổi tab) */
+const curTab = () => { const t = TABS.find(t => $('#tab-' + t[0]).getAttribute('aria-selected') === 'true'); return t ? t[0] : null; };
+function tabNav(d) {
+  const i = TABS.findIndex(t => t[0] === curTab()), j = i + d;
   if (j >= 0 && j < TABS.length) { select(TABS[j][0]); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+}
+function nav(d) {
+  const st = STEPPERS[curTab()];
+  if (!st) { tabNav(d); return; }
+  if (d > 0 ? st.canNext() : st.canBack()) { if (d > 0) st.next(); else st.back(); }
+  syncNav();
+}
+function syncNav() {
+  const p = $('#navPrev'), n = $('#navNext'); if (!p || !n) return;
+  const st = STEPPERS[curTab()];
+  p.title = st ? 'Bước trước (←)' : 'Tab trước (←)'; n.title = st ? 'Bước sau (→)' : 'Tab sau (→)';
+  p.disabled = st ? !st.canBack() : false; n.disabled = st ? !st.canNext() : false;
+  p.setAttribute('aria-label', p.title); n.setAttribute('aria-label', n.title);
 }
 [['navPrev', '‹', 'Tab trước (←)', -1], ['navNext', '›', 'Tab sau (→)', 1]].forEach(a => {
   const b = document.createElement('button'); b.type = 'button'; b.id = a[0]; b.className = 'navfix'; b.textContent = a[1]; b.title = a[2]; b.setAttribute('aria-label', a[2]);
   b.onclick = () => nav(a[3]); document.body.appendChild(b);
 });
 document.addEventListener('keydown', e => {
-  if ((e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+  if ((e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') || e.altKey || e.ctrlKey || e.metaKey) return;
   if (e.target.closest && e.target.closest('input,select,textarea,[role=tab]')) return;   // để ô nhập/thanh trượt/thanh tab tự xử lý
-  nav(e.key === 'ArrowRight' ? 1 : -1);
+  const d = e.key === 'ArrowRight' ? 1 : -1;
+  if (e.shiftKey) tabNav(d); else nav(d);
 });
+/* Space = Chạy / Tạm dừng ở tab đang mở (tab nào có nút "-play"), dù focus đang ở thanh tốc độ hay nút khác */
+let spaceDone = false;
+document.addEventListener('keydown', e => {
+  if (e.key !== ' ' || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+  if (e.target.closest && e.target.closest('input:not([type=range]),select,textarea,summary,[role=tab]')) return;   // ô nhập, hộp chọn, thẻ mở/đóng, thanh tab tự xử lý Space
+  const panel = $('#panel-' + curTab()), b = panel && $('[id$="-play"]', panel);
+  if (!b) return;
+  e.preventDefault(); spaceDone = true; if (!e.repeat) b.click();
+});
+document.addEventListener('keyup', e => { if (e.key === ' ' && spaceDone) { spaceDone = false; e.preventDefault(); } });   // chặn nút đang focus tự bấm thêm lần nữa khi nhả phím
 select(TABS.some(t => t[0] === location.hash.slice(1)) ? location.hash.slice(1) : 'journey');
 
 </script>
