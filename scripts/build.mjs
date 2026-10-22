@@ -1,4 +1,4 @@
-import { cpSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const SRC = 'content';
@@ -26,8 +26,14 @@ cpSync(SRC, OUT, {
   filter: (src) => src === SRC || !hidden(src.split('/').pop()),
 });
 
+// content/_ten.json: { "Thư mục/File.html": "Tên hiển thị" } (tuỳ chọn, không đổi tên file thật)
+let titles = {};
+try { titles = JSON.parse(readFileSync(join(SRC, '_ten.json'), 'utf8')); } catch (e) { if (e.code !== 'ENOENT') throw e; }
+const paths = new Set(files.map((s) => s.join('/')));
+for (const k of Object.keys(titles)) if (!paths.has(k)) console.warn(`Cảnh báo: _ten.json có "${k}" nhưng không có file này`);
+
 const items = files.map((segs) => ({
-  name: segs[segs.length - 1].replace(/\.html$/, ''),
+  name: titles[segs.join('/')] ?? segs[segs.length - 1].replace(/\.html$/, ''),
   group: segs.length > 1 ? segs.slice(0, -1).join(' / ') : 'Chung',
   href: segs.map(encodeURIComponent).join('/'),
 }));

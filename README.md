@@ -12,6 +12,10 @@ Link Vercel production là **CÔNG KHAI với bất kỳ ai có link**. Đừng 
 - Ảnh, css, js đi kèm cứ để cạnh file html, sẽ được chép sang nguyên cấu trúc.
 - File/thư mục bắt đầu bằng `.` hoặc `_` (ví dụ `content/_nhap/`) bị bỏ qua: không liệt kê và không được đưa lên web. Vì vậy đừng để ảnh/css cần dùng trong thư mục bắt đầu bằng `_`.
 
+## Đổi tên hiển thị (không đổi tên file thật)
+
+Sửa `content/_ten.json`: mỗi dòng là `"đường dẫn file tính từ content/": "Tên muốn hiện"`. File không có trong đó sẽ hiện theo tên file. Đường dẫn gõ sai thì `npm run build` in dòng "Cảnh báo". Dòng cuối không có dấu phẩy.
+
 ## Build thử trên máy
 
 ```bash
