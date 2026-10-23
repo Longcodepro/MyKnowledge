@@ -1,51 +1,44 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>Lab Sơ đồ OOAD</title>
-<meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Lexend:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab OOAD v2 – Phân tích thiết kế hướng đối tượng</title>
 <style>
+.sh-panel{padding:12px 16px 90px;max-width:1180px;margin:0 auto}
+.lb h2{margin:0 0 6px;font-size:19px}
+.lb h3{margin:0 0 6px;font-size:15px}
+.lb p{margin:6px 0;line-height:1.55}
+.lb .why{background:var(--vl-panel);border-left:4px solid var(--vl-accent);padding:8px 12px;border-radius:6px;margin:8px 0}
+.lb .warn{background:var(--vl-hl);color:var(--vl-hl-fg);padding:8px 12px;border-radius:6px;margin:8px 0}
+.lb .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.lb .chip{border:1px solid var(--vl-line);background:var(--vl-bg);color:var(--vl-fg);border-radius:999px;padding:5px 12px;font:inherit;font-size:13px;cursor:pointer}
+.lb .chip[aria-pressed=true]{background:var(--vl-accent);color:#fff;border-color:var(--vl-accent)}
+.lb table{border-collapse:collapse;width:100%;font-size:13px;margin:6px 0}
+.lb th,.lb td{border:1px solid var(--vl-line);padding:5px 8px;text-align:left;vertical-align:top;overflow-wrap:anywhere}
+.lb th{background:var(--vl-panel)}
+.lb .tw{overflow-wrap:anywhere}
+.lb .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.lb .card{border:1px solid var(--vl-line);border-radius:10px;padding:10px 12px;background:var(--vl-bg)}
+.lb .dgwrap{overflow:hidden;position:relative;border:1px solid var(--vl-line);border-radius:10px;background:var(--vl-bg)}
+.lb .dginner{transform-origin:0 0}
+.lb .st{margin:8px 0;padding:8px 12px;background:var(--vl-panel);border-radius:6px;font-size:14px;line-height:1.5}
+.lb pre{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--vl-panel);border:1px solid var(--vl-line);border-radius:8px;padding:10px;font-size:12.5px;line-height:1.5;margin:6px 0}
+.lb code{background:var(--vl-panel);padding:1px 5px;border-radius:4px;font-size:12.5px}
+.lb .btn{border:1px solid var(--vl-line);background:var(--vl-panel);color:var(--vl-fg);border-radius:8px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+.lb select{font:inherit;font-size:13px;padding:5px 8px;border-radius:8px;border:1px solid var(--vl-line);background:var(--vl-bg);color:var(--vl-fg);max-width:100%}
+.lb .tb{display:inline-block;border:1px solid var(--vl-line);border-radius:6px;margin:4px 8px 4px 0;vertical-align:top;background:var(--vl-bg)}
+.lb .tb b{display:block;background:var(--vl-panel);padding:3px 8px;font-size:13px;border-bottom:1px solid var(--vl-line)}
+.lb .tb div{padding:3px 8px;font-size:12.5px;font-family:ui-monospace,monospace}
+.lb .pk{color:#b45309;font-weight:700}.lb .fk{color:#2563eb;font-weight:700}
+.lb .quiz li{margin:4px 0}
+.lb .quiz button{margin-left:6px}
 :root{
-  --paper:#F2F5FA; --panel:#FFFFFF; --ink:#0F1B2D; --mute:#5B6B82; --line:#D5DCE8; --line2:#E7ECF4;
-  --accent:#2750D8; --accent-soft:#E6ECFD;
-  --static:#0B8A7A; --static-soft:#DDF3EF;
-  --dyn:#B93F0C; --dyn-soft:#FFEADD; --signal:#FF6A1F;
-  --draw:#1D2A3E;
-  --f-body:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',sans-serif;
-  --f-head:'Lexend','Be Vietnam Pro',system-ui,sans-serif;
-  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
-  color-scheme:light;
+  --paper:var(--vl-panel); --panel:var(--vl-bg); --ink:var(--vl-fg); --mute:var(--vl-muted); --line:var(--vl-line); --line2:var(--vl-grid);
+  --accent:var(--vl-accent); --accent-soft:#E6ECFD; --static:#0B8A7A; --static-soft:#DDF3EF; --dyn:#B93F0C; --dyn-soft:#FFEADD; --signal:#FF6A1F; --draw:var(--vl-fg);
+  --f-body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; --f-head:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; --f-mono:ui-monospace,Menlo,Consolas,monospace;
 }
-*{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);font:400 15px/1.6 var(--f-body);
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 56px}
-.wrap{max-width:1180px;margin:0 auto}
-button{font:inherit;color:inherit;cursor:pointer}
-h1,h2,h3{font-family:var(--f-head);margin:0;text-wrap:balance;line-height:1.25}
-.top{display:flex;flex-direction:column;gap:4px;margin-bottom:18px}
-.top h1{font-size:clamp(24px,4.4vw,34px);font-weight:700;letter-spacing:-.01em}
-.top h1 span{color:var(--accent)}
-.top p{margin:0;color:var(--mute);max-width:62ch}
-
-/* chọn ví dụ */
-.exs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:16px}
-.ex{background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;text-align:left;display:flex;flex-direction:column;gap:2px;transition:border-color .15s,box-shadow .15s}
-.ex b{font-family:var(--f-head);font-size:15px;font-weight:600}
-.ex span{font-size:12.5px;color:var(--mute);line-height:1.45}
-.ex:hover{border-color:#aebbd6}
-.ex[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
-.ex[aria-pressed=true] b{color:var(--accent)}
-.ex i{font-style:normal;font-family:var(--f-mono);font-size:11px;color:var(--mute);letter-spacing:.04em;text-transform:uppercase}
-
-/* tab */
-.tabs{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 10px;margin-bottom:6px;scrollbar-width:thin}
-.tab{flex:0 0 auto;background:var(--panel);border:1.5px solid var(--line);border-radius:10px;padding:8px 12px 8px 10px;display:flex;align-items:center;gap:8px;white-space:nowrap}
-.tab .n{font-family:var(--f-mono);font-size:12px;color:var(--mute)}
-.tab .nm{font-weight:600;font-size:14px}
-.tab .dot{width:8px;height:8px;border-radius:50%;background:var(--static)}
-.tab.d .dot{background:var(--signal)}
-.tab[aria-selected=true]{background:var(--ink);border-color:var(--ink);color:#fff}
-.tab[aria-selected=true] .n{color:#aab6cc}
-.tab:hover:not([aria-selected=true]){border-color:#aebbd6}
-
+:root[data-vl-theme="dark"]{--accent-soft:#1E2B52;--static:#3FC1AE;--static-soft:#12332F;--dyn:#FF9A63;--dyn-soft:#3A2415;}
 /* nội dung */
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-top:14px}
 .card h2{font-size:18px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:10px}
@@ -71,11 +64,11 @@ td code,.mono{font-family:var(--f-mono);font-size:12.5px}
 
 /* ký hiệu */
 .syms{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
-.sym{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;align-items:center;border:1px solid var(--line2);border-radius:10px;padding:10px 12px;background:#FCFDFF}
+.sym{display:grid;grid-template-columns:150px minmax(0,1fr);gap:12px;align-items:center;border:1px solid var(--line2);border-radius:10px;padding:10px 12px;background:#FCFDFF}
 .sym .g{background:var(--paper);border-radius:8px;display:grid;place-items:center;padding:6px 2px}
 .sym b{display:block;font-size:14px;font-weight:600;line-height:1.35}
 .sym p{margin:2px 0 0;font-size:13px;color:var(--mute);line-height:1.5}
-.gsvg{width:88px;height:48px;display:block}
+.gsvg{width:140px;height:auto;display:block}.gsvg .tx.sm{font-size:10.5px}
 
 /* bàn vẽ */
 .lab-bar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:space-between;margin-bottom:12px}
@@ -184,41 +177,117 @@ td code,.mono{font-family:var(--f-mono);font-size:12.5px}
 .new .frb,.new .frt,.new .frd{stroke:var(--accent)}
 .tcov table{min-width:0}.tcov th,.tcov td{padding:7px 6px;font-size:12px;white-space:normal;overflow-wrap:anywhere;word-break:break-word}.tcov td.k{width:auto;min-width:92px}
 @media (max-width:640px){
-  .exs{grid-template-columns:1fr}
+
   .card{padding:16px 14px}
-  .sym{grid-template-columns:88px minmax(0,1fr)}
+  .sym{grid-template-columns:130px minmax(0,1fr)}
 }
 @media (prefers-reduced-motion:reduce){
   .el,.nd{transition:none}
 }
-/* ghép với khung VLab */
-html body{background:var(--paper);color:var(--ink);font:400 15px/1.6 var(--f-body);margin:0;
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 56px}
-html body .vl-app{max-width:none;padding:0;margin-top:14px}
-html body .vl-head{display:none}
-html body .vl-main{grid-template-columns:minmax(0,1fr) 320px}
-@media (max-width:860px){html body .vl-main{grid-template-columns:minmax(0,1fr)}}
-html body .vl-stage-wrap{background:var(--panel);border-color:var(--line)}
-html body .vl-card{background:var(--panel);border-color:var(--line)}
-html body .vl-status{background:var(--panel);border-top-color:var(--line);color:var(--ink);min-height:64px;font-size:14px}
-html body .vl-status b{color:var(--accent)}
-.svghost{position:relative;overflow:hidden;touch-action:none;
-  background:linear-gradient(var(--line2) 1px,transparent 1px) 0 0/24px 24px,linear-gradient(90deg,var(--line2) 1px,transparent 1px) 0 0/24px 24px,var(--panel)}
+.lb2{max-width:1180px;margin:0 auto}
+.svghost{position:relative;overflow:hidden;touch-action:pan-y;border:1px solid var(--line);border-radius:12px;width:100%;
+  background:linear-gradient(var(--line2) 1px,transparent 1px) 0 0/24px 24px,linear-gradient(90deg,var(--line2) 1px,transparent 1px) 0 0/24px 24px,var(--panel);cursor:grab}
 .svghost svg{display:block;width:100%;height:100%}
-.tb{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--panel)}
-.card h2:first-child{margin-top:0}
-.card + .card{margin-top:14px}
-#botSec h2{font-size:18px;margin-bottom:10px}
-#labhost .vl-title{display:none}
-html body .vl-code{max-height:300px}
-html body .vl-code div.on{background:var(--dyn-soft);color:var(--dyn)}
-html body .vl-card h3{font-family:var(--f-mono)}
-:root[data-vl-theme="dark"]{
-  --paper:#0E131B; --panel:#161D28; --ink:#E8ECF1; --mute:#9AA5B1; --line:#2B3442; --line2:#1D2530;
-  --accent:#6C93FF; --accent-soft:#1E2B52; --static:#3FC1AE; --static-soft:#12332F; --dyn:#FF9A63; --dyn-soft:#3A2415; --draw:#C9D3E3;
-  color-scheme:dark;
-}
-</style>
+.tb{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:10px 0}
+.exc button,.scc button{border:1.5px solid var(--line);background:var(--panel);color:var(--ink);border-radius:99px;padding:4px 12px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.exc button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
+.scc button{border-color:#F0C3A6;color:var(--dyn)}
+.scc button[aria-pressed=true]{background:var(--dyn);border-color:var(--dyn);color:#fff}
+.exc,.scc{display:flex;gap:6px;flex-wrap:wrap}
+.st2{margin:10px 0;padding:10px 14px;background:var(--accent-soft);border-radius:10px;font-size:14px;line-height:1.55;min-height:62px}
+.bar2{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px}
+.lb2 .tbl-wrap{overflow-x:auto}
+.lb2 table{min-width:0}
+.lb2 th{white-space:normal}
+.lb2 td,.lb2 th{overflow-wrap:anywhere}
+.lb2 .seg button{border:0;background:transparent;padding:6px 14px;border-radius:8px;font:inherit;font-weight:600;font-size:13.5px;color:var(--mute);cursor:pointer}
+.lb2 .seg button[aria-pressed=true]{background:var(--panel);color:var(--dyn);box-shadow:0 1px 3px rgba(15,27,45,.14)}
+.lb2 .seg{display:inline-flex;background:var(--paper);border-radius:10px;padding:3px;gap:2px}
+.lb2 .btn{border:1.5px solid var(--line);background:var(--panel);color:var(--ink);border-radius:9px;padding:6px 13px;font:inherit;font-weight:600;font-size:13.5px;cursor:pointer}
+@media (max-width:640px){.sym{grid-template-columns:130px minmax(0,1fr)}}
+/* ---- thử thách / mồi câu hỏi ---- */
+.hook{margin-top:12px;padding:10px 14px;border-left:4px solid var(--signal);background:var(--dyn-soft);border-radius:8px;line-height:1.6;font-size:14.5px}
+.chi{padding:12px 0;border-top:1px solid var(--line2)}
+.chi:first-of-type{border-top:0}
+.chi .q{margin:0 0 8px;line-height:1.6}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.ob{border:1.5px solid var(--line);background:var(--panel);color:var(--ink);border-radius:10px;padding:7px 12px;font:inherit;font-size:13.5px;cursor:pointer;text-align:left;max-width:100%}
+.ob:hover{border-color:var(--accent)}
+.ob.ok{border-color:#16a34a;background:#dcfce7;color:#14532d}
+.ob.bad{border-color:#dc2626;background:#fee2e2;color:#7f1d1d}
+.ob.pick{border-color:var(--accent);background:var(--accent-soft)}
+:root[data-vl-theme="dark"] .ob.ok{background:#14351f;color:#bbf7d0}
+:root[data-vl-theme="dark"] .ob.bad{background:#3b1414;color:#fecaca}
+.ob.sm{padding:3px 10px;font-size:12.5px}
+.fb{margin-top:8px;padding:10px 12px;background:var(--accent-soft);border-radius:8px;line-height:1.6;font-size:14px}
+.sortl .sr{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;padding:4px 0}
+.sortl .sn{font-weight:600;min-width:150px}
+.sortl .sb{display:inline-flex;gap:6px;flex-wrap:wrap}
+.sres{width:100%;font-size:13.5px;padding:2px 0 6px 0;color:var(--mute)}
+.chal .card{margin-top:14px}
+.chal h2 small{margin-left:8px}
+/* ---- bản đồ môn ---- */
+.mapbar{margin:6px 0}
+.reqc{padding:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;margin:8px 0}
+.stg{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:8px 0;background:var(--panel)}
+.stg.none{background:var(--paper);border-style:dashed}
+.stg .sh{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.stg .sh .n{width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;display:inline-grid;place-items:center;font-size:12.5px;font-weight:700}
+.stg.none .sh .n{background:var(--mute)}
+.chp{font-size:11.5px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--mute)}
+.chp.nn{border-color:#F0C3A6;color:var(--dyn)}
+.stg p{margin:6px 0;line-height:1.6}
+.stg .curio{color:var(--dyn);font-size:14px}
+.tblw{overflow-x:auto}
+/* ---- RDM ---- */
+.rbar{margin:6px 0 10px}
+.cb,.rt{display:inline-block;vertical-align:top;border:1.5px solid var(--draw);border-radius:6px;margin:4px 8px 4px 0;background:var(--panel);min-width:140px}
+.cb b,.rt b{display:block;padding:4px 10px;background:var(--paper);border-bottom:1.5px solid var(--draw);font-size:13px;text-align:center}
+.cb div,.rt div{padding:2px 10px;font-size:12.5px;font-family:var(--f-mono)}
+.rt{border-color:var(--accent)}.rt b{border-color:var(--accent)}
+.pk{color:#b45309;font-weight:700}.fk{color:#2563eb;font-weight:700}
+:root[data-vl-theme="dark"] .pk{color:#fbbf24}:root[data-vl-theme="dark"] .fk{color:#7db3ff}
+.flow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:10px 0}
+.flow .mid{padding:4px 10px;background:var(--accent-soft);border-radius:99px;font-size:12.5px;font-weight:600}
+.mul{display:inline-block;margin:0 6px;font-size:12.5px;color:var(--mute);vertical-align:middle}
+.three{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:10px}
+.three .card{margin-top:0;padding:10px 12px}
+.rtw{margin-top:10px}
+.lb .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:12px}
+/* ---- giao diện ---- */
+.uigrid{display:grid;grid-template-columns:minmax(280px,420px) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:760px){.uigrid{grid-template-columns:minmax(0,1fr)}}
+.wf{border:2px solid var(--draw);border-radius:14px;padding:12px;background:var(--panel)}
+.wfh{display:flex;flex-direction:column;gap:2px;padding-bottom:8px;border-bottom:1px dashed var(--line);margin-bottom:8px;cursor:pointer}
+.wfh span{font-size:12.5px;color:var(--mute)}
+.wfs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}
+.seat{border:1.5px solid var(--draw);border-radius:8px;padding:8px 0;text-align:center;background:var(--panel);color:var(--ink);font:inherit;font-size:13px;cursor:pointer}
+.seat.free:hover{background:var(--accent-soft)}
+.seat.pick{background:var(--accent);color:#fff;border-color:var(--accent)}
+.seat.sold{background:var(--line);color:var(--mute);cursor:not-allowed}
+.seat.hold{background:#fde68a;color:#78350f;border-color:#d97706;cursor:not-allowed}
+.seat.sm{display:inline-block;padding:2px 8px;font-size:11.5px;cursor:default;margin-right:6px}
+.wfl{margin-bottom:8px}
+.wff{display:grid;gap:6px;margin-bottom:8px}
+.wff label{display:flex;flex-direction:column;font-size:12.5px;color:var(--mute);gap:2px}
+.wff input{font:inherit;padding:6px 8px;border:1.5px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
+.wft{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.cd.off{opacity:.3}
+.go{border:0;background:var(--accent);color:#fff;border-radius:10px;padding:8px 16px;font:inherit;font-weight:600;cursor:pointer}
+.go:disabled{background:var(--line);color:var(--mute);cursor:not-allowed}
+tr.lit td{background:var(--dyn-soft)}
+.mdpre{max-height:none}
+.lb .bar{margin:8px 0}
+.lb table{min-width:0;font-size:13px}
+.lb th,.lb td{padding:5px 7px;white-space:normal;overflow-wrap:anywhere;word-break:break-word}
+.tblw{overflow:visible}
+.cb,.rt{min-width:0;max-width:100%}
+.cb div,.rt div{overflow-wrap:anywhere}
+.flow .side{min-width:0;max-width:100%}
+.lb th:first-child,.lb td:first-child{min-width:4ch}
+.lb pre,.lb code,.cb div,.rt div{font-family:ui-monospace,"Noto Sans Mono","DejaVu Sans Mono",Consolas,monospace}
+.lb th:first-child{white-space:nowrap}
+</style></head><body>
 <script>
 /* ============================================================================
    VLab — khung dùng chung cho mọi trang mô phỏng bài học IT/AI
@@ -227,7 +296,7 @@ html body .vl-card h3{font-family:var(--f-mono)}
    Không phụ thuộc thư viện ngoài. Chạy được offline.
 
    Cung cấp sẵn:
-     - Chủ đề sáng/tối tự theo hệ thống + nút đổi
+     - Chủ đề MẶC ĐỊNH SÁNG + nút đổi sang tối (nhớ lựa chọn)
      - 4 bảng màu (có 1 bảng thân thiện với người mù màu)
      - Zoom bằng con lăn, kéo để di chuyển, nút đặt lại khung nhìn
      - Thanh trượt tham số
@@ -261,34 +330,28 @@ html body .vl-card h3{font-family:var(--f-mono)}
   :root{
     --vl-bg:#ffffff; --vl-panel:#f6f7f9; --vl-fg:#14181d; --vl-muted:#5d6670;
     --vl-line:#d9dde3; --vl-accent:#2563eb; --vl-grid:#e8ebef; --vl-axis:#9aa3ad;
-    --vl-hl:#fff3bf; --vl-hl-fg:#5c4600;
+    --vl-hl:#fff3bf; --vl-hl-fg:#5c4600; --vl-warn:#b45309;
   }
   :root[data-vl-theme="dark"]{
     --vl-bg:#13161a; --vl-panel:#1b1f25; --vl-fg:#e8ecf1; --vl-muted:#9aa5b1;
     --vl-line:#2b323b; --vl-accent:#5b9dff; --vl-grid:#22272e; --vl-axis:#5d6670;
-    --vl-hl:#3a3414; --vl-hl-fg:#ffe79a;
-  }
-  @media (prefers-color-scheme: dark){
-    :root:not([data-vl-theme="light"]){
-      --vl-bg:#13161a; --vl-panel:#1b1f25; --vl-fg:#e8ecf1; --vl-muted:#9aa5b1;
-      --vl-line:#2b323b; --vl-accent:#5b9dff; --vl-grid:#22272e; --vl-axis:#5d6670;
-      --vl-hl:#3a3414; --vl-hl-fg:#ffe79a;
-    }
+    --vl-hl:#3a3414; --vl-hl-fg:#ffe79a; --vl-warn:#fbbf24;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--vl-bg);color:var(--vl-fg);
     font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
-  .vl-app{max-width:1180px;margin:0 auto;padding:16px;}
+  .vl-app{width:100%;padding:16px;}
+  @media (max-width:600px){.vl-app{padding:10px;}}
   .vl-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
-  .vl-title{font-size:18px;font-weight:650;margin:0;flex:1 1 220px;}
+  .vl-title{font-size:18px;font-weight:650;margin:0;flex:1 1 220px;overflow-wrap:anywhere;}
   .vl-head-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
-  .vl-main{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start;}
-  @media (max-width:860px){ .vl-main{grid-template-columns:1fr;} }
+  .vl-main{display:grid;grid-template-columns:minmax(0,1fr) clamp(290px,24vw,400px);gap:16px;align-items:start;}
+  @media (max-width:900px){ .vl-main{grid-template-columns:minmax(0,1fr);} }
   .vl-stage-wrap{position:relative;border:1px solid var(--vl-line);border-radius:10px;
     overflow:hidden;background:var(--vl-panel);}
   .vl-stage{display:block;width:100%;height:auto;touch-action:none;cursor:grab;}
   .vl-stage.dragging{cursor:grabbing;}
-  .vl-status{padding:10px 12px;border-top:1px solid var(--vl-line);background:var(--vl-bg);
+  .vl-status{overflow-wrap:anywhere;padding:10px 12px;border-top:1px solid var(--vl-line);background:var(--vl-bg);
     font-size:14px;min-height:42px;color:var(--vl-fg);}
   .vl-status b{color:var(--vl-accent);}
   .vl-side{display:flex;flex-direction:column;gap:12px;min-width:0;}
@@ -300,7 +363,7 @@ html body .vl-card h3{font-family:var(--f-mono)}
   .vl-lab{display:flex;justify-content:space-between;gap:8px;font-size:13px;margin-bottom:4px;}
   .vl-lab span:last-child{font-variant-numeric:tabular-nums;color:var(--vl-accent);font-weight:600;}
   input[type=range]{width:100%;accent-color:var(--vl-accent);margin:0;}
-  .vl-btn{font:inherit;font-size:13px;padding:6px 11px;border-radius:7px;cursor:pointer;
+  .vl-btn{font:inherit;font-size:13px;min-height:34px;padding:6px 11px;border-radius:7px;cursor:pointer;
     border:1px solid var(--vl-line);background:var(--vl-bg);color:var(--vl-fg);}
   .vl-btn:hover{border-color:var(--vl-accent);}
   .vl-btn.primary{background:var(--vl-accent);border-color:var(--vl-accent);color:#fff;}
@@ -311,11 +374,12 @@ html body .vl-card h3{font-family:var(--f-mono)}
   .vl-err{color:#dc2626;font-size:12px;margin-top:4px;min-height:16px;}
   :root[data-vl-theme="dark"] .vl-err{color:#ff8080;}
   .vl-code{margin:0;font:12.5px/1.6 ui-monospace,"Cascadia Code",Consolas,monospace;
-    counter-reset:vlline;max-height:260px;overflow:auto;}
-  .vl-code div{padding:1px 6px;border-radius:4px;white-space:pre-wrap;color:var(--vl-muted);}
+    counter-reset:vlline;}
+  .vl-code div{padding:1px 6px;border-radius:4px;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--vl-muted);}
   .vl-code div.on{background:var(--vl-hl);color:var(--vl-hl-fg);font-weight:600;}
   .vl-why{font-size:13.5px;color:var(--vl-fg);}
   .vl-why p{margin:0 0 8px;} .vl-why p:last-child{margin:0;}
+  .vl-compact{padding:0;max-width:none;}
   .vl-hint{font-size:12px;color:var(--vl-muted);margin-top:6px;}
   `;
 
@@ -637,13 +701,40 @@ html body .vl-card h3{font-family:var(--f-mono)}
    *   onReset  {function(app)}  đặt lại trạng thái bài
    *   onParam  {function(id, value, app)}  khi một tham số đổi
    */
+  VLab.apps = [];
+  /** Nhúng CSS chung (shell.js gọi sẵn, để tab không dùng VLab.create vẫn đúng giao diện) */
+  VLab.injectCSS = injectCSS;
+  /** Chủ đề: MẶC ĐỊNH SÁNG. Chỉ tối khi người dùng bấm nút. */
+  VLab.getTheme = function () {
+    return document.documentElement.getAttribute('data-vl-theme') === 'dark' ? 'dark' : 'light';
+  };
+  VLab.setTheme = function (t) {
+    document.documentElement.setAttribute('data-vl-theme', t === 'dark' ? 'dark' : 'light');
+    try { localStorage.setItem('vl-theme', t); } catch (e) {}
+    VLab.redrawAll();
+  };
+  VLab.setPalette = function (name) {
+    if (PALETTES[name]) { paletteName = name; VLab.redrawAll(); }
+  };
+  VLab.redrawAll = function () {
+    VLab.apps.forEach(function (a) { a.redraw(); });
+    global.dispatchEvent(new Event('vl-redraw'));
+  };
+  (function () {
+    let t = 'light';
+    try { t = localStorage.getItem('vl-theme') || 'light'; } catch (e) {}
+    document.documentElement.setAttribute('data-vl-theme', t === 'dark' ? 'dark' : 'light');
+  })();
+
   VLab.create = function (cfg) {
     injectCSS();
     cfg = cfg || {};
     const app = {};
     const root = document.createElement('div');
-    root.className = 'vl-app';
-    document.body.appendChild(root);
+    root.className = 'vl-app' + (cfg.compact ? ' vl-compact' : '');
+    (cfg.mount || document.body).appendChild(root);
+    app.root = root;
+    VLab.apps.push(app);
 
     /* --- đầu trang --- */
     const head = document.createElement('div');
@@ -654,6 +745,8 @@ html body .vl-card h3{font-family:var(--f-mono)}
       '<button class="vl-btn vl-theme">Sáng/Tối</button>' +
       '<button class="vl-btn vl-home">Đặt lại khung nhìn</button></div>';
     head.querySelector('.vl-title').textContent = cfg.title || 'Mô phỏng';
+    if (cfg.compact) head.querySelector('.vl-head-tools').style.display = 'none';
+    if (cfg.compact && !cfg.title) head.style.display = 'none';
     root.appendChild(head);
 
     const palSel = head.querySelector('.vl-pal');
@@ -666,12 +759,7 @@ html body .vl-card h3{font-family:var(--f-mono)}
       paletteName = palSel.value; app.redraw();
     });
     head.querySelector('.vl-theme').addEventListener('click', function () {
-      const cur = document.documentElement.getAttribute('data-vl-theme');
-      const sysDark = global.matchMedia &&
-        global.matchMedia('(prefers-color-scheme: dark)').matches;
-      const now = cur || (sysDark ? 'dark' : 'light');
-      document.documentElement.setAttribute('data-vl-theme', now === 'dark' ? 'light' : 'dark');
-      app.redraw();
+      VLab.setTheme(VLab.getTheme() === 'dark' ? 'light' : 'dark');
     });
 
     /* --- bố cục chính --- */
@@ -686,6 +774,16 @@ html body .vl-card h3{font-family:var(--f-mono)}
     const side = document.createElement('div');
     side.className = 'vl-side';
     main.appendChild(side);
+    app.side = side; app.main = main;
+    /** Thêm một thẻ điều khiển riêng của tab vào cột bên phải. Trả về <div> nội dung. */
+    app.addCard = function (title, content) {
+      const c = document.createElement('div'); c.className = 'vl-card';
+      const h = document.createElement('h3'); h.textContent = title; c.appendChild(h);
+      const b = document.createElement('div'); c.appendChild(b);
+      if (typeof content === 'string') b.innerHTML = content; else if (content) b.appendChild(content);
+      side.insertBefore(c, side.firstChild);
+      return b;
+    };
 
     /* --- sân khấu --- */
     const stageMode = cfg.stage || '2d';
@@ -696,14 +794,14 @@ html body .vl-card h3{font-family:var(--f-mono)}
     if (stageMode === '2d') {
       canvas = document.createElement('canvas');
       canvas.className = 'vl-stage';
-      canvas.style.height = stageH + 'px';
+      canvas.style.height = 'clamp(280px, 62vh, ' + stageH + 'px)';
       stageWrap.appendChild(canvas);
       ctx = canvas.getContext('2d');
       app.canvas = canvas; app.ctx = ctx;
     } else {
       const host = document.createElement('div');
       host.className = 'vl-stage';
-      host.style.height = stageH + 'px';
+      host.style.height = 'clamp(280px, 62vh, ' + stageH + 'px)';
       stageWrap.appendChild(host);
       app.host = host;
     }
@@ -802,7 +900,7 @@ html body .vl-card h3{font-family:var(--f-mono)}
         '<button class="vl-btn vl-again">Làm lại</button></div>' +
         '<div class="vl-row" style="margin-top:12px">' +
         '<div class="vl-lab"><span>Tốc độ (bước/giây)</span><span class="vl-spd">8</span></div>' +
-        '<input type="range" class="vl-speed" min="1" max="60" step="1" value="8"></div>';
+        '<input type="range" class="vl-speed" min="0.1" max="60" step="0.1" value="8"></div>';
       side.appendChild(card);
       const btnPlay = card.querySelector('.vl-play');
       const spdEl = card.querySelector('.vl-spd');
@@ -913,13 +1011,15 @@ html body .vl-card h3{font-family:var(--f-mono)}
     };
 
     global.addEventListener('resize', function () { app.redraw(); });
-    if (global.matchMedia) {
-      global.matchMedia('(prefers-color-scheme: dark)')
-        .addEventListener('change', function () { app.redraw(); });
-    }
 
     if (cfg.onReset) cfg.onReset(app);
     app.redraw();
+    /* trang một khung (không có VLabShell): vẫn có Space = Chạy/Dừng toàn trang nếu đã ghép player.js */
+    if (cfg.player && !cfg.mount && global.VLabPlayer && !global.VLabShell) {
+      const ctl = VLabPlayer.attach({ app: function () { return app; } });
+      const p0 = app.play, p1 = app.pause;
+      app.play = function () { p0(); ctl.sync(); }; app.pause = function () { p1(); ctl.sync(); };
+    }
     return app;
   };
 
@@ -973,6 +1073,9 @@ html body .vl-card h3{font-family:var(--f-mono)}
     ctx.font = '12px system-ui,sans-serif';
     ctx.textAlign = align || 'left';
     ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round'; ctx.lineWidth = 4;                 // viền nền quanh chữ: không bị đường/lưới đè lên
+    ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--vl-panel').trim() || '#fff';
+    ctx.strokeText(text, px, py);
     ctx.fillText(text, px, py);
   };
 
@@ -980,8 +1083,605 @@ html body .vl-card h3{font-family:var(--f-mono)}
   global.VLab = VLab;
 
 })(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* ============================================================================
+   VLabPlayer — phím tắt toàn trang, nút Back/Chạy/Next nổi, tốc độ và hoạt họa dùng chung
+   ----------------------------------------------------------------------------
+   Dán TRƯỚC core/shell.js (bundle.mjs tự làm). code-flow cũng dùng file này.
+
+   Quy ước "stepper" của một tab (đối tượng tab trả về):
+     { next(), back(), canNext(), canBack(), reset?() }
+     - next() CÓ THỂ trả về Promise: đó là hoạt họa chạy từ trạng thái cũ sang trạng thái mới
+       (gói tin chạy dọc dây, mũi tên vẽ dần…). Player đợi xong mới cho bước tiếp theo.
+     - back() làm NGAY, không hoạt họa.
+     - reset() (tuỳ chọn): về bước đầu; Space ở bước cuối sẽ tự gọi rồi chạy lại từ đầu.
+
+   Phím (chạy ở BẤT KỲ đâu trên trang, không cần bấm vào ô nào):
+     →  Next (có hoạt họa)         ←  Back (ngay lập tức)
+     Space  Chạy tự động / Dừng    Shift+← →  đổi tab
+   Chỉ bỏ qua khi đang gõ chữ trong ô nhập văn bản / textarea / contenteditable
+   (để vẫn gõ được dấu cách và di chuyển con trỏ). Ô chọn (select), thanh trượt, nút bấm KHÔNG chặn phím.
+
+   Tốc độ: VLabPlayer.speed (0.1–3), lưu localStorage. Đang hoạt họa mà bấm → lần nữa = tua nhanh tới cuối bước đó
+   (cần ở tốc độ chậm).  Mọi hoạt họa phải dùng
+     VLabPlayer.tween(ms, k => …)  hoặc  VLabPlayer.wait(ms)   để tuân theo tốc độ.
+   VLabPlayer.fast = true → bỏ hoạt họa (dùng khi kiểm thử).
+   ========================================================================== */
+(function (global) {
+  'use strict';
+  const CSS = `
+  .pl-bar{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-template-columns:1fr auto 1fr;align-items:end;
+    gap:8px;padding:0 14px 14px;pointer-events:none;}
+  .pl-bar>*{pointer-events:auto;}
+  .pl-back{justify-self:start;grid-column:1;} .pl-mid{grid-column:2;} .pl-next{justify-self:end;grid-column:3;}
+  .pl-btn{font:inherit;font-size:14px;font-weight:600;min-height:44px;padding:10px 18px;border-radius:999px;cursor:pointer;
+    border:1px solid var(--vl-accent);background:var(--vl-accent);color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.25);}
+  .pl-btn.ghost{background:var(--vl-bg);color:var(--vl-accent);}
+  .pl-btn:disabled{opacity:.4;cursor:not-allowed;}
+  .pl-btn[hidden],.pl-mid[hidden]{display:none;}
+  .pl-mid{display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .pl-grp{display:flex;gap:6px;align-items:center;background:var(--vl-bg);border:1px solid var(--vl-line);border-radius:999px;
+    padding:4px;box-shadow:0 2px 10px rgba(0,0,0,.18);}
+  .pl-grp .pl-btn{box-shadow:none;min-height:38px;padding:7px 14px;}
+  .pl-spd{font:inherit;font-size:13px;min-height:38px;border:1px solid var(--vl-line);border-radius:999px;padding:0 8px;
+    background:var(--vl-bg);color:var(--vl-fg);cursor:pointer;width:auto;}
+  .pl-hint{font-size:12px;color:var(--vl-muted);background:var(--vl-bg);border:1px solid var(--vl-line);border-radius:999px;padding:2px 10px;}
+  @media (max-width:700px){.pl-hint{display:none;}.pl-btn{padding:10px 14px;}}
+  `;
+  const ease = function (k) { return k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2; };
+  let speed = 1, gen = 0;                 // gen tăng → các tween đang chạy kết thúc ngay
+  const LEVELS = [.1, .25, .5, .75, 1, 1.5, 2, 3];
+  try { const v = parseFloat(localStorage.getItem('vl-speed')); if (v >= .1 && v <= 4) speed = v; } catch (e) {}
+
+  const P = {
+    fast: false,
+    get speed() { return speed; },
+    setSpeed: function (v) {
+      speed = Math.max(.1, Math.min(4, +v || 1));
+      try { localStorage.setItem('vl-speed', String(speed)); } catch (e) {}
+      if (global.Flow) global.Flow.speed = speed;
+    },
+    ms: function (ms) { return ms / speed; },
+    /** Tua: mọi hoạt họa đang chạy nhảy ngay tới cuối. */
+    finish: function () { gen++; },
+    wait: function (ms) { return P.fast ? Promise.resolve() : new Promise(function (r) { setTimeout(r, ms / speed); }); },
+    /** Chạy fn(k) với k: 0→1 trong ms (đã chia tốc độ), có làm mượt đầu/cuối. Trả Promise. */
+    tween: function (ms, fn, noEase) {
+      if (P.fast) { fn(1); return Promise.resolve(); }
+      return new Promise(function (res) {
+        const t0 = performance.now(), D = ms / speed, g0 = gen;
+        (function tick(t) {
+          const k = gen !== g0 ? 1 : Math.min(1, (t - t0) / D);
+          fn(noEase ? k : ease(k));
+          if (k < 1) requestAnimationFrame(tick); else res();
+        })(t0);
+      });
+    },
+    ease: ease,
+    /** Hiện dần một phần tử DOM mới (mờ → rõ, trượt nhẹ lên). Trả Promise. */
+    enter: function (el, ms) {
+      if (!el) return Promise.resolve();
+      el.style.opacity = 0; el.style.transform = 'translateY(10px)';
+      return P.tween(ms || 450, function (k) { el.style.opacity = k; el.style.transform = 'translateY(' + (10 * (1 - k)) + 'px)'; })
+        .then(function () { el.style.opacity = ''; el.style.transform = ''; });
+    },
+
+    /** cfg: { stepper(): obj|null, app(): app|null, moveTab(dir) } → { sync, stop, playing } */
+    attach: function (cfg) {
+      if (!document.getElementById('pl-css')) {
+        const s = document.createElement('style'); s.id = 'pl-css'; s.textContent = CSS; document.head.appendChild(s);
+      }
+      const bar = document.createElement('div'); bar.className = 'pl-bar';
+      bar.innerHTML = '<button class="pl-btn ghost pl-back" hidden>← Back</button>' +
+        '<div class="pl-mid" hidden><div class="pl-hint">← → lùi/tiến · Space chạy/dừng · Shift+← → đổi tab</div>' +
+        '<div class="pl-grp"><button class="pl-btn pl-play" title="Space">▶ Chạy</button>' +
+        '<select class="pl-spd" title="Tốc độ hoạt họa" aria-label="Tốc độ hoạt họa">' +
+        LEVELS.map(function (v) { return '<option value="' + v + '">' + v + '×</option>'; }).join('') +
+        '</select></div></div>' +
+        '<button class="pl-btn pl-next" hidden>Next →</button>';
+      document.body.appendChild(bar);
+      const $ = function (c) { return bar.querySelector(c); };
+      const back = $('.pl-back'), next = $('.pl-next'), mid = $('.pl-mid'), play = $('.pl-play'), spd = $('.pl-spd');
+      spd.value = String(LEVELS.indexOf(speed) >= 0 ? speed : 1);
+      spd.addEventListener('change', function () { P.setSpeed(spd.value); });
+      P.setSpeed(speed);
+
+      let busy = false, playing = false;
+      const st = function () { return cfg.stepper ? cfg.stepper() : null; };
+      const ap = function () { const a = cfg.app ? cfg.app() : null; return a && a.play && a.pause ? a : null; };
+      function sync() {
+        const s = st(), a = ap();
+        back.hidden = next.hidden = !s;
+        mid.hidden = !(s || a);
+        $('.pl-hint').textContent = s ? '← → lùi/tiến · Space chạy/dừng · Shift+← → đổi tab' : 'Space chạy/dừng · Shift+← → đổi tab';
+        if (s) {
+          back.disabled = busy || (s.canBack ? !s.canBack() : false);
+          next.disabled = !busy && (s.canNext ? !s.canNext() : false);   // đang hoạt họa: Next = tua tới cuối bước
+          next.textContent = busy ? 'Tua ⏭' : 'Next →';
+        }
+        const run = s ? playing : !!(a && a.running);
+        play.textContent = run ? '⏸ Dừng' : '▶ Chạy';
+      }
+      async function runStep(dir) {
+        const s = st();
+        if (!s || busy) return false;
+        if (dir > 0 && s.canNext && !s.canNext()) return false;
+        if (dir < 0 && s.canBack && !s.canBack()) return false;
+        busy = true; sync();
+        try { const r = dir > 0 ? s.next() : s.back(); if (r && r.then) await r; }
+        finally { busy = false; sync(); }
+        return true;
+      }
+      function stop() { playing = false; sync(); }
+      async function toggle() {
+        const s = st();
+        if (!s) { const a = ap(); if (a) { a.running ? a.pause() : a.play(); sync(); } return; }
+        if (playing) { stop(); return; }
+        if (s.canNext && !s.canNext() && s.reset) { s.reset(); sync(); await P.wait(300); }
+        playing = true; sync();
+        while (playing) {
+          if (!(await runStep(1))) break;
+          if (!playing) break;
+          await P.wait(700);
+        }
+        playing = false; sync();
+      }
+      function user(dir) {
+        if (playing) stop();
+        if (busy) { if (dir > 0) P.finish(); return Promise.resolve(false); }   // → khi đang chạy hoạt họa: tua tới cuối
+        return runStep(dir);
+      }
+      back.addEventListener('click', function () { user(-1); });
+      next.addEventListener('click', function () { user(1); });
+      play.addEventListener('click', toggle);
+
+      /* chỉ ô nhập CHỮ mới giữ phím; range/checkbox/radio/button không giữ */
+      function typing(t) {
+        if (!t) return false;
+        const n = (t.tagName || '').toLowerCase();
+        if (n === 'textarea' || t.isContentEditable === true) return true;
+        /* ô chọn (select) KHÔNG giữ phím: chọn kịch bản bằng chuột xong bấm → là chạy luôn */
+        if (n === 'input') return !/^(range|checkbox|radio|button|submit|reset)$/i.test(t.type || 'text');
+        return false;
+      }
+      document.addEventListener('keydown', function (e) {
+        if (e.ctrlKey || e.metaKey || e.altKey || typing(e.target)) return;
+        if (e.key === ' ' || e.code === 'Space') {
+          if (!st() && !ap()) return;
+          e.preventDefault(); e.stopPropagation();
+          if (!e.repeat) toggle();
+          return;
+        }
+        if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+        const dir = e.key === 'ArrowRight' ? 1 : -1;
+        if (e.shiftKey) { if (cfg.moveTab) { cfg.moveTab(dir); e.preventDefault(); } return; }
+        if (!st()) return;
+        e.preventDefault(); e.stopPropagation();
+        if (!e.repeat) user(dir);
+      }, true);
+      document.addEventListener('keyup', function (e) {        // Space nhả ra không được "bấm" nút đang focus
+        if ((e.key === ' ' || e.code === 'Space') && !typing(e.target) && (st() || ap())) e.preventDefault();
+      }, true);
+
+      setTimeout(sync, 0);                               // hiện đúng nút ngay khi trang dựng xong
+      return { sync: sync, stop: stop, toggle: toggle, playing: function () { return playing; }, el: bar };
+    }
+  };
+  global.VLabPlayer = P;
+})(window);
+
+/* ============================================================================
+   VLabShell — vỏ nhiều tab cho một file HTML
+   ----------------------------------------------------------------------------
+   Dán SAU core/base.js. Mỗi tab có ĐIỀU KHIỂN RIÊNG (không cần giống nhau).
+
+   Dùng:
+     VLabShell.create({
+       title: 'Tên trang',
+       tabs: [
+         { id:'a', title:'Tab A',
+           build(panel, tab) {              // panel = <div> của tab
+             const app = VLab.create({ mount: panel, compact: true, ... });
+             return { app,                  // (tuỳ chọn) để tự vẽ lại khi hiện tab
+                      stepper: { next(), back(), canNext(), canBack() } }; // (tuỳ chọn)
+           } },
+       ]
+     });
+
+   Quy tắc nút Back/Next:
+     - CHỈ hiện ở tab trả về `stepper`. Tab không có `stepper` thì không có nút,
+       và phím ←/→ không làm gì.
+     - Phím, nút Back/Chạy/Next, tốc độ, hoạt họa: xem core/player.js (chạy toàn trang, không cần focus).
+       next() có thể trả Promise (hoạt họa); back() làm ngay. Space = chạy tự động/dừng.
+     - Shift+←/→ = chuyển tab trước/sau.
+   ========================================================================== */
+(function (global) {
+  'use strict';
+  const CSS = `
+  .sh-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 16px;
+    border-bottom:1px solid var(--vl-line);background:var(--vl-panel);position:sticky;top:0;z-index:20;}
+  .sh-title{font-size:16px;font-weight:650;margin-right:8px;}
+  .sh-tabs{display:flex;gap:4px;flex-wrap:wrap;flex:1 1 auto;}
+  .sh-tab{font:inherit;font-size:13px;min-height:34px;padding:6px 12px;border-radius:7px;cursor:pointer;
+    border:1px solid var(--vl-line);background:var(--vl-bg);color:var(--vl-fg);}
+  .sh-tab[aria-selected=true]{background:var(--vl-accent);border-color:var(--vl-accent);color:#fff;}
+  .sh-tools{display:flex;gap:6px;align-items:center;}
+  .sh-tools select{width:auto;}
+  .sh-panel{display:none;padding:16px 16px 96px;width:100%;}
+  @media (max-width:700px){.sh-bar{position:static;padding:8px 10px;}.sh-panel{padding:10px 10px 96px;}.sh-title{width:100%;}}
+  .sh-panel.on{display:block;}
+  `;
+  function el(tag, cls, txt) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (txt != null) e.textContent = txt;
+    return e;
+  }
+  global.VLabShell = {
+    create: function (cfg) {
+      if (global.VLab && VLab.injectCSS) VLab.injectCSS();
+      if (!document.getElementById('sh-css')) {
+        const s = el('style'); s.id = 'sh-css'; s.textContent = CSS; document.head.appendChild(s);
+      }
+      document.title = cfg.title || document.title;
+      const bar = el('div', 'sh-bar');
+      bar.appendChild(el('span', 'sh-title', cfg.title || 'Mô phỏng'));
+      const tabsEl = el('div', 'sh-tabs'); tabsEl.setAttribute('role', 'tablist');
+      bar.appendChild(tabsEl);
+      const tools = el('div', 'sh-tools');
+      const pal = el('select'); pal.title = 'Bảng màu';
+      Object.keys(VLab.palettes).forEach(function (n) {
+        const o = el('option', null, n); o.value = n; pal.appendChild(o);
+      });
+      pal.addEventListener('change', function () { VLab.setPalette(pal.value); });
+      const th = el('button', 'vl-btn', 'Sáng/Tối');
+      th.addEventListener('click', function () {
+        VLab.setTheme(VLab.getTheme() === 'dark' ? 'light' : 'dark');
+      });
+      tools.appendChild(pal); tools.appendChild(th); bar.appendChild(tools);
+      document.body.appendChild(bar);
+
+      const tabs = [];
+      let cur = -1;
+      const cur_ = function () { return tabs[cur]; };
+      const shell = { tabs: tabs, current: cur_ };
+      const ctl = VLabPlayer.attach({
+        stepper: function () { const t = tabs[cur]; return t && t.api && t.api.stepper || null; },
+        app: function () { const t = tabs[cur]; return t && t.api && t.api.app || null; },
+        moveTab: function (d) { show(Math.max(0, Math.min(tabs.length - 1, cur + d))); }
+      });
+      function syncFab() { ctl.sync(); }
+      shell.sync = syncFab; global.VLabShell.sync = syncFab;
+
+      function show(i) {
+        if (i < 0 || i >= tabs.length) return;
+        cur = i;
+        tabs.forEach(function (t, k) {
+          t.btn.setAttribute('aria-selected', k === i ? 'true' : 'false');
+          t.panel.classList.toggle('on', k === i);
+        });
+        ctl.stop();
+        const t = tabs[i];
+        if (!t.built) {            // dựng lười: tab nào mở lần đầu mới dựng
+          t.built = true;
+          t.api = t.def.build(t.panel, t) || {};
+        }
+        if (t.api.app) t.api.app.redraw();
+        if (t.api.onShow) t.api.onShow();
+        try { localStorage.setItem('sh-tab:' + (cfg.title || ''), t.def.id); } catch (e) {}
+        syncFab();
+        global.dispatchEvent(new Event('resize'));
+      }
+      shell.show = show;
+
+      cfg.tabs.forEach(function (def, i) {
+        const btn = el('button', 'sh-tab', def.title); btn.setAttribute('role', 'tab');
+        btn.addEventListener('click', function () { show(i); });
+        tabsEl.appendChild(btn);
+        const panel = el('div', 'sh-panel'); document.body.appendChild(panel);
+        tabs.push({ def: def, btn: btn, panel: panel, built: false, api: null });
+      });
+
+      global.addEventListener('vl-redraw', function () {
+        const t = tabs[cur]; if (t && t.api && t.api.redraw) t.api.redraw();
+      });
+
+      let start = 0;
+      try {
+        const saved = localStorage.getItem('sh-tab:' + (cfg.title || ''));
+        const k = cfg.tabs.findIndex(function (d) { return d.id === saved; });
+        if (k >= 0) start = k;
+      } catch (e) {}
+      if (location.hash) {
+        const k = cfg.tabs.findIndex(function (d) { return '#' + d.id === location.hash; });
+        if (k >= 0) start = k;
+      }
+      show(start);
+      return shell;
+    }
+  };
+})(window);
+
+</script>
+<script>
+/* ============================================================================
+   SvgKit v2 — bộ vẽ sơ đồ UML/SVG, TỰ VỪA BỀ RỘNG khung chứa (laptop lẫn điện thoại)
+   ----------------------------------------------------------------------------
+   - Khung SVG luôn rộng đúng bằng khung chứa (1 đơn vị = 1px) nên chữ giữ cỡ thật,
+     KHÔNG bị co nhỏ khi xem trên điện thoại. Chiều cao tự theo nội dung (kit.fit()).
+   - kit.W là bề rộng thật; kit.narrow = true khi < 640px → hãy xếp sơ đồ theo chiều dọc.
+   - Mọi chữ có thể tự xuống dòng (maxW) → không bị cắt, không tràn ra ngoài hộp.
+   - Mỗi phần tử gắn vào một "bước": kit.at(i); kit.showUpTo(n) hiện dần cho Back/Next.
+   - Kéo để di chuyển, con lăn / chụm hai ngón để thu phóng; host.__reset() đặt lại.
+
+     const kit = SvgKit.create(host);
+     const a = kit.cls(kit.at(0), x, y, 'Sach', ['- ma: int'], ['+ muon(): void']);   // → {x,y,w,h}
+     kit.poly(kit.at(1), [[x1,y1],[x1,ym],[x2,ym],[x2,y2]], {open:true, label:'kế thừa'});
+     kit.arrow(kit.at(2), x1, y, x2, y, {label:'1: gửi', dashed:true});
+     kit.lifeline(kit.at(0), x, y, 'Người dùng', yEnd, {maxW: 90});
+     kit.fit();  kit.showUpTo(n);
+   ========================================================================== */
+(function (global) {
+  'use strict';
+  const NS = 'http://www.w3.org/2000/svg';
+  const FONT = 'system-ui,-apple-system,"Segoe UI",Roboto,sans-serif';
+  function s(tag, attrs, parent, text) {
+    const e = document.createElementNS(NS, tag);
+    for (const k in (attrs || {})) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  const INK = 'var(--vl-fg,#14181d)', MUTED = 'var(--vl-muted,#4b5560)', FILL = 'var(--vl-panel,#f6f7f9)', LINE = 'var(--vl-fg,#14181d)', BG = 'var(--vl-bg,#fff)';
+  let mctx = null;
+  function measure(t, size, bold) {
+    if (!mctx) { try { mctx = document.createElement('canvas').getContext('2d'); } catch (e) { mctx = false; } }
+    if (!mctx) return String(t).length * (size || 13) * 0.58;
+    mctx.font = (bold ? 700 : 400) + ' ' + (size || 13) + 'px ' + FONT;
+    return mctx.measureText(t).width;
+  }
+  /* xuống dòng theo từ; từ quá dài (tên hàm như user_repo.get_by_id) được bẻ ở dấu . _ / - : rồi mới tới bẻ theo ký tự */
+  function wrap(text, maxW, size, bold) {
+    const fits = function (t) { return measure(t, size, bold) <= maxW; };
+    const toks = String(text == null ? '' : text).match(/[^\s\/_.\-:,(){}\[\]]+[\/_.\-:,(){}\[\]]?|[\/_.\-:,(){}\[\]]|\s+/g) || [];
+    const lines = []; let cur = '';
+    toks.forEach(function (tok) {
+      if (/^\s+$/.test(tok)) { if (cur) cur += ' '; return; }
+      if (fits(cur + tok)) { cur += tok; return; }
+      if (cur.trim()) { lines.push(cur.trim()); cur = ''; }
+      while (!fits(tok) && tok.length > 1) {
+        let k = tok.length - 1; while (k > 1 && !fits(tok.slice(0, k))) k--;
+        lines.push(tok.slice(0, k)); tok = tok.slice(k);
+      }
+      cur = tok;
+    });
+    if (cur.trim()) lines.push(cur.trim());
+    return lines.length ? lines : [''];
+  }
+
+  global.SvgKit = {
+    n: 0, measure: measure, wrap: wrap,
+    create: function (host, o) {
+      o = o || {};
+      host.innerHTML = '';
+      const cs = getComputedStyle(host);
+      const W = Math.max(260, Math.floor((host.clientWidth || host.getBoundingClientRect().width || 900) - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0)));
+      let H = o.h || 200;
+      const home = { x: 0, y: 0, w: W, h: H };
+      let vb = Object.assign({}, home);
+      const svg = s('svg', { viewBox: [vb.x, vb.y, vb.w, vb.h].join(' '), width: '100%', height: H, 'data-svgkit': '1',
+        style: 'display:block;touch-action:pan-y;cursor:grab;font-family:' + FONT }, host);
+      const uid = 'sk' + (++global.SvgKit.n);
+      const defs = s('defs', null, svg);
+      const mk = s('marker', { id: uid + 'a', viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 8, markerHeight: 8, orient: 'auto' }, defs);
+      s('path', { d: 'M0 0L10 5L0 10z', fill: LINE }, mk);
+      const mko = s('marker', { id: uid + 'o', viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 9, markerHeight: 9, orient: 'auto' }, defs);
+      s('path', { d: 'M0 0L10 5L0 10z', fill: BG, stroke: LINE, 'stroke-width': 1.3 }, mko);
+      const root = s('g', null, svg);
+      const groups = [];
+      const apply = function () { svg.setAttribute('viewBox', [vb.x, vb.y, vb.w, vb.h].join(' ')); };
+
+      /* thu phóng + kéo (chuột) + chụm hai ngón (cảm ứng) */
+      svg.addEventListener('wheel', function (e) {
+        e.preventDefault();
+        const r = svg.getBoundingClientRect(), mx = vb.x + (e.clientX - r.left) / r.width * vb.w, my = vb.y + (e.clientY - r.top) / r.height * vb.h, k = e.deltaY < 0 ? 0.88 : 1 / 0.88;
+        vb = { x: mx - (mx - vb.x) * k, y: my - (my - vb.y) * k, w: vb.w * k, h: vb.h * k }; apply();
+      }, { passive: false });
+      const ptrs = new Map(); let last = null;
+      svg.addEventListener('pointerdown', function (e) { ptrs.set(e.pointerId, [e.clientX, e.clientY]); last = null; svg.style.cursor = 'grabbing'; });
+      const up = function (e) { ptrs.delete(e.pointerId); last = null; if (!ptrs.size) svg.style.cursor = 'grab'; };
+      global.addEventListener('pointerup', up); global.addEventListener('pointercancel', up);
+      global.addEventListener('pointermove', function (e) {
+        if (!ptrs.has(e.pointerId)) return;
+        const r = svg.getBoundingClientRect(); ptrs.set(e.pointerId, [e.clientX, e.clientY]);
+        const P = [...ptrs.values()];
+        if (P.length >= 2) {
+          const d = Math.hypot(P[0][0] - P[1][0], P[0][1] - P[1][1]), cx = (P[0][0] + P[1][0]) / 2, cy = (P[0][1] + P[1][1]) / 2;
+          if (last && last.d) {
+            const k = last.d / d, mx = vb.x + (cx - r.left) / r.width * vb.w, my = vb.y + (cy - r.top) / r.height * vb.h;
+            vb = { x: mx - (mx - vb.x) * k, y: my - (my - vb.y) * k, w: vb.w * k, h: vb.h * k };
+            vb.x -= (cx - last.cx) / r.width * vb.w; vb.y -= (cy - last.cy) / r.height * vb.h; apply();
+          }
+          last = { d: d, cx: cx, cy: cy };
+        } else if (last && !last.d) {
+          vb.x -= (e.clientX - last.x) / r.width * vb.w; vb.y -= (e.clientY - last.y) / r.height * vb.h; apply(); last = { x: e.clientX, y: e.clientY };
+        } else last = { x: e.clientX, y: e.clientY };
+      });
+      host.__reset = function () { vb = Object.assign({}, home); apply(); };
+
+      const kit = {
+        svg: svg, W: W, narrow: W < 640, measure: measure, wrap: wrap,
+        at: function (i) { if (!groups[i]) groups[i] = s('g', { 'data-step': i }, root); return groups[i]; },
+        /** Hiện các bước 0..n. ghost=true: các bước sau vẫn hiện MỜ (để thấy trước cả sơ đồ) thay vì ẩn hẳn. */
+        showUpTo: function (n, ghost) { groups.forEach(function (g, i) { if (!g) return; g.style.display = i <= n || ghost ? '' : 'none'; g.style.opacity = i <= n ? '' : ghost ? 0.16 : ''; }); },
+        count: function () { return groups.length; },
+        /** Hiện các bước 0..n-1 ngay, rồi VẼ DẦN bước n (mũi tên chạy từ đầu tới cuối, hộp/chữ hiện dần). Trả Promise. */
+        reveal: function (n, ghost) {
+          const P = global.VLabPlayer;
+          kit.showUpTo(n - 1, ghost);
+          const g = groups[n]; if (!g) return Promise.resolve();
+          g.style.display = ''; g.style.opacity = '';
+          if (!P || P.fast) return Promise.resolve();
+          const lines = [].slice.call(g.querySelectorAll('.sk-line')), rest = [].slice.call(g.children).filter(function (c) { return !c.classList.contains('sk-line') && !c.querySelector('.sk-line'); });
+          const saved = lines.map(function (l) { return [l.getAttribute('marker-end'), l.getAttribute('stroke-dasharray')]; });
+          const lens = lines.map(function (l) { try { return l.getTotalLength(); } catch (e) { return 0; } });
+          lines.forEach(function (l, i) { l.removeAttribute('marker-end'); l.setAttribute('stroke-dasharray', lens[i] + ' ' + lens[i]); l.setAttribute('stroke-dashoffset', lens[i]); });
+          g.querySelectorAll('text').forEach(function (t) { t.style.opacity = 0; });
+          rest.forEach(function (c) { c.style.opacity = 0; });
+          return P.tween(Math.max(450, Math.min(1000, 350 + (lens[0] || 100) * 1.2)), function (k) {
+            lines.forEach(function (l, i) { l.setAttribute('stroke-dashoffset', lens[i] * (1 - k)); });
+            rest.forEach(function (c) { c.style.opacity = k; });
+            g.querySelectorAll('text').forEach(function (t) { t.style.opacity = Math.max(0, (k - .35) / .65); });
+          }).then(function () {
+            lines.forEach(function (l, i) { if (saved[i][0]) l.setAttribute('marker-end', saved[i][0]); if (saved[i][1]) l.setAttribute('stroke-dasharray', saved[i][1]); else l.removeAttribute('stroke-dasharray'); l.removeAttribute('stroke-dashoffset'); });
+            rest.forEach(function (c) { c.style.opacity = ''; }); g.querySelectorAll('text').forEach(function (t) { t.style.opacity = ''; });
+          });
+        },
+        /** Đặt chiều cao khung đúng bằng nội dung đã vẽ (tất cả các bước) */
+        fit: function () {
+          const shown = groups.map(function (g) { return g && g.style.display; });
+          groups.forEach(function (g) { if (g) g.style.display = ''; });
+          const b = root.getBBox();
+          groups.forEach(function (g, i) { if (g) g.style.display = shown[i]; });
+          H = Math.ceil(b.y + b.height + 16); home.h = H; vb = Object.assign({}, home);
+          svg.setAttribute('height', H); apply();
+          return H;
+        },
+        /** Chữ nhiều dòng: tự xuống dòng theo maxW. Trả về số dòng. */
+        text: function (g, x, y, t, a) {
+          a = a || {};
+          const size = a.size || 13, lines = a.maxW ? wrap(t, a.maxW, size, a.bold) : [String(t)];
+          lines.forEach(function (ln, i) {
+            const el = s('text', { x: x, y: y + i * Math.round(size * 1.3), 'font-size': size, 'text-anchor': a.anchor || 'start',
+              'font-weight': a.bold ? 700 : 400, fill: a.fill || INK, class: 'sk-t' }, g, ln);
+            if (a.halo) { el.setAttribute('stroke', BG); el.setAttribute('stroke-width', 4); el.setAttribute('paint-order', 'stroke'); el.setAttribute('stroke-linejoin', 'round'); }
+          });
+          return lines.length;
+        },
+        box: function (g, x, y, w, h, a) {
+          a = a || {};
+          return s('rect', { x: x, y: y, width: w, height: h, rx: a.rx == null ? 6 : a.rx, fill: a.fill || FILL, stroke: a.stroke || LINE, 'stroke-width': 1.5, 'stroke-dasharray': a.dashed ? '5 4' : '' }, g);
+        },
+        /** Hộp lớp UML 3 ngăn. Chiều rộng tự theo chữ (tối đa W−24); dòng dài tự xuống dòng. */
+        cls: function (g, x, y, name, attrs, ops, a) {
+          a = a || {};
+          const row = 18, rows = function (list, w) { const out = []; list.forEach(function (t) { wrap(t, w - 16, 12).forEach(function (l, i) { out.push(i ? '   ' + l : l); }); }); return out; };
+          let w = a.w || Math.ceil(Math.max(measure(name, 14, true) + 24, ...attrs.concat(ops).map(function (t) { return measure(t, 12) + 20; }), 110));
+          w = Math.min(w, kit.W - 24);
+          const A = rows(attrs, w), Op = rows(ops, w), nameL = wrap(name, w - 16, 14, true);
+          const h1 = 12 + nameL.length * 18, h2 = Math.max(1, A.length) * row + 8, h3 = Math.max(1, Op.length) * row + 8;
+          kit.box(g, x, y, w, h1 + h2 + h3, { rx: 4 });
+          s('line', { x1: x, x2: x + w, y1: y + h1, y2: y + h1, stroke: LINE }, g); s('line', { x1: x, x2: x + w, y1: y + h1 + h2, y2: y + h1 + h2, stroke: LINE }, g);
+          nameL.forEach(function (l, i) { kit.text(g, x + w / 2, y + 20 + i * 18, l, { anchor: 'middle', bold: true, size: 14 }); });
+          A.forEach(function (t, i) { kit.text(g, x + 8, y + h1 + 17 + i * row, t, { size: 12 }); });
+          Op.forEach(function (t, i) { kit.text(g, x + 8, y + h1 + h2 + 17 + i * row, t, { size: 12 }); });
+          return { x: x, y: y, w: w, h: h1 + h2 + h3, cx: x + w / 2, cy: y + (h1 + h2 + h3) / 2, r: x + w, b: y + h1 + h2 + h3 };
+        },
+        actor: function (g, x, y, label, maxW) {
+          s('circle', { cx: x, cy: y, r: 9, fill: 'none', stroke: LINE, 'stroke-width': 1.5 }, g);
+          s('path', { d: 'M' + x + ' ' + (y + 9) + 'V' + (y + 34) + 'M' + (x - 14) + ' ' + (y + 17) + 'H' + (x + 14) + 'M' + x + ' ' + (y + 34) + 'L' + (x - 11) + ' ' + (y + 52) + 'M' + x + ' ' + (y + 34) + 'L' + (x + 11) + ' ' + (y + 52), fill: 'none', stroke: LINE, 'stroke-width': 1.5 }, g);
+          return kit.text(g, x, y + 70, label, { anchor: 'middle', size: 12, maxW: maxW || 110 });
+        },
+        /** Đối tượng sơ đồ tuần tự: hộp tên (tự xuống dòng theo maxW) + đường sống nét đứt */
+        lifeline: function (g, x, y, label, toY, a) {
+          a = a || {};
+          const maxW = a.maxW || 140, lines = wrap(label, maxW - 12, 12.5, true), w = Math.min(maxW, Math.max.apply(null, lines.map(function (t) { return measure(t, 12.5, true); })) + 14), h = 12 + lines.length * 16;
+          kit.box(g, x - w / 2, y, w, h, {});
+          lines.forEach(function (l, i) { kit.text(g, x, y + 17 + i * 16, l, { anchor: 'middle', bold: true, size: 12.5 }); });
+          s('line', { x1: x, x2: x, y1: y + h, y2: toY, stroke: MUTED, 'stroke-dasharray': '6 5', class: 'sk-life' }, g);
+          return h;
+        },
+        /** Mũi tên thẳng ngang/dọc. Nhãn tự xuống dòng cho vừa đoạn mũi tên, đặt phía trên (hoặc bên phải nếu dọc). Trả về số dòng nhãn. */
+        arrow: function (g, x1, y1, x2, y2, a) { return kit.poly(g, [[x1, y1], [x2, y2]], a); },
+        /** Đường gấp khúc có mũi tên ở cuối. open=true: đầu rỗng (kế thừa). */
+        poly: function (g, pts, a) {
+          a = a || {};
+          s('polyline', { points: pts.map(function (p) { return p[0] + ',' + p[1]; }).join(' '), fill: 'none', stroke: a.color || LINE, 'stroke-width': 1.6,
+            'stroke-dasharray': a.dashed ? '6 4' : '', 'marker-end': 'url(#' + uid + (a.open ? 'o' : 'a') + ')', class: 'sk-line' }, g);
+          if (!a.label) return 0;
+          let bi = 1, bl = 0;
+          for (let i = 1; i < pts.length; i++) { const l = Math.abs(pts[i][0] - pts[i - 1][0]) + Math.abs(pts[i][1] - pts[i - 1][1]); if (l > bl) { bl = l; bi = i; } }
+          const p = pts[bi - 1], q = pts[bi], hz = p[1] === q[1], size = 12;
+          const maxW = hz ? Math.max(60, Math.abs(q[0] - p[0]) - 12) : 130, lines = wrap(a.label, maxW, size);
+          const cx = (p[0] + q[0]) / 2, cy = (p[1] + q[1]) / 2;
+          lines.forEach(function (ln, i) {
+            if (hz) kit.text(g, cx, p[1] - 6 - (lines.length - 1 - i) * 15, ln, { anchor: 'middle', size: size, halo: true });
+            else kit.text(g, p[0] + 8, cy - ((lines.length - 1) * 15) / 2 + i * 15 + 4, ln, { anchor: 'start', size: size, halo: true });
+          });
+          return lines.length;
+        },
+        note: function (g, x, y, w, t) {
+          const lines = []; t.split('\n').forEach(function (p) { wrap(p, w - 16, 12).forEach(function (l) { lines.push(l); }); });
+          const h = 12 + lines.length * 16;
+          kit.box(g, x, y, w, h, { fill: 'var(--vl-hl,#fff3bf)', dashed: true });
+          lines.forEach(function (ln, i) { kit.text(g, x + 8, y + 18 + i * 16, ln, { size: 12, fill: 'var(--vl-hl-fg,#5c4600)' }); });
+          return h;
+        }
+      };
+      return kit;
+    }
+  };
+})(window);
+
+</script>
+<script>
+/* ===== helpers chung ===== */
+const NS_='http://www.w3.org/2000/svg';
+function raw(g,tag,attrs,text){const e=document.createElementNS(NS_,tag);for(const k in attrs||{})e.setAttribute(k,attrs[k]);if(text!=null)e.textContent=text;g.appendChild(e);return e;}
+const INK='var(--vl-fg,#14181d)',MUT='var(--vl-muted,#4b5560)',PAN='var(--vl-panel,#f6f7f9)',BGC='var(--vl-bg,#fff)',ACC='var(--vl-accent,#2563eb)';
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function h(tag,cls,html){const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e;}
+function table(head,rows){return '<table><thead><tr>'+head.map(function(x){return '<th>'+x+'</th>';}).join('')+'</tr></thead><tbody>'+rows.map(function(r){return '<tr>'+r.map(function(c){return '<td>'+c+'</td>';}).join('')+'</tr>';}).join('')+'</tbody></table>';}
+function chips(parent,items,cur,onPick){const bar=h('div','bar');const bs=items.map(function(it,i){const b=h('button','chip',esc(it));b.setAttribute('aria-pressed',i===cur?'true':'false');b.setAttribute('data-cl-variant','1');b.addEventListener('click',function(){bs.forEach(function(x,k){x.setAttribute('aria-pressed',k===i?'true':'false');});onPick(i);});bar.appendChild(b);return b;});parent.appendChild(bar);return bar;}
+function text(g,x,y,t,o){o=o||{};return raw(g,'text',{x:x,y:y,'font-size':o.size||12,'text-anchor':o.a||'middle','font-weight':o.b?700:400,fill:o.fill||INK,class:'sk-t'},t);}
+function wrapLines(t,w,size,b){return SvgKit.wrap(t,w,size||12,b);}
+function ml(g,x,y,t,w,o){o=o||{};const L=wrapLines(t,w,o.size||12,o.b);const lh=Math.round((o.size||12)*1.3);L.forEach(function(l,i){text(g,x,y+i*lh,l,o);});return L.length;}
+function halo(el){el.setAttribute('stroke',BGC);el.setAttribute('stroke-width',4);el.setAttribute('paint-order','stroke');el.setAttribute('stroke-linejoin','round');return el;}
+
+/* Sơ đồ tab: dựng host co giãn; nếu hẹp hơn minW thì vẽ ở bề rộng minW rồi thu nhỏ (vẫn kéo/phóng được) */
+function makeDiagramTab(opts){
+  /* opts: {title, intro, why, examples:[names], getData(i)->{draw(kit),notes[],tables(html)}, minW} */
+  return function(panel){
+    panel.classList.add('lb');
+    panel.innerHTML='';
+    panel.appendChild(h('h2',null,opts.title));
+    if(opts.why)panel.appendChild(h('div','why',opts.why));
+    let ex=0,sub=0,kit=null,i=0,last=0,lastW=0;
+    const barHost=h('div');panel.appendChild(barHost);
+    const subHost=h('div');panel.appendChild(subHost);
+    const wrap=h('div','dgwrap');const inner=h('div','dginner');wrap.appendChild(inner);panel.appendChild(wrap);
+    const st=h('div','st');panel.appendChild(st);
+    const btns=h('div','bar');const all=h('button','btn','Hiện tất cả');const home=h('button','btn','Đặt lại khung nhìn');btns.appendChild(all);btns.appendChild(home);panel.appendChild(btns);
+    const below=h('div');panel.appendChild(below);
+    function cur(){return opts.getData(ex,sub);}
+    function renderBelow(){const d=cur();below.innerHTML=d.below||'';if(d.afterBelow)d.afterBelow(below);}
+    function note(){const d=cur();st.innerHTML='<b>Bước '+(i+1)+'/'+(last+1)+':</b> '+(d.notes[i]||'');}
+    function render(){
+      const d=cur();const avail=Math.max(260,wrap.clientWidth||900);const DW=Math.max(avail,opts.minW||720);const sc=avail/DW;
+      inner.style.width=DW+'px';inner.style.transform=sc<1?'scale('+sc+')':'';
+      kit=SvgKit.create(inner);d.draw(kit);const H=kit.fit();last=kit.count()-1;i=Math.min(i,last);lastW=avail;
+      wrap.style.height=Math.ceil(H*sc)+'px';
+      kit.showUpTo(i);note();if(window.VLabShell&&VLabShell.sync)VLabShell.sync();
+    }
+    function show(){kit.showUpTo(i);note();if(window.VLabShell&&VLabShell.sync)VLabShell.sync();}
+    function rebuildSub(){
+      subHost.innerHTML='';const d0=opts.examples[ex];
+      if(d0.subs&&d0.subs.length>1){chips(subHost,d0.subs,sub,function(k){sub=k;i=0;render();renderBelow();});}
+    }
+    chips(barHost,opts.examples.map(function(e){return e.name;}),0,function(k){ex=k;sub=0;i=0;rebuildSub();render();renderBelow();});
+    all.addEventListener('click',function(){i=last;show();});
+    home.addEventListener('click',function(){inner.__reset&&inner.__reset();});
+    rebuildSub();render();renderBelow();
+    if(window.ResizeObserver){let tm=null;new ResizeObserver(function(){if(Math.abs(wrap.clientWidth-lastW)<6)return;clearTimeout(tm);tm=setTimeout(render,120);}).observe(wrap);}
+    return {redraw:function(){},stepper:{
+      next:async function(){if(i>=last)return;i++;st.innerHTML='<b>Bước '+(i+1)+'/'+(last+1)+':</b> '+(cur().notes[i]||'');await kit.reveal(i);show();},
+      back:function(){if(i>0){i--;show();}},reset:function(){i=0;show();},
+      canNext:function(){return i<last;},canBack:function(){return i>0;}}};
+  };
+}
 </script><script>
-/* ============ ENGINE: bộ vẽ SVG cho 9 loại sơ đồ ============ */
 const ENG = (function () {
   'use strict';
   const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -1589,7 +2289,7 @@ const ENG = (function () {
 
   /* ---------- glyph nhỏ cho phần Ký hiệu ---------- */
   const G = {
-    svg: (inner, w) => `<svg class="gsvg" viewBox="0 0 ${w || 84} 44" role="img" aria-hidden="true">${inner}</svg>`,
+    svg: (inner, w) => `<svg class="gsvg" viewBox="-20 -4 ${(w || 84) + 40} 52" role="img" aria-hidden="true">${inner}</svg>`,
     ln: (a, b, c, e, dash) => `<path class="ln${dash ? ' dash' : ''}" d="M${a},${b} L${c},${e}"/>`,
     t: (x, y, s, o) => txt(x, y, s, Object.assign({ cls: 'sm', mid: true }, o || {})),
     deco, actor: (x, y) => `<g class="stk"><circle class="sh" cx="${x}" cy="${y - 13}" r="5.5"/><path class="ln" d="M${x},${y - 7.5} V${y + 6} M${x - 9},${y - 3} H${x + 9} M${x},${y + 6} L${x - 8},${y + 17} M${x},${y + 6} L${x + 8},${y + 17}"/></g>`
@@ -2266,18 +2966,18 @@ const EX_ATM = {
   }
 };
 const EX_BUS = {
-  id: 'bus', name: 'Đặt vé xe khách', blurb: 'Hành khách tìm chuyến, chọn ghế, thanh toán online và nhận vé điện tử (cùng chủ đề đồ án nhóm).',
+  id: 'bus', name: 'Đặt vé xe khách', blurb: 'Khách tìm chuyến, chọn ghế, thanh toán giả lập, nhận vé điện tử. Nhân viên bán vé tại quầy. Chỉ hủy vé mới bắt buộc đăng nhập (đúng quyết định đồ án nhóm).',
   uc: NORM.uc({
-    h: 430, boundary: { x: 150, y: 16, w: 600, h: 400, title: 'Hệ thống Đặt vé xe khách' },
-    actors: [{ id: 'hk', x: 70, y: 190, label: 'Hành khách' }, { id: 'nv', x: 830, y: 80, label: 'Nhân viên\nnhà xe' }, { id: 'cg', x: 830, y: 300, label: 'Cổng\nthanh toán' }],
+    h: 450, boundary: { x: 150, y: 16, w: 600, h: 420, title: 'Hệ thống Đặt vé xe khách (phạm vi: luồng mua vé)' },
+    actors: [{ id: 'kh', x: 70, y: 200, label: 'Khách hàng' }, { id: 'nv', x: 830, y: 70, label: 'Nhân viên\nbán vé' }, { id: 'cg', x: 830, y: 190, label: 'Cổng\nthanh toán\n(giả lập)' }, { id: 'ad', x: 830, y: 330, label: 'Quản trị\nviên' }],
     ucs: [
-      { id: 'tim', x: 260, y: 80, label: 'Tìm chuyến xe' }, { id: 'dat', x: 260, y: 190, label: 'Đặt vé' }, { id: 'huy', x: 260, y: 310, label: 'Hủy vé' },
-      { id: 'ghe', x: 450, y: 110, label: 'Chọn ghế' }, { id: 'mgg', x: 450, y: 290, label: 'Áp mã\ngiảm giá' },
-      { id: 'tt', x: 635, y: 200, label: 'Thanh toán\nonline' }, { id: 'qlc', x: 635, y: 80, label: 'Quản lý\nchuyến xe' }
+      { id: 'tim', x: 260, y: 80, label: 'Tìm chuyến xe' }, { id: 'dat', x: 260, y: 190, label: 'Đặt vé' }, { id: 'huy', x: 260, y: 340, label: 'Hủy vé' },
+      { id: 'tt', x: 450, y: 125, label: 'Thanh toán' }, { id: 'dn', x: 450, y: 265, label: 'Đăng nhập' },
+      { id: 'ban', x: 635, y: 70, label: 'Bán vé\ntại quầy' }, { id: 'tk', x: 635, y: 335, label: 'Thống kê\nbáo cáo' }
     ],
     edges: [
-      { f: 'hk', t: 'tim' }, { f: 'hk', t: 'dat' }, { f: 'hk', t: 'huy' }, { f: 'nv', t: 'qlc' }, { f: 'cg', t: 'tt' },
-      { f: 'dat', t: 'ghe', kind: 'include' }, { f: 'dat', t: 'tt', kind: 'include', lp: [0, 10] }, { f: 'mgg', t: 'dat', kind: 'extend' }
+      { f: 'kh', t: 'tim' }, { f: 'kh', t: 'dat' }, { f: 'kh', t: 'huy' }, { f: 'nv', t: 'ban' }, { f: 'cg', t: 'tt' }, { f: 'ad', t: 'tk' },
+      { f: 'dat', t: 'tt', kind: 'include' }, { f: 'ban', t: 'tt', kind: 'include' }, { f: 'huy', t: 'dn', kind: 'include' }, { f: 'dn', t: 'dat', kind: 'extend' }
     ]
   }),
   act: NORM.act({
@@ -2448,12 +3148,12 @@ const EX_BUS = {
     uc: {
       title: 'Đặc tả use case: Đặt vé',
       rows: [
-        ['Tác nhân', 'Hành khách (chính); Cổng thanh toán (hỗ trợ)'],
-        ['Mô tả', 'Hành khách chọn chuyến, chọn ghế và thanh toán để nhận vé điện tử.'],
-        ['Tiền điều kiện', 'Hành khách đã chọn được một chuyến còn ghế.'],
-        ['Luồng chính', '1. Hành khách chọn chuyến và bấm Đặt vé.\n2. Hệ thống thực hiện use case Chọn ghế.\n3. Hệ thống giữ ghế trong 10 phút.\n4. Hệ thống thực hiện use case Thanh toán online.\n5. Hệ thống tạo vé và gửi mã vé qua SMS/Email.'],
-        ['Luồng thay thế', '3a. Ghế vừa bị người khác đặt: quay lại bước chọn ghế.\n4a. Thanh toán thất bại hoặc quá 10 phút: nhả ghế, kết thúc.\nMở rộng: Áp mã giảm giá trước bước thanh toán.'],
-        ['Hậu điều kiện', 'Có một vé hợp lệ gắn với chuyến và ghế đã chọn.']
+        ['Tác nhân', 'Khách hàng (chính, có thể chưa đăng nhập); Cổng thanh toán (hỗ trợ, giả lập bằng mock service)'],
+        ['Mô tả', 'Khách chọn chuyến, chọn ghế (là một bước bên trong use case này, không phải use case riêng), thanh toán và nhận vé điện tử.'],
+        ['Tiền điều kiện', 'Có ít nhất một chuyến còn ghế trống. Không bắt buộc đăng nhập.'],
+        ['Luồng chính', '1. Khách chọn một chuyến từ kết quả Tìm chuyến xe.\n2. Hệ thống hiển thị sơ đồ ghế của chuyến.\n3. Khách chọn một hoặc nhiều ghế trống; hệ thống khóa tạm các ghế đó trong 10 phút.\n4. Khách nhập họ tên và số điện thoại hành khách.\n5. Hệ thống thực hiện use case Thanh toán (include).\n6. Hệ thống tạo vé điện tử, chuyển ghế sang "đã bán" và hiển thị mã vé.'],
+        ['Luồng thay thế', '3a. Ghế vừa bị người khác khóa/mua: báo lỗi, quay lại bước 2.\n3b. Khách chọn đăng nhập trước khi đặt (use case Đăng nhập, extend): thông tin hành khách được điền sẵn.\n5a. Thanh toán thất bại hoặc quá 10 phút: nhả ghế, báo lỗi, kết thúc.'],
+        ['Hậu điều kiện', 'Có một vé hợp lệ gắn với chuyến và ghế đã chọn; ghế ở trạng thái "đã bán".']
       ]
     },
     cls: { head: ['Lớp', 'Vai trò trong hệ thống'], rows: [
@@ -2470,329 +3170,865 @@ const EX_BUS = {
     ] }
   }
 };
-</script><script>
-(function () {
-  'use strict';
-  document.documentElement.setAttribute('data-vl-theme', 'light'); // mặc định sáng
-  const NS = 'http://www.w3.org/2000/svg';
-  const EXS = { lib: EX_LIB, atm: EX_ATM, bus: EX_BUS };
   const SIMPL = {
     seq: 'Lab vẽ 5 toán tử alt, opt, loop, par, break; chưa vẽ neg, critical, ref. Số vòng lặp và nhánh được chọn là cố định theo từng kịch bản chứ không tính guard thật. Trong par, các thông điệp bắn cùng lúc khi chạy luồng nhưng trên hình xếp nối nhau theo chiều dọc.',
     act: 'Lab gom thông báo lỗi vào một hành động và dùng hai điểm kết thúc cho dễ đọc; bạn có thể tách nhỏ hơn.',
     st: 'Lab chỉ vẽ các sự kiện chính, chưa vẽ đầy đủ hành vi do / exit và lịch sử trạng thái.'
+};
+/* ===== Tab sơ đồ UML dùng engine ENG (9 loại) + stepper của VLabShell ===== */
+const EXS = { lib: EX_LIB, atm: EX_ATM, bus: EX_BUS };
+const GST = { ex: 'bus' };
+const NSV = 'http://www.w3.org/2000/svg';
+const nl = s => esc(s).replace(/\n/g, '<br>');
+function msgTable(data, kind) {
+  const lab = {}; (data.parts || data.objs).forEach(p => lab[p.id] = p.label.replace(/\n/g, ' '));
+  const rows = data.msgs.map((m, i) => {
+    const k = m.kind || 'sync';
+    const t = { ret: 'trả về', create: 'tạo đối tượng', self: 'gọi chính nó', sync: 'đồng bộ', async: 'bất đồng bộ', destroy: 'hủy' }[k];
+    return '<tr><td class="mono">' + (kind === 'col' ? esc(m.label.split(':')[0]) : i + 1) + '</td><td>' + esc(lab[m.f]) + '</td><td>' + esc(lab[m.t]) + '</td><td class="mono">' + esc(kind === 'col' ? m.label.replace(/^[\d.]+:\s*/, '') : m.label) + '</td><td>' + t + '</td></tr>';
+  }).join('');
+  return '<table><thead><tr><th>#</th><th>Từ</th><th>Đến</th><th>Thông điệp</th><th>Loại</th></tr></thead><tbody>' + rows + '</tbody></table>';
+}
+function seqTables(r, data) {
+  const lab = {}; data.parts.forEach(p => { lab[p.id] = p.label.replace(/\n/g, ' '); });
+  const T = (head, rows, cls) => '<div class="tbl-wrap' + (cls ? ' ' + cls : '') + '"><table><thead><tr>' + head.map(h => '<th>' + h + '</th>').join('') + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+  const fr = r.frags.map(f => '<tr><td class="k">' + esc(f.op) + '</td><td>' + esc(f.title || '') + '</td><td>' + (f.parent ? esc(r.lbl(f.parent, f.parentOp)) : 'ngoài cùng') + '</td>' +
+    '<td>' + f.ops.map((o, j) => esc((f.ops.length > 1 ? r.sym(j) + ' ' : '') + (o.g || '(luồng song song ' + (j + 1) + ')'))).join('<br>') + '</td>' +
+    '<td class="mono">#' + (f.a + 1) + ' → #' + (f.b + 1) + '</td><td>' + esc(f.note || '') + '</td></tr>').join('');
+  const kn = { ret: 'trả về', create: 'tạo đối tượng', self: 'gọi chính nó', sync: 'đồng bộ', async: 'bất đồng bộ', destroy: 'hủy' };
+  const ms = data.msgs.map((m, i) => '<tr><td class="mono">' + (i + 1) + '</td><td>' + esc(lab[m.f]) + '</td><td>' + esc(lab[m.t]) + '</td><td class="mono">' + esc(m.label) + '</td><td>' + kn[m.kind || 'sync'] + '</td><td class="mono">' + esc(r.fragPath(i) || '—') + '</td></tr>').join('');
+  const cell = (f, c) => {
+    if (!c.reached) return '—';
+    if (f.op === 'alt') { const t = c.n.map((k, j) => k ? r.sym(j) : '').join(''); return t ? 'nhánh ' + t : '✗'; }
+    if (f.op === 'loop') return '×' + c.n[0] + ' vòng';
+    if (f.op === 'par') return c.n.every(k => k) ? '✓ cả 2 luồng' : '✗';
+    return c.n[0] ? '✓ chạy' : '✗ bỏ qua';
   };
-  const ST = { ex: 'lib', tab: 'uc', mode: 'draw', step: 1, scen: 0, idx: 0 };
-  let cur = null, svg = null, fx = null, ready = false, token = 0;
-  let vb = null, home = null;
-  const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const esc = ENG.esc;
-  const $ = s => document.querySelector(s);
-  const nl = s => esc(s).replace(/\n/g, '<br>');
-
-  /* ---------- khung trang ---------- */
-  document.body.insertAdjacentHTML('afterbegin',
-    '<div class="wrap">' +
-    '<header class="top"><h1>Lab sơ đồ <span>OOAD</span></h1>' +
-    '<p>Chín sơ đồ UML theo thứ tự làm việc thực tế. Mỗi sơ đồ có khái niệm, ký hiệu, cách vẽ từng bước và một ví dụ để bạn tự chạy.</p></header>' +
-    '<div class="exs" id="exs"></div>' +
-    '<nav class="tabs" id="tabs" role="tablist" aria-label="Các sơ đồ"></nav>' +
-    '<section id="topSec"></section><div id="labhost"></div><section id="symSec"></section><section id="botSec"></section></div>');
-
-  /* ---------- VLab ---------- */
-  const app = VLab.create({
-    title: 'Lab sơ đồ', why: ' ', stage: 'none', height: 520,
-    params: [{ id: 'buoc', label: 'Bước vẽ (drawing step)', min: 1, max: 6, step: 1, value: 6 }],
-    player: true,
-    code: Array.from({ length: 18 }, () => ' '),
-    onReset: function () { if (ready) resetExternal(); },
-    onParam: function (id, v) { if (ready && id === 'buoc') scrub(v); },
-    onStep: function () { return ready ? stepOnce() : false; },
-    onDraw: function (c, a) { document.documentElement.style.setProperty('--signal', a.color(3)); }
-  });
-  const root = app.stageEl.closest('.vl-app');
-  $('#labhost').appendChild(root);
-  const host = app.host;
-  const q = s => root.querySelector(s);
-  const titleEl = q('.vl-title'), whyEl = q('.vl-why'), speedIn = q('.vl-speed'), speedLb = q('.vl-spd');
-  const cards = Array.from(root.querySelectorAll('.vl-card'));
-  const cardBy = t => cards.find(c => c.querySelector('h3').textContent === t);
-  const pcard = cardBy('Tham số'), slider = pcard.querySelector('input'), sliderVal = pcard.querySelector('.vl-val');
-  const ccard = cardBy('Thuật toán'), codeDivs = Array.from(ccard.querySelectorAll('.vl-code > div'));
-  ccard.querySelector('h3').textContent = 'Các bước';
-  speedIn.value = 1; speedLb.textContent = '1';
-
-  /* thanh chế độ + kịch bản, đặt phía trên sân khấu */
-  const tb = document.createElement('div');
-  tb.className = 'tb';
-  tb.innerHTML = '<div class="seg f" id="modeSeg"><button data-m="draw">Vẽ từng bước</button><button data-m="flow">Chạy luồng</button></div><div class="chips" id="chips"></div>';
-  app.stageEl.insertBefore(tb, host);
-  const modeSeg = tb.querySelector('#modeSeg'), chips = tb.querySelector('#chips');
-  host.classList.add('svghost');
-
-  function speedMs() { return 1000 / parseFloat(speedIn.value || 1); }
-  function setSlider(v) { slider.value = v; sliderVal.textContent = String(v); }
-  function setLines(arr) {
-    codeDivs.forEach((d, i) => { d.style.display = i < arr.length ? '' : 'none'; d.textContent = arr[i] || ''; d.classList.remove('on'); });
-  }
-
-  /* ---------- chọn ví dụ + tab ---------- */
-  function buildPickers() {
-    $('#exs').innerHTML = Object.keys(EXS).map((k, i) =>
-      `<button class="ex" data-ex="${k}" aria-pressed="${k === ST.ex}"><i>Ví dụ ${i + 1}</i><b>${esc(EXS[k].name)}</b><span>${esc(EXS[k].blurb)}</span></button>`).join('');
-    $('#tabs').innerHTML = DIAGRAMS.map((d, i) =>
-      `<button class="tab ${d.tag}" role="tab" data-tab="${d.id}" aria-selected="${d.id === ST.tab}"><span class="n">${i + 1}</span><span class="nm">${d.name}</span><span class="dot" title="${d.tag === 's' ? 'Sơ đồ tĩnh' : 'Sơ đồ động'}"></span></button>`).join('');
-  }
-  $('#exs').addEventListener('click', e => { const b = e.target.closest('.ex'); if (!b) return; ST.ex = b.dataset.ex; sync(); render(); });
-  $('#tabs').addEventListener('click', e => { const b = e.target.closest('.tab'); if (!b) return; ST.tab = b.dataset.tab; ST.mode = 'draw'; ST.scen = 0; sync(); render(); });
-  function sync() {
-    document.querySelectorAll('.ex').forEach(b => b.setAttribute('aria-pressed', b.dataset.ex === ST.ex));
-    document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === ST.tab));
-  }
-
-  /* ---------- phần chữ quanh sân khấu ---------- */
-  function msgTable(data, kind) {
-    const lab = {}; (data.parts || data.objs).forEach(p => lab[p.id] = p.label.replace(/\n/g, ' '));
-    const rows = data.msgs.map((m, i) => {
-      const k = m.kind || 'sync';
-      const t = { ret: 'trả về', create: 'tạo đối tượng', self: 'gọi chính nó', sync: 'đồng bộ', async: 'bất đồng bộ', destroy: 'hủy' }[k];
-      return `<tr><td class="mono">${kind === 'col' ? esc(m.label.split(':')[0]) : i + 1}</td><td>${esc(lab[m.f])}</td><td>${esc(lab[m.t])}</td><td class="mono">${esc(kind === 'col' ? m.label.replace(/^[\d.]+:\s*/, '') : m.label)}</td><td>${kind === 'col' ? '' : t}</td></tr>`;
-    }).join('');
-    return `<table><thead><tr><th>#</th><th>Từ</th><th>Đến</th><th>Thông điệp</th><th>Loại</th></tr></thead><tbody>${rows}</tbody></table>`;
-  }
-  /* bảng mô tả riêng cho Sequence: combined fragment, thông điệp, độ phủ của các kịch bản */
-  function seqTables(r, data) {
-    const lab = {}; data.parts.forEach(p => { lab[p.id] = p.label.replace(/\n/g, ' '); });
-    const T = (head, rows, cls) => `<div class="tbl-wrap${cls ? ' ' + cls : ''}"><table><thead><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
-    const fr = r.frags.map(f => `<tr><td class="k">${esc(f.op)}</td><td>${esc(f.title || '')}</td><td>${f.parent ? esc(r.lbl(f.parent, f.parentOp)) : 'ngoài cùng'}</td>` +
-      `<td>${f.ops.map((o, j) => esc((f.ops.length > 1 ? r.sym(j) + ' ' : '') + (o.g || '(luồng song song ' + (j + 1) + ')'))).join('<br>')}</td>` +
-      `<td class="mono">#${f.a + 1} → #${f.b + 1}</td><td>${esc(f.note || '')}</td></tr>`).join('');
-    const kn = { ret: 'trả về', create: 'tạo đối tượng', self: 'gọi chính nó', sync: 'đồng bộ', async: 'bất đồng bộ', destroy: 'hủy' };
-    const ms = data.msgs.map((m, i) => `<tr><td class="mono">${i + 1}</td><td>${esc(lab[m.f])}</td><td>${esc(lab[m.t])}</td><td class="mono">${esc(m.label)}</td><td>${kn[m.kind || 'sync']}</td><td class="mono">${esc(r.fragPath(i) || '—')}</td></tr>`).join('');
-    const cell = (f, c) => {
-      if (!c.reached) return '—';
-      if (f.op === 'alt') { const t = c.n.map((k, j) => k ? r.sym(j) : '').join(''); return t ? 'nhánh ' + t : '✗'; }
-      if (f.op === 'loop') return '×' + c.n[0] + ' vòng';
-      if (f.op === 'par') return c.n.every(k => k) ? '✓ cả 2 luồng' : '✗';
-      return c.n[0] ? '✓ chạy' : '✗ bỏ qua';
-    };
-    const seen = r.frags.map(() => new Set());
-    const cv = r.scen.map(sc => {
-      const c = r.cover(sc.steps.reduce((a, g) => a.concat(g), []));
-      return `<tr><td class="k">${esc(sc.n)}</td><td class="mono">${sc.steps.length}</td>${r.frags.map((f, i) => { const t = cell(f, c[f.id]); if (t !== '—') seen[i].add(t); return `<td>${esc(t)}</td>`; }).join('')}</tr>`;
-    }).join('');
-    const sum = `<tr><td class="k">Kết cục đã thử</td><td></td>${seen.map(s => `<td>${esc(Array.from(s).sort().join(' · '))}</td>`).join('')}</tr>`;
-    return `<h2>Bảng combined fragment</h2>${T(['Toán tử', 'Tên', 'Nằm trong', 'Điều kiện / nhánh', 'Bao thông điệp', 'Ý nghĩa'], fr, 'tcov')}` +
-      `<h2 style="margin-top:20px">Danh sách thông điệp</h2>${T(['#', 'Từ', 'Đến', 'Thông điệp', 'Loại', 'Nằm trong fragment'], ms, 'tcov')}` +
-      `<h2 style="margin-top:20px">Độ phủ của các kịch bản chạy luồng</h2>${T(['Kịch bản', 'Số bước'].concat(r.frags.map(f => esc(f.op) + '<br><span class="src">' + esc(f.title || '') + '</span>')), cv + sum, 'tcov')}` +
-      `<p class="src" style="margin:8px 0 0">— : khung cha không chạy nên chưa tới khung này · ✗ : tới nơi nhưng bị bỏ qua · ① ②: nhánh được chọn · ×n: số vòng lặp</p>`;
-  }
-  function renderText() {
-    const d = cur.d;
-    const idx = DIAGRAMS.indexOf(d) + 1;
-    const sym = d.symbols.map(s => `<div class="sym"><div class="g">${s.g}</div><div><b>${esc(s.n)}</b><p>${esc(s.d)}</p></div></div>`).join('');
-    $('#topSec').innerHTML =
-      `<div class="card"><div class="head"><h2 class="big">${idx}. ${d.name}</h2><span class="chip ${d.tag}">${d.tag === 's' ? 'Sơ đồ tĩnh' : 'Sơ đồ động'}</span><span class="src">${esc(d.src)}</span></div>` +
-      `<p class="lead">${esc(d.lead)}</p>` +
-      `<div class="cols"><div class="mini"><h3>${d.tag === 's' ? 'Tĩnh nghĩa là' : 'Động nghĩa là'}</h3><p>${d.tag === 's' ? 'Mô tả cấu trúc tại một thời điểm, không có trục thời gian.' : 'Mô tả hành vi diễn ra theo thời gian, có trước có sau.'}</p></div>` +
-      `<div class="mini"><h3>Dùng lúc nào</h3><p>${esc(d.when)}</p></div><div class="mini"><h3>Dễ nhầm</h3><p>${esc(d.pitfall)}</p></div></div></div>`;
-    $('#symSec').innerHTML = `<div class="card"><h2>Ký hiệu <small>định nghĩa và cách vẽ</small></h2><div class="syms">${sym}</div></div>`;
-    const sp = cur.ex.spec; let bot = '';
-    if (ST.tab === 'uc') bot = `<h2>${esc(sp.uc.title)}</h2><div class="tbl-wrap"><table><tbody>${sp.uc.rows.map(r => `<tr><td class="k">${esc(r[0])}</td><td>${nl(r[1])}</td></tr>`).join('')}</tbody></table></div>`;
-    else if (ST.tab === 'cls' || ST.tab === 'st') {
-      const t = sp[ST.tab];
-      bot = `<h2>${ST.tab === 'cls' ? 'Danh sách lớp chính' : 'Bảng chuyển trạng thái'}</h2><div class="tbl-wrap"><table><thead><tr>${t.head.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${t.rows.map(r => `<tr>${r.map((c, i) => `<td${i === 0 ? ' class="k"' : ''}>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
-    } else if (ST.tab === 'seq') bot = seqTables(cur.r, cur.data);
-    else if (ST.tab === 'col') bot = `<h2>Danh sách thông điệp</h2><div class="tbl-wrap">${msgTable(cur.data, ST.tab)}</div>`;
-    $('#botSec').innerHTML = bot ? `<div class="card">${bot}</div>` : '';
-  }
-
-  /* ---------- vẽ sơ đồ ---------- */
-  function render() {
-    stopAll();
-    const d = DIAGRAMS.find(x => x.id === ST.tab), ex = EXS[ST.ex], data = ex[ST.tab];
-    const r = ENG.R[ST.tab](data);
-    let edges = r.edges, scen = r.scen;
-    if (ST.tab === 'act') { edges = {}; data.edges.forEach(e => edges[e.id] = { from: e.f, to: e.t }); scen = data.scen; }
-    cur = { d, ex, data, r, edges, scen, N: d.steps.length, dyn: d.tag === 'd' && !!scen };
-    host.innerHTML = `<svg xmlns="${NS}" viewBox="0 0 ${r.w} ${r.h}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Sơ đồ ${d.name} của ví dụ ${esc(ex.name)}">${r.svg}<g class="fx"></g></svg>`;
-    svg = host.querySelector('svg'); fx = svg.querySelector('.fx');
-    home = { x: 0, y: 0, w: r.w, h: r.h }; vb = Object.assign({}, home);
-    fitHost();
-    titleEl.textContent = `${d.name} · ${ex.name}`;
-    whyEl.innerHTML = `<p><b>Vì sao cần sơ đồ này?</b> ${esc(d.why)}</p>` + (SIMPL[ST.tab] ? `<p class="vl-hint">Đơn giản hóa so với thực tế: ${esc(SIMPL[ST.tab])}</p>` : '');
-    slider.min = 1; slider.max = cur.N;
-    modeSeg.style.display = tb.style.display = cur.dyn ? '' : 'none';
-    ST.scen = 0; ST.idx = 0; ST.step = cur.N;
-    renderText();
-    setMode(cur.dyn ? ST.mode : 'draw', true);
-    ready = true;
-  }
-  function fitHost() {
-    if (!svg) return;
-    const w = host.clientWidth || 700;
-    host.style.height = Math.round(Math.min(cur.r.maxH || 860, Math.max(300, w * cur.r.h / cur.r.w))) + 'px';
-  }
-  window.addEventListener('resize', fitHost);
-
-  function stepText(n) { const s = cur.d.steps[n - 1]; return `<b>Bước ${n}/${cur.N} · ${esc(s.t)}</b><br>${esc(s.d)}`; }
-  function summary() {
-    const nd = svg.querySelectorAll('.nd').length, ed = svg.querySelectorAll('.ed').length;
-    return `<b>Sơ đồ ${cur.d.name} đã vẽ xong</b> trong ${cur.N} bước: ${nd} phần tử chính và ${ed} đường nối hoặc thông điệp.`;
-  }
-  function applyStep(n) {
-    ST.step = n;
-    const part = n < cur.N;
-    svg.querySelectorAll('.el').forEach(el => {
-      const s = +el.dataset.s;
-      el.classList.toggle('hid', part && s > n);
-      el.classList.toggle('new', part && s === n);
+  const seen = r.frags.map(() => new Set());
+  const cv = r.scen.map(sc => {
+    const c = r.cover(sc.steps.reduce((a, g) => a.concat(g), []));
+    return '<tr><td class="k">' + esc(sc.n) + '</td><td class="mono">' + sc.steps.length + '</td>' + r.frags.map((f, i) => { const t = cell(f, c[f.id]); if (t !== '—') seen[i].add(t); return '<td>' + esc(t) + '</td>'; }).join('') + '</tr>';
+  }).join('');
+  const sum = '<tr><td class="k">Kết cục đã thử</td><td></td>' + seen.map(s => '<td>' + esc(Array.from(s).sort().join(' · ')) + '</td>').join('') + '</tr>';
+  return '<h2>Bảng combined fragment</h2>' + T(['Toán tử', 'Tên', 'Nằm trong', 'Điều kiện / nhánh', 'Bao thông điệp', 'Ý nghĩa'], fr, 'tcov') +
+    '<h2 style="margin-top:20px">Danh sách thông điệp</h2>' + T(['#', 'Từ', 'Đến', 'Thông điệp', 'Loại', 'Nằm trong fragment'], ms, 'tcov') +
+    '<h2 style="margin-top:20px">Độ phủ của các kịch bản chạy luồng</h2>' + T(['Kịch bản', 'Số bước'].concat(r.frags.map(f => esc(f.op) + '<br><span class="src">' + esc(f.title || '') + '</span>')), cv + sum, 'tcov') +
+    '<p class="src" style="margin:8px 0 0">— : khung cha không chạy nên chưa tới khung này · ✗ : tới nơi nhưng bị bỏ qua · ① ②: nhánh được chọn · ×n: số vòng lặp</p>';
+}
+const DIAG_REG = [];
+function diagTab(id) {
+  return function (panel) {
+    panel.classList.add('lb2');
+    const d = DIAGRAMS.find(x => x.id === id), idx0 = DIAGRAMS.indexOf(d) + 1;
+    const sym = d.symbols.map(s => '<div class="sym"><div class="g">' + s.g + '</div><div><b>' + esc(s.n) + '</b><p>' + esc(s.d) + '</p></div></div>').join('');
+    panel.innerHTML =
+      '<div class="card" style="margin-top:0"><div class="head"><h2 class="big">' + idx0 + '. ' + d.name + '</h2><span class="chip ' + d.tag + '">' + (d.tag === 's' ? 'Sơ đồ tĩnh' : 'Sơ đồ động') + '</span><span class="src">' + esc(d.src) + '</span></div>' +
+      '<p class="lead">' + esc(d.lead) + '</p>' +
+      '<div class="cols"><div class="mini"><h3>Vì sao cần?</h3><p>' + esc(d.why) + '</p></div><div class="mini"><h3>Dùng lúc nào</h3><p>' + esc(d.when) + '</p></div><div class="mini"><h3>Dễ nhầm</h3><p>' + esc(d.pitfall) + '</p></div></div>' +
+      '<div class="xtra"></div></div>' +
+      '<div class="tb"><span class="src">Ví dụ:</span><div class="chips exc"></div><div class="seg f modeSeg" style="display:none"><button data-m="draw" data-cl-variant="1">Vẽ từng bước</button><button data-m="flow" data-cl-variant="1">Chạy luồng</button></div><div class="chips scc" style="display:none"></div></div>' +
+      '<div class="svghost"></div><div class="st2"></div>' +
+      '<div class="bar2"><button class="btn allb">Hiện tất cả</button><button class="btn homeb">Đặt lại khung nhìn</button><button class="btn zin" aria-label="Phóng to">+</button><button class="btn zout" aria-label="Thu nhỏ">−</button><span class="src">Kéo để di chuyển · Ctrl + lăn chuột để phóng · Space chạy tự động, ← → từng bước</span></div>' +
+      '<div class="chal"></div><div class="card sym-card"><h2>Ký hiệu <small>định nghĩa và cách vẽ</small></h2><div class="syms">' + sym + '</div></div>' +
+      '<div class="card tbl-card"></div>';
+    const $ = s => panel.querySelector(s);
+    const host = $('.svghost'), st = $('.st2'), exc = $('.exc'), scc = $('.scc'), modeSeg = $('.modeSeg');
+    let cur = null, svg = null, fx = null, vb = null, home = null, mode = 'draw', scen = 0, idx = 0, step = 1, token = 0, exKey = GST.ex, ready = false;
+    const dyn0 = d.tag === 'd';
+    exc.innerHTML = Object.keys(EXS).map(k => '<button data-k="' + k + '" data-cl-variant="1" aria-pressed="' + (k === GST.ex) + '">' + esc(EXS[k].name) + '</button>').join('');
+    exc.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; GST.ex = b.dataset.k; render(); });
+    function syncExChips() { exc.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.k === GST.ex)); }
+    function sync() { if (window.VLabShell && VLabShell.sync) VLabShell.sync(); }
+    function fitHost() {
+      if (!svg) return;
+      const w = host.clientWidth || 700;
+      host.style.height = Math.round(Math.min(cur.r.maxH || 860, Math.max(300, w * cur.r.h / cur.r.w))) + 'px';
+    }
+    function stepText(n) { const s = d.steps[n - 1]; return '<b>Bước ' + n + '/' + cur.N + ' · ' + esc(s.t) + '</b><br>' + esc(s.d); }
+    function summary() {
+      const nd = svg.querySelectorAll('.nd').length, ed = svg.querySelectorAll('.ed').length;
+      return '<b>Sơ đồ ' + d.name + ' đã vẽ xong</b> trong ' + cur.N + ' bước: ' + nd + ' phần tử chính và ' + ed + ' đường nối hoặc thông điệp.';
+    }
+    function applyStep(n) {
+      step = n;
+      const part = n < cur.N;
+      svg.querySelectorAll('.el').forEach(el => {
+        const s = +el.dataset.s;
+        el.classList.toggle('hid', part && s > n);
+        el.classList.toggle('new', part && s === n);
+      });
+    }
+    function nodeLabel(id) { const el = svg.querySelector('[data-node="' + id + '"]'); return el ? (el.dataset.l || id) : id; }
+    function edgeText(eid) { const g = svg.querySelector('[data-eid="' + eid + '"]'), t = g && g.querySelector('text'); return t ? t.textContent.replace(/\s+/g, ' ').trim() : ''; }
+    function groupText(grp) { return grp.map(eid => { const e = cur.edges[eid], t = edgeText(eid); return nodeLabel(e.from) + ' → ' + nodeLabel(e.to) + (t ? ' : ' + t : ''); }).join('  ‖  '); }
+    function setStatus(h) { st.innerHTML = h; }
+    function clearFlow() {
+      token++;
+      if (!svg) return;
+      if (cur && cur.r && cur.r.onFlowClear) cur.r.onFlowClear(svg);
+      svg.classList.remove('playing');
+      svg.querySelectorAll('.seen,.cur,.on,.fire').forEach(e => e.classList.remove('seen', 'cur', 'on', 'fire'));
+      svg.querySelectorAll('.tr').forEach(t => { t.style.strokeDasharray = ''; t.style.strokeDashoffset = ''; });
+      fx.innerHTML = '';
+      idx = 0;
+    }
+    function setCur(ids) {
+      svg.querySelectorAll('.cur').forEach(e => { e.classList.remove('cur'); e.classList.add('seen'); });
+      ids.forEach(id => svg.querySelectorAll('[data-node="' + id + '"]').forEach(e => { e.classList.remove('seen'); e.classList.add('cur'); }));
+    }
+    function fire(eid, dur, tk) {
+      const g = svg.querySelector('[data-eid="' + eid + '"]'); if (!g) return;
+      g.classList.add('on', 'fire');
+      const tr = g.querySelector('.tr'); if (!tr) return;
+      const len = tr.getTotalLength();
+      tr.style.strokeDasharray = len + ' ' + len; tr.style.strokeDashoffset = len;
+      if (!dur) { tr.style.strokeDashoffset = 0; g.classList.remove('fire'); return; }
+      const c = document.createElementNS(NSV, 'circle');
+      c.setAttribute('r', 7); c.setAttribute('class', 'pulse'); fx.appendChild(c);
+      const t0 = performance.now();
+      (function frame(now) {
+        if (tk !== token) { c.remove(); return; }
+        const k = Math.min(1, (now - t0) / dur);
+        tr.style.strokeDashoffset = len * (1 - k);
+        const p = tr.getPointAtLength(len * k);
+        c.setAttribute('cx', p.x); c.setAttribute('cy', p.y);
+        if (k < 1) requestAnimationFrame(frame); else { c.remove(); g.classList.remove('fire'); }
+      })(t0);
+    }
+    function flowStatus(done) {
+      const sc = cur.scen[scen], steps = sc.steps;
+      if (!done) { const f = cur.edges[steps[0][0]]; setStatus('<b>Kịch bản: ' + esc(sc.n) + '</b> · ' + steps.length + ' bước. Bấm <b>Next</b> hoặc phím → để tín hiệu xuất phát tại <b>' + esc(nodeLabel(f.from)) + '</b>.'); return; }
+    }
+    /* chạy 1 bước luồng; instant=true: không hoạt họa (dùng khi lùi lại) */
+    function flowStep(instant) {
+      const sc = cur.scen[scen], steps = sc.steps;
+      if (idx === 0) {
+        applyStep(cur.N); svg.classList.add('playing');
+        setCur(Array.from(new Set(steps[0].map(e => cur.edges[e].from))));
+      }
+      const grp = steps[idx]; idx++;
+      const tk = ++token;
+      const dur = (instant || VLabPlayer.fast) ? 0 : Math.max(180, Math.min(650, 700 / VLabPlayer.speed));
+      grp.forEach(eid => fire(eid, dur, tk));
+      const arrive = () => { if (tk === token) setCur(Array.from(new Set(grp.map(e => cur.edges[e].to)))); };
+      dur ? setTimeout(arrive, dur) : arrive();
+      const extra = cur.r.onFlow ? cur.r.onFlow(svg, steps.slice(0, idx).reduce((a, g) => a.concat(g), []), idx >= steps.length) : '';
+      setStatus('<b>Bước ' + idx + '/' + steps.length + ' · ' + esc(sc.n) + '</b><br>' + esc(groupText(grp)) + extra);
+      return dur;
+    }
+    function buildScen() {
+      scc.innerHTML = cur.scen.map((s, i) => '<button data-i="' + i + '" data-cl-variant="1" aria-pressed="' + (i === scen) + '">' + esc(s.n) + '</button>').join('');
+      scc.style.display = mode === 'flow' ? '' : 'none';
+    }
+    function setMode(m) {
+      clearFlow(); mode = m;
+      modeSeg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === m));
+      if (cur.dyn) buildScen();
+      if (m === 'flow') { applyStep(cur.N); flowStatus(false); }
+      else { applyStep(1); setStatus(stepText(1)); }
+      sync();
+    }
+    modeSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (b && ready) setMode(b.dataset.m); });
+    scc.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; scen = +b.dataset.i; setMode('flow'); });
+    function renderTables() {
+      const ex = cur.ex, sp = ex.spec; let bot = '';
+      if (id === 'uc') bot = '<h2>' + esc(sp.uc.title) + '</h2><div class="tbl-wrap"><table><tbody>' + sp.uc.rows.map(r => '<tr><td class="k">' + esc(r[0]) + '</td><td>' + nl(r[1]) + '</td></tr>').join('') + '</tbody></table></div>';
+      else if (id === 'cls' || id === 'st') {
+        const t = sp[id];
+        bot = '<h2>' + (id === 'cls' ? 'Danh sách lớp chính' : 'Bảng chuyển trạng thái') + '</h2><div class="tbl-wrap"><table><thead><tr>' + t.head.map(h => '<th>' + esc(h) + '</th>').join('') + '</tr></thead><tbody>' + t.rows.map(r => '<tr>' + r.map((c, i) => '<td' + (i === 0 ? ' class="k"' : '') + '>' + esc(c) + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>';
+      } else if (id === 'seq') bot = seqTables(cur.r, cur.data);
+      else if (id === 'col') bot = '<h2>Danh sách thông điệp</h2><div class="tbl-wrap">' + msgTable(cur.data, 'col') + '</div>';
+      $('.tbl-card').innerHTML = bot;
+      $('.tbl-card').style.display = bot ? '' : 'none';
+      const C = (typeof CH !== 'undefined') ? CH[id] : null;
+      $('.xtra').innerHTML = C && C.hook ? '<div class="hook">' + C.hook + '</div>' : '';
+      if (window.buildChallenges) buildChallenges($('.chal'), C, GST.ex);
+    }
+    function render() {
+      exKey = GST.ex; syncExChips();
+      const ex = EXS[GST.ex], data = ex[id];
+      const r = ENG.R[id](data);
+      let edges = r.edges, sc = r.scen;
+      if (id === 'act') { edges = {}; data.edges.forEach(e => edges[e.id] = { from: e.f, to: e.t }); sc = data.scen; }
+      cur = { ex, data, r, edges, scen: sc, N: d.steps.length, dyn: d.tag === 'd' && !!sc };
+      host.innerHTML = '<svg xmlns="' + NSV + '" viewBox="0 0 ' + r.w + ' ' + r.h + '" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Sơ đồ ' + d.name + ' của ví dụ ' + esc(ex.name) + '">' + r.svg + '<g class="fx"></g></svg>';
+      svg = host.querySelector('svg'); fx = svg.querySelector('.fx');
+      home = { x: 0, y: 0, w: r.w, h: r.h }; vb = Object.assign({}, home);
+      fitHost();
+      scen = 0; idx = 0; mode = 'draw';
+      modeSeg.style.display = cur.dyn ? '' : 'none';
+      modeSeg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === 'draw'));
+      scc.style.display = 'none';
+      renderTables();
+      applyStep(1); setStatus(stepText(1));
+      ready = true; sync();
+    }
+    $('.allb').addEventListener('click', () => { if (mode === 'flow') setMode('draw'); applyStep(cur.N); setStatus(summary()); sync(); });
+    $('.zin').addEventListener('click', () => zoomAt(.5, .5, 1.3));
+    $('.zout').addEventListener('click', () => zoomAt(.5, .5, 1 / 1.3));
+    $('.homeb').addEventListener('click', () => { vb = Object.assign({}, home); setVB(); });
+    function setVB() { svg.setAttribute('viewBox', vb.x.toFixed(1) + ' ' + vb.y.toFixed(1) + ' ' + vb.w.toFixed(1) + ' ' + vb.h.toFixed(1)); }
+    function zoomAt(fx_, fy_, k) {
+      const W = home.w, nw = Math.max(W / 6, Math.min(W * 1.4, vb.w / k)), nh = nw * home.h / home.w;
+      vb.x += fx_ * (vb.w - nw); vb.y += fy_ * (vb.h - nh); vb.w = nw; vb.h = nh; setVB();
+    }
+    host.addEventListener('wheel', e => {
+      if (!svg || !(e.ctrlKey || e.metaKey)) return; e.preventDefault();
+      const r = host.getBoundingClientRect();
+      zoomAt((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height, Math.exp(-e.deltaY * 0.0015));
+    }, { passive: false });
+    const ptrs = new Map(); let lastD = 0;
+    host.addEventListener('pointerdown', e => { ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); try { host.setPointerCapture(e.pointerId); } catch (_) { } lastD = 0; });
+    host.addEventListener('pointermove', e => {
+      if (!svg || !ptrs.has(e.pointerId)) return;
+      const p = ptrs.get(e.pointerId), r = host.getBoundingClientRect();
+      if (ptrs.size === 2) {
+        ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        const a = Array.from(ptrs.values()), dd = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
+        if (lastD) zoomAt(((a[0].x + a[1].x) / 2 - r.left) / r.width, ((a[0].y + a[1].y) / 2 - r.top) / r.height, dd / lastD);
+        lastD = dd; return;
+      }
+      vb.x -= (e.clientX - p.x) * vb.w / r.width; vb.y -= (e.clientY - p.y) * vb.h / r.height;
+      ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); setVB();
     });
-  }
-
-  /* ---------- chế độ ---------- */
-  function drawLines() { return cur.d.steps.map((s, i) => `${i + 1}. ${s.t}`); }
-  function nodeLabel(id) { const el = svg.querySelector(`[data-node="${id}"]`); return el ? (el.dataset.l || id) : id; }
-  function edgeText(eid) { const g = svg.querySelector(`[data-eid="${eid}"]`), t = g && g.querySelector('text'); return t ? t.textContent.replace(/\s+/g, ' ').trim() : ''; }
-  function groupText(grp) {
-    return grp.map(eid => { const e = cur.edges[eid], t = edgeText(eid); return nodeLabel(e.from) + ' → ' + nodeLabel(e.to) + (t ? ' : ' + t : ''); }).join('  ‖  ');
-  }
-  function flowLines() { return cur.scen[ST.scen].steps.map(g => groupText(g)); }
-  function buildChips() {
-    chips.innerHTML = cur.scen.map((s, i) => `<button data-i="${i}" aria-pressed="${i === ST.scen}">${esc(s.n)}</button>`).join('');
-    chips.style.display = ST.mode === 'flow' ? '' : 'none';
-  }
-  function setMode(m, quiet) {
-    app.pause(); clearFlow(); ST.mode = m;
-    modeSeg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === m));
-    applyStep(cur.N); setSlider(cur.N);
-    if (cur.dyn) buildChips();
-    if (m === 'flow') {
-      setLines(flowLines());
-      const sc = cur.scen[ST.scen], f = cur.edges[sc.steps[0][0]];
-      app.status(`<b>Kịch bản: ${esc(sc.n)}</b> · ${sc.steps.length} bước. Tín hiệu xuất phát tại <b>${esc(nodeLabel(f.from))}</b>.`);
-    } else {
-      setLines(drawLines());
-      app.status(summary());
+    const endP = e => { ptrs.delete(e.pointerId); lastD = 0; };
+    host.addEventListener('pointerup', endP); host.addEventListener('pointercancel', endP);
+    window.addEventListener('resize', fitHost);
+    render();
+    const reg = { rerender: function () { if (exKey !== GST.ex) render(); else syncExChips(); } };
+    DIAG_REG.push(reg);
+    return {
+      onShow: function () { reg.rerender(); fitHost(); },
+      stepper: {
+        next: async function () {
+          if (mode === 'draw') { if (step >= cur.N) return; applyStep(step + 1); setStatus(step >= cur.N ? summary() : stepText(step)); sync(); await VLabPlayer.wait(260); }
+          else { const steps = cur.scen[scen].steps; if (idx >= steps.length) return; const dur = flowStep(false); sync(); await VLabPlayer.wait(dur + 40); }
+        },
+        back: function () {
+          if (mode === 'draw') { if (step > 1) { applyStep(step - 1); setStatus(stepText(step)); } }
+          else { const target = idx - 1; clearFlow(); if (target <= 0) flowStatus(false); else for (let k = 0; k < target; k++) flowStep(true); }
+          sync();
+        },
+        reset: function () { if (mode === 'draw') { applyStep(1); setStatus(stepText(1)); } else { clearFlow(); applyStep(cur.N); flowStatus(false); } sync(); },
+        canNext: function () { return !ready ? false : mode === 'draw' ? step < cur.N : idx < cur.scen[scen].steps.length; },
+        canBack: function () { return !ready ? false : mode === 'draw' ? step > 1 : idx > 0; }
+      }
+    };
+  };
+}
+/* ===== Thành phần "thử thách": đoán trước rồi mới xem đáp án ===== */
+function buildChallenges(box, def, ex) {
+  box.innerHTML = '';
+  const items = def && def.items ? def.items.filter(i => !i.ex || i.ex === ex) : [];
+  if (!items.length) { box.style.display = 'none'; return; }
+  box.style.display = '';
+  const card = h('div', 'card');
+  card.appendChild(h('h2', null, 'Đoán trước, rồi mới xem đáp án <small>không chấm điểm</small>'));
+  items.forEach(function (it, n) {
+    const row = h('div', 'chi');
+    row.appendChild(h('p', 'q', '<b>' + (n + 1) + '.</b> ' + it.q));
+    const fb = h('div', 'fb');
+    if (it.t === 'mc') {
+      const opts = h('div', 'opts');
+      it.opts.forEach(function (o, i) {
+        const b = h('button', 'ob', esc(o)); b.type = 'button';
+        b.addEventListener('click', function () {
+          opts.querySelectorAll('.ob').forEach(function (x, k) { x.classList.remove('ok', 'bad'); if (k === it.ans) x.classList.add('ok'); else if (k === i) x.classList.add('bad'); });
+          fb.innerHTML = '<b>' + (i === it.ans ? 'Đúng. ' : 'Chưa đúng, đáp án là “' + esc(it.opts[it.ans]) + '”. ') + '</b>' + (it.fb && it.fb[i] ? it.fb[i] + ' ' : '') + it.why;
+          fb.style.display = '';
+        });
+        opts.appendChild(b);
+      });
+      row.appendChild(opts);
+    } else if (it.t === 'debate') {
+      const opts = h('div', 'opts');
+      it.opts.forEach(function (o) {
+        const b = h('button', 'ob', esc(o.l)); b.type = 'button';
+        b.addEventListener('click', function () {
+          opts.querySelectorAll('.ob').forEach(function (x) { x.classList.remove('pick'); }); b.classList.add('pick');
+          fb.innerHTML = '<b>Nếu chọn thế này:</b> ' + o.r + (it.end ? '<br><b>Chốt:</b> ' + it.end : ''); fb.style.display = '';
+        });
+        opts.appendChild(b);
+      });
+      row.appendChild(opts);
+    } else if (it.t === 'sort') {
+      const list = h('div', 'sortl');
+      it.rows.forEach(function (r) {
+        const line = h('div', 'sr'); line.appendChild(h('span', 'sn', esc(r[0])));
+        const bs = h('span', 'sb'); const res = h('div', 'sres'); res.style.display = 'none';
+        it.cats.forEach(function (c, k) {
+          const b = h('button', 'ob sm', esc(c)); b.type = 'button';
+          b.addEventListener('click', function () {
+            bs.querySelectorAll('.ob').forEach(function (x, j) { x.classList.remove('ok', 'bad'); if (j === r[1]) x.classList.add('ok'); else if (j === k) x.classList.add('bad'); });
+            res.innerHTML = (k === r[1] ? '✓ ' : '✗ Thực ra là “' + esc(it.cats[r[1]]) + '”. ') + r[2]; res.style.display = '';
+          });
+          bs.appendChild(b);
+        });
+        line.appendChild(bs); list.appendChild(line); list.appendChild(res);
+      });
+      row.appendChild(list);
+      if (it.why) { fb.innerHTML = it.why; fb.style.display = ''; }
     }
-  }
-  modeSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (b && ready) setMode(b.dataset.m); });
-  chips.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; ST.scen = +b.dataset.i; setMode('flow'); });
-
-  /* ---------- bộ chạy ---------- */
-  function scrub(v) {
-    app.pause();
-    if (ST.mode === 'flow') { clearFlow(); ST.mode = 'draw'; modeSeg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === 'draw')); chips.style.display = 'none'; setLines(drawLines()); }
-    applyStep(v); app.highlight(v - 1);
-    app.status(v >= cur.N ? summary() : stepText(v));
-  }
-  function resetExternal() {
-    clearFlow();
-    if (ST.mode === 'flow') {
-      applyStep(cur.N); setSlider(cur.N); setLines(flowLines());
-      const sc = cur.scen[ST.scen];
-      app.status(`<b>Đã đặt lại.</b> Kịch bản: ${esc(sc.n)}, ${sc.steps.length} bước.`);
-    } else {
-      applyStep(1); setSlider(1); app.highlight(0); app.status(stepText(1));
-    }
-  }
-  function stepOnce() {
-    if (ST.mode === 'flow') return stepFlow();
-    if (ST.step >= cur.N) ST.step = 0;
-    const n = ST.step + 1;
-    applyStep(n); setSlider(n); app.highlight(n - 1);
-    app.status(n >= cur.N ? summary() : stepText(n));
-    return n < cur.N;
-  }
-
-  /* ---------- luồng hoạt động (như tín hiệu chạy trong mạng nơ-ron) ---------- */
-  function clearFlow() {
-    token++;
-    if (!svg) return;
-    if (cur && cur.r && cur.r.onFlowClear) cur.r.onFlowClear(svg);
-    svg.classList.remove('playing');
-    svg.querySelectorAll('.seen,.cur,.on,.fire').forEach(e => e.classList.remove('seen', 'cur', 'on', 'fire'));
-    svg.querySelectorAll('.tr').forEach(t => { t.style.strokeDasharray = ''; t.style.strokeDashoffset = ''; });
-    fx.innerHTML = '';
-    ST.idx = 0;
-    app.highlight(-1);
-  }
-  function stopAll() { try { app.pause(); } catch (e) { } clearFlow(); }
-  function setCur(ids) {
-    svg.querySelectorAll('.cur').forEach(e => { e.classList.remove('cur'); e.classList.add('seen'); });
-    ids.forEach(id => svg.querySelectorAll(`[data-node="${id}"]`).forEach(e => { e.classList.remove('seen'); e.classList.add('cur'); }));
-  }
-  function fire(eid, dur, tk) {
-    const g = svg.querySelector(`[data-eid="${eid}"]`); if (!g) return;
-    g.classList.add('on', 'fire');
-    const tr = g.querySelector('.tr'); if (!tr) return;
-    const len = tr.getTotalLength();
-    tr.style.strokeDasharray = len + ' ' + len; tr.style.strokeDashoffset = len;
-    if (!dur) { tr.style.strokeDashoffset = 0; g.classList.remove('fire'); return; }
-    const c = document.createElementNS(NS, 'circle');
-    c.setAttribute('r', 7); c.setAttribute('class', 'pulse'); fx.appendChild(c);
-    const t0 = performance.now();
-    (function frame(now) {
-      if (tk !== token) { c.remove(); return; }
-      const k = Math.min(1, (now - t0) / dur);
-      tr.style.strokeDashoffset = len * (1 - k);
-      const p = tr.getPointAtLength(len * k);
-      c.setAttribute('cx', p.x); c.setAttribute('cy', p.y);
-      if (k < 1) requestAnimationFrame(frame); else { c.remove(); g.classList.remove('fire'); }
-    })(t0);
-  }
-  function stepFlow() {
-    const sc = cur.scen[ST.scen], steps = sc.steps;
-    if (ST.idx >= steps.length) clearFlow();
-    if (ST.idx === 0) {
-      applyStep(cur.N);
-      svg.classList.add('playing');
-      setCur(Array.from(new Set(steps[0].map(e => cur.edges[e].from))));
-    }
-    const grp = steps[ST.idx]; ST.idx++;
-    const tk = ++token;
-    const dur = reduce ? 0 : Math.max(180, Math.min(650, speedMs() * 0.7));
-    grp.forEach(eid => fire(eid, dur, tk));
-    const arrive = () => { if (tk === token) setCur(Array.from(new Set(grp.map(e => cur.edges[e].to)))); };
-    dur ? setTimeout(arrive, dur) : arrive();
-    app.highlight(ST.idx - 1);
-    const extra = cur.r.onFlow ? cur.r.onFlow(svg, steps.slice(0, ST.idx).reduce((a, g) => a.concat(g), []), ST.idx >= steps.length) : '';
-    app.status(`<b>Bước ${ST.idx}/${steps.length} · ${esc(sc.n)}</b><br>${esc(groupText(grp))}${extra}`);
-    return ST.idx < steps.length;
-  }
-
-  /* ---------- zoom, kéo, pinch cho sân khấu SVG ---------- */
-  function setVB() { svg.setAttribute('viewBox', `${vb.x.toFixed(1)} ${vb.y.toFixed(1)} ${vb.w.toFixed(1)} ${vb.h.toFixed(1)}`); }
-  function zoomAt(fx_, fy_, k) {
-    const W = home.w, nw = Math.max(W / 6, Math.min(W * 1.4, vb.w / k)), nh = nw * home.h / home.w;
-    vb.x += fx_ * (vb.w - nw); vb.y += fy_ * (vb.h - nh); vb.w = nw; vb.h = nh; setVB();
-  }
-  host.addEventListener('wheel', e => {
-    if (!svg) return; e.preventDefault();
-    const r = host.getBoundingClientRect();
-    zoomAt((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height, Math.exp(-e.deltaY * 0.0015));
-  }, { passive: false });
-  const ptrs = new Map(); let lastD = 0;
-  host.addEventListener('pointerdown', e => { ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); host.setPointerCapture(e.pointerId); host.classList.add('dragging'); lastD = 0; });
-  host.addEventListener('pointermove', e => {
-    if (!svg || !ptrs.has(e.pointerId)) return;
-    const p = ptrs.get(e.pointerId), r = host.getBoundingClientRect();
-    if (ptrs.size === 2) {
-      ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      const a = Array.from(ptrs.values()), d = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
-      if (lastD) zoomAt(((a[0].x + a[1].x) / 2 - r.left) / r.width, ((a[0].y + a[1].y) / 2 - r.top) / r.height, d / lastD);
-      lastD = d; return;
-    }
-    vb.x -= (e.clientX - p.x) * vb.w / r.width; vb.y -= (e.clientY - p.y) * vb.h / r.height;
-    ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); setVB();
+    if (it.t !== 'sort' || !it.why) fb.style.display = 'none';
+    row.appendChild(fb); card.appendChild(row);
   });
-  const endP = e => { ptrs.delete(e.pointerId); lastD = 0; if (!ptrs.size) host.classList.remove('dragging'); };
-  host.addEventListener('pointerup', endP); host.addEventListener('pointercancel', endP);
-  app.onHome = function () { if (svg) { vb = Object.assign({}, home); setVB(); } };
+  box.appendChild(card);
+}
 
-  buildPickers();
-  render();
-  window.__lab = { ST, render, app, get cur() { return cur; }, setMode, ST_: ST };
-})();
-</script>
+const CH = {};
+/* ---------------- USE CASE ---------------- */
+CH.uc = {
+  hook: '<b>Câu hỏi mồi:</b> cùng là “Đăng nhập”, nhưng với <i>Hủy vé</i> nó bắt buộc còn với <i>Đặt vé</i> thì tùy chọn. Hai mũi tên này không thể vẽ giống nhau. Bạn nghĩ cái nào là «include», cái nào là «extend»? Chọn ví dụ <b>Đặt vé xe khách</b> bên dưới rồi thử đoán trước khi bấm Next.',
+  items: [
+    { t: 'mc', ex: 'bus', q: 'Đồ án quyết định: khách <b>không cần</b> đăng nhập để đặt vé, nhưng <b>phải</b> đăng nhập mới hủy được vé. Nối “Đăng nhập” vào “Đặt vé” bằng quan hệ nào?',
+      opts: ['«include»: Đặt vé → Đăng nhập', '«extend»: Đăng nhập → Đặt vé', 'Không nối, vẽ hai use case rời nhau'], ans: 1,
+      why: 'Mẹo kiểm tra: <i>bỏ nó đi thì use case gốc còn chạy trọn vẹn không?</i> Đặt vé vẫn chạy khi không đăng nhập, nên Đăng nhập chỉ là phần mở rộng tùy chọn: mũi tên đi <b>từ</b> use case phụ <b>về</b> use case gốc. Còn Hủy vé mà thiếu đăng nhập thì không chạy được, nên là «include» (mũi tên đi từ Hủy vé tới Đăng nhập). Cùng một use case nhưng hai vai trò khác nhau tùy bên dùng nó.' },
+    { t: 'mc', ex: 'bus', q: '“Chọn ghế” có nên là một hình elip riêng trong sơ đồ không?',
+      opts: ['Có, vì nó là chức năng rõ ràng trên giao diện', 'Không, nó là một bước bên trong Đặt vé'], ans: 1,
+      why: 'Use case là <b>một mục tiêu trọn vẹn có giá trị</b> với tác nhân. Không ai tới bến chỉ để “chọn ghế” rồi ra về, chọn ghế chưa tạo ra kết quả nào có ích. Nó thuộc luồng chính của Đặt vé (bước 3 trong bảng đặc tả bên dưới). Cẩn thận: <i>use case ≠ endpoint</i>. Backend vẫn có thể có một API khóa ghế, nhưng đó là chi tiết thiết kế ở sequence diagram, không phải mục tiêu của người dùng.' },
+    { t: 'mc', q: 'Cổng thanh toán của đồ án chỉ là một mock service (giả lập). Trong use case diagram nó có còn là tác nhân không?',
+      opts: ['Không, vì nó là code của mình viết', 'Có, vì nó nằm ngoài ranh giới hệ thống'], ans: 1,
+      why: 'Tác nhân là <b>bất cứ thứ gì nằm ngoài ranh giới hệ thống và tương tác với nó</b>, không nhất thiết là người. Mock chỉ là cách <i>cài đặt</i> hôm nay; mô hình hóa theo thế giới thật. Khi thay mock bằng cổng thanh toán thật, sơ đồ không phải sửa một nét nào. Đó là dấu hiệu bạn mô hình đúng.' },
+    { t: 'mc', q: 'Sau 10 phút không thanh toán thì ghế tự nhả. Cần một use case “Nhả ghế” với tác nhân “Đồng hồ” không?',
+      opts: ['Cần, vì đây là chức năng của hệ thống', 'Không, đây là hành vi theo trạng thái của ghế'], ans: 1,
+      why: 'Không có ai <i>đặt mục tiêu</i> “nhả ghế” cả: đây là phản ứng tự động khi một sự kiện thời gian xảy ra. Hành vi kiểu “khi ở trạng thái X, nếu có sự kiện Y thì chuyển sang Z” thuộc về <b>State diagram</b> (tab 7). Một mẹo phân loại: câu hỏi “ai muốn điều này?” có tác nhân trả lời được thì là use case; không ai trả lời được thì nghĩ tới trạng thái.' }
+  ]
+};
+/* ---------------- ACTIVITY ---------------- */
+CH.act = {
+  hook: '<b>Câu hỏi mồi:</b> nếu khách thanh toán <i>thất bại</i>, sơ đồ này dẫn tới đâu? Một sơ đồ mà bạn không chỉ ra được “đường ra” cho mọi trường hợp là một sơ đồ chưa xong. (Ghi chú: yêu cầu đồ án không liệt kê Activity, nên đây là phần bonus. Nó có ích để nghĩ ra <i>luồng thay thế</i> trước khi vẽ Sequence.)',
+  items: [
+    { t: 'mc', q: 'Sau khi thanh toán thành công, “xuất vé điện tử” và “gửi SMS xác nhận” nên nối bằng gì?',
+      opts: ['Một nhánh rẽ (decision)', 'Fork/join: hai việc chạy song song', 'Hai mũi tên nối tiếp'], ans: 1,
+      why: 'Hai việc này <b>không phụ thuộc nhau</b>. Nối tiếp thì SMS lỗi sẽ kéo theo khách không nhận được vé. Fork (thanh ngang chia ra) rồi join (thanh ngang gom lại) diễn tả “làm cả hai, thứ tự tùy ý”. Khi viết backend, đây chính là tín hiệu để đẩy việc gửi SMS sang một tác vụ nền (background task) thay vì bắt khách chờ.' },
+    { t: 'mc', q: 'Một rẽ nhánh “Thanh toán thành công?” chỉ vẽ nhánh [thành công]. Điều gì xảy ra với người dùng thất bại?',
+      opts: ['Không sao, mặc định hệ thống sẽ tự xử lý', 'Sơ đồ bị “kẹt”: không ai biết nhánh còn lại đi đâu'], ans: 1,
+      why: 'Mỗi decision phải có <b>các nhánh phủ hết mọi trường hợp và loại trừ nhau</b>. Nhánh bị quên trên giấy sẽ thành lỗi bị quên trong code: ghế bị giữ mãi, khách nhìn màn hình quay vòng. Thử chạy chế độ <i>Chạy luồng</i> với kịch bản “Thanh toán thất bại” để thấy tín hiệu đi hết đường như thế nào.' },
+    { t: 'mc', q: 'Hành động “Kiểm tra ghế còn trống” nên đặt ở làn (swimlane) nào?',
+      opts: ['Làn Hành khách', 'Làn Hệ thống', 'Làn Cổng thanh toán'], ans: 1,
+      why: 'Làn trả lời câu hỏi <b>“ai chịu trách nhiệm làm việc này?”</b>. Khách chỉ chọn, hệ thống mới kiểm tra. Đặt sai làn thì về sau bạn sẽ giao nhầm trách nhiệm cho sai lớp trong class diagram.' }
+  ]
+};
+/* ---------------- SEQUENCE ---------------- */
+CH.seq = {
+  hook: '<b>Câu hỏi mồi:</b> mỗi mũi tên đi vào một đối tượng sẽ trở thành <i>một hàm</i> của lớp đó. Trước khi cuộn xuống bảng thông điệp, thử đếm xem trong ví dụ Đặt vé có mấy hàm sẽ nằm ở <code>:QuảnLýĐặtVé</code>? Sau đó đối chiếu.',
+  items: [
+    { t: 'mc', q: 'Trong sơ đồ có 3 loại đối tượng: <b>Boundary</b> (màn hình), <b>Control</b> (điều phối), <b>Entity</b> (dữ liệu). Nếu đổi giao diện từ web React sang app điện thoại, lớp nào phải đổi?',
+      opts: ['Chỉ Boundary', 'Boundary và Control', 'Cả ba'], ans: 0,
+      why: 'Đó chính là lý do ta tách 3 loại: thứ hay đổi nhất (giao diện) bị cô lập ở Boundary. Với backend của bạn, có thể hình dung gần đúng: Boundary ≈ router/DTO, Control ≈ lớp use case/service, Entity ≈ lớp nghiệp vụ. Nhưng đây là phép đối chiếu, không phải quy tắc cứng.' },
+    { t: 'mc', ex: 'bus', q: 'Hai request “đặt ghế A12” đến cùng lúc (khách bấm đúp, hoặc hai người cùng bấm). Sơ đồ chạy <code>ghếTrống()</code> rồi mới <code>khóaGhế()</code>. Lỗi tiềm ẩn là gì?',
+      opts: ['Không có lỗi, alt đã xử lý rồi', 'Cả hai cùng thấy “trống” trước khi ai kịp khóa, nên cả hai cùng đặt được'], ans: 1,
+      why: 'Đây là <b>race condition</b> (đua dữ liệu): “kiểm tra rồi mới làm” là hai bước tách rời. Sequence diagram không tự cứu bạn, nó chỉ giúp bạn <i>nhìn ra</i> chỗ cần nghĩ. Hướng xử lý khi viết backend: gộp kiểm tra và khóa thành một thao tác nguyên tử, ví dụ <code>UPDATE ... SET trang_thai=\'GIU\' WHERE trang_thai=\'TRONG\'</code> rồi xem số dòng bị ảnh hưởng (1 là thắng, 0 là thua), hoặc khóa dòng bằng <code>SELECT ... FOR UPDATE</code>.' },
+    { t: 'mc', q: ':Vé không nằm ngang hàng với các đối tượng khác mà “mọc” ra giữa sơ đồ. Vì sao?',
+      opts: ['Cho đỡ chật chỗ', 'Vì vé chưa tồn tại trước khi thanh toán xong; thông điệp «create» sinh ra nó'], ans: 1,
+      why: 'Vị trí theo chiều dọc trong sequence là <b>thời gian</b>. Vé chỉ ra đời khi có «create». Điều này báo cho bạn: ai là nơi tạo Vé (ở đây là <code>QuảnLýĐặtVé</code>) và rằng trước thời điểm đó <i>không thể</i> có mã vé để tra cứu.' },
+    { t: 'mc', q: 'Mã giảm giá là tùy chọn: khách có thể nhập hoặc không. Dùng khung kết hợp (combined fragment) nào?',
+      opts: ['alt', 'opt', 'loop'], ans: 1,
+      why: '<b>opt</b> = làm hoặc bỏ qua (một nhánh, như câu “nếu… thì”). <b>alt</b> = chọn một trong nhiều nhánh (“nếu… ngược lại…”). <b>loop</b> = lặp. Chọn sai khung thì người đọc hiểu sai luồng.' }
+  ]
+};
+/* ---------------- COLLABORATION ---------------- */
+CH.col = {
+  hook: '<b>Câu hỏi mồi:</b> Sequence và Collaboration kể <i>cùng một câu chuyện</i>, một bên theo trục thời gian, một bên theo “ai nói chuyện với ai”. Nhìn sơ đồ bên dưới, bạn trả lời nhanh được: <i>:QuảnLýĐặtVé phải biết những đối tượng nào?</i> Sequence khó cho câu trả lời này hơn nhiều.',
+  items: [
+    { t: 'mc', q: 'Số thứ tự “2.1, 2.2, 2.3” nghĩa là gì?',
+      opts: ['Ba thông điệp độc lập, đánh số cho đẹp', 'Các thông điệp con phát sinh bên trong khi xử lý thông điệp số 2'], ans: 1,
+      why: 'Số thập phân thể hiện <b>lồng nhau</b>: khi <code>:QuảnLýĐặtVé</code> nhận thông điệp 2 (đặtVé), nó phải gọi tiếp 2.1, 2.2, 2.3 theo thứ tự. Thiếu số này thì collaboration mất đi khả năng diễn tả thứ tự.' },
+    { t: 'mc', q: 'Giữa :QuảnLýĐặtVé và :ChuyếnXe có một đường liên kết (link). Điều đó đòi hỏi gì ở class diagram?',
+      opts: ['Không đòi hỏi gì', 'Phải có quan hệ (association hoặc dependency) giữa hai lớp tương ứng'], ans: 1,
+      why: 'Mỗi link là một thể hiện của một quan hệ. Đây là cách kiểm tra chéo hữu ích: nếu vẽ xong collaboration mà class diagram không có quan hệ nào cho link đó thì <b>class diagram đang thiếu</b>.' }
+  ]
+};
+/* ---------------- CLASS ---------------- */
+CH.cls = {
+  hook: '<b>Câu hỏi mồi:</b> trong yêu cầu của đồ án có hàng chục danh từ, nhưng chỉ vài cái trở thành lớp. Hãy thử <i>lọc danh từ</i> ngay bên dưới (phương pháp ở chương 5) trước khi nhìn sơ đồ, rồi xem bạn lọc giống nhóm mình tới đâu.',
+  items: [
+    { t: 'sort', ex: 'bus', q: 'Phân loại các danh từ lấy từ yêu cầu: cái nào là <b>Lớp</b>, <b>Thuộc tính</b> của lớp khác, hay <b>Loại</b> (không đưa vào mô hình)?',
+      cats: ['Lớp', 'Thuộc tính', 'Loại'],
+      rows: [
+        ['Chuyến xe', 0, 'Có tên, có vòng đời (tạo, chạy, kết thúc), có nhiều thông tin đi kèm.'],
+        ['Ghế', 0, 'Tinh tế: đây là <i>ghế của một chuyến</i> (A12 chuyến 7h khác A12 chuyến 9h) và có trạng thái riêng, nên là lớp.'],
+        ['Giờ khởi hành', 1, 'Chỉ là một giá trị mô tả Chuyến xe, không có vòng đời riêng.'],
+        ['Số điện thoại', 1, 'Giá trị mô tả Khách hàng/Hành khách.'],
+        ['Màn hình đặt vé', 2, 'Là thành phần giao diện (boundary), ở mức phân tích ta chưa đưa vào class diagram nghiệp vụ.'],
+        ['Mã OTP', 1, 'Giá trị tạm, gắn với một lần xác thực. Có thể thành lớp nếu cần lưu lịch sử gửi, nhưng ở mức phân tích để là thuộc tính.'],
+        ['Hệ thống', 2, 'Chính là thứ ta đang xây, không phải đối tượng bên trong nó.'],
+        ['Thanh toán', 0, 'Có vòng đời (chờ, thành công, thất bại), có số tiền, thời điểm, phương thức.']
+      ] },
+    { t: 'debate', ex: 'bus', q: 'Một khách đặt <b>3 ghế</b> trong một lần. Nên tạo <b>1 vé gồm 3 ghế</b> hay <b>3 vé</b> (mỗi ghế một vé)? Không có đáp án “đúng tuyệt đối”, hãy chọn rồi xem hậu quả.',
+      opts: [
+        { l: '1 vé chứa 3 ghế', r: 'Hóa đơn gọn, thanh toán một lần là đủ. Nhưng muốn hủy riêng 1 ghế thì phải sửa vé (chia nhỏ tiền, đổi trạng thái từng ghế), và bạn cần một bảng chi tiết cho danh sách ghế (quy tắc 7 ở tab Class → RDM).' },
+        { l: '3 vé, mỗi vé 1 ghế', r: 'Hủy từng ghế dễ, trạng thái vé đơn giản, class diagram Vé–Ghế là 1–1. Nhưng thanh toán 3 vé cùng lúc cần một khái niệm gom lại (ví dụ “Đơn đặt”) nếu không muốn thanh toán 3 lần.' }
+      ], end: 'Nhiều nhóm chọn mô hình “Đơn đặt” có nhiều “Vé”: cả hai ưu điểm, đổi lại thêm một lớp. Điểm cần nhớ: mỗi lựa chọn ở class diagram kéo theo hệ quả ở RDM và API, nên hãy chọn khi còn là hình vẽ.' },
+    { t: 'mc', ex: 'bus', q: 'Hủy một chuyến xe thì các ghế của chuyến đó (cùng trạng thái giữ/đã bán) còn ý nghĩa không? Quan hệ Chuyến xe – Ghế là gì?',
+      opts: ['Aggregation (hình thoi rỗng)', 'Composition (hình thoi đặc)'], ans: 1,
+      why: 'Ghế-của-chuyến không thể tồn tại nếu chuyến mất: đó là <b>composition</b>, “bộ phận chết theo toàn thể”. Hệ quả đẹp ở RDM: khóa chính của Ghế sẽ <i>chứa</i> khóa của Chuyến (mã chuyến + số ghế). Bạn sẽ gặp lại điều này ở tab Class → RDM.' },
+    { t: 'mc', q: 'KháchHàng và NhânViên kế thừa NgườiDùng. Tại sao không gộp thành một lớp NgườiDùng có thuộc tính <code>vaiTro</code>?',
+      opts: ['Không có lý do, gộp cũng được', 'Chỉ nên tách thành lớp con khi các loại có <b>hành vi hoặc thuộc tính riêng</b> đáng kể'], ans: 1,
+      why: 'Nếu hai loại chỉ khác nhau một giá trị thì đó là thuộc tính. Còn khi NhânViên có “bán vé hộ”, KháchHàng có “đặt vé, hủy vé” và mỗi bên có dữ liệu riêng, kế thừa diễn tả đúng hơn. Quyết định này sẽ chuyển thành 1 trong 3 cách ở quy tắc 5 khi sang RDM.' }
+  ]
+};
+/* ---------------- OBJECT ---------------- */
+CH.obj = {
+  hook: '<b>Câu hỏi mồi:</b> Object diagram là “ảnh chụp” của class diagram tại một khoảnh khắc. Dùng nó như một <i>bài kiểm tra</i>: nếu bạn không vẽ nổi một tình huống có thật bằng các lớp đã thiết kế, class diagram của bạn sai.',
+  items: [
+    { t: 'mc', ex: 'bus', q: 'Khách An mua 1 vé ghế A12 cho chuyến 7h30. Sau đó An hủy vé, rồi một khách khác mua <b>cùng ghế A12</b> cùng chuyến. Với class diagram, ghế A12 giờ gắn với mấy vé?',
+      opts: ['1 vé (vé cũ bị xóa)', '2 vé: vé đã hủy và vé đang hiệu lực'], ans: 1,
+      why: 'Nếu bạn xóa vé cũ thì mất lịch sử giao dịch và thống kê doanh thu sai. Vì vậy theo thời gian, một ghế có thể có <b>nhiều vé</b> (quan hệ 1–nhiều), nhưng tại mỗi thời điểm chỉ có đúng một vé đang hiệu lực. Chính tình huống tưởng nhỏ này làm lộ ra điều class diagram và RDM phải xử lý (đừng đặt ràng buộc UNIQUE đơn giản trên cặp chuyến+ghế).' },
+    { t: 'mc', q: 'Vì sao liên kết trong object diagram không có bội số như 0..* ?',
+      opts: ['Vì vẽ cho gọn', 'Vì mỗi liên kết là một cặp đối tượng cụ thể, bội số chỉ có nghĩa ở mức lớp'], ans: 1,
+      why: 'Bội số là luật cho <i>cả lớp</i> (“một khách có thể có 0 hoặc nhiều vé”). Object diagram vẽ <i>một trường hợp</i> (“An có đúng 1 vé v1”), nên chỉ cần đường nối.' }
+  ]
+};
+/* ---------------- STATE ---------------- */
+CH.st = {
+  hook: '<b>Câu hỏi mồi:</b> Lúc 7:00 ghế A12 “trống”, 7:01 “đang giữ”, 7:11 lại “trống”, trong khi lúc 7:11 không ai bấm gì cả. Ai làm ghế đổi trạng thái? Một sơ đồ tuần tự không trả lời được, vì nó chỉ vẽ các cuộc gọi. State diagram sinh ra cho đúng chuyện này: <b>mỗi mũi tên là một quyền được phép, mũi tên không vẽ là một lệnh cấm</b>.',
+  items: [
+    { t: 'mc', q: 'Sự kiện “quá 10 phút” không do người dùng gây ra. Cách cài đặt nào <b>chắc chắn sai</b>?',
+      opts: ['Lưu thời điểm hết hạn trong CSDL và coi ghế là trống khi quá thời điểm đó', 'Frontend đếm 10 phút rồi gọi API nhả ghế', 'Một tác vụ định kỳ quét và nhả các ghế quá hạn'], ans: 1,
+      why: 'Nếu khách tắt trình duyệt hoặc mất mạng thì frontend không còn gọi API nữa và ghế bị giữ mãi. <b>Đừng để bên ngoài hệ thống quyết định tính đúng đắn của dữ liệu.</b> Cách 1 và 3 (thường dùng kết hợp) đáng tin vì hạn giữ nằm trong dữ liệu của backend.' },
+    { t: 'mc', q: 'Vé đang ở trạng thái “Đã thanh toán”. Sự kiện “quá 10 phút” xảy ra. Điều gì xảy ra?',
+      opts: ['Vé bị hủy', 'Không có gì: sự kiện này không có mũi tên đi ra từ trạng thái đó'], ans: 1,
+      why: 'Sự kiện chỉ có nghĩa <b>trong trạng thái chịu nó</b>. Đây là chỗ hay sinh lỗi trong code: đồng hồ 10 phút vẫn đếm và bắn sau khi đã thanh toán. Vì vậy trạng thái “Đang giữ chỗ” có hành vi <code>exit</code> (khi rời đi thì hủy đồng hồ), xem phần ký hiệu “Hành vi nội bộ”.' },
+    { t: 'mc', q: 'Có thể đi từ “Đã hủy” trở lại “Đang giữ chỗ” không?',
+      opts: ['Được, nếu khách đổi ý', 'Không, vì không có mũi tên đó; muốn có thì phải tạo vé mới'], ans: 1,
+      why: 'Mỗi trạng thái cuối là một <b>quy tắc nghiệp vụ</b>: vé đã hủy không sống lại (không thì hoàn tiền rồi mà vé vẫn dùng được!). Khi viết backend, bạn có thể dựng một bảng chuyển trạng thái hợp lệ và <b>từ chối</b> mọi cặp không có trong sơ đồ.' }
+  ]
+};
+/* ---------------- COMPONENT ---------------- */
+CH.cmp = {
+  hook: '<b>Câu hỏi mồi:</b> nếu hôm nay thay mock thanh toán bằng một cổng thật, bao nhiêu thành phần trong sơ đồ phải sửa? Mục đích của component diagram là làm cho câu trả lời này là <i>“một”</i>.',
+  items: [
+    { t: 'mc', q: 'ĐặtVéService phụ thuộc vào giao diện <code>IThanhToán</code> chứ không phụ thuộc trực tiếp vào ThanhToánService. Lợi ích chính?',
+      opts: ['Chạy nhanh hơn', 'Thay cách cài đặt thanh toán mà không phải sửa ĐặtVéService'], ans: 1,
+      why: 'Đây là ý tưởng “phụ thuộc vào giao diện, không phụ thuộc vào cài đặt” (cùng tư tưởng với Clean Architecture mà bạn dùng cho backend). Khi mock đổi thành cổng thật, chỉ bên <i>cung cấp</i> giao diện đổi.' },
+    { t: 'mc', q: 'Ký hiệu hình tròn (lollipop) và nửa vòng (socket) gắn vào component: cái nào là bên <b>cung cấp</b>, cái nào là bên <b>cần</b>?',
+      opts: ['Hình tròn cung cấp, nửa vòng cần', 'Hình tròn cần, nửa vòng cung cấp'], ans: 0,
+      why: 'Mẹo nhớ: nửa vòng “ôm” lấy hình tròn như ổ cắm ôm phích. Bên có hình tròn <i>đưa ra</i> dịch vụ, bên có nửa vòng <i>nhận</i> dịch vụ.' }
+  ]
+};
+/* ---------------- DEPLOYMENT ---------------- */
+CH.dep = {
+  hook: '<b>Câu hỏi mồi:</b> docker-compose của đồ án có 3 service. Đó là <b>3 layer</b> hay <b>3 tier</b>? Chương 6 phân biệt rất rõ hai khái niệm này, và Deployment diagram là nơi bạn trả lời đúng.',
+  items: [
+    { t: 'mc', q: 'Layer (tầng logic) và Tier (tầng vật lý) khác nhau thế nào?',
+      opts: ['Là hai tên gọi của cùng một thứ', 'Layer chia <b>code</b> theo trách nhiệm; Tier chia theo <b>nơi chạy</b> (máy/tiến trình/container)'], ans: 1,
+      why: 'Trong backend FastAPI theo Clean Architecture bạn có nhiều layer (router, use case, repository…) nhưng tất cả chạy trong <b>một</b> tier (service API). Còn React, FastAPI, MySQL là 3 tier chạy trong 3 container. Một hệ thống có thể là “1-tier, 3-layer”, “3-tier, 3-layer”… đúng như slide chương 6.' },
+    { t: 'mc', q: 'Đường kết nối nào <b>không được</b> xuất hiện trong sơ đồ triển khai của đồ án?',
+      opts: ['Trình duyệt → Backend API (HTTPS)', 'Backend API → MySQL', 'Trình duyệt → MySQL trực tiếp', 'Backend API → mock thanh toán'], ans: 2,
+      why: 'Nếu trình duyệt nói chuyện thẳng với CSDL thì chuỗi kết nối và quyền truy cập nằm trên máy khách, ai cũng đọc được. Nhìn sơ đồ để <b>tìm đường không nên có</b> cũng quan trọng không kém tìm đường cần có. Trong Docker Compose, thường chỉ cổng của frontend/API được mở ra ngoài, còn MySQL chỉ nằm trong mạng nội bộ.' }
+  ]
+};
+/* ===== Tab 0: Bản đồ môn ===== */
+const STAGES = ['Yêu cầu', 'Use Case', 'Sequence', 'Class', 'State', 'RDM', 'Giao diện'];
+const STAGE_CH = ['Ch3', 'Ch4', 'Ch4', 'Ch5', 'Ch5', 'Ch6', 'Ch6'];
+const JOURNEYS = [
+  { name: 'Ghế giữ 10 phút', req: 'Sau khi chọn ghế, khách có 10 phút để thanh toán; hết giờ thì ghế mở lại cho người khác.', st: [
+    { t: 'Câu này chứa một con số (10) và một sự kiện không ai bấm (hết giờ). Hai thứ đó sẽ đi về hai nơi khác nhau. Bạn đoán xem là đâu?', q: 'Cứ giữ câu hỏi này, bước RDM và State sẽ trả lời.' },
+    { none: 1, t: 'Không có use case riêng. Không tác nhân nào có mục tiêu “nhả ghế”. Khóa ghế là bước 3 của luồng chính Đặt vé, “quá 10 phút” là luồng thay thế 5a.', q: 'Một yêu cầu quan trọng mà không thành use case là chuyện bình thường.' },
+    { t: 'Thông điệp <code>khóaGhế(ghế, 10 phút)</code> từ :QuảnLýĐặtVé tới :ChuyếnXe, nằm trong nhánh alt [ghế còn trống]. Nhánh kia báo “ghế đã có người đặt”.', q: 'Kiểm tra ghế và khóa ghế là hai bước tách rời, đó là chỗ có thể đua dữ liệu (race condition).' },
+    { t: 'Lớp Ghế (ghế-của-chuyến) có thuộc tính <code>trạngThái</code> và <code>giữĐến: DateTime</code>; phương thức <code>giữ()</code>, <code>nhả()</code>.', q: '“10 phút” không nằm trong lớp nào cả: nó là tham số cấu hình.' },
+    { t: 'Ghế: Trống → [chọn ghế] Đang giữ (entry / giữĐến = bây giờ + 10 phút) → [thanh toán thành công] Đã bán; hoặc → [quá hạn] Trống.', q: 'Sự kiện “quá hạn” là sự kiện thời gian. Chỉ state diagram có chỗ đặt nó.' },
+    { t: 'Bảng <code>GheChuyen(MaChuyen, SoGhe, MaTrangThai, GiuDen)</code>, khóa chính ghép (MaChuyen, SoGhe) vì Ghế là một phần của Chuyến (composition). Trạng thái là bảng danh mục (quy tắc 8). Số 10 nằm ở bảng tham số (quy tắc 9): <code>THOI_GIAN_GIU_GHE = 10</code>.', q: 'Nếu code cứng số 10 thì đổi sang 15 phút là phải sửa và triển khai lại. Với bảng tham số chỉ cần sửa một dòng.' },
+    { t: 'Màn hình thanh toán có đồng hồ đếm ngược. Biến cố “hết giờ”: báo và quay lại chọn ghế. D1: ghế đã chọn; D2: thời gian còn lại; D3: <code>giữĐến</code> đọc từ CSDL.', q: 'Đồng hồ trên màn hình chỉ để hiển thị. Nguồn sự thật là <code>giữĐến</code> ở server.' }] },
+  { name: 'Hủy vé cần đăng nhập', req: 'Khách có tài khoản nhưng không bắt buộc đăng nhập khi mua. Muốn hủy vé thì phải đăng nhập.', st: [
+    { t: 'Câu này ngầm hỏi: vé mua lúc chưa đăng nhập thì thuộc về ai?', q: 'Giữ câu hỏi này, nó sẽ quay lại ở bước Class.' },
+    { t: 'Hủy vé «include» Đăng nhập (bắt buộc). Đặt vé được «extend» bởi Đăng nhập (tùy chọn).', q: 'Cùng một use case nhưng hai quan hệ khác nhau, tùy bên dùng nó.' },
+    { t: 'Trước khi hủy: <code>xácThực(token)</code>. Nhánh alt [chưa đăng nhập] chuyển sang đăng nhập; [đã đăng nhập] chạy <code>kiểmTraQuyềnSởHữu(vé)</code> rồi <code>hủy()</code>.', q: 'Hai câu hỏi khác nhau: “bạn là ai?” (xác thực) và “vé này của bạn không?” (phân quyền). Thiếu câu thứ hai là lỗ hổng kinh điển.' },
+    { t: 'Vé có liên kết 0..1 tới KháchHàng (vé mua khi chưa đăng nhập thì chưa có chủ tài khoản). Phương thức <code>hủy()</code> ở Vé.', q: 'Mua khi chưa đăng nhập rồi đăng nhập sau có hủy được không? Nhóm phải chốt (ví dụ gắn theo số điện thoại đã xác thực OTP).' },
+    { t: 'Vé: Đã thanh toán → [hủyVé, còn hơn 4 giờ trước giờ đi] Đã hủy. Không có mũi tên nào đi từ Đã hủy trở lại.', q: 'Con số 4 giờ là một tham số nghiệp vụ, không nên là hằng số trong code.' },
+    { t: '<code>Ve.MaKH</code> là khóa ngoại <b>cho phép NULL</b> (quan hệ 0..1). Trạng thái vé nằm ở bảng danh mục <code>TrangThaiVe</code>.', q: 'NULL ở khóa ngoại nghĩa là “chưa biết chủ”. Code phải xử lý được trường hợp này.' },
+    { t: 'Nút “Hủy vé” ở lịch sử vé. Biến cố bấm Hủy: nếu chưa có JWT hợp lệ thì chuyển tới đăng nhập, ngược lại hiện hộp xác nhận.', q: 'Chương 6: tác vụ mang tính phá hoại phải yêu cầu xác nhận.' }] },
+  { name: 'Bán vé tại quầy', req: 'Nhân viên bán vé cho khách đến quầy; lúc thanh toán chọn tiền mặt hoặc online.', st: [
+    { t: 'Hai cách thu tiền khác nhau. Bạn nghĩ đó là hai use case hay một?', q: 'Đoán rồi mới sang bước sau.' },
+    { t: 'Một use case: Bán vé tại quầy «include» Thanh toán. Tiền mặt hay online là hai nhánh bên trong Thanh toán.', q: 'Cùng mục tiêu, khác cách làm: đó là luồng thay thế, không phải use case mới.' },
+    { t: 'Khung alt: [tiền mặt] nhân viên <code>xácNhậnĐãThu()</code>; [online] gọi <code>:CổngThanhToán.thanhToán()</code>. Cả hai nhánh cùng kết thúc bằng <code>tạoVé()</code>.', q: 'Nhánh tiền mặt không có đối tượng :CổngThanhToán.' },
+    { t: 'Vé có liên kết 0..1 tới NhânViên (bán hộ). <code>ThanhToán.phươngThức</code> nhận một trong các giá trị: tiền mặt, online.', q: 'Một lớp ThanhToán dùng chung cho cả hai nhánh: lợi của việc không tách hai use case.' },
+    { t: 'Vòng đời vé giống hệt vé mua online. Không cần vẽ thêm state diagram.', q: 'Một sơ đồ dùng lại được cho nhiều tình huống là dấu hiệu mô hình tốt.' },
+    { t: '<code>Ve.MaNVBan</code> (FK, cho phép NULL) và <code>PhuongThucThanhToan</code> là bảng danh mục (quy tắc 8).', q: '' },
+    { t: 'Màn hình bán vé có nhóm Tiền mặt / Online. Chọn Tiền mặt: hiện ô “số tiền nhận” và tiền thối. Chọn Online: hiện nút thanh toán (mock).', q: 'Nguyên tắc chương 6: chỉ hiển thị thông tin phù hợp với ngữ cảnh hiện tại.' }] },
+  { name: 'Thống kê doanh thu', req: 'Quản trị viên xem doanh thu và số vé theo tuyến, theo khoảng ngày.', st: [
+    { t: 'Báo cáo có cần một lớp “BáoCáo” lưu trong CSDL không? Đoán trước.', q: '' },
+    { t: 'Use case Thống kê báo cáo, tác nhân Quản trị viên. Theo quyết định nhóm, vẽ thành một sơ đồ riêng.', q: '' },
+    { t: 'Chuỗi ngắn: Quản trị viên → :MànHìnhThốngKê → :QuảnLýThốngKê → truy vấn Vé/ThanhToán rồi trả kết quả. Không có create, không có alt phức tạp.', q: 'Sơ đồ ngắn vẫn hợp lệ. Đừng vẽ thêm cho đủ.' },
+    { none: 1, t: 'Không thêm lớp thực thể. “Báo cáo” là kết quả tính từ Vé, ThanhToán, Tuyến. Chỉ cần một lớp điều phối.', q: 'Dữ liệu tính ra được thì đừng lưu.' },
+    { none: 1, t: 'Không có state diagram: báo cáo không có vòng đời trạng thái đáng kể.', q: 'Không chức năng nào cũng cần đủ mọi sơ đồ. Biết khi nào bỏ qua cũng là kỹ năng.' },
+    { none: 1, t: 'Không có bảng BaoCao. Dùng truy vấn <code>GROUP BY</code> trên Ve, ThanhToan, ChuyenXe, Tuyen (hoặc một view). Dữ liệu tăng nhanh theo thời gian nên cân nhắc chỉ mục theo ngày.', q: 'Chương 6 nhắc: khối lượng dữ liệu phát sinh nhanh theo thời gian, truy xuất phải nhanh.' },
+    { t: 'Bộ lọc (từ ngày, đến ngày, tuyến), bảng số liệu và biểu đồ.', q: 'Chương 6: biểu đồ chỉ chứa dữ liệu tổng hợp để xem xu hướng; cần số cụ thể thì dùng bảng.' }] }
+];
+function buildMap(panel) {
+  panel.classList.add('lb');
+  let cur = 0, shown = 1;
+  panel.innerHTML = '<h2>Bản đồ môn: một câu yêu cầu đi qua những sơ đồ nào?</h2>' +
+    '<div class="why">Các chương 3 đến 6 không phải bảy môn rời nhau. Chúng là <b>cùng một câu yêu cầu</b> được biến hình qua từng bước. Chọn một yêu cầu thật của đồ án, bấm <b>Next</b> (hoặc phím →) để xem nó trở thành gì ở mỗi bước. Có bước nó <b>biến mất</b>, và đó cũng là điều đáng biết.</div>' +
+    '<div class="mapbar"></div><div class="req"></div><div class="stages"></div><div class="mapnote src"></div>' +
+    '<h3 style="margin-top:22px">Môn yêu cầu nộp gì, và bảng nào đi kèm sơ đồ nào?</h3>' +
+    '<div class="tblw">' + table(['Nội dung báo cáo (theo yêu cầu đồ án)', 'Sơ đồ / hình', 'Bảng đi kèm để đạt điểm', 'Tab trong lab'], [
+      ['Mô hình Use Case, đặc tả use case', 'Use Case (mỗi chức năng một hình)', 'Danh sách tác nhân, danh sách use case, bảng đặc tả từng use case', '1 và 11'],
+      ['Mô hình Sequence', 'Sequence', 'Bảng thông điệp (nguồn, đích, phương thức)', '3'],
+      ['Thiết kế lớp đối tượng', 'Class', 'Danh sách lớp + mô tả từng lớp (thuộc tính, phương thức chính)', '5'],
+      ['Thiết kế cơ sở dữ liệu', 'RDM (không dùng ERD)', 'Mô tả từng bảng: cột, kiểu, khóa chính, khóa ngoại, ràng buộc', '10'],
+      ['Thiết kế giao diện', 'Hình từng màn hình', 'Danh sách thành phần + danh sách biến cố (+ bảng thiết kế xử lý)', '12'],
+      ['(Bonus, không bắt buộc) hành vi theo trạng thái', 'State', 'Bảng chuyển trạng thái: sự kiện, điều kiện, hành động', '7']
+    ]) + '</div><p class="src">Thứ tự làm của nhóm: BFD + kế hoạch, rồi (1) Use Case + đặc tả, (2) Sequence + Class, (3) RDM + giao diện, và chỉ bắt đầu code sau pha 1 và 2.</p>';
+  const bar = panel.querySelector('.mapbar'), reqEl = panel.querySelector('.req'), box = panel.querySelector('.stages'), note = panel.querySelector('.mapnote');
+  const cards = [];
+  function build() {
+    const J = JOURNEYS[cur]; box.innerHTML = ''; cards.length = 0;
+    reqEl.innerHTML = '<div class="reqc"><b>Câu yêu cầu:</b> “' + esc(J.req) + '”</div>';
+    J.st.forEach(function (s, i) {
+      const c = h('div', 'stg' + (s.none ? ' none' : ''));
+      c.innerHTML = '<div class="sh"><span class="n">' + (i + 1) + '</span><b>' + STAGES[i] + '</b><span class="chp">' + STAGE_CH[i] + '</span>' + (s.none ? '<span class="chp nn">không có, và đúng</span>' : '') + '</div><p>' + s.t + '</p>' + (s.q ? '<p class="curio">❓ ' + s.q + '</p>' : '');
+      box.appendChild(c); cards.push(c);
+    });
+    shown = 1; apply();
+  }
+  function apply() {
+    cards.forEach(function (c, i) { c.style.display = i < shown ? '' : 'none'; });
+    note.innerHTML = 'Đã lần theo <b>' + shown + '/' + cards.length + '</b> bước. ' + (shown < cards.length ? 'Bấm Next để biết bước tiếp theo.' : 'Xong. Thử chọn yêu cầu khác để xem nó đi theo đường khác thế nào.');
+    if (window.VLabShell && VLabShell.sync) VLabShell.sync();
+  }
+  chips(bar, JOURNEYS.map(function (j) { return j.name; }), 0, function (k) { cur = k; build(); });
+  build();
+  return { stepper: {
+    next: async function () { if (shown >= cards.length) return; shown++; apply(); await VLabPlayer.enter(cards[shown - 1]); },
+    back: function () { if (shown > 1) { shown--; apply(); } },
+    reset: function () { shown = 1; apply(); },
+    canNext: function () { return shown < cards.length; }, canBack: function () { return shown > 1; } } };
+}
+/* ===== Tab: Xuất use case sang Markdown cho AI viết backend ===== */
+const MD_FN = {
+  'Đặt vé': {
+    diagram: `# UC02 Đặt vé: chuyển đổi từ sơ đồ
 
-</body></html>
+## Tác nhân
+| Tác nhân | Loại | Ghi chú cho backend |
+|---|---|---|
+| Khách hàng | chính | KHÔNG bắt buộc đăng nhập |
+| Cổng thanh toán | hỗ trợ (hệ thống ngoài) | hiện cài bằng mock service; code phải gọi qua interface, không gọi thẳng mock |
+
+## Use case
+| ID | Tên | Tác nhân chính |
+|---|---|---|
+| UC02 | Đặt vé | Khách hàng |
+| UC04 | Thanh toán | Cổng thanh toán (hỗ trợ) |
+| UC05 | Đăng nhập | Khách hàng |
+
+## Quan hệ
+| Từ | Loại | Đến | Ý nghĩa khi viết code |
+|---|---|---|---|
+| Khách hàng | association | UC02 | endpoint công khai, không cần JWT |
+| UC02 | include | UC04 | luôn gọi bước thanh toán trong luồng Đặt vé |
+| UC05 | extend | UC02 | nếu có JWT thì điền sẵn thông tin hành khách; không có JWT vẫn đặt được |
+
+## Không phải use case (đừng tạo endpoint/dịch vụ riêng chỉ vì tên)
+- "Chọn ghế": là một bước trong UC02.
+- "Nhả ghế sau 10 phút": hành vi theo trạng thái ghế (xem state diagram), không có tác nhân.
+`,
+    clear: `# UC02 Đặt vé: đặc tả
+
+- Tác nhân chính: Khách hàng (có thể chưa đăng nhập)
+- Tác nhân hỗ trợ: Cổng thanh toán (mock)
+- Tiền điều kiện: chuyến tồn tại, giờ khởi hành còn ở tương lai, còn ít nhất 1 ghế trạng thái TRONG
+
+## Luồng chính
+1. Khách chọn chuyến.
+2. Hệ thống trả về sơ đồ ghế (mỗi ghế: số ghế, trạng thái TRONG / DANG_GIU / DA_BAN).
+3. Khách chọn 1..N ghế TRONG (N là tham số SO_GHE_TOI_DA_MOI_LAN, chưa chốt).
+4. Hệ thống KHÓA TẠM các ghế đó: chuyển TRONG → DANG_GIU và ghi GiuDen = now + THOI_GIAN_GIU_GHE (mặc định 10 phút). Thao tác này phải NGUYÊN TỬ (không để hai người cùng khóa một ghế).
+5. Khách nhập họ tên, số điện thoại.
+6. Hệ thống thực hiện UC04 Thanh toán.
+7. Nếu thanh toán thành công: tạo vé, ghế DANG_GIU → DA_BAN, trả về mã vé.
+
+## Luồng thay thế
+- 4a. Có ghế đã bị người khác khóa/mua → trả lỗi xung đột, KHÔNG khóa ghế nào (hoặc hoàn tác cả lô), kèm sơ đồ ghế mới.
+- 6a. Thanh toán thất bại → giữ ghế đến hết GiuDen, cho thử lại; hết hạn thì ghế về TRONG.
+- 6b. Quá GiuDen → ghế về TRONG, báo hết hạn.
+
+## Hậu điều kiện
+- Thành công: có Vé hợp lệ; GheChuyen.TrangThai = DA_BAN.
+- Thất bại: không có vé; ghế về TRONG (ngay hoặc khi hết hạn).
+
+## Câu hỏi nhóm chưa chốt (AI không được tự quyết)
+- Giới hạn số ghế mỗi lần?
+- Khóa ghế khi bấm chọn hay khi bấm Tiếp tục?
+`,
+    vague: `# Đặt vé
+Khách chọn chuyến, chọn ghế và thanh toán. Hệ thống giữ ghế một lúc cho khách thanh toán rồi gửi vé.`,
+    guess: ['"giữ ghế một lúc" là bao lâu, và con số đó cố định hay cấu hình được?', 'Hai người cùng chọn một ghế thì ai thắng, và hệ thống chống chuyện đó bằng cách nào?', 'Khách có phải đăng nhập không?', 'Thanh toán thất bại thì ghế giữ lại hay nhả ngay?', '"gửi vé" bằng cách nào (SMS, email, chỉ hiển thị)?']
+  },
+  'Hủy vé': {
+    diagram: `# UC03 Hủy vé: chuyển đổi từ sơ đồ
+
+## Tác nhân
+| Tác nhân | Loại | Ghi chú cho backend |
+|---|---|---|
+| Khách hàng | chính | BẮT BUỘC đăng nhập (JWT) |
+
+## Use case
+| ID | Tên | Tác nhân chính |
+|---|---|---|
+| UC03 | Hủy vé | Khách hàng |
+| UC05 | Đăng nhập | Khách hàng |
+
+## Quan hệ
+| Từ | Loại | Đến | Ý nghĩa khi viết code |
+|---|---|---|---|
+| Khách hàng | association | UC03 | chỉ người dùng đã xác thực được gọi |
+| UC03 | include | UC05 | endpoint dùng dependency xác thực JWT; KHÔNG tạo endpoint hủy riêng cho "đăng nhập" |
+
+## Lưu ý
+- "Đã đăng nhập" mới là điều kiện CẦN. Còn phải kiểm tra vé thuộc về người đó (phân quyền).
+`,
+    clear: `# UC03 Hủy vé: đặc tả
+
+- Tác nhân chính: Khách hàng đã đăng nhập
+- Tiền điều kiện (kiểm tra theo thứ tự này):
+  1. JWT hợp lệ, chưa hết hạn
+  2. Vé tồn tại và Ve.MaKH = id người dùng trong JWT
+  3. Ve.TrangThai = DA_THANH_TOAN
+  4. (giờ khởi hành - bây giờ) > THOI_GIAN_HUY_TOI_THIEU (tham số, mặc định 4 giờ)
+
+## Luồng chính
+1. Khách mở lịch sử vé, chọn vé, bấm Hủy.
+2. Giao diện hiện hộp xác nhận; khách xác nhận.
+3. Hệ thống kiểm tra tiền điều kiện.
+4. Trong MỘT giao dịch CSDL: Ve.TrangThai = DA_HUY và GheChuyen.TrangThai = TRONG.
+5. Trả về kết quả; giao diện hiện thông báo.
+
+## Luồng thay thế (mã lỗi là gợi ý, nhóm chốt theo quy ước endpoint của môn SE)
+- 3a. Thiếu hoặc hết hạn JWT → 401, giao diện chuyển tới đăng nhập.
+- 3b. Vé không thuộc người dùng → 403 (không tiết lộ vé có tồn tại hay không).
+- 3c. Vé không ở trạng thái DA_THANH_TOAN → 409.
+- 3d. Quá hạn hủy → 422 kèm số giờ tối thiểu.
+
+## Hậu điều kiện
+- Vé DA_HUY, không thể chuyển ngược về trạng thái khác.
+- Ghế được bán lại được; vé cũ vẫn giữ trong CSDL (phục vụ thống kê).
+
+## Câu hỏi nhóm chưa chốt
+- Hoàn tiền xử lý thế nào (ghi nhận trạng thái hoàn bằng mock?)
+- Vé mua khi chưa đăng nhập: đăng nhập sau có hủy được không, nhận diện bằng gì?
+`,
+    vague: `# Hủy vé
+Khách hàng có thể hủy vé nếu còn sớm. Hệ thống sẽ hoàn tiền và mở lại ghế.`,
+    guess: ['"còn sớm" là bao lâu trước giờ đi?', 'Ai được hủy: cần đăng nhập không? Vé của người khác thì sao?', 'Hoàn bao nhiêu tiền, bằng cách nào (hệ thống chỉ có cổng giả lập)?', 'Ghế mở lại cùng lúc với đổi trạng thái vé, hay làm sau? Nếu giữa chừng lỗi thì sao?', 'Vé ở trạng thái nào mới hủy được? Hủy hai lần thì sao?', 'Lỗi trả mã gì, thông báo gì?']
+  }
+};
+function buildMd(panel) {
+  panel.classList.add('lb');
+  let fn = 'Đặt vé', kind = 'diagram';
+  panel.innerHTML = '<h2>Xuất use case cho AI đọc để viết backend</h2>' +
+    '<div class="why">Bạn chuyển use case sang markdown để AI viết backend. AI chỉ làm đúng những gì <b>đọc được</b>. Một chỗ bạn viết mơ hồ là một chỗ AI sẽ <b>đoán</b>, và đoán sai thì lỗi nằm trong code chạy được nhưng sai nghiệp vụ. Tab này cho bạn thấy cùng một use case viết hai kiểu cho AI đọc ra hai kết quả khác nhau thế nào. Gợi ý tách 2 file: <b>file chuyển đổi sơ đồ</b> (ai, use case nào, quan hệ nào) và <b>file đặc tả</b> (luồng, điều kiện, lỗi).</div>' +
+    '<div class="bar fnbar"></div><div class="bar kbar"></div><div class="mdinfo"></div><pre class="mdpre"></pre>' +
+    '<div class="bar"><button class="btn cp">Sao chép nội dung</button><button class="btn dl">Tải về dạng .md</button><span class="src cpmsg"></span></div><div class="guess"></div>' +
+    '<div class="card" style="margin-top:14px"><h3>Thử thách: hai kiểu viết, hai kết quả</h3><p>Chọn <b>“Đặc tả (viết mơ hồ)”</b>, đọc như thể bạn là AI và tự liệt kê những chỗ phải đoán. Rồi bấm hiện danh sách để đối chiếu. Sau đó chuyển sang bản viết rõ và đếm xem còn bao nhiêu chỗ phải đoán (mục tiêu: những chỗ còn lại phải được ghi rõ là <i>“nhóm chưa chốt”</i>, không được lặng lẽ để trống).</p></div>';
+  const pre = panel.querySelector('.mdpre'), info = panel.querySelector('.mdinfo'), guess = panel.querySelector('.guess'), cpmsg = panel.querySelector('.cpmsg');
+  const kinds = [['diagram', 'Chuyển đổi sơ đồ'], ['clear', 'Đặc tả (viết rõ)'], ['vague', 'Đặc tả (viết mơ hồ)']];
+  function fileName() { return (fn === 'Đặt vé' ? 'uc02-dat-ve' : 'uc03-huy-ve') + (kind === 'diagram' ? '-so-do' : '-dac-ta') + '.md'; }
+  function show() {
+    const D = MD_FN[fn], txt = D[kind]; pre.textContent = txt;
+    info.innerHTML = '<span class="src">Tên file gợi ý: <code>' + fileName() + '</code> · ' + txt.split('\n').length + ' dòng</span>';
+    guess.innerHTML = '';
+    if (kind === 'vague') {
+      const b = h('button', 'btn', 'Hiện danh sách những chỗ AI sẽ phải đoán'); b.type = 'button';
+      const ul = h('ul', null, D.guess.map(function (g) { return '<li>' + esc(g) + '</li>'; }).join('')); ul.style.display = 'none';
+      b.addEventListener('click', function () { ul.style.display = ul.style.display === 'none' ? '' : 'none'; });
+      guess.appendChild(b); guess.appendChild(ul);
+    }
+  }
+  const fb = panel.querySelector('.fnbar'), kb = panel.querySelector('.kbar');
+  chips(fb, Object.keys(MD_FN), 0, function (i) { fn = Object.keys(MD_FN)[i]; show(); });
+  chips(kb, kinds.map(function (k) { return k[1]; }), 0, function (i) { kind = kinds[i][0]; show(); });
+  panel.querySelector('.cp').addEventListener('click', function () {
+    const t = pre.textContent;
+    const done = function (ok) { cpmsg.textContent = ok ? 'Đã sao chép.' : 'Trình duyệt chặn sao chép, hãy bôi đen và Ctrl+C.'; };
+    try { navigator.clipboard.writeText(t).then(function () { done(true); }, function () { done(false); }); } catch (e) { done(false); }
+  });
+  panel.querySelector('.dl').addEventListener('click', function () {
+    try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([pre.textContent], { type: 'text/markdown' })); a.download = fileName(); document.body.appendChild(a); a.click(); a.remove(); cpmsg.textContent = 'Đã tạo file ' + fileName(); } catch (e) { cpmsg.textContent = 'Không tải được trong chế độ xem này.'; }
+  });
+  show();
+  return {};
+}
+/* ===== Tab: Class → RDM (9 quy tắc của chương 6). Không dùng ERD. ===== */
+function cbox(name, attrs, stereo) { return '<div class="cb"><b>' + (stereo ? '«' + stereo + '»<br>' : '') + esc(name) + '</b>' + attrs.map(function (a) { return '<div>' + esc(a) + '</div>'; }).join('') + '</div>'; }
+function rt(name, cols) {
+  return '<div class="rt"><b>' + esc(name) + '</b>' + cols.map(function (c) {
+    const m = /^(PK,FK|PK|FK|UQ)\s+(.*)$/.exec(c); if (!m) return '<div>' + esc(c) + '</div>';
+    const cls = m[1] === 'PK' ? 'pk' : m[1] === 'FK' || m[1] === 'PK,FK' ? 'fk' : '';
+    return '<div><span class="' + cls + '">' + m[1] + '</span> ' + esc(m[2]) + '</div>';
+  }).join('') + '</div>';
+}
+function arrowRow(a, b, mid) { return '<div class="flow"><div class="side">' + a + '</div><div class="mid">' + (mid || '→') + '</div><div class="side">' + b + '</div></div>'; }
+const RULES = [
+  { n: '1', name: 'Lớp → bảng', why: 'CSDL chỉ giữ thứ phải <b>sống sau khi tắt máy</b> (dữ liệu bền, persistent). Một lớp cần lưu thì thành một bảng: thuộc tính thành cột, mỗi đối tượng thành một dòng. Chỉ thuộc tính nào ứng dụng thật sự cần lưu mới thành cột; thuộc tính tính ra được (như tổng tiền) thường không lưu.',
+    body: arrowRow(cbox('KháchHàng', ['hoTen', 'sdt', 'matKhauHash']), rt('KhachHang', ['PK MaKH', 'HoTen', 'Sdt', 'MatKhauHash']), 'một lớp → một bảng'),
+    ch: { items: [{ t: 'sort', q: 'Lớp nào trong ví dụ Đặt vé sẽ thành bảng? (Gợi ý: cái nào cần sống sau khi tắt máy?)', cats: ['Thành bảng', 'Không thành bảng'], rows: [
+      ['ChuyếnXe', 0, 'Phải nhớ chuyến nào chạy lúc nào, kể cả khi tắt server.'], ['Vé', 0, 'Bằng chứng giao dịch, phải lưu lâu dài.'], ['Ghế (của chuyến)', 0, 'Trạng thái từng ghế phải bền vững.'],
+      ['QuảnLýĐặtVé', 1, 'Lớp điều phối (control), chỉ có hành vi, không có dữ liệu cần lưu.'], ['MànHìnhĐặtVé', 1, 'Giao diện (boundary), tồn tại tạm khi người dùng đang xem.'], ['CổngThanhToán (interface)', 1, 'Là giao diện tới hệ thống ngoài, không có dữ liệu riêng. (Kết quả giao dịch thì lưu ở bảng ThanhToán.)']] }] } },
+  { n: '2', name: 'Quan hệ 1–1', why: 'Có ba hướng: đặt <b>khóa của A vào B</b>, hoặc <b>khóa của B vào A</b>, hoặc <b>gộp hai lớp thành một bảng</b>. Không có hướng nào luôn đúng, nó phụ thuộc: hai bên có hay được truy vấn cùng nhau không, và dữ liệu nào nhạy cảm cần tách ra.',
+    body: arrowRow(cbox('KháchHàng', ['hoTen', 'sdt']) + '<div class="mul">1 — 1</div>' + cbox('TàiKhoản', ['matKhauHash', 'daXacThucOTP']), rt('KhachHang', ['PK MaKH', 'HoTen', 'Sdt']) + rt('TaiKhoan', ['PK,FK MaKH', 'MatKhauHash', 'DaXacThucOTP']), 'tách + khóa ở một bên') +
+      '<p class="src">Hoặc gộp: <code>KhachHang_TaiKhoan(MaKH, HoTen, Sdt, MatKhauHash, DaXacThucOTP)</code>.</p>',
+    ch: { items: [{ t: 'debate', q: 'Nên <b>gộp</b> KháchHàng và TàiKhoản thành một bảng, hay <b>tách</b> thành hai?', opts: [
+      { l: 'Gộp một bảng', r: 'Truy vấn đơn giản, không cần JOIN. Nhưng mọi câu <code>SELECT *</code> trên khách hàng đều kéo theo cả mật khẩu băm; một lỗi nhỏ ở API là lộ dữ liệu nhạy cảm.' },
+      { l: 'Tách hai bảng', r: 'Dữ liệu nhạy cảm nằm riêng, dễ kiểm soát quyền đọc. Đổi lại phải JOIN và đảm bảo mỗi khách có đúng một tài khoản (khóa của TaiKhoan chính là khóa ngoại).' }], end: 'Cả hai đều đúng quy tắc. Chọn dựa trên rủi ro nào bạn ngại hơn, rồi ghi lại lý do trong báo cáo (giảng viên thích thấy lý do).' }] } },
+  { n: '3', name: 'Quan hệ 1–n', why: 'Khóa ngoại luôn nằm ở <b>phía n</b>. Lý do rất đời thường: mỗi dòng ở phía n chỉ thuộc về <i>một</i> dòng phía 1, nên một ô là đủ. Ngược lại, một dòng phía 1 sẽ phải chứa nhiều mã, mà mỗi ô chỉ được chứa một giá trị.',
+    body: arrowRow(cbox('Tuyến', ['diemDi', 'diemDen']) + '<div class="mul">1 — 1..*</div>' + cbox('ChuyếnXe', ['gioDi', 'giaCoBan']), rt('Tuyen', ['PK MaTuyen', 'DiemDi', 'DiemDen']) + rt('ChuyenXe', ['PK MaChuyen', 'FK MaTuyen', 'GioDi', 'GiaCoBan']), 'khóa ngoại ở phía n'),
+    ch: { items: [{ t: 'mc', q: 'Quan hệ Tuyến 1 — n ChuyếnXe. Cột khóa ngoại nằm ở bảng nào?', opts: ['Bảng Tuyen (lưu danh sách mã chuyến)', 'Bảng ChuyenXe (lưu mã tuyến)'], ans: 1, why: 'Một chuyến chỉ chạy đúng một tuyến, nên một ô <code>MaTuyen</code> là đủ. Nếu đặt ở Tuyen thì mỗi tuyến phải chứa cả danh sách mã chuyến trong một ô, điều bảng quan hệ không cho phép.' }] } },
+  { n: '4', name: 'Quan hệ m–n', why: 'Hai bên đều “nhiều” thì không bên nào chứa nổi khóa của bên kia. Cách giải: tạo <b>bảng trung gian</b> chứa khóa của cả hai. Bảng này còn là nơi đặt các thuộc tính <i>của chính mối quan hệ</i> (ví dụ giá vé tại lúc đặt).',
+    body: '<p class="src">Tình huống minh họa (nếu nhóm chọn mô hình “Đơn đặt có nhiều ghế”, xem tab Class):</p>' + arrowRow(cbox('ĐơnĐặt', ['maDon', 'ngayDat']) + '<div class="mul">* — *</div>' + cbox('GhếChuyến', ['soGhe']), rt('DonDat', ['PK MaDon', 'NgayDat']) + rt('GheChuyen', ['PK,FK MaChuyen', 'PK SoGhe']) + rt('ChiTietDat', ['PK,FK MaDon', 'PK,FK MaChuyen', 'PK,FK SoGhe', 'GiaVe']), 'bảng trung gian'),
+    ch: { items: [{ t: 'mc', q: 'Giá vé tại thời điểm đặt (<code>GiaVe</code>) nên nằm ở đâu?', opts: ['Bảng GheChuyen', 'Bảng DonDat', 'Bảng trung gian ChiTietDat'], ans: 2, why: 'Giá phụ thuộc vào <b>cặp (đơn, ghế)</b>. Để ở GheChuyen thì khi giá chuyến đổi, đơn cũ cũng đổi theo (lịch sử sai). Để ở DonDat thì không chia được giá từng ghế. Chỉ bảng trung gian giữ đúng “giá tại lúc đó” cho từng ghế.' }] } },
+  { n: '5', name: 'Quan hệ kế thừa', why: 'Cơ sở dữ liệu không có khái niệm kế thừa nên phải “dàn phẳng” cây lớp. Có ba cách, mỗi cách đổi chác khác nhau. Cái bạn phải biết là <b>đổi chác thế nào</b>, không phải học thuộc.',
+    body: arrowRow(cbox('NgườiDùng', ['hoTen', 'sdt'], 'abstract') + '<div class="mul">▲ kế thừa</div>' + cbox('KháchHàng', ['maKH']) + cbox('NhânViên', ['maNV']), '', 'ba cách') +
+      '<div class="three"><div class="card"><h3>Cách 1: mỗi lớp con một bảng đủ cột</h3>' + rt('KhachHang', ['PK MaKH', 'HoTen', 'Sdt']) + rt('NhanVien', ['PK MaNV', 'HoTen', 'Sdt']) + '<p class="src">+ Đơn giản. − Khó thấy mối liên hệ chung, khó thống kê tổng quát. <b>Chỉ phù hợp (complete, disjoint).</b></p></div>' +
+      '<div class="card"><h3>Cách 2: một bảng + cột Loại</h3>' + rt('NguoiDung', ['PK MaND', 'HoTen', 'Sdt', 'Loai', 'MaKH (có thể NULL)', 'MaNV (có thể NULL)']) + '<p class="src">+ Nhìn tổng quát dễ. − Lãng phí chỗ (nhiều NULL). Phù hợp mọi trường hợp.</p></div>' +
+      '<div class="card"><h3>Cách 3: bảng chung + bảng riêng từng loại</h3>' + rt('NguoiDung', ['PK MaND', 'HoTen', 'Sdt']) + rt('KhachHang', ['PK,FK MaND', 'MaKH']) + rt('NhanVien', ['PK,FK MaND', 'MaNV']) + '<p class="src">+ Tiết kiệm, vẫn nhìn tổng quát được. − Tổ chức phức tạp hơn. Phù hợp mọi trường hợp.</p></div></div>',
+    ch: { items: [{ t: 'mc', q: 'Giả sử một nhân viên nhà xe cũng mua vé như khách (một người vừa là NhânViên vừa là KháchHàng: <b>overlapping</b>). Cách nào <b>không</b> phù hợp?', opts: ['Cách 1', 'Cách 2', 'Cách 3'], ans: 0, why: 'Ở cách 1 người đó nằm ở <b>hai bảng</b>, mỗi bảng một bản sao họ tên và số điện thoại. Sửa số điện thoại ở bảng này mà quên bảng kia là hai dữ liệu mâu thuẫn. Cách 2 và 3 giữ thông tin chung ở <b>một chỗ</b>.' }] } },
+  { n: '6', name: 'Thuộc tính có cấu trúc', why: 'Nếu một thuộc tính tự nó là một “cục” nhiều trường thì tách ra <b>bảng phụ</b>, mang theo khóa của bảng chính.',
+    body: arrowRow(cbox('ChuyếnXe', ['gioDi', 'điểmĐón: ĐiểmĐón']) + cbox('ĐiểmĐón', ['tenDiem', 'diaChi', 'gioDon'], 'cấu trúc'), rt('ChuyenXe', ['PK MaChuyen', 'GioDi']) + rt('DiemDon', ['PK,FK MaChuyen', 'TenDiem', 'DiaChi', 'GioDon']), 'tách bảng phụ'),
+    ch: { items: [{ t: 'debate', q: 'Có nhất thiết tách <code>điểmĐón</code> ra bảng phụ không, hay cứ nhét 3 cột vào ChuyenXe?', opts: [
+      { l: 'Nhét thẳng vào ChuyenXe', r: 'Nhanh gọn nếu mỗi chuyến luôn đúng <b>một</b> điểm đón và không bao giờ dùng lại. Nhưng ngày mai nhà xe muốn thêm điểm đón thứ hai là phải sửa cấu trúc bảng.' },
+      { l: 'Tách bảng DiemDon', r: 'Thêm điểm đón chỉ là thêm dòng. Đổi lại truy vấn tốn một phép JOIN.' }], end: 'Quy tắc 6 nói “tách khi cấu trúc phức tạp”; chữ “phức tạp” là phán đoán của bạn dựa trên khả năng thay đổi, hãy ghi lại phán đoán đó.' }] } },
+  { n: '7', name: 'Thuộc tính kiểu mảng', why: 'Một ô chỉ được chứa <b>một</b> giá trị. Thuộc tính là mảng (danh sách) thì mỗi phần tử thành <b>một dòng</b> trong bảng chi tiết.',
+    body: arrowRow(cbox('ĐơnĐặt', ['maDon', 'dsGhế: Ghế[]']), rt('DonDat', ['PK MaDon']) + rt('ChiTietDat', ['PK,FK MaDon', 'PK SoGhe']), 'mảng → bảng chi tiết'),
+    ch: { items: [{ t: 'mc', q: 'Một lập trình viên lười lưu danh sách ghế vào một cột chuỗi: <code>"A12,A13,A14"</code>. Điều gì xảy ra khi hỏi “ghế A13 chuyến này đã bán chưa?”', opts: ['Vẫn truy vấn nhanh và chính xác', 'Phải dò chuỗi, không đánh chỉ mục được, không ràng buộc khóa ngoại được'], ans: 1, why: 'Chuỗi gộp phá vỡ nguyên tắc “mỗi ô một giá trị”. Truy vấn trở thành <code>LIKE \'%A13%\'</code> (còn khớp nhầm A130), CSDL không thể chặn hai đơn cùng chứa A13, và không có khóa ngoại để đảm bảo ghế tồn tại. Tách thành dòng thì cả ba vấn đề biến mất.' }] } },
+  { n: '8', name: 'Giá trị rời rạc → bảng danh mục', why: 'Thuộc tính chỉ nhận vài giá trị cố định (trạng thái, loại…) thì tách thành <b>bảng danh mục</b> và dùng khóa ngoại. Điều thú vị: <b>mỗi trạng thái trong State diagram chính là một dòng</b> của bảng danh mục này.',
+    body: arrowRow(cbox('Vé', ['trangThai: String']), rt('Ve', ['PK MaVe', 'FK MaTrangThai']) + rt('TrangThaiVe', ['PK MaTrangThai', 'TenTrangThai']) + '<div class="rt"><b>dữ liệu TrangThaiVe</b><div>1 · DANG_GIU</div><div>2 · DA_THANH_TOAN</div><div>3 · DA_HUY</div><div>4 · HET_HAN</div></div>', 'danh mục + khóa ngoại'),
+    ch: { items: [{ t: 'mc', q: 'Cột <code>trangThai</code> kiểu chuỗi tự do. Rủi ro lớn nhất?', opts: ['Chiếm nhiều dung lượng', 'Ai đó ghi “Da huy” hoặc “DA_HUY ” (dư dấu cách), và CSDL không chặn được giá trị sai đó'], ans: 1, why: 'Khóa ngoại đến bảng danh mục khiến CSDL <b>từ chối</b> giá trị ngoài danh sách. Thêm trạng thái mới (ví dụ “Đã lên xe” khi soát vé) chỉ là thêm một dòng, không sửa cấu trúc. Đổi lại phải JOIN khi cần tên trạng thái (hoặc dùng kiểu ENUM nếu nhóm ưu tiên đơn giản, hãy ghi rõ đánh đổi).' }] } },
+  { n: '9', name: 'Bảng tham số', why: 'Những con số có thể thay đổi theo chính sách (10 phút giữ ghế, 4 giờ hạn hủy…) <b>không nên nằm trong code</b>. Gom chúng vào bảng tham số để đổi bằng dữ liệu, không phải sửa chương trình. Có hai dạng:',
+    body: '<div class="three"><div class="card"><h3>Dạng 1: mỗi tham số một cột (thường chỉ một dòng)</h3>' + rt('ThamSo', ['PK Khoa', 'ThoiGianGiuGhe', 'ThoiGianHuyToiThieu']) + '<p class="src">Thêm tham số mới = thêm cột (sửa cấu trúc). Vô hiệu hóa một tham số khó diễn đạt.</p></div>' +
+      '<div class="card"><h3>Dạng 2: mỗi tham số một dòng</h3>' + rt('ThamSo', ['PK MaThamSo', 'TenThamSo', 'Kieu', 'GiaTri (chuỗi)', 'TinhTrang']) + '<div class="rt"><b>dữ liệu ví dụ</b><div>THOI_GIAN_GIU_GHE · số nguyên · "10" · bật</div><div>THOI_GIAN_HUY_TOI_THIEU · số nguyên · "4" · bật</div></div><p class="src">Thêm tham số = thêm dòng. Giá trị lưu dạng chuỗi nên cần cột Kiểu để chương trình ép đúng kiểu.</p></div></div>',
+    ch: { items: [{ t: 'mc', q: 'Cần thêm tham số “số ghế tối đa mỗi lần đặt”. Dạng nào buộc phải <b>sửa cấu trúc bảng</b>?', opts: ['Dạng 1 (mỗi tham số một cột)', 'Dạng 2 (mỗi tham số một dòng)'], ans: 0, why: 'Dạng 1 phải thêm cột (<code>ALTER TABLE</code>). Dạng 2 chỉ thêm một dòng. Ngược lại dạng 1 có kiểu dữ liệu đúng ngay từ cột, còn dạng 2 phải lưu chuỗi và nhớ thêm cột Kiểu. Đổi chác muôn thuở: linh hoạt hay chặt chẽ.' }] } }
+];
+function buildRdm(panel) {
+  panel.classList.add('lb');
+  let cur = 0;
+  panel.innerHTML = '<h2>Class → RDM: 9 quy tắc, và vì sao lại thế</h2>' +
+    '<div class="why"><b>RDM</b> (Relational Data Model, mô hình dữ liệu quan hệ) là sơ đồ các <b>bảng</b> với khóa chính, khóa ngoại. Môn này <b>không dùng ERD</b>: bạn đi thẳng từ class diagram sang RDM bằng 9 quy tắc. Mỗi quy tắc dưới đây có <i>vì sao</i> trước, ví dụ từ đồ án đặt vé sau, và một câu để bạn đoán trước. Màu: <span class="pk">PK</span> = khóa chính, <span class="fk">FK</span> = khóa ngoại.</div>' +
+    '<div class="rbar"></div><div class="rbody"></div>';
+  const bar = panel.querySelector('.rbar'), body = panel.querySelector('.rbody');
+  const names = RULES.map(function (r) { return r.n + '. ' + r.name; }).concat(['Áp dụng cho đồ án']);
+  function show() {
+    body.innerHTML = '';
+    if (cur < RULES.length) {
+      const R = RULES[cur];
+      body.appendChild(h('div', 'card', '<h3>Quy tắc ' + R.n + ': ' + esc(R.name) + '</h3><p><b>Vì sao:</b> ' + R.why + '</p>' + R.body));
+      const box = h('div', 'chal'); body.appendChild(box); buildChallenges(box, R.ch, 'x');
+    } else {
+      body.appendChild(h('div', 'card', '<h3>Áp dụng: chuyển class diagram “Đặt vé xe khách” sang RDM</h3>' +
+        '<p class="warn">Đây là <b>bản nháp để đối chiếu</b> chuyển từ class diagram mẫu ở tab Class, không phải đáp án chính thức. Nhóm tự chốt lại khi class diagram của nhóm khác đi.</p>' +
+        table(['Phần của class diagram', 'Quy tắc', 'Kết quả'], [
+          ['Mỗi lớp lưu dữ liệu', '1', 'NguoiDung, KhachHang, NhanVien, Tuyen, ChuyenXe, GheChuyen, Ve, ThanhToan. <i>CổngThanhToán (interface) không thành bảng.</i>'],
+          ['KháchHàng, NhânViên kế thừa NgườiDùng', '5 (cách 3)', 'NguoiDung chứa cột chung; KhachHang và NhanVien có khóa chính cũng là khóa ngoại đến NguoiDung.'],
+          ['Tuyến 1 — n ChuyếnXe', '3', 'ChuyenXe.MaTuyen (FK).'],
+          ['ChuyếnXe ◆ Ghế (composition)', '3 + khóa ghép', 'Khóa chính của GheChuyen là (MaChuyen, SoGhe): bộ phận mang khóa của toàn thể.'],
+          ['Vé — Chuyến, Vé — Khách, Vé — Nhân viên', '3', 'Ve.MaChuyen, Ve.MaKH (NULL được), Ve.MaNVBan (NULL được).'],
+          ['Vé giữ Ghế', '3', 'Ve(MaChuyen, SoGhe) là khóa ngoại ghép đến GheChuyen. <b>Không</b> đặt UNIQUE trên cặp này vì vé đã hủy vẫn nằm lại (xem tab Object).'],
+          ['Vé 1 — 0..1 ThanhToán', '2', 'ThanhToan.MaVe (FK, UNIQUE).'],
+          ['Trạng thái ghế/vé, phương thức thanh toán', '8', 'Bảng danh mục TrangThaiGhe, TrangThaiVe, PhuongThucThanhToan. Thuộc tính boolean <code>dangGiu</code> của lớp Ghế phải nâng lên thành danh mục vì thực tế có 3 trạng thái (trống, đang giữ, đã bán).'],
+          ['10 phút, 4 giờ…', '9 (dạng 2)', 'Bảng ThamSo: THOI_GIAN_GIU_GHE, THOI_GIAN_HUY_TOI_THIEU.']
+        ]) +
+        '<p class="src">Quy tắc 4, 6, 7 không xuất hiện ở class diagram mẫu. Chúng sẽ xuất hiện ngay nếu nhóm chọn mô hình “Đơn đặt có nhiều vé” (xem câu tranh luận ở tab Class).</p>' +
+        '<div class="rtw">' + rt('NguoiDung', ['PK MaND', 'HoTen', 'Sdt', 'MatKhauHash']) + rt('KhachHang', ['PK,FK MaND', 'MaKH']) + rt('NhanVien', ['PK,FK MaND', 'MaNV']) + rt('Tuyen', ['PK MaTuyen', 'DiemDi', 'DiemDen']) + rt('ChuyenXe', ['PK MaChuyen', 'FK MaTuyen', 'GioDi', 'GiaCoBan']) + rt('GheChuyen', ['PK,FK MaChuyen', 'PK SoGhe', 'FK MaTrangThaiGhe', 'GiuDen']) + rt('Ve', ['PK MaVe', 'FK MaChuyen + SoGhe', 'FK MaKH (NULL)', 'FK MaNVBan (NULL)', 'GiaVe', 'FK MaTrangThaiVe']) + rt('ThanhToan', ['PK MaTT', 'FK MaVe (UQ)', 'SoTien', 'FK MaPhuongThuc', 'ThoiDiem']) + rt('TrangThaiGhe', ['PK MaTrangThai', 'TenTrangThai']) + rt('TrangThaiVe', ['PK MaTrangThai', 'TenTrangThai']) + rt('PhuongThucThanhToan', ['PK MaPhuongThuc', 'TenPhuongThuc']) + rt('ThamSo', ['PK MaThamSo', 'TenThamSo', 'Kieu', 'GiaTri', 'TinhTrang']) + '</div>'));
+      const box = h('div', 'chal'); body.appendChild(box);
+      buildChallenges(box, { items: [
+        { t: 'mc', q: 'Chú ý bảng <code>GheChuyen</code>: khóa chính ghép (MaChuyen, SoGhe). Vì sao không dùng một cột <code>MaGhe</code> tự tăng cho gọn?', opts: ['Dùng cột tự tăng cũng được, chỉ khác sở thích', 'Khóa ghép thể hiện đúng “ghế thuộc chuyến” và tự ngăn trùng số ghế trong cùng một chuyến'], ans: 1, why: 'Với khóa tự tăng, bạn vẫn phải thêm ràng buộc UNIQUE(MaChuyen, SoGhe) để chặn hai ghế A12 trong cùng một chuyến. Khóa ghép nói thẳng điều đó ngay trong cấu trúc. Cả hai đều dùng được; điều quan trọng là bạn biết <i>vì sao</i> chọn.' },
+        { t: 'mc', q: 'Bảng <code>ThanhToan</code> lưu thêm <code>SoTien</code>, dù số tiền có thể suy ra từ <code>Ve.GiaVe</code>. Có nên không?', opts: ['Không, vì lưu dữ liệu tính được là thừa', 'Có, vì số tiền thực thu là một sự thật lịch sử và có thể khác giá vé (giảm giá, thu một phần)'], ans: 1, why: 'Quy tắc ngón tay cái: dữ liệu <b>tính được từ dữ liệu hiện tại</b> thì đừng lưu (như tổng doanh thu); dữ liệu là <b>sự kiện đã xảy ra</b> (đã thu bao nhiêu) thì phải lưu, vì sau này giá đổi sẽ không tính lại được.' }] }, 'x');
+    }
+  }
+  chips(bar, names, 0, function (k) { cur = k; show(); });
+  show();
+  return {};
+}
+/* ===== Tab: Thiết kế giao diện (chương 6) — bấm vào màn hình để thấy biến cố ===== */
+function buildUi(panel) {
+  panel.classList.add('lb');
+  const seats = []; ['A', 'B', 'C', 'D'].forEach(function (r) { for (let i = 1; i <= 4; i++) seats.push(r + (i + (r === 'A' ? 0 : 0))); });
+  const sold = { A2: 'sold', B3: 'sold', C1: 'hold', D4: 'sold' };
+  const sel = {}; let timer = null, left = 0, locked = false;
+  panel.innerHTML = '<h2>Thiết kế giao diện: một màn hình, bốn bảng</h2>' +
+    '<div class="why">Chương 6 yêu cầu mô tả màn hình bằng: <b>hình</b>, <b>danh sách thành phần</b>, <b>danh sách biến cố</b> (điều kiện kích hoạt → xử lý) và <b>thiết kế xử lý</b> (hàm, tham số, thuật giải). Nghe khô, nhưng chúng liên thông với nhau. <b>Bấm thử vào màn hình mẫu bên dưới</b>: mỗi lần bấm, bạn vừa kích hoạt một biến cố, và dòng tương ứng trong các bảng sẽ sáng lên.</div>' +
+    '<div class="uigrid"><div class="wf" id="wf"></div><div class="uiside"><div class="card"><h3>Bạn vừa làm gì?</h3><p class="uiwhat">Chưa bấm gì. Thử bấm vào một ghế trống.</p><p class="src">D1 = dữ liệu người dùng nhập vào · D2 = kết quả hiển thị ra · D3 = dữ liệu đọc từ bộ nhớ phụ (CSDL) · D4 = dữ liệu ghi xuống bộ nhớ phụ</p></div></div></div>' +
+    '<h3 style="margin-top:18px">Danh sách thành phần</h3><div class="tblw" id="t1"></div>' +
+    '<h3 style="margin-top:14px">Danh sách biến cố</h3><div class="tblw" id="t2"></div>' +
+    '<h3 style="margin-top:14px">Thiết kế xử lý</h3><div class="tblw" id="t3"></div><div class="chal" id="uic"></div>' +
+    '<div class="card" style="margin-top:14px"><h3>Hội thoại có ba tầng</h3>' + table(['Tầng', 'Câu hỏi nó trả lời', 'Ví dụ ở màn hình chọn ghế'], [
+      ['Ngữ nghĩa', 'Nội dung dữ liệu và chức năng là gì?', 'Hiển thị chuyến, sơ đồ ghế, tổng tiền; thông báo “ghế vừa bị người khác chọn” phải đúng với điều hệ thống thật sự làm.'],
+      ['Cú pháp', 'Quá trình tương tác diễn ra theo trình tự nào?', 'Chọn chuyến → chọn ghế → nhập thông tin → thanh toán. Kiểu đối thoại: mẫu biểu điền vào + chọn trên sơ đồ.'],
+      ['Từ vựng', 'Từ ngữ và cách trình bày ra sao?', 'Màu ghế: trống, đang chọn, đã bán, đang giữ; nhãn nút “Tiếp tục”; nhất quán với các màn hình khác.']]) + '</div>' +
+    '<div class="card" style="margin-top:14px"><h3>Bốn câu người dùng thầm hỏi ở mỗi màn hình</h3><p>Màn hình tốt trả lời được cả bốn mà không cần chữ hướng dẫn dài: <b>Tôi đang ở đâu? Tôi đã đến đây thế nào? Tôi có thể làm gì ở đây? Sau màn hình này tôi đi đâu?</b> Thử kiểm tra màn hình mẫu bên trên: câu nào nó trả lời tốt, câu nào còn yếu?</p></div>';
+  const $ = function (s) { return panel.querySelector(s); };
+  const wf = $('#wf');
+  function money(n) { return n.toLocaleString('vi-VN') + ' đ'; }
+  function render() {
+    const picked = Object.keys(sel).filter(function (k) { return sel[k]; });
+    wf.innerHTML = '<div class="wfh" data-c="c1"><b>TP.HCM → Đà Lạt</b><span>Chủ nhật 07:30 · giá cơ bản 250.000 đ</span></div>' +
+      '<div class="wfs" data-c="c2">' + seats.map(function (s) { const st = sold[s] || (sel[s] ? 'pick' : 'free'); return '<button type="button" class="seat ' + st + '" data-seat="' + s + '"' + (sold[s] ? ' aria-disabled="true"' : '') + '>' + s + '</button>'; }).join('') + '</div>' +
+      '<div class="wfl"><span class="seat free sm">trống</span><span class="seat pick sm">đang chọn</span><span class="seat sold sm">đã bán</span><span class="seat hold sm">đang giữ</span></div>' +
+      '<div class="wff"><label>Họ tên <input data-c="c4" placeholder="Nguyễn Văn A" value="" aria-label="Họ tên" readonly></label><label>Số điện thoại <input data-c="c5" placeholder="09xx xxx xxx" aria-label="Số điện thoại" readonly></label></div>' +
+      '<div class="wft"><span data-c="c6">Tổng: <b>' + money(picked.length * 250000) + '</b></span><span data-c="c3" class="cd' + (locked ? '' : ' off') + '">⏱ ' + String(Math.floor(left / 60)).padStart(2, '0') + ':' + String(left % 60).padStart(2, '0') + '</span><button type="button" class="go" data-c="c7"' + (picked.length ? '' : ' disabled') + '>Tiếp tục</button></div>';
+  }
+  const EV = [
+    ['0', 'Khởi động màn hình', 'Đọc D3 (ghế của chuyến), hiển thị sơ đồ ghế và đặt tổng tiền = 0. Ghế quá hạn giữ (GiuDen < bây giờ) được coi là trống.', 'e0'],
+    ['1', 'Bấm vào ghế <b>trống</b>', 'Ghế chuyển sang “đang chọn”; cập nhật tổng tiền; bật nút Tiếp tục. Chưa ghi gì xuống CSDL.', 'e1'],
+    ['2', 'Bấm vào ghế <b>đang chọn</b>', 'Bỏ chọn; cập nhật tổng tiền; nếu không còn ghế nào thì tắt nút Tiếp tục.', 'e2'],
+    ['3', 'Bấm vào ghế <b>đã bán / đang giữ</b>', 'Không làm gì (ghế bị vô hiệu hóa). Nguyên tắc: cấm chức năng không phù hợp với ngữ cảnh hiện tại.', 'e3'],
+    ['4', 'Bấm <b>Tiếp tục</b>', 'Kiểm tra dữ liệu nhập (D1) → gọi khóaGhế → thành công: bắt đầu đếm ngược 10 phút và sang bước thanh toán; thất bại: báo ghế vừa bị người khác lấy và tải lại sơ đồ.', 'e4'],
+    ['5', 'Đồng hồ đếm ngược về 0', 'Báo hết giờ, quay lại chọn ghế; ghế được trả về trống ở server.', 'e5']
+  ];
+  const COMP = [['1', 'lblChuyen', 'Label', 'Tuyến, giờ đi, giá cơ bản của chuyến', 'Chuỗi', 'Từ chuyến đã chọn', 'Chỉ đọc', 'c1'], ['2', 'gridGhe', 'Lưới nút', 'Mỗi nút là một ghế', 'Trạng thái: trống / đang chọn / đã bán / đang giữ', 'Tất cả trống', 'Nút đã bán/đang giữ vô hiệu hóa', 'c2'], ['3', 'lblDemNguoc', 'Label', 'Thời gian còn lại để thanh toán', 'mm:ss, 00:00 đến 10:00', '10:00 (ẩn)', 'Chỉ hiện sau khi khóa ghế thành công', 'c3'], ['4', 'txtHoTen', 'TextBox', 'Họ tên hành khách', 'Chuỗi 1 đến 100 ký tự', 'Rỗng (điền sẵn nếu đã đăng nhập)', 'Bắt buộc', 'c4'], ['5', 'txtSdt', 'TextBox', 'Số điện thoại hành khách', '10 chữ số, bắt đầu bằng 0', 'Rỗng', 'Bắt buộc', 'c5'], ['6', 'lblTongTien', 'Label', 'Tổng tiền các ghế đang chọn', 'Số nguyên ≥ 0', '0', 'Tính từ giá cơ bản × số ghế', 'c6'], ['7', 'btnTiepTuc', 'Button', 'Khóa ghế và sang bước thanh toán', 'Bật/tắt', 'Tắt', 'Tắt khi chưa chọn ghế', 'c7']];
+  const PROC = [['1', 'taiSoDoGhe', 'maChuyen', 'Danh sách ghế', 'Đọc D3 ghế của chuyến; ghế có GiuDen nhỏ hơn bây giờ coi là trống.', 'Dùng cho biến cố 0', 'e0'], ['2', 'tinhTongTien', 'dsGheChon, giaCoBan', 'Số nguyên', 'Tổng = số ghế × giá cơ bản.', 'Biến cố 1, 2', 'e1'], ['3', 'khoaGhe', 'maChuyen, dsSoGhe', 'Kết quả (thành công / danh sách ghế xung đột)', 'Với từng ghế: cập nhật nguyên tử TRỐNG → ĐANG_GIỮ, GiuDen = bây giờ + THOI_GIAN_GIU_GHE. Nếu có ghế thất bại thì hoàn tác cả lô.', 'Biến cố 4; ghi D4', 'e4']];
+  function tbl(id, head, rows, key) {
+    $(id).innerHTML = '<table><thead><tr>' + head.map(function (x) { return '<th>' + x + '</th>'; }).join('') + '</tr></thead><tbody>' + rows.map(function (r) { return '<tr data-k="' + r[key] + '">' + r.slice(0, key).map(function (c) { return '<td>' + c + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table>';
+  }
+  tbl('#t1', ['STT', 'Tên', 'Kiểu', 'Ý nghĩa', 'Miền giá trị', 'Mặc định', 'Ghi chú'], COMP, 7);
+  tbl('#t2', ['STT', 'Điều kiện kích hoạt', 'Xử lý'], EV, 3);
+  tbl('#t3', ['STT', 'Hàm', 'Tham số', 'Kiểu trả về', 'Thuật giải', 'Ghi chú'], PROC, 6);
+  function light(keys, msg) {
+    panel.querySelectorAll('tr[data-k]').forEach(function (tr) { tr.classList.toggle('lit', keys.indexOf(tr.getAttribute('data-k')) >= 0); });
+    $('.uiwhat').innerHTML = msg;
+  }
+  wf.addEventListener('click', function (e) {
+    const b = e.target.closest('[data-seat]'), g = e.target.closest('.go'), c = e.target.closest('[data-c]');
+    if (b) {
+      const s = b.getAttribute('data-seat');
+      if (sold[s]) { light(['e3', 'c2'], '<b>Biến cố 3.</b> Ghế ' + s + ' đã ' + (sold[s] === 'sold' ? 'bán' : 'có người giữ') + ': nút bị vô hiệu hóa, không có gì xảy ra. Đây là chủ đích: không để người dùng có cơ hội mắc lỗi.'); return; }
+      if (locked) return;
+      sel[s] = !sel[s]; render();
+      light(sel[s] ? ['e1', 'c2', 'c6', 'c7'] : ['e2', 'c2', 'c6', 'c7'], sel[s] ? '<b>Biến cố 1.</b> Chọn ghế ' + s + '. Xử lý: <code>tinhTongTien</code> (D1 → D2). <u>Chưa có gì ghi xuống CSDL</u>: người khác vẫn thấy ghế này trống. Bạn nghĩ đó có ổn không? Xem câu hỏi bên dưới.' : '<b>Biến cố 2.</b> Bỏ chọn ghế ' + s + '. Tổng tiền tính lại.');
+    } else if (g) {
+      if (locked) return; locked = true; left = 600; render();
+      light(['e4', 'c3', 'c7'], '<b>Biến cố 4.</b> Tiếp tục: <code>khoaGhe</code> chạy, ghi D4 (ghế thành ĐANG_GIỮ, GiuDen = bây giờ + 10 phút) rồi bắt đầu đếm ngược. Nếu giữa chừng có ghế vừa bị người khác lấy, cả lô bị hoàn tác.');
+      clearInterval(timer); timer = setInterval(function () { left--; if (left <= 0) { clearInterval(timer); locked = false; left = 0; Object.keys(sel).forEach(function (k) { sel[k] = false; }); light(['e5', 'c3'], '<b>Biến cố 5.</b> Hết giờ: báo hết hạn và quay lại chọn ghế; server trả các ghế về trống.'); } render(); }, 1000);
+    } else if (c) {
+      const k = c.getAttribute('data-c'); light([k], 'Thành phần <b>' + esc((COMP.filter(function (r) { return r[7] === k; })[0] || [])[1] || '') + '</b> (dòng sáng ở bảng thành phần).');
+    }
+  });
+  render(); light(['e0'], '<b>Biến cố 0.</b> Màn hình vừa khởi động: <code>taiSoDoGhe</code> đọc D3 và hiển thị. Thử bấm một ghế trống.');
+  buildChallenges($('#uic'), { items: [
+    { t: 'debate', q: 'Khóa ghế vào <b>lúc bấm chọn ghế</b> hay <b>lúc bấm Tiếp tục</b>? Mỗi lựa chọn là một quyết định thiết kế giao diện kéo theo hệ quả cho backend.', opts: [
+      { l: 'Khóa ngay khi chọn ghế', r: 'Người dùng yên tâm ghế đã là của mình. Nhưng ai đó có thể chọn hàng loạt ghế rồi bỏ đi, giữ chỗ vô ích cả 10 phút; và mỗi cú bấm là một request ghi vào CSDL.' },
+      { l: 'Khóa lúc bấm Tiếp tục', r: 'Ít ghi CSDL, khó bị lợi dụng giữ chỗ. Đổi lại người dùng có thể chọn xong mới biết ghế “vừa bị người khác lấy”, nên giao diện phải có thông báo lỗi rõ ràng và tải lại sơ đồ ghế.' }], end: 'Không có đáp án duy nhất. Quan trọng là nhóm chốt và ghi vào đặc tả use case (đây cũng là một câu hỏi “nhóm chưa chốt” trong tab Xuất cho AI).' },
+    { t: 'mc', q: 'Nút “Tiếp tục” vẫn bật dù chưa chọn ghế nào, bấm vào mới báo lỗi. Vi phạm nguyên tắc nào của chương 6?', opts: ['Nhất quán', 'Cấm chức năng không phù hợp ngữ cảnh / tránh tạo cơ hội cho người dùng mắc lỗi', 'Hỗ trợ undo'], ans: 1, why: 'Tốt hơn hết là <b>không cho phép sai ngay từ đầu</b> (tắt nút) thay vì cho sai rồi mắng. Đó cũng là cách màn hình mẫu bên trên xử lý.' }] }, 'x');
+  return { onShow: function () { render(); } };
+}
+VLabShell.create({
+  title: 'Lab OOAD v2',
+  tabs: [
+    { id: 'map', title: '0. Bản đồ môn',   build: buildMap },
+    { id: 'uc',  title: '1. Use Case',      build: diagTab('uc') },
+    { id: 'act', title: '2. Activity',      build: diagTab('act') },
+    { id: 'seq', title: '3. Sequence',      build: diagTab('seq') },
+    { id: 'col', title: '4. Collaboration', build: diagTab('col') },
+    { id: 'cls', title: '5. Class',         build: diagTab('cls') },
+    { id: 'obj', title: '6. Object',        build: diagTab('obj') },
+    { id: 'st',  title: '7. State',         build: diagTab('st') },
+    { id: 'cmp', title: '8. Component',     build: diagTab('cmp') },
+    { id: 'dep', title: '9. Deployment',    build: diagTab('dep') },
+    { id: 'rdm', title: '10. Class → RDM',  build: buildRdm },
+    { id: 'md',  title: '11. Xuất cho AI',  build: buildMd },
+    { id: 'ui',  title: '12. Giao diện',    build: buildUi }
+  ]
+});
+</script></body></html>
