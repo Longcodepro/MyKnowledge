@@ -1,12 +1,12 @@
 {
-  "Hackathon/whybi-overview.html": "WhyBi: tổng quan workflow",
-  "LabIT/labit.html": "LabIT: workflow",
-  "ML/Lab-TV2-Tuan1,2.html": "Phòng lab tuần 1 và 2",
-  "NLP/Lab nơ-ron (NLP).html": "Lab nơ-ron (NLP)",
+  "Docker and Github/docker-knowledge.html": "Docker Basic",
+  "Docker and Github/github-knowledge.html": "Github Basic",
   "OOAD/Lab Sơ đồ OOAD.html": "Lab sơ đồ OOAD",
   "OOAD/ban-do-workflow-backend.html": "Bản đồ workflow backend",
   "SE/BrewLite qua 5 mô hình(SE).html": "BrewLite qua 5 mô hình",
-  "TestBackend/Postman Lab.html": "Postman Lab",
-  "Docker and Github/docker-knowledge.html": "Docker Basic",
-  "Docker and Github/github-knowledge.html": "Github Basic"
+  "ML/Lab-TV2-Tuan1,2.html": "Phòng lab tuần 1 và 2",
+  "NLP/Lab nơ-ron (NLP).html": "Lab nơ-ron (NLP)",
+  "Hackathon/whybi-overview.html": "WhyBi: tổng quan workflow",
+  "LabIT/labit.html": "LabIT: workflow",
+  "TestBackend/Postman Lab.html": "Postman Lab"
 }

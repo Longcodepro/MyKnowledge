@@ -32,11 +32,18 @@ try { titles = JSON.parse(readFileSync(join(SRC, '_ten.json'), 'utf8')); } catch
 const paths = new Set(files.map((s) => s.join('/')));
 for (const k of Object.keys(titles)) if (!paths.has(k)) console.warn(`Cảnh báo: _ten.json có "${k}" nhưng không có file này`);
 
+// Thứ tự hiển thị = thứ tự khoá trong _ten.json; mục không có trong đó xếp sau, theo A→Z
+const rank = Object.fromEntries(Object.keys(titles).map((k, i) => [k, i]));
 const items = files.map((segs) => ({
   name: titles[segs.join('/')] ?? segs[segs.length - 1].replace(/\.html$/, ''),
   group: segs.length > 1 ? segs.slice(0, -1).join(' / ') : 'Chung',
   href: segs.map(encodeURIComponent).join('/'),
+  o: rank[segs.join('/')] ?? 1e9,
 }));
+// Thứ tự nhóm = thứ hạng nhỏ nhất trong nhóm
+const groupRank = {};
+for (const it of items) groupRank[it.group] = Math.min(groupRank[it.group] ?? 1e9, it.o);
+for (const it of items) it.go = groupRank[it.group];
 // "<" thoát thành < để dữ liệu không đóng nhầm thẻ <script>
 const data = JSON.stringify(items).replace(/</g, '\\u003c');
 
@@ -97,7 +104,7 @@ function render() {
     box.append(p);
     return;
   }
-  const names = [...groups.keys()].sort((a, b) => a === 'Chung' ? -1 : b === 'Chung' ? 1 : cmp(a, b));
+  const names = [...groups.keys()].sort((a, b) => a === 'Chung' ? -1 : b === 'Chung' ? 1 : groups.get(a)[0].go - groups.get(b)[0].go || cmp(a, b));
   for (const g of names) {
     const d = document.createElement('details');
     d.open = q ? true : !closed.has(g);
@@ -108,7 +115,7 @@ function render() {
     n.textContent = '(' + groups.get(g).length + ')';
     s.append(n);
     const ul = document.createElement('ul');
-    for (const it of groups.get(g).sort((a, b) => cmp(a.name, b.name))) {
+    for (const it of groups.get(g).sort((a, b) => a.o - b.o || cmp(a.name, b.name))) {
       const li = document.createElement('li');
       const a = document.createElement('a');
       a.href = it.href;
