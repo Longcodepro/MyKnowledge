@@ -34,16 +34,13 @@
 <div class="tw"><table id="pt" aria-label="Điểm ưu tiên của nút"></table></div>
 <p class="cap">Luôn có 1 ≤ p(n) ≤ 1 + α. Nút chưa bạn nào thử thì chưa tính được tỉ lệ; ở đây tạm quy ước p = 1 (đề cương chưa nói rõ).</p>
 
-<h2>Bước 3 đến 7: tính w cho một cặp, từng bước</h2>
-<div class="fig">
-<p><b>Chọn bạn a:</b></p>
-<div class="row" id="pa" role="group" aria-label="Chọn bạn a"></div>
-<p><b>Chọn bạn b:</b></p>
-<div class="row" id="pb" role="group" aria-label="Chọn bạn b"></div>
-<div class="row"><button class="b" id="st" type="button">Bước tiếp</button><button class="b" id="rs" type="button">Làm lại</button></div>
-<div class="tw" id="lg"></div>
-<div class="msg" id="msg" aria-live="polite"></div>
-</div>
+<h2>Bước 3: kết quả w của mọi cặp</h2>
+<p>Với mỗi cặp: lấy các nút bên này dạy được bên kia (T), cộng p của chúng (S), rồi lấy số nhỏ hơn (w). Có 4 bạn nên có 6 cặp:</p>
+<div class="tw"><table id="all" aria-label="Điểm w của mọi cặp"></table></div>
+<p class="cap" id="allcap"></p>
+
+<h2>Bước 4: xem kỹ một cặp, Bình – Chi</h2>
+<div class="tw"><table id="ex" aria-label="Tính w cho Bình và Chi"></table></div>
 
 <h2>Đọc ký hiệu trong công thức</h2>
 <div class="tw"><table>
@@ -58,10 +55,6 @@
 for n in T_ab:          # với mỗi nút n mà a dạy được cho b
     S_ab += p[n]        # cộng điểm ưu tiên của nút đó</code></pre>
 <p>Chữ nhỏ <sub>ab</sub> chỉ là nhãn "từ a sang b", không phải phép nhân.</p>
-
-<h2>Bước 8: tất cả các cặp, ra đồ thị trọng số</h2>
-<div class="tw"><table id="all" aria-label="Điểm w của mọi cặp"></table></div>
-<p class="cap" id="allcap"></p>
 
 <h2>Vì sao lấy min mà không cộng</h2>
 <div class="tw"><table>
@@ -93,7 +86,7 @@ for n in T_ab:          # với mỗi nút n mà a dạy được cho b
 var SV = ['An', 'Bình', 'Chi', 'Dũng'], ND = ['N1', 'N2', 'N3', 'N4'];
 var G = { 'An': 'ĐĐĐS', 'Bình': 'ĐĐSK', 'Chi': 'ĐCĐK', 'Dũng': 'ĐĐĐĐ' };
 var SYM = { 'Đ': ['c-ok', '✓'], 'S': ['c-fr', '◎'], 'C': ['c-bad', '✗'], 'K': ['c-lk', '🔒'] };
-var ALPHA = 1, A = 'Bình', B = 'Chi', k = 0;
+var ALPHA = 1;
 function f2(x) { return x.toFixed(2).replace('.', ','); }
 function setStr(a) { return a.length ? '{' + a.join(', ') + '}' : '{ } (rỗng)'; }
 function cell(s, j) { return G[s].charAt(j); }
@@ -126,49 +119,31 @@ $('#pt').innerHTML = '<thead><tr><th>Nút</th><th>Đã thử</th><th>Đạt</th>
     var r = RATE[n];
     return '<tr><td><b>' + n + '</b></td><td>' + r.tried + '</td><td>' + r.ok + '</td><td>' + (r.tried ? r.ok + '/' + r.tried + ' = ' + f2(r.ok / r.tried) : 'chưa ai thử') + '</td><td><b>' + f2(P[n]) + '</b></td></tr>';
   }).join('') + '</tbody>';
-/* Bước 3 đến 7 */
-function steps() {
-  var a = A, b = B, c = calc(a, b);
-  return [
-    ['3', 'Nút <b>' + a + '</b> dạy được cho <b>' + b + '</b>', 'T<sub>ab</sub> = Đạt(' + a + ') ∩ Biên(' + b + ') = ' + setStr(dat(a)) + ' ∩ ' + setStr(bien(b)), setStr(c.tab)],
-    ['4', 'Nút <b>' + b + '</b> dạy được cho <b>' + a + '</b>', 'T<sub>ba</sub> = Đạt(' + b + ') ∩ Biên(' + a + ') = ' + setStr(dat(b)) + ' ∩ ' + setStr(bien(a)), setStr(c.tba)],
-    ['5', 'Cộng điểm một chiều ' + a + ' → ' + b, 'S<sub>ab</sub> = ' + sumStr(c.tab), f2(c.sab)],
-    ['6', 'Cộng điểm chiều ' + b + ' → ' + a, 'S<sub>ba</sub> = ' + sumStr(c.tba), f2(c.sba)],
-    ['7', 'Lấy số nhỏ hơn', 'w(' + a + ', ' + b + ') = min(' + f2(c.sab) + ' ; ' + f2(c.sba) + ')', '<b>' + f2(c.w) + '</b>']
-  ];
-}
-function draw() {
-  $('#pa').innerHTML = SV.map(function (s) { return '<button class="b" type="button" aria-pressed="' + (s === A) + '" data-s="' + s + '">' + s + '</button>'; }).join('');
-  $('#pb').innerHTML = SV.map(function (s) { return '<button class="b" type="button" aria-pressed="' + (s === B) + '" data-s="' + s + '">' + s + '</button>'; }).join('');
-  $$('#pa button').forEach(function (x) { x.onclick = function () { A = x.dataset.s; k = 0; draw(); }; });
-  $$('#pb button').forEach(function (x) { x.onclick = function () { B = x.dataset.s; k = 0; draw(); }; });
-  var same = A === B, st = same ? [] : steps();
-  $('#st').disabled = same || k >= st.length;
-  if (same) { $('#lg').innerHTML = ''; $('#msg').innerHTML = '<b>Chọn hai bạn khác nhau.</b> Một bạn không ghép với chính mình.'; }
-  else {
-    $('#lg').innerHTML = k ? '<table aria-label="Các bước tính w"><thead><tr><th>Bước</th><th>Việc làm</th><th>Phép tính</th><th>Kết quả</th></tr></thead><tbody>' +
-      st.slice(0, k).map(function (r, i) { return '<tr' + (i === k - 1 ? ' class="hit"' : '') + '><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td><td>' + r[3] + '</td></tr>'; }).join('') + '</tbody></table>' :
-      '<p class="cap">Bấm "Bước tiếp" để tính w(' + A + ', ' + B + ') từng bước. Bước 1, 2 đã làm ở các bảng phía trên.</p>';
-    var c = calc(A, B);
-    $('#msg').innerHTML = k < st.length ? 'Đã làm ' + k + '/' + st.length + ' bước.' :
-      c.w > 0 ? '<b>w(' + A + ', ' + B + ') = ' + f2(c.w) + ' &gt; 0</b>: cả hai chiều đều dạy được, cặp này <b>có cạnh</b> trong đồ thị.'
-        : '<b>w(' + A + ', ' + B + ') = 0</b>: ' + (c.tab.length ? B : A) + ' không dạy được bạn kia nút nào, chỉ là ghép một chiều nên <b>cặp bị loại</b> (BR-08).';
-  }
-  allPairs();
-}
+/* Bước 3: mọi cặp, Bước 4: một cặp chi tiết */
 function allPairs() {
   var rows = '', edges = [];
   for (var i = 0; i < SV.length; i++) for (var j = i + 1; j < SV.length; j++) {
-    var a = SV[i], b = SV[j], c = calc(a, b), cur = (a === A && b === B) || (a === B && b === A);
+    var a = SV[i], b = SV[j], c = calc(a, b);
     if (c.w > 0) edges.push(a + '–' + b + ' (' + f2(c.w) + ')');
-    rows += '<tr' + (cur ? ' class="hit"' : '') + '><td><b>' + a + ' – ' + b + '</b></td><td>' + setStr(c.tab) + ' = ' + f2(c.sab) + '</td><td>' + setStr(c.tba) + ' = ' + f2(c.sba) + '</td><td class="' + (c.w > 0 ? 'c-ok' : 'c-bad') + '">' + (c.w > 0 ? '✓ ' + f2(c.w) + ', có cạnh' : '✗ 0, loại') + '</td></tr>';
+    rows += '<tr><td><b>' + a + ' – ' + b + '</b></td><td>' + setStr(c.tab) + ' = ' + f2(c.sab) + '</td><td>' + setStr(c.tba) + ' = ' + f2(c.sba) + '</td><td class="' + (c.w > 0 ? 'c-ok' : 'c-bad') + '">' + (c.w > 0 ? '✓ ' + f2(c.w) + ', có cạnh' : '✗ 0, loại') + '</td></tr>';
   }
-  $('#all').innerHTML = '<thead><tr><th>Cặp</th><th>a dạy b: T và S</th><th>b dạy a: T và S</th><th>w</th></tr></thead><tbody>' + rows + '</tbody>';
-  $('#allcap').innerHTML = 'Có ' + edges.length + ' cạnh: ' + (edges.join(', ') || 'không có') + '. Cạnh này là đầu vào của bài toán chọn cặp cho cả lớp. Trong ví dụ nhỏ này chỉ có một cạnh nên chọn thế nào cũng như nhau; lớp thật có nhiều cạnh chồng nhau nên mới cần tham lam hoặc Blossom.';
+  $('#all').innerHTML = '<thead><tr><th>Cặp (a – b)</th><th>a dạy b: T và S</th><th>b dạy a: T và S</th><th>w = min</th></tr></thead><tbody>' + rows + '</tbody>';
+  $('#allcap').innerHTML = 'Có ' + edges.length + ' cạnh: ' + (edges.join(', ') || 'không có') + '. Các cạnh này là đầu vào của bài toán chọn cặp cho cả lớp. Trong ví dụ nhỏ này chỉ có một cạnh; lớp thật có nhiều cạnh chồng nhau nên mới cần tham lam hoặc Blossom.';
 }
-$('#st').onclick = function () { if (A !== B) { k++; draw(); } };
-$('#rs').onclick = function () { k = 0; draw(); };
-draw();
+function onePair(a, b) {
+  var c = calc(a, b);
+  var r = [
+    ['1', a + ' dạy được cho ' + b, 'T<sub>ab</sub> = Đạt(' + a + ') ∩ Biên(' + b + ') = ' + setStr(dat(a)) + ' ∩ ' + setStr(bien(b)), setStr(c.tab)],
+    ['2', b + ' dạy được cho ' + a, 'T<sub>ba</sub> = Đạt(' + b + ') ∩ Biên(' + a + ') = ' + setStr(dat(b)) + ' ∩ ' + setStr(bien(a)), setStr(c.tba)],
+    ['3', 'Cộng điểm chiều ' + a + ' → ' + b, 'S<sub>ab</sub> = ' + sumStr(c.tab), f2(c.sab)],
+    ['4', 'Cộng điểm chiều ' + b + ' → ' + a, 'S<sub>ba</sub> = ' + sumStr(c.tba), f2(c.sba)],
+    ['5', 'Lấy số nhỏ hơn', 'w(' + a + ', ' + b + ') = min(' + f2(c.sab) + ' ; ' + f2(c.sba) + ')', '<b>' + f2(c.w) + '</b>']
+  ];
+  $('#ex').innerHTML = '<thead><tr><th>Bước</th><th>Việc làm</th><th>Phép tính</th><th>Kết quả</th></tr></thead><tbody>' +
+    r.map(function (x) { return '<tr><td>' + x[0] + '</td><td>' + x[1] + '</td><td>' + x[2] + '</td><td>' + x[3] + '</td></tr>'; }).join('') + '</tbody>';
+}
+allPairs();
+onePair('Bình', 'Chi');
 </script>
 </body>
 </html>
