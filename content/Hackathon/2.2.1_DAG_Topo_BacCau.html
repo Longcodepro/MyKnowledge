@@ -68,7 +68,26 @@ function threeColor(edges) {
   return cyc;
 }
 function indeg() { var d = {}; names.forEach(function (n) { d[n] = 0; }); E.forEach(function (e) { d[e[1]]++; }); return d; }
-function reset() { E = BASE.map(function (e) { return e.slice(); }); S = { out: [], deg: indeg(), cyc: null, cur: null, log: [], deg0: indeg(), ev: dfsEvents(E), i: 0, col: {}, fin: [], dlog: [] }; draw(); }
+function reset() { E = BASE.map(function (e) { return e.slice(); }); S = { out: [], deg: indeg(), cyc: null, cur: null, log: [], deg0: indeg(), ev: dfsEvents(E), lv: layerRounds(), li: 0, lrows: [], i: 0, col: {}, fin: [], dlog: [] }; draw(); }
+function layerRounds() {          // Kahn theo tầng: mỗi vòng lấy cả lớp nút bậc vào 0 (giống nx.topological_generations)
+  var deg = indeg(), cur = names.filter(function (n) { return deg[n] === 0; }), rounds = [];
+  while (cur.length) {
+    var ch = [], nz = [];
+    cur.forEach(function (n) {
+      E.forEach(function (e) {
+        if (e[0] !== n) return;
+        ch.push({ n: e[1], a: deg[e[1]], b: deg[e[1]] - 1 });
+        deg[e[1]]--;
+        if (deg[e[1]] === 0) nz.push(e[1]);
+      });
+    });
+    rounds.push({ layer: cur, ch: ch, nz: nz, deg: JSON.parse(JSON.stringify(deg)) });
+    cur = nz;
+  }
+  return rounds;
+}
+function lstep() { if (S.li < S.lv.length) { S.lrows.push(S.lv[S.li++]); draw(); } }
+function layerOf(n) { for (var i = 0; i < S.lrows.length; i++) if (S.lrows[i].layer.indexOf(n) >= 0) return i; return -1; }
 var CN = { 0: 'trắng', 1: 'xám', 2: 'đen' };
 function dfsEvents(edges) {          // chạy DFS một lần, ghi lại từng sự kiện để bấm xem từng bước
   var col = {}, ev = [];
@@ -113,9 +132,9 @@ function draw() {
     return '<line class="ed' + (bad ? ' bad' : '') + '" x1="' + a[1] + '" y1="' + (a[2] + H) + '" x2="' + b[1] + '" y2="' + (b[2] - 4) + '" marker-end="url(#' + (bad ? 'a1' : 'a0') + ')"/>';
   }).join('');
   $('#ndg').innerHTML = names.map(function (n) {
-    var dfs = mode === 'topo' && algo === 'dfs';
-    var d = N[n], c = S.cyc && S.cyc.indexOf(n) >= 0 ? ' bad' : dfs ? (S.col[n] === 1 ? ' fr' : S.col[n] === 2 ? ' ok' : '') : mode === 'topo' && S.out.indexOf(n) >= 0 ? (n === S.cur ? ' cur' : ' ok') : '';
-    var sub = dfs ? CN[S.col[n] || 0] + (S.fin.indexOf(n) >= 0 ? ' · xong thứ ' + (S.fin.indexOf(n) + 1) : '') : mode === 'topo' ? (S.out.indexOf(n) >= 0 ? 'thứ ' + (S.out.indexOf(n) + 1) : 'bậc vào = ' + S.deg[n]) : '';
+    var dfs = mode === 'topo' && algo === 'dfs', lay = mode === 'topo' && algo === 'layer', li = lay ? layerOf(n) : -1;
+    var d = N[n], c = S.cyc && S.cyc.indexOf(n) >= 0 ? ' bad' : lay ? (li >= 0 ? (li === S.lrows.length - 1 ? ' cur' : ' ok') : '') : dfs ? (S.col[n] === 1 ? ' fr' : S.col[n] === 2 ? ' ok' : '') : mode === 'topo' && S.out.indexOf(n) >= 0 ? (n === S.cur ? ' cur' : ' ok') : '';
+    var sub = lay ? (li >= 0 ? 'tầng ' + li : 'bậc vào = ' + (S.lrows.length ? S.lrows[S.lrows.length - 1].deg[n] : S.deg0[n])) : dfs ? CN[S.col[n] || 0] + (S.fin.indexOf(n) >= 0 ? ' · xong thứ ' + (S.fin.indexOf(n) + 1) : '') : mode === 'topo' ? (S.out.indexOf(n) >= 0 ? 'thứ ' + (S.out.indexOf(n) + 1) : 'bậc vào = ' + S.deg[n]) : '';
     return '<g class="nd' + c + '"><rect x="' + (d[1] - W / 2) + '" y="' + d[2] + '" width="' + W + '" height="' + H + '" rx="2"/>' +
       '<text x="' + d[1] + '" y="' + (d[2] + 19) + '" text-anchor="middle">' + n + ' · ' + d[0] + '</text><text class="sm" x="' + d[1] + '" y="' + (d[2] + 35) + '" text-anchor="middle">' + sub + '</text></g>';
   }).join('');
@@ -129,8 +148,17 @@ function dfsTable() {
   });
   return S.dlog.length ? h + '</tbody></table><p class="cap">Mỗi bước là một sự kiện của DFS. Gặp nút đen thì bình thường, chỉ gặp nút xám mới là chu trình.</p>' : '<p class="cap">Bấm "Bước tiếp" để DFS bắt đầu từ N1.</p>';
 }
+function layerTable() {
+  var h = '<table aria-label="Các vòng theo tầng"><thead><tr><th>Vòng</th><th>Tầng lấy ra</th><th>Trừ bậc vào</th><th>Nút mới về 0</th></tr></thead><tbody>';
+  S.lrows.forEach(function (r, i) {
+    h += '<tr' + (i === S.lrows.length - 1 ? ' class="hit"' : '') + '><td>' + (i + 1) + '</td><td><b>{' + r.layer.join(', ') + '}</b></td><td>' +
+      (r.ch.map(function (c) { return c.n + ': ' + c.a + '→' + c.b; }).join('<br>') || 'không có') + '</td><td>' + (r.nz.join(', ') || 'không có') + '</td></tr>';
+  });
+  return S.lrows.length ? h + '</tbody></table><p class="cap">Chỉ số tầng của một nút = độ dài đường dài nhất từ một nút bậc vào 0 tới nó. Ví dụ N4 ở tầng 2 vì đường dài nhất là N1→N2→N4.</p>' : '<p class="cap">Bấm "Bước tiếp" để lấy tầng đầu tiên.</p>';
+}
 function logTable() {
   if (mode !== 'topo') return '';
+  if (algo === 'layer') return layerTable();
   if (algo === 'dfs') return dfsTable();
   var h = '<table aria-label="Các bước Kahn"><thead><tr><th>Bước</th><th>Lấy nút</th><th>Trừ 1 bậc vào của</th>' +
     names.map(function (n) { return '<th>' + n + '</th>'; }).join('') + '</tr></thead><tbody>';
@@ -144,11 +172,16 @@ function logTable() {
 function panel() {
   var a, m;
   if (mode === 'topo') {
-    var left = algo === 'dfs' ? S.ev.length - S.i : names.length - S.out.length;
-    var tg = '<button class="b" id="k1" aria-pressed="' + (algo === 'kahn') + '" type="button">Cách Kahn</button><button class="b" id="k2" aria-pressed="' + (algo === 'dfs') + '" type="button">Cách DFS</button> ';
+    var left = algo === 'dfs' ? S.ev.length - S.i : algo === 'layer' ? S.lv.length - S.li : names.length - S.out.length;
+    var tg = '<button class="b" id="k1" aria-pressed="' + (algo === 'kahn') + '" type="button">Cách Kahn</button><button class="b" id="k2" aria-pressed="' + (algo === 'dfs') + '" type="button">Cách DFS</button><button class="b" id="k3" aria-pressed="' + (algo === 'layer') + '" type="button">Theo tầng (bản dùng trong code)</button> ';
     a = tg + '<button class="b" id="b1"' + (left ? '' : ' disabled') + ' type="button">Bước tiếp</button><button class="b" id="b0" type="button">Làm lại</button>';
     m = '<b>Kahn:</b> lấy nút có bậc vào = 0 (không còn tiên quyết chưa xếp), xếp nó ra, rồi trừ 1 bậc vào của các nút nó trỏ tới. Lặp lại tới hết.<br><b>Thứ tự học:</b> ' + (S.out.join(' → ') || '(chưa có)') +
       (left ? '' : '<br>Xếp đủ 5 nút nên đồ thị không có chu trình.');
+    if (algo === 'layer') {
+      m = '<b>Theo tầng:</b> mỗi vòng lấy <b>cả lớp</b> nút bậc vào = 0 làm một tầng, rồi trừ bậc vào của các nút con; nút nào về 0 thì vào tầng sau. Đây là cách của <code>nx.topological_generations</code> (Long ghi nhận code của nhóm dùng hàm này; chưa đối chiếu với mã nguồn dự án).<br><b>Các tầng:</b> ' +
+        (S.lrows.map(function (r, i) { return 'tầng ' + i + ' = {' + r.layer.join(', ') + '}'; }).join('; ') || '(chưa có)') +
+        (left ? '' : '<br>Xếp hết nên không có chu trình. Nút cùng tầng không phụ thuộc nhau; khi trải thành hàng ngang, nút nào đứng trước cũng hợp lệ.');
+    }
     if (algo === 'dfs') {
       m = '<b>DFS:</b> đi sâu hết một đường; nút nào <b>xong</b> (đen) thì ghi lại. Nút xong sau cùng đứng đầu danh sách học nên cuối cùng ta <b>đảo ngược</b> thứ tự xong.<br><b>Thứ tự xong:</b> ' + (S.fin.join(', ') || '(chưa có)') +
         (left ? '' : '<br><b>Đảo ngược = thứ tự học:</b> ' + S.fin.slice().reverse().join(' → ') + '. Không gặp nút xám nào nên đồ thị không có chu trình.');
@@ -165,8 +198,8 @@ function panel() {
   }
   $('#act').innerHTML = a; $('#msg').innerHTML = m; $('#lg').innerHTML = logTable();
   $('#b0').onclick = reset;
-  $('#b1').onclick = mode === 'topo' ? (algo === 'dfs' ? dstep : kahn) : mode === 'cyc' ? addCycle : dropRed;
-  if ($('#k1')) { $('#k1').onclick = function () { algo = 'kahn'; reset(); }; $('#k2').onclick = function () { algo = 'dfs'; reset(); }; }
+  $('#b1').onclick = mode === 'topo' ? (algo === 'dfs' ? dstep : algo === 'layer' ? lstep : kahn) : mode === 'cyc' ? addCycle : dropRed;
+  if ($('#k1')) { $('#k1').onclick = function () { algo = 'kahn'; reset(); }; $('#k2').onclick = function () { algo = 'dfs'; reset(); }; $('#k3').onclick = function () { algo = 'layer'; reset(); }; }
 }
 $$('[data-m]').forEach(function (b) {
   b.onclick = function () { mode = b.dataset.m; $$('[data-m]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); reset(); };
