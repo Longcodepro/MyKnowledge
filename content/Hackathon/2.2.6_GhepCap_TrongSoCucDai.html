@@ -68,7 +68,36 @@
 <p>Tham lam sai khi cạnh nặng nhất <b>chặn mất hai cạnh nhỏ cộng lại lớn hơn nó</b>. Tuy vậy, tham lam theo trọng số luôn đạt ít nhất <b>một nửa</b> tối ưu (một kết quả đã biết), nên đề cương giữ nó làm <b>phương án dự phòng</b>, còn phương án chính là Blossom.</p>
 
 <h2>Vì sao Blossom mà không phải Hungarian</h2>
-<p>Hungarian chỉ chạy trên đồ thị hai phía. Ở đây SV nào cũng có thể ghép với SV nào, nên đồ thị có thể có chu trình lẻ (ví dụ tam giác A, B, C). Blossom xử lý được trường hợp này.</p>
+<h3>Đồ thị hai phía là gì</h3>
+<p><mark>Đồ thị hai phía</mark> là đồ thị mà các đỉnh chia được thành <b>hai nhóm</b>, và mọi cạnh chỉ nối <b>giữa hai nhóm</b>, không có cạnh nối hai đỉnh cùng nhóm. Ví dụ: ghép shipper với đơn hàng, hoặc giảng viên với lớp học. Thuật toán <mark>Hungarian</mark> (ghép cặp trên đồ thị hai phía) chạy đúng cho loại này.</p>
+<h3>Vì sao đồ thị của Whybi không phải hai phía</h3>
+<p>Sinh viên nào cũng có thể ghép với sinh viên nào, nên không thể chia lớp thành "nhóm 1" và "nhóm 2" rồi chỉ ghép chéo. Hệ quả: đồ thị có thể có <mark>chu trình lẻ</mark>, ví dụ tam giác A–B–C (3 bạn, đi vòng 3 cạnh).</p>
+<p>Cách kiểm tra bằng tô hai màu: nếu đồ thị là hai phía thì tô được hai màu sao cho hai đầu mỗi cạnh khác màu.</p>
+<div class="tw"><table>
+<thead><tr><th>Bước</th><th>Tô</th><th>Vì sao</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>A đỏ</td><td>Chọn tùy ý</td></tr>
+<tr><td>2</td><td>B xanh</td><td>B nối với A nên khác màu A</td></tr>
+<tr><td>3</td><td class="c-bad">C: không tô được</td><td>C nối với A (đỏ) nên phải xanh, nhưng C cũng nối với B (xanh) nên phải đỏ. Mâu thuẫn</td></tr>
+</tbody></table></div>
+<p class="cap">Tam giác không tô được hai màu, nên không phải đồ thị hai phía. Mọi chu trình có số đỉnh lẻ đều như vậy.</p>
+<h3>Ghép cặp trên tam giác</h3>
+<div class="tw"><table>
+<thead><tr><th>Cách ghép hợp lệ</th><th>Ai bị lẻ</th></tr></thead>
+<tbody>
+<tr><td>A–B</td><td>C</td></tr>
+<tr><td>B–C</td><td>A</td></tr>
+<tr><td>C–A</td><td>B</td></tr>
+</tbody></table></div>
+<p>3 người, mỗi cặp 2 người nên luôn lẻ một người, và mỗi cách chỉ chọn được một cạnh. Hungarian giả định đồ thị hai phía nên không xử lý đúng các tình huống như vậy. <mark>Blossom</mark> (Edmonds) giải đồ thị bất kỳ: ý chính là gói chu trình lẻ thành một "bông hoa" (blossom) rồi xử lý như một đỉnh. Chi tiết toán sâu bạn không cần nhớ.</p>
+<div class="tw"><table>
+<thead><tr><th></th><th>Hungarian</th><th>Blossom</th></tr></thead>
+<tbody>
+<tr><td>Đồ thị áp dụng</td><td>Chỉ hai phía</td><td>Bất kỳ</td></tr>
+<tr><td>Chu trình lẻ</td><td class="c-bad">✗ Không xử lý</td><td class="c-ok">✓ Xử lý được</td></tr>
+<tr><td>Thời gian (đề cương)</td><td>(không dùng)</td><td>O(V³); V ≤ 100 chạy dưới 1 giây</td></tr>
+<tr><td>Có sẵn</td><td></td><td>NetworkX: <code>max_weight_matching</code></td></tr>
+</tbody></table></div>
 
 <h2>Dễ bị hỏi</h2>
 <details><summary>Mỗi người chỉ vào một cặp, vậy người lẻ thì sao?</summary><p>Người không có cặp được ghép một chiều với một mentor hoặc vào hàng chờ.</p></details>
