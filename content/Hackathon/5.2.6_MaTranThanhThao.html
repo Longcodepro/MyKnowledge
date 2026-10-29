@@ -6,6 +6,10 @@
 <title>5.2.6 Ma trận thành thạo</title>
 <link rel="stylesheet" href="assets/hoc.css">
 <script src="assets/hoc.js"></script>
+<style>
+.nd{cursor:pointer}.nd:focus{outline:none}.nd:focus rect{stroke-width:4}
+.ed.hl{stroke:var(--blue);stroke-width:3}
+</style>
 </head>
 <body>
 <header class="top"><a href="index.html">← Mục lục</a><button class="b" id="tg" type="button">Chế độ tối</button></header>
@@ -44,7 +48,20 @@
 </tbody></table></div>
 <div class="luu-y"><p><b>Câu hỏi còn mở:</b> NEEDS_REVERIFY có tính là "đã Đạt" khi xét tiên quyết của nút con và khi tính Biên không? Các trang đang có chưa nói rõ. Nên hỏi lại nhóm trước khi trình bày.</p></div>
 
-<h3>Các lần chuyển trạng thái (theo mục 4.5)</h3>
+<h2>Vòng đời của một ô, vẽ như cây</h2>
+<div class="fig">
+<svg class="d" viewBox="0 0 720 440" role="group" aria-label="Sơ đồ trạng thái của một ô">
+<defs>
+<marker id="sa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--mut)"/></marker>
+<marker id="sb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--blue)"/></marker>
+</defs>
+<g id="sed"></g><g id="snd"></g>
+</svg>
+<p class="cap">Bấm một trạng thái để thấy các mũi tên đi ra khỏi nó (tô xanh). Thân cây đi từ trên xuống: Khóa, Sẵn sàng, Đang giảng, rồi rẽ sang Đạt hoặc Chưa đạt. Các mũi tên cong là đường quay lại. Nút nào có nhãn cũng có chữ, không chỉ dựa vào màu.</p>
+<div class="msg" id="smsg" aria-live="polite"></div>
+</div>
+
+<details><summary>Bảng chuyển trạng thái đầy đủ (theo mục 4.5)</summary>
 <div class="tw"><table>
 <thead><tr><th>Từ</th><th>Sự kiện</th><th>Sang</th></tr></thead>
 <tbody>
@@ -59,6 +76,7 @@
 <tr><td>NEEDS_REVERIFY</td><td>Bắt đầu phiên</td><td>IN_PROGRESS (phiên xác nhận)</td></tr>
 <tr><td>AVAILABLE hoặc NOT_PASSED</td><td>Phát hành bản mới, thêm tiên quyết chưa Đạt</td><td>LOCKED</td></tr>
 </tbody></table></div>
+</details>
 
 <h2>Lưu trong cơ sở dữ liệu</h2>
 <div class="tw"><table>
@@ -105,6 +123,49 @@ function draw(k) {
 }
 $$('[data-m]').forEach(function (b) { b.onclick = function () { draw(b.dataset.m); }; });
 draw('mx2');
+
+/* Sơ đồ vòng đời của một ô */
+(function () {
+  var W = 170, H = 44;
+  var SN = {
+    LOCKED: ['Khóa', 230, 16, 'lk'], AVAILABLE: ['Sẵn sàng', 230, 104, 'fr'], IN_PROGRESS: ['Đang giảng', 230, 192, 'fr'],
+    MASTERED: ['Đạt', 130, 290, 'ok'], NOT_PASSED: ['Chưa đạt', 420, 290, 'fr'], NEEDS_REVERIFY: ['Cần xác nhận lại', 130, 380, '']
+  };
+  var SE = [
+    ['LOCKED', 'AVAILABLE', 'M230,60 L230,100'], ['AVAILABLE', 'IN_PROGRESS', 'M230,148 L230,188'],
+    ['IN_PROGRESS', 'MASTERED', 'M190,236 L150,286'], ['IN_PROGRESS', 'NOT_PASSED', 'M270,236 L390,286'],
+    ['IN_PROGRESS', 'AVAILABLE', 'M145,214 C30,214 30,126 141,126'], ['NOT_PASSED', 'IN_PROGRESS', 'M505,320 C580,320 580,214 319,214'],
+    ['MASTERED', 'NEEDS_REVERIFY', 'M130,334 L130,376'], ['NEEDS_REVERIFY', 'IN_PROGRESS', 'M215,402 C320,402 300,300 240,240'],
+    ['AVAILABLE', 'LOCKED', 'M315,114 C390,114 390,46 319,46'], ['NOT_PASSED', 'LOCKED', 'M505,300 C700,300 700,28 319,28']
+  ];
+  var OUT = {
+    LOCKED: ['Mọi tiên quyết đã MASTERED → AVAILABLE'],
+    AVAILABLE: ['Bắt đầu phiên → IN_PROGRESS', 'Phát hành bản mới, thêm tiên quyết chưa Đạt → LOCKED'],
+    IN_PROGRESS: ['Chấm xong, qua → MASTERED', 'Chấm xong, trượt → NOT_PASSED', 'Bỏ dở hoặc hết hạn → AVAILABLE nếu chưa từng trượt, NOT_PASSED nếu đã trượt'],
+    NOT_PASSED: ['Bắt đầu phiên → IN_PROGRESS', 'Phát hành bản mới, thêm tiên quyết chưa Đạt → LOCKED'],
+    MASTERED: ['Phát hành bản mới, rubric của nút đổi → NEEDS_REVERIFY'],
+    NEEDS_REVERIFY: ['Bắt đầu phiên (phiên xác nhận) → IN_PROGRESS']
+  };
+  var sel = 'AVAILABLE';
+  function drawS() {
+    $('#sed').innerHTML = SE.map(function (e) {
+      var on = e[0] === sel;
+      return '<path class="ed' + (on ? ' hl' : '') + '" fill="none" d="' + e[2] + '" marker-end="url(#' + (on ? 'sb' : 'sa') + ')"/>';
+    }).join('');
+    $('#snd').innerHTML = Object.keys(SN).map(function (k) {
+      var d = SN[k];
+      return '<g class="nd ' + d[3] + (k === sel ? ' cur' : '') + '" tabindex="0" role="button" aria-pressed="' + (k === sel) + '" data-k="' + k + '" aria-label="' + k + ', ' + d[0] + '"><rect x="' + (d[1] - W / 2) + '" y="' + d[2] + '" width="' + W + '" height="' + H + '" rx="2"/>' +
+        '<text x="' + d[1] + '" y="' + (d[2] + 19) + '" text-anchor="middle">' + k + '</text><text class="sm" x="' + d[1] + '" y="' + (d[2] + 35) + '" text-anchor="middle">' + d[0] + '</text></g>';
+    }).join('');
+    $('#smsg').innerHTML = '<b>' + sel + ' (' + SN[sel][0] + ')</b> đi tiếp thế nào:<br>' + OUT[sel].map(function (t) { return '• ' + t; }).join('<br>') +
+      '<br><span class="cap">Khi phát hành cây lần đầu, ô bắt đầu ở AVAILABLE nếu nút không có tiên quyết, ngược lại ở LOCKED.</span>';
+    $$('#snd .nd').forEach(function (g) {
+      var go = function () { sel = g.dataset.k; drawS(); };
+      g.onclick = go; g.onkeydown = function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(); } };
+    });
+  }
+  drawS();
+})();
 </script>
 </body>
 </html>
