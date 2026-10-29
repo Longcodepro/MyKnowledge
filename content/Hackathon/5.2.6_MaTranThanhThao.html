@@ -26,9 +26,39 @@
 <button class="b" data-m="mx4" aria-pressed="false" type="button">MX4 đọc theo hàng</button>
 </div>
 <div class="tw"><table id="t" aria-label="Ma trận minh họa"></table></div>
-<p class="cap">Ví dụ 4 SV × 4 nút. ✓ Đạt · ◎ Sẵn sàng · ✗ Chưa đạt · 🔒 Khóa.</p>
+<p class="cap">Ví dụ 4 SV × 4 nút. ✓ Đạt · ◎ Sẵn sàng · ✗ Chưa đạt · 🔒 Khóa. Ví dụ chỉ vẽ 4 trong 6 trạng thái; bảng ngay dưới có đủ cả sáu.</p>
 <div class="msg" id="msg" aria-live="polite"></div>
 </div>
+
+<h2>Sáu trạng thái của một ô</h2>
+<p>Cột <code>state</code> nhận một trong sáu giá trị. Tên tiếng Việt và cột "thuộc Biên" là cách diễn giải của người ghi chú, dựa trên bảng chuyển trạng thái ở mục 4.5.</p>
+<div class="tw"><table>
+<thead><tr><th>Giá trị</th><th>Tên gọi</th><th>Nghĩa</th><th>Thuộc Biên</th></tr></thead>
+<tbody>
+<tr><td><code>LOCKED</code></td><td>🔒 Khóa</td><td>Còn tiên quyết chưa MASTERED</td><td class="c-lk">Không</td></tr>
+<tr><td><code>AVAILABLE</code></td><td>◎ Sẵn sàng</td><td>Đủ tiên quyết, chưa từng giảng</td><td class="c-fr">Có</td></tr>
+<tr><td><code>IN_PROGRESS</code></td><td>Đang giảng</td><td>Phiên giảng lại đang diễn ra</td><td class="c-fr">Có (chưa Đạt, đủ tiên quyết)</td></tr>
+<tr><td><code>MASTERED</code></td><td>✓ Đạt</td><td>Chấm xong, qua ngưỡng</td><td class="c-ok">Không (đã Đạt)</td></tr>
+<tr><td><code>NOT_PASSED</code></td><td>✗ Chưa đạt</td><td>Đã giảng nhưng chưa qua</td><td class="c-fr">Có</td></tr>
+<tr><td><code>NEEDS_REVERIFY</code></td><td>Cần xác nhận lại</td><td>Từng Đạt, nhưng rubric của nút đổi sau khi phát hành bản mới</td><td>Chưa rõ</td></tr>
+</tbody></table></div>
+<div class="luu-y"><p><b>Câu hỏi còn mở:</b> NEEDS_REVERIFY có tính là "đã Đạt" khi xét tiên quyết của nút con và khi tính Biên không? Các trang đang có chưa nói rõ. Nên hỏi lại nhóm trước khi trình bày.</p></div>
+
+<h3>Các lần chuyển trạng thái (theo mục 4.5)</h3>
+<div class="tw"><table>
+<thead><tr><th>Từ</th><th>Sự kiện</th><th>Sang</th></tr></thead>
+<tbody>
+<tr><td>(khởi tạo)</td><td>Phát hành cây</td><td>AVAILABLE nếu nút không có tiên quyết, ngược lại LOCKED</td></tr>
+<tr><td>LOCKED</td><td>Mọi tiên quyết đã MASTERED</td><td>AVAILABLE</td></tr>
+<tr><td>AVAILABLE</td><td>Bắt đầu phiên</td><td>IN_PROGRESS</td></tr>
+<tr><td>IN_PROGRESS</td><td>Chấm xong, qua</td><td>MASTERED</td></tr>
+<tr><td>IN_PROGRESS</td><td>Chấm xong, trượt</td><td>NOT_PASSED</td></tr>
+<tr><td>IN_PROGRESS</td><td>Bỏ dở hoặc hết hạn</td><td>AVAILABLE nếu chưa từng trượt, NOT_PASSED nếu đã trượt</td></tr>
+<tr><td>NOT_PASSED</td><td>Bắt đầu phiên</td><td>IN_PROGRESS</td></tr>
+<tr><td>MASTERED</td><td>Phát hành bản mới, rubric nút đổi</td><td>NEEDS_REVERIFY</td></tr>
+<tr><td>NEEDS_REVERIFY</td><td>Bắt đầu phiên</td><td>IN_PROGRESS (phiên xác nhận)</td></tr>
+<tr><td>AVAILABLE hoặc NOT_PASSED</td><td>Phát hành bản mới, thêm tiên quyết chưa Đạt</td><td>LOCKED</td></tr>
+</tbody></table></div>
 
 <h2>Lưu trong cơ sở dữ liệu</h2>
 <div class="tw"><table>
