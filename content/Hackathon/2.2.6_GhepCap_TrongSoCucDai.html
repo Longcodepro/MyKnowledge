@@ -70,6 +70,19 @@
 <h2>Vì sao Blossom mà không phải Hungarian</h2>
 <h3>Đồ thị hai phía là gì</h3>
 <p><mark>Đồ thị hai phía</mark> là đồ thị mà các đỉnh chia được thành <b>hai nhóm</b>, và mọi cạnh chỉ nối <b>giữa hai nhóm</b>, không có cạnh nối hai đỉnh cùng nhóm. Ví dụ: ghép shipper với đơn hàng, hoặc giảng viên với lớp học. Thuật toán <mark>Hungarian</mark> (ghép cặp trên đồ thị hai phía) chạy đúng cho loại này.</p>
+<h3>Ý chính của cả hai thuật toán: tìm đường tăng</h3>
+<p>Cả Hungarian lẫn Blossom đều làm một việc lặp đi lặp lại: <b>có một cách ghép, tìm cách sửa để ghép được nhiều hơn</b>. Cách sửa gọi là <mark>đường tăng</mark> (augmenting path): một đường đi xuất phát từ một bạn <b>chưa có cặp</b>, đi luân phiên qua cạnh <b>chưa chọn</b> rồi cạnh <b>đã chọn</b>, và kết thúc ở một bạn khác cũng <b>chưa có cặp</b>. Sau đó <b>đảo</b> các cạnh trên đường: cạnh chọn thành bỏ, cạnh bỏ thành chọn. Số cặp tăng thêm 1.</p>
+<p>Dùng chính ví dụ tham lam ở trên (chuỗi C – A – B – D). Tham lam đã chọn A–B, còn C và D chưa có cặp:</p>
+<div class="tw"><table>
+<thead><tr><th>Bước</th><th>Việc làm</th><th>Cạnh được chọn sau bước</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>Bắt đầu từ cách ghép tham lam</td><td>A–B (1 cặp; C, D lẻ)</td></tr>
+<tr><td>1</td><td>Xuất phát từ C (chưa có cặp). Đi cạnh chưa chọn C–A</td><td>(đang tìm)</td></tr>
+<tr><td>2</td><td>Từ A đi cạnh <b>đã chọn</b> A–B sang B</td><td>(đang tìm)</td></tr>
+<tr><td>3</td><td>Từ B đi cạnh chưa chọn B–D, tới D cũng chưa có cặp. Đã có đường tăng C–A–B–D</td><td>(đang tìm)</td></tr>
+<tr><td>4</td><td class="c-ok">Đảo: bỏ A–B, chọn C–A và B–D</td><td class="c-ok">C–A, B–D (2 cặp, tổng 4)</td></tr>
+</tbody></table></div>
+<p class="cap">Đây chính là cách thuật toán "sửa" lỗi của tham lam. Với bài có trọng số, thuật toán còn thêm bước điều chỉnh để ưu tiên cạnh nặng; phần đó toán sâu, bạn chỉ cần nhớ ý đường tăng.</p>
 <h3>Vì sao đồ thị của Whybi không phải hai phía</h3>
 <p>Sinh viên nào cũng có thể ghép với sinh viên nào, nên không thể chia lớp thành "nhóm 1" và "nhóm 2" rồi chỉ ghép chéo. Hệ quả: đồ thị có thể có <mark>chu trình lẻ</mark>, ví dụ tam giác A–B–C (3 bạn, đi vòng 3 cạnh).</p>
 <p>Cách kiểm tra bằng tô hai màu: nếu đồ thị là hai phía thì tô được hai màu sao cho hai đầu mỗi cạnh khác màu.</p>
@@ -90,6 +103,16 @@
 <tr><td>C–A</td><td>B</td></tr>
 </tbody></table></div>
 <p>3 người, mỗi cặp 2 người nên luôn lẻ một người, và mỗi cách chỉ chọn được một cạnh. Hungarian giả định đồ thị hai phía nên không xử lý đúng các tình huống như vậy. <mark>Blossom</mark> (Edmonds) giải đồ thị bất kỳ: ý chính là gói chu trình lẻ thành một "bông hoa" (blossom) rồi xử lý như một đỉnh. Chi tiết toán sâu bạn không cần nhớ.</p>
+<h3>Vì sao chu trình lẻ làm đường tăng bị sai</h3>
+<p>Trên tam giác A–B–C, giả sử đã chọn A–B và C chưa có cặp. Thử tìm đường tăng từ C:</p>
+<div class="tw"><table>
+<thead><tr><th>Bước</th><th>Đi</th><th>Nhận xét</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>C → A (cạnh chưa chọn)</td><td>Bình thường</td></tr>
+<tr><td>2</td><td>A → B (cạnh đã chọn)</td><td>Bình thường</td></tr>
+<tr><td>3</td><td class="c-bad">B → C (cạnh chưa chọn)</td><td>Quay lại đúng C, nơi xuất phát. Đường tăng phải kết thúc ở một bạn <b>khác</b> chưa có cặp, nên đây là đường giả</td></tr>
+</tbody></table></div>
+<p>Ở đồ thị hai phía, điều này không xảy ra: đi luân phiên thì luôn đổi nhóm, không bao giờ trở lại đỉnh cùng nhóm với xuất phát. Có chu trình lẻ thì có thể quay lại, thuật toán hai phía dễ bị lừa. <mark>Blossom</mark> phát hiện chu trình lẻ đó, <b>gói nó thành một đỉnh duy nhất</b> (một "bông hoa"), tiếp tục tìm đường tăng, rồi <b>mở ra</b> lại khi tìm xong.</p>
 <div class="tw"><table>
 <thead><tr><th></th><th>Hungarian</th><th>Blossom</th></tr></thead>
 <tbody>
