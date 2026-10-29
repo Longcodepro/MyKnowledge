@@ -29,6 +29,48 @@
 <li>Trong hệ thống: đỉnh là SV, cạnh là hai bạn bù cho nhau, trọng số là w(a, b).</li>
 </ul></div>
 
+<h2>Công thức w(a, b): hai bạn bù cho nhau bao nhiêu</h2>
+<p>Trước khi chọn cặp, hệ thống cho mỗi cặp (a, b) một điểm w. Điểm càng cao thì hai bạn càng <mark>cùng có lợi</mark>: a dạy b được điều b cần học, và b dạy a được điều a cần học. Tính w qua ba bước:</p>
+<div class="tw"><table>
+<thead><tr><th>Bước</th><th>Công thức</th><th>Nghĩa</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>T<sub>ab</sub> = Đạt(a) ∩ Biên(b)<br>T<sub>ba</sub> = Đạt(b) ∩ Biên(a)</td><td>Các nút a dạy được cho b, và b dạy được cho a (người dạy đã Đạt, người học có nút trong Biên)</td></tr>
+<tr><td>2</td><td>S<sub>ab</sub> = Σ p(n), n ∈ T<sub>ab</sub><br>S<sub>ba</sub> = Σ p(n), n ∈ T<sub>ba</sub></td><td>Cộng điểm ưu tiên p(n) của các nút đó. Σ đọc là "tổng"</td></tr>
+<tr><td>3</td><td><b>w(a, b) = min(S<sub>ab</sub>, S<sub>ba</sub>)</b></td><td>Lấy chiều <b>yếu hơn</b>. Một chiều bằng 0 thì w = 0 và cặp bị loại (BR-08)</td></tr>
+</tbody></table></div>
+
+<h3>p(n): vì sao không phải nút nào cũng nặng như nhau</h3>
+<p>Nút ít bạn Đạt là điểm nghẽn của lớp, nên dạy nút đó đáng hơn. Đề cương đặt:</p>
+<p><b>p(n) = 1 + α · (1 − tỉ lệ Đạt của n)</b>, với α mặc định = 1.</p>
+<div class="tw"><table>
+<thead><tr><th>Tỉ lệ Đạt của nút</th><th>p(n) khi α = 1</th><th>Ý nghĩa</th></tr></thead>
+<tbody>
+<tr><td>100%</td><td>1,00</td><td>Ai cũng Đạt, nút bình thường (nhỏ nhất)</td></tr>
+<tr><td>75%</td><td>1,25</td><td></td></tr>
+<tr><td>25%</td><td>1,75</td><td></td></tr>
+<tr><td>0%</td><td>2,00</td><td>Chẳng ai Đạt, ưu tiên cao nhất</td></tr>
+</tbody></table></div>
+<p class="cap">Luôn có 1 ≤ p(n) ≤ 1 + α. Số "1 +" giữ cho mọi nút có giá trị tối thiểu 1, α chỉnh mức nhấn vào nút khó.</p>
+
+<h3>Vì sao dùng min mà không cộng</h3>
+<div class="tw"><table>
+<thead><tr><th>Cặp</th><th>a dạy b</th><th>b dạy a</th><th>Cộng</th><th>min</th></tr></thead>
+<tbody>
+<tr><td>X – Y</td><td>5</td><td>0</td><td>5</td><td class="c-bad">0, loại</td></tr>
+<tr><td>P – Q</td><td>2</td><td>2</td><td>4</td><td class="c-ok">2, giữ</td></tr>
+</tbody></table></div>
+<p>Nếu cộng, cặp một chiều X – Y (Y không dạy được gì) thắng cặp bù trừ P – Q. Mà mục tiêu là học đồng đẳng, nên min được chọn để <mark>ép bù trừ hai chiều</mark>.</p>
+
+<h3>Hai lỗi hay gặp khi tính</h3>
+<div class="tw"><table>
+<thead><tr><th>Lỗi</th><th>Vì sao sai</th></tr></thead>
+<tbody>
+<tr><td class="c-bad">✗ Tính cả nút mà cả hai cùng Đạt</td><td>Người học đã Đạt thì không cần học, nút đó không nằm trong Biên nên không vào T</td></tr>
+<tr><td class="c-bad">✗ Cho rằng w(a, b) khác w(b, a)</td><td>Công thức lấy min của hai vế, đổi vai a và b chỉ đổi chỗ hai vế nên w luôn như nhau</td></tr>
+</tbody></table></div>
+
+<div class="luu-y"><p><b>Hai điểm yếu cần biết:</b> (1) Trong đề cương, ký hiệu p(n) được dùng cho <b>hai thứ khác nhau</b>: tỉ lệ Đạt của nút (mục 6.5.1) và độ ưu tiên của nút (mục 6.6.2). Khi trình bày nên gọi riêng, ví dụ r(n) cho tỉ lệ Đạt, p(n) cho độ ưu tiên. (2) Tỉ lệ Đạt tính trên số bạn đã thử; lớp mới hoặc ít người thử thì tỉ lệ không đáng tin, và p(n) gần như không phân biệt được nút.</p></div>
+
 <h2>Tham lam không đủ</h2>
 <div class="fig">
 <div class="row"><button class="b" id="gr" type="button">Chọn tham lam</button><button class="b" id="op" type="button">Chọn tối ưu</button><button class="b" id="cl" type="button">Xóa chọn</button></div>
@@ -39,8 +81,8 @@
 <div class="msg" id="msg" aria-live="polite"></div>
 </div>
 
-<h2>Cạnh và trọng số đến từ đâu</h2>
-<p>Hai bạn a, b có cạnh khi <mark>cả hai chiều</mark> đều dạy được: Đạt(a) ∩ Biên(b) khác rỗng và Đạt(b) ∩ Biên(a) khác rỗng. Trọng số w(a, b) lấy chiều yếu hơn (min), để cặp lệch một phía không được điểm cao. Ví dụ dưới dùng ma trận ở trang 5.2.6 (số minh họa, coi mỗi nút nặng 1). Lưu ý: ma trận này chỉ có <b>4 nút N1–N4</b>, không có N5, nên Dũng đã Đạt hết và Biên rỗng. (Ở trang 2.1.6 cây có thêm N5 nên Biên của Dũng là {N5}; hai trang dùng hai cây khác nhau.)</p>
+<h2>Ví dụ: tính w cho 4 bạn</h2>
+<p>Cặp (a, b) có cạnh khi <mark>cả hai chiều</mark> đều dạy được (T<sub>ab</sub> và T<sub>ba</sub> đều khác rỗng). Ví dụ dưới dùng ma trận ở trang 5.2.6 (số minh họa, coi mỗi nút nặng 1). Lưu ý: ma trận này chỉ có <b>4 nút N1–N4</b>, không có N5, nên Dũng đã Đạt hết và Biên rỗng. (Ở trang 2.1.6 cây có thêm N5 nên Biên của Dũng là {N5}; hai trang dùng hai cây khác nhau.)</p>
 <div class="tw"><table>
 <thead><tr><th>Bạn</th><th>Đạt</th><th>Biên</th></tr></thead>
 <tbody>
@@ -57,6 +99,7 @@
 <tr><td>An – Chi</td><td>An dạy Chi N2</td><td>Chi không dạy được An</td><td class="c-bad">✗ 0, loại</td></tr>
 <tr><td>Dũng – bất kỳ ai</td><td>Dũng dạy được</td><td>Dũng không còn gì để học (Biên rỗng)</td><td class="c-bad">✗ 0, loại</td></tr>
 </tbody></table></div>
+<p>Nếu dùng p thật thay cho "mỗi nút nặng 1": giả sử N2 có 75% bạn Đạt (p = 1,25) và N3 có 100% (p = 1,00). Bình dạy Chi N2 được 1,25; Chi dạy Bình N3 được 1,00. Khi đó w(Bình, Chi) = min(1,25 ; 1,00) = <b>1,00</b>.</p>
 <p class="cap">Kết quả: chỉ Bình – Chi có cạnh. An và Dũng đi theo đường "một chiều" (mentor hoặc hàng chờ), xem câu hỏi bên dưới.</p>
 
 <h2>Vì sao Blossom mà không phải Hungarian</h2>
