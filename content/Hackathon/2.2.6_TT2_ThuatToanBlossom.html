@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2.2.6 TT2 Thuật toán Blossom</title>
+<link rel="stylesheet" href="assets/hoc.css">
+<script src="assets/hoc.js"></script>
+<style>
+pre{overflow-x:auto;margin:10px 0;padding:10px 12px;border:1px solid var(--rule);background:var(--panel);font-size:14px}
+pre code{background:none;border:0;padding:0}
+.ed2{stroke:var(--mut);stroke-width:2.5;fill:none}
+.ed2.mt{stroke:var(--ok);stroke-width:7}
+.ed2.hl{stroke:var(--blue);stroke-width:4;stroke-dasharray:8 5}
+.ed2.bad{stroke:var(--red);stroke-width:5}
+.vc{fill:var(--paper);stroke:var(--ink);stroke-width:1.5}
+.vc.fr{fill:var(--frbg);stroke:var(--blue);stroke-width:2.5}
+.vc.ok{fill:var(--okbg);stroke:var(--ok);stroke-width:2.5}
+.vc.bad{fill:var(--badbg);stroke:var(--red);stroke-width:2.5}
+.bl{fill:none;stroke:var(--red);stroke-width:2.5;stroke-dasharray:3 4}
+</style>
+</head>
+<body>
+<header class="top"><a href="index.html">← Mục lục</a><button class="b" id="tg" type="button">Chế độ tối</button></header>
+<main class="wrap">
+<div class="head"><span class="no">2.2.6 · TT2</span><div><h1>Thuật toán Blossom</h1><p class="lede">Giảng từng khái niệm: ghép cặp, đường tăng, chu trình lẻ, bông hoa. Phần 2 của mục 2.2.6, học sau phần tính điểm w.</p></div></div>
+
+<div class="nho"><ul>
+<li>Việc của thuật toán: có một cách ghép, <mark>tìm đường tăng</mark> để ghép được nhiều hơn, lặp lại tới khi hết đường.</li>
+<li>Đồ thị hai phía thì tìm đường tăng dễ. Có <mark>chu trình lẻ</mark> thì dễ bị lừa; Blossom gói chu trình lẻ thành một "bông hoa" để vượt qua.</li>
+<li>Trong hệ thống: gọi sẵn <code>nx.max_weight_matching</code>, độ phức tạp O(V³).</li>
+</ul></div>
+
+<h2>Bước 1: từ vựng nền</h2>
+<div class="tw"><table>
+<thead><tr><th>Từ</th><th>Nghĩa</th><th>Ví dụ</th></tr></thead>
+<tbody>
+<tr><td>Đỉnh, cạnh</td><td>Đỉnh là một bạn; cạnh nối hai bạn có thể ghép cặp</td><td>Cạnh A–B</td></tr>
+<tr><td>Ghép cặp (matching)</td><td>Tập cạnh <b>không chung đỉnh</b>: mỗi bạn nằm trong tối đa một cạnh</td><td>{A–B, C–D}</td></tr>
+<tr><td>Đỉnh đã ghép / tự do</td><td>Đã ghép: nằm trong một cạnh đã chọn. Tự do: chưa có cặp</td><td>Sau khi chọn A–B: C, D tự do</td></tr>
+<tr><td>Ghép cặp cực đại</td><td>Cách ghép có <b>nhiều cặp nhất</b> (chưa tính điểm)</td><td>{C–A, B–D} (2 cặp) hơn {A–B} (1 cặp)</td></tr>
+</tbody></table></div>
+<p>Ví dụ với chuỗi 4 bạn C – A – B – D. Ba cách chọn:</p>
+<div class="tw"><table>
+<thead><tr><th>Cách chọn</th><th>Hợp lệ?</th><th>Vì sao</th></tr></thead>
+<tbody>
+<tr><td>{A–B}</td><td class="c-ok">✓</td><td>Không chung đỉnh. C, D tự do</td></tr>
+<tr><td>{C–A, B–D}</td><td class="c-ok">✓ cực đại</td><td>Không ai tự do, 2 cặp</td></tr>
+<tr><td>{C–A, A–B}</td><td class="c-bad">✗</td><td>A nằm trong hai cạnh</td></tr>
+</tbody></table></div>
+
+<h2>Bước 2: đường luân phiên và đường tăng</h2>
+<p><mark>Đường luân phiên</mark> là đường đi mà các cạnh <b>xen kẽ</b>: chưa chọn, đã chọn, chưa chọn, đã chọn, ... Giống bước chân trái phải, không có hai bước cùng chân liền nhau.</p>
+<p><mark>Đường tăng</mark> (augmenting path) là đường luân phiên thỏa hai điều kiện: <b>bắt đầu</b> ở một đỉnh tự do và <b>kết thúc</b> ở một đỉnh tự do khác. Đường tăng luôn có cạnh chưa chọn ở hai đầu, nên nhiều hơn một cạnh chưa chọn so với cạnh đã chọn. <b>Đảo</b> các cạnh trên đường (chưa chọn thành chọn, đã chọn thành bỏ) thì số cặp tăng thêm 1.</p>
+
+<h3>Xem từng bước trên chuỗi C – A – B – D</h3>
+<div class="fig" id="st1"></div>
+
+<h3>Những đường nhìn giống đường tăng nhưng sai</h3>
+<p>Dùng cách ghép hiện tại {A–B} trên chuỗi C – A – B – D:</p>
+<div class="tw"><table>
+<thead><tr><th>Đường</th><th>Sai ở đâu</th></tr></thead>
+<tbody>
+<tr><td class="c-bad">✗ A – B</td><td>Bắt đầu ở A, mà A đã ghép, không phải đỉnh tự do</td></tr>
+<tr><td class="c-bad">✗ C – A</td><td>Kết thúc ở A, đã ghép. Đường tăng phải kết thúc ở đỉnh tự do</td></tr>
+<tr><td class="c-bad">✗ C – A – B</td><td>Kết thúc ở B, đã ghép</td></tr>
+<tr><td class="c-ok">✓ C – A – B – D</td><td>Bắt đầu ở C (tự do), luân phiên chưa chọn, đã chọn, chưa chọn, kết thúc ở D (tự do)</td></tr>
+</tbody></table></div>
+
+<h2>Bước 3: vì sao hết đường tăng thì là tốt nhất</h2>
+<p>Đây là một kết quả đã biết (định lý Berge, bạn không cần chứng minh): <b>một cách ghép là cực đại (nhiều cặp nhất) khi và chỉ khi không còn đường tăng nào</b>. Vì vậy thuật toán chỉ cần lặp: còn đường tăng thì đảo, hết thì dừng.</p>
+
+<h2>Bước 4: đồ thị hai phía và chu trình lẻ</h2>
+<p><mark>Đồ thị hai phía</mark> là đồ thị mà các đỉnh chia được thành hai nhóm sao cho mọi cạnh nối <b>giữa hai nhóm</b>. Cách kiểm tra là <b>tô hai màu</b> sao cho hai đầu mỗi cạnh khác màu. <mark>Chu trình</mark> là đường đi vòng quay lại đỉnh xuất phát; chu trình <mark>lẻ</mark> có số đỉnh lẻ (3, 5, ...).</p>
+<div class="tw"><table>
+<thead><tr><th>Đồ thị</th><th>Tô hai màu</th><th>Hai phía?</th></tr></thead>
+<tbody>
+<tr><td>Tam giác A–B–C (3 đỉnh)</td><td>A đỏ, B xanh, C nối cả A (đỏ) lẫn B (xanh) nên không tô được</td><td class="c-bad">✗ Không</td></tr>
+<tr><td>Hình vuông A–B–C–D (4 đỉnh)</td><td>A đỏ, B xanh, C đỏ, D xanh; D nối A (đỏ) khớp</td><td class="c-ok">✓ Có</td></tr>
+<tr><td>Ngũ giác 5 đỉnh</td><td>Đỏ, xanh, đỏ, xanh rồi đỉnh thứ 5 nối cả đỉnh 4 (xanh) lẫn đỉnh 1 (đỏ), không tô được</td><td class="c-bad">✗ Không</td></tr>
+</tbody></table></div>
+<p class="cap">Quy tắc nhớ: có chu trình lẻ thì <b>không</b> phải đồ thị hai phía. Mình đã kiểm tra bằng NetworkX: <code>nx.is_bipartite</code> cho tam giác False, hình vuông True, ngũ giác False.</p>
+<p>Với Whybi, bạn nào cũng có thể ghép với bạn nào, không chia được hai nhóm, nên đồ thị <b>có thể</b> có chu trình lẻ. Đó là lý do không dùng được thuật toán chỉ chạy trên hai phía (Hungarian).</p>
+
+<h2>Bước 5: chu trình lẻ làm tìm đường tăng bị lừa</h2>
+<p>Ở đồ thị hai phía, đi luân phiên thì luôn đổi màu nên <b>không bao giờ quay lại</b> đúng nhóm xuất phát. Trên tam giác thì có thể. Giả sử đã chọn A–B, C tự do, tìm đường tăng từ C:</p>
+<div class="tw"><table>
+<thead><tr><th>Bước</th><th>Đi</th><th>Nhận xét</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>C → A (chưa chọn)</td><td>Bình thường</td></tr>
+<tr><td>2</td><td>A → B (đã chọn)</td><td>Bình thường</td></tr>
+<tr><td>3</td><td class="c-bad">B → C (chưa chọn)</td><td>Quay đúng C, nơi xuất phát. Đường tăng phải kết thúc ở một đỉnh tự do <b>khác</b>, nên đây là đường giả</td></tr>
+</tbody></table></div>
+<p>Thuật toán hai phía không lường trước chuyện này nên dễ đi vòng hoặc bỏ sót đường tăng thật.</p>
+
+<h2>Bước 6: bông hoa (blossom)</h2>
+<p><mark>Bông hoa</mark> là chu trình lẻ tìm thấy trong lúc tìm đường tăng. Cách xử lý của Edmonds, ba bước: <b>(1) gói</b> bông hoa thành một đỉnh duy nhất, <b>(2)</b> tiếp tục tìm đường tăng trên đồ thị đã gói, <b>(3) mở</b> bông hoa ra, chọn đường đi trong bông hoa sao cho vẫn luân phiên.</p>
+<h3>Xem từng bước trên một đồ thị có chu trình lẻ</h3>
+<p>6 bạn S, P, Q, X, Y, T. Q, X, Y tạo thành tam giác. Cách ghép hiện tại: {P–Q, X–Y}; S và T đang tự do.</p>
+<div class="fig" id="st2"></div>
+
+<h3>Vì sao phải mở bông hoa đúng cách</h3>
+<p>Khi mở, đường vào bông hoa ở Q và đường ra ở Y (tới T). Có hai cách đi từ Q tới Y trong tam giác:</p>
+<div class="tw"><table>
+<thead><tr><th>Cách đi</th><th>Chuỗi cạnh cả đường S → T</th><th>Luân phiên?</th></tr></thead>
+<tbody>
+<tr><td class="c-bad">✗ Đi tắt Q → Y</td><td>S–P (chưa), P–Q (đã), Q–Y (chưa), Y–T (chưa)</td><td class="c-bad">Hai cạnh chưa chọn liền nhau, không luân phiên</td></tr>
+<tr><td class="c-ok">✓ Đi vòng Q → X → Y</td><td>S–P (chưa), P–Q (đã), Q–X (chưa), X–Y (đã), Y–T (chưa)</td><td class="c-ok">Chưa, đã, chưa, đã, chưa: đúng luân phiên</td></tr>
+</tbody></table></div>
+<p class="cap">Trong bông hoa 3 đỉnh luôn có đúng một cách đi để vẫn luân phiên; phần mở ra được thuật toán tự tìm.</p>
+
+<h2>Bước 7: thuật toán tổng thể</h2>
+<pre><code>M = tập cạnh đã chọn (ban đầu rỗng)
+lặp:
+    tìm đường tăng từ một đỉnh tự do (gặp chu trình lẻ thì gói, mở sau)
+    nếu không còn đường tăng: dừng
+    đảo các cạnh trên đường để được cách ghép nhiều hơn 1 cặp
+trả về M</code></pre>
+<div class="tw"><table>
+<thead><tr><th>Dòng</th><th>Làm gì</th></tr></thead>
+<tbody>
+<tr><td><code>M = rỗng</code></td><td>Lúc đầu chưa ghép ai, mọi đỉnh tự do</td></tr>
+<tr><td><code>tìm đường tăng</code></td><td>Từ mỗi đỉnh tự do, đi luân phiên; gặp chu trình lẻ thì dùng bông hoa</td></tr>
+<tr><td><code>không còn đường tăng: dừng</code></td><td>Theo định lý ở bước 3, lúc đó đã đạt nhiều cặp nhất</td></tr>
+<tr><td><code>đảo</code></td><td>Cạnh chưa chọn thành chọn, đã chọn thành bỏ; số cặp tăng 1</td></tr>
+</tbody></table></div>
+<p>Vì sao O(V³): với V đỉnh, mỗi lần đảo tăng thêm 1 cặp nên tối đa V/2 lần; mỗi lần tìm đường tăng tốn cỡ V² thao tác. Đây là con số đề cương và thư viện nêu; mình chưa tự kiểm chứng.</p>
+
+<h2>Bước 8: thêm trọng số (ý chính)</h2>
+<p>Hệ thống không chỉ muốn nhiều cặp mà muốn <b>tổng điểm w lớn nhất</b>. Thuật toán thêm một cơ chế: mỗi đỉnh có một con số gọi là "giá"; thuật toán chỉ đi trên cạnh <b>chặt</b> (tổng giá hai đầu bằng đúng điểm của cạnh). Khi hết đường để đi, nó chỉnh giá để mở thêm cạnh chặt. Bạn chỉ cần nhớ: <mark>vẫn là tìm đường tăng</mark>, nhưng chỉ trên các cạnh chặt. Đây là phần toán sâu, mình tóm tắt rất gọn.</p>
+
+<h2>Bước 9: dùng trong NetworkX</h2>
+<pre><code>import networkx as nx
+
+G = nx.Graph()
+G.add_weighted_edges_from([("C", "A", 2), ("A", "B", 3), ("B", "D", 2)])
+
+m = nx.max_weight_matching(G)     # mặc định maxcardinality=False
+print(sorted(tuple(sorted(e)) for e in m))
+# [('A', 'C'), ('B', 'D')]   tổng 4, tối ưu</code></pre>
+<div class="tw"><table>
+<thead><tr><th>Dòng</th><th>Làm gì</th></tr></thead>
+<tbody>
+<tr><td><code>nx.Graph()</code></td><td>Tạo đồ thị vô hướng</td></tr>
+<tr><td><code>add_weighted_edges_from([...])</code></td><td>Thêm cạnh (đỉnh, đỉnh, điểm w)</td></tr>
+<tr><td><code>max_weight_matching(G)</code></td><td>Chạy Blossom có trọng số, trả về tập các cặp</td></tr>
+<tr><td><code>maxcardinality=False</code></td><td>Tối đa <b>tổng điểm</b>, không ép số cặp nhiều nhất. Đề cương dùng giá trị này</td></tr>
+</tbody></table></div>
+<p>Mình đã chạy thử: với đồ thị C–A (2), A–B (3), B–D (2), hàm trả đúng {A–C, B–D} tổng 4. Với tam giác ba cạnh cùng điểm 3, hàm chỉ chọn <b>1</b> cạnh (3 người, một người lẻ). Với đồ thị 6 đỉnh ở bước 6 (không trọng số) và <code>maxcardinality=True</code>, hàm trả 3 cặp {P–S, Q–X, T–Y}, đúng kết quả sau khi đảo ở demo.</p>
+
+<h2>Dễ bị hỏi</h2>
+<details><summary>Blossom và Hungarian khác nhau thế nào?</summary><p>Cùng ý tìm đường tăng. Hungarian chỉ đúng cho đồ thị hai phía. Blossom thêm bước gói chu trình lẻ nên đúng cho đồ thị bất kỳ, và đồ thị ghép sinh viên với sinh viên có thể có chu trình lẻ.</p></details>
+<details><summary>Vì sao không chia lớp thành hai nhóm cho đỡ phức tạp?</summary><p>Chia nhóm sẽ làm mất những cặp tốt giữa hai bạn cùng nhóm, và việc chia cũng cần một tiêu chí chưa có. Dùng Blossom cho đồ thị bất kỳ là đơn giản hơn.</p></details>
+<details><summary>Blossom có đảm bảo ai cũng có cặp không?</summary><p>Không. Nó tối đa tổng điểm, nên có thể bỏ lẻ một bạn nếu như vậy tổng điểm cao hơn, và số bạn trong lớp lẻ thì chắc chắn có người lẻ. Người lẻ được xử lý bằng ghép một chiều với mentor hoặc hàng chờ (trang kế).</p></details>
+<details><summary>Kết quả tối ưu có tốt nếu điểm w sai không?</summary><p>Không. Blossom chỉ tối ưu theo điểm w nó nhận được. Điểm w tính từ Biên và p(n) có giới hạn (xem trang tính điểm w), nên "tối ưu" chỉ đúng với mô hình đó.</p></details>
+<p class="cap">Trang kế (2.2.6 phần 3): có thuật toán rồi, quay lại xem tham lam khác gì và vì sao tham lam chỉ là phương án dự phòng.</p>
+</main>
+<script>
+function key(u, v) { return u < v ? u + v : v + u; }
+function stepper(id, nodes, edges, frames, vb) {
+  var root = $('#' + id), k = 0;
+  root.innerHTML = '<svg class="d" viewBox="0 0 ' + vb[0] + ' ' + vb[1] + '" role="img" aria-label="Đồ thị minh họa từng bước"><g id="' + id + 'g"></g></svg>' +
+    '<p class="cap">Nét xanh lá dày: cạnh đã chọn. Nét đứt xanh dương: đường đang đi. Nét đỏ: cạnh gây vòng. Vòng nét chấm đỏ: bông hoa. Dưới mỗi đỉnh có chữ cho biết trạng thái.</p>' +
+    '<div class="row"><button class="b" id="' + id + 'n" type="button">Bước tiếp</button><button class="b" id="' + id + 'r" type="button">Làm lại</button></div>' +
+    '<div class="tw" id="' + id + 'l"></div>';
+  function draw() {
+    var f = frames[k], m = {}, hl = {}, bd = {}, matched = {};
+    f.m.forEach(function (e) { m[key(e[0], e[1])] = 1; matched[e[0]] = matched[e[1]] = 1; });
+    (f.hl || []).forEach(function (e) { hl[key(e[0], e[1])] = 1; });
+    (f.bad || []).forEach(function (e) { bd[key(e[0], e[1])] = 1; });
+    var h = '';
+    if (f.blob) {
+      var xs = f.blob.map(function (n) { return nodes[n][0]; }), ys = f.blob.map(function (n) { return nodes[n][1]; });
+      var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
+      h += '<ellipse class="bl" cx="' + (x0 + x1) / 2 + '" cy="' + (y0 + y1) / 2 + '" rx="' + ((x1 - x0) / 2 + 42) + '" ry="' + ((y1 - y0) / 2 + 42) + '"/>';
+    }
+    edges.forEach(function (e) {
+      var a = nodes[e[0]], b = nodes[e[1]], kk = key(e[0], e[1]);
+      h += '<line class="ed2' + (m[kk] ? ' mt' : '') + (bd[kk] ? ' bad' : '') + '" x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '"/>';
+      if (hl[kk]) h += '<line class="ed2 hl" x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '"/>';
+    });
+    Object.keys(nodes).forEach(function (n) {
+      var p = nodes[n], c = (f.cls || {})[n] || '', lab = (f.lab || {})[n] || (matched[n] ? 'đã ghép' : 'tự do');
+      h += '<circle class="vc ' + c + '" cx="' + p[0] + '" cy="' + p[1] + '" r="24"/><text x="' + p[0] + '" y="' + (p[1] + 5) + '" text-anchor="middle">' + n + '</text>' +
+        '<text class="sm" x="' + p[0] + '" y="' + (p[1] + 44) + '" text-anchor="middle">' + lab + '</text>';
+    });
+    $('#' + id + 'g').innerHTML = h;
+    $('#' + id + 'l').innerHTML = '<table aria-label="Các bước"><thead><tr><th>Bước</th><th>Việc làm</th></tr></thead><tbody>' +
+      frames.slice(0, k + 1).map(function (x, i) { return '<tr' + (i === k ? ' class="hit"' : '') + '><td>' + i + '</td><td>' + x.t + '</td></tr>'; }).join('') + '</tbody></table>';
+    $('#' + id + 'n').disabled = k >= frames.length - 1;
+  }
+  $('#' + id + 'n').onclick = function () { if (k < frames.length - 1) { k++; draw(); } };
+  $('#' + id + 'r').onclick = function () { k = 0; draw(); };
+  draw();
+}
+
+/* Demo 1: đường tăng trên chuỗi C–A–B–D */
+stepper('st1', { C: [90, 90], A: [270, 90], B: [450, 90], D: [630, 90] }, [['C', 'A'], ['A', 'B'], ['B', 'D']], [
+  { m: [['A', 'B']], cls: { C: 'fr', D: 'fr' }, t: 'Cách ghép hiện tại: chỉ A–B (nét dày). C và D chưa có cặp, gọi là <b>tự do</b>.' },
+  { m: [['A', 'B']], hl: [['C', 'A']], cls: { C: 'fr', D: 'fr' }, lab: { C: 'gốc tìm' }, t: 'Xuất phát từ <b>C</b> (tự do). Đi theo một cạnh <b>chưa chọn</b>: C–A.' },
+  { m: [['A', 'B']], hl: [['C', 'A'], ['A', 'B']], cls: { C: 'fr', D: 'fr' }, t: 'Từ A đi theo cạnh <b>đã chọn</b> A–B, sang B.' },
+  { m: [['A', 'B']], hl: [['C', 'A'], ['A', 'B'], ['B', 'D']], cls: { C: 'fr', D: 'fr' }, lab: { D: 'tự do, đích' }, t: 'Từ B đi theo cạnh <b>chưa chọn</b> B–D, tới <b>D</b> cũng tự do. Có <b>đường tăng C–A–B–D</b>: chưa chọn, đã chọn, chưa chọn (luân phiên).' },
+  { m: [['C', 'A'], ['B', 'D']], cls: { C: 'ok', A: 'ok', B: 'ok', D: 'ok' }, t: '<b>Đảo</b> các cạnh trên đường: bỏ A–B, chọn C–A và B–D. Từ 1 cặp lên <b>2 cặp</b>, không còn đỉnh tự do.' }
+], [720, 190]);
+
+/* Demo 2: bông hoa */
+var N2 = { S: [60, 150], P: [190, 150], Q: [330, 150], X: [470, 70], Y: [470, 230], T: [630, 230] };
+var E2 = [['S', 'P'], ['P', 'Q'], ['Q', 'X'], ['X', 'Y'], ['Y', 'Q'], ['Y', 'T']];
+var M0 = [['P', 'Q'], ['X', 'Y']];
+stepper('st2', N2, E2, [
+  { m: M0, cls: { S: 'fr', T: 'fr' }, t: 'Cách ghép hiện tại {P–Q, X–Y}. <b>S</b> và <b>T</b> tự do. Ta tìm đường tăng nối S tới T.' },
+  { m: M0, hl: [['S', 'P'], ['P', 'Q']], cls: { S: 'fr', T: 'fr' }, lab: { S: 'gốc tìm', P: 'đã thăm', Q: 'đã thăm' }, t: 'Từ S: cạnh chưa chọn S–P tới P, rồi cạnh đã chọn P–Q tới Q.' },
+  { m: M0, hl: [['S', 'P'], ['P', 'Q'], ['Q', 'X'], ['X', 'Y']], cls: { S: 'fr', T: 'fr' }, lab: { S: 'gốc tìm', P: 'đã thăm', Q: 'đã thăm', X: 'đã thăm', Y: 'đã thăm' }, t: 'Từ Q: cạnh chưa chọn Q–X tới X, rồi cạnh đã chọn X–Y tới Y.' },
+  { m: M0, hl: [['S', 'P'], ['P', 'Q'], ['Q', 'X'], ['X', 'Y']], bad: [['Y', 'Q']], cls: { S: 'fr', T: 'fr', Q: 'bad', X: 'bad', Y: 'bad' }, lab: { Q: 'đã thăm', X: 'đã thăm', Y: 'đã thăm' }, t: 'Từ Y thấy cạnh Y–Q, mà <b>Q đã thăm</b>: ta vừa đi vòng Q–X–Y–Q. Đó là <b>chu trình lẻ</b> (3 đỉnh). Nếu đi tiếp như thường sẽ quay vòng hoặc bỏ sót đường.' },
+  { m: M0, blob: ['Q', 'X', 'Y'], cls: { S: 'fr', T: 'fr', Q: 'bad', X: 'bad', Y: 'bad' }, lab: { Q: 'bông hoa', X: 'bông hoa', Y: 'bông hoa' }, t: '<b>Gói</b> Q, X, Y thành một đỉnh duy nhất gọi là B* (bông hoa, vòng chấm đỏ).' },
+  { m: M0, blob: ['Q', 'X', 'Y'], hl: [['S', 'P'], ['P', 'Q'], ['Y', 'T']], cls: { S: 'fr', T: 'fr', Q: 'bad', X: 'bad', Y: 'bad' }, lab: { Q: 'bông hoa', X: 'bông hoa', Y: 'bông hoa', T: 'tự do, đích' }, t: 'Trên đồ thị đã gói, từ B* có cạnh chưa chọn (Y–T) tới <b>T</b> tự do. Tìm được đường tăng <b>S–P=B*–T</b>.' },
+  { m: M0, hl: [['S', 'P'], ['P', 'Q'], ['Q', 'X'], ['X', 'Y'], ['Y', 'T']], cls: { S: 'fr', T: 'fr' }, lab: { T: 'tự do, đích' }, t: '<b>Mở</b> bông hoa, đi vòng trong nó để vẫn luân phiên: Q–X (chưa chọn), X–Y (đã chọn). Đường tăng thật: <b>S–P, P–Q, Q–X, X–Y, Y–T</b> (chưa, đã, chưa, đã, chưa).' },
+  { m: [['S', 'P'], ['Q', 'X'], ['Y', 'T']], cls: { S: 'ok', P: 'ok', Q: 'ok', X: 'ok', Y: 'ok', T: 'ok' }, t: '<b>Đảo</b> các cạnh trên đường: được {S–P, Q–X, Y–T}, <b>3 cặp</b>, không còn đỉnh tự do.' }
+], [680, 290]);
+</script>
+</body>
+</html>
