@@ -68,7 +68,7 @@ function threeColor(edges) {
   return cyc;
 }
 function indeg() { var d = {}; names.forEach(function (n) { d[n] = 0; }); E.forEach(function (e) { d[e[1]]++; }); return d; }
-function reset() { E = BASE.map(function (e) { return e.slice(); }); S = { out: [], deg: indeg(), cyc: null, cur: null, log: [], deg0: indeg(), ev: dfsEvents(E), lv: layerRounds(), li: 0, lrows: [], i: 0, col: {}, fin: [], dlog: [] }; draw(); }
+function reset() { E = BASE.map(function (e) { return e.slice(); }); S = { out: [], deg: indeg(), cyc: null, cur: null, log: [], deg0: indeg(), ev: dfsEvents(E), lv: layerRounds(), li: 0, lrows: [], rchk: [], ri: 0, i: 0, col: {}, fin: [], dlog: [] }; draw(); }
 function layerRounds() {          // Kahn theo tầng: mỗi vòng lấy cả lớp nút bậc vào 0 (giống nx.topological_generations)
   var deg = indeg(), cur = names.filter(function (n) { return deg[n] === 0; }), rounds = [];
   while (cur.length) {
@@ -122,10 +122,24 @@ function kahn() {
   draw();
 }
 function addCycle() { E = BASE.slice(0, 5).map(function (e) { return e.slice(); }).concat([['N5', 'N1']]); S.cyc = threeColor(E); draw(); }
-function dropRed() { E = E.filter(function (e) { return !path(E, e[0], e[1], e); }); draw(); }
+function dropRed() { E = E.filter(function (e) { return !path(E, e[0], e[1], e); }); S.rchk = []; S.ri = 0; draw(); }
+function pathFind(edges, from, to, skip) {   // DFS tìm một đường from ⇝ to không dùng cạnh skip
+  var seen = {}, res = null;
+  (function go(u, pth) {
+    if (res || seen[u]) return; seen[u] = 1;
+    edges.forEach(function (e) {
+      if (res || e === skip || e[0] !== u) return;
+      var q = pth.concat([e[1]]);
+      if (e[1] === to) { res = q; return; }
+      go(e[1], q);
+    });
+  })(from, [from]);
+  return res;
+}
+function rstep() { var e = E[S.ri]; if (!e) return; S.rchk.push({ e: e, p: pathFind(E, e[0], e[1], e) }); S.ri++; draw(); }
 function draw() {
   var cycE = S.cyc ? S.cyc.slice(1).map(function (n, i) { return S.cyc[i] + '>' + n; }) : [];
-  var red = mode === 'red' ? redundant().map(function (e) { return e.join('>'); }) : [];
+  var red = mode === 'red' ? S.rchk.filter(function (r) { return r.p; }).map(function (r) { return r.e.join('>'); }) : [];
   $('#ed').innerHTML = E.map(function (e) {
     var a = N[e[0]], b = N[e[1]], k = e.join('>'), bad = cycE.indexOf(k) >= 0 || red.indexOf(k) >= 0;
     if (k === 'N5>N1') return '<path class="ed bad" d="M455 326 C 740 326, 740 38, 455 38" marker-end="url(#a1)"/>';
@@ -156,7 +170,16 @@ function layerTable() {
   });
   return S.lrows.length ? h + '</tbody></table><p class="cap">Chỉ số tầng của một nút = độ dài đường dài nhất từ một nút bậc vào 0 tới nó. Ví dụ N4 ở tầng 2 vì đường dài nhất là N1→N2→N4.</p>' : '<p class="cap">Bấm "Bước tiếp" để lấy tầng đầu tiên.</p>';
 }
+function redTable() {
+  if (!S.rchk.length) return '<p class="cap">Bấm "Kiểm tra cạnh tiếp" để xét từng cạnh một.</p>';
+  var h = '<table aria-label="Kiểm tra từng cạnh"><thead><tr><th>Bước</th><th>Cạnh</th><th>Bỏ cạnh, DFS từ nút đầu: đường khác</th><th>Kết luận</th></tr></thead><tbody>';
+  S.rchk.forEach(function (r, i) {
+    h += '<tr' + (i === S.rchk.length - 1 ? ' class="hit"' : '') + '><td>' + (i + 1) + '</td><td><b>' + r.e[0] + ' → ' + r.e[1] + '</b></td><td>' + (r.p ? r.p.join(' → ') : 'không có') + '</td><td class="' + (r.p ? 'c-bad' : 'c-ok') + '">' + (r.p ? '✗ Thừa, bỏ được' : '✓ Cần giữ') + '</td></tr>';
+  });
+  return h + '</tbody></table><p class="cap">Mỗi cạnh được kiểm tra trên đồ thị đầy đủ, nên kết quả không phụ thuộc thứ tự kiểm tra.</p>';
+}
 function logTable() {
+  if (mode === 'red') return redTable();
   if (mode !== 'topo') return '';
   if (algo === 'layer') return layerTable();
   if (algo === 'dfs') return dfsTable();
@@ -191,14 +214,16 @@ function panel() {
     m = S.cyc ? '<b>DFS ba màu:</b> trắng là chưa thăm, xám là đang thăm, đen là xong. Từ N5 đi tiếp gặp <b>N1 đang xám</b>, vậy có chu trình <b>' + S.cyc.join(' → ') + '</b>. Hệ thống <b>từ chối</b> cạnh này vì cây phải là DAG.'
       : 'Cây hiện là DAG. Thử thêm cạnh N5 → N1 (coi "Cây nhị phân" là tiên quyết của "Biến & kiểu") rồi xem hệ thống chặn thế nào.';
   } else {
-    var r = redundant();
-    a = '<button class="b" id="b1"' + (r.length ? '' : ' disabled') + ' type="button">Bỏ cạnh thừa</button><button class="b" id="b0" type="button">Làm lại</button>';
-    m = r.length ? '<b>Cạnh thừa:</b> ' + r.map(function (e) { return e.join(' → '); }).join(', ') + '. Đã có đường N1 → N2 → N4 nên cạnh trực tiếp N1 → N4 không thêm thông tin, chỉ làm sơ đồ rối.'
-      : '<b>Đã rút gọn.</b> Còn đúng các cạnh cần thiết, thứ tự học vẫn không đổi.';
+    var r = redundant(), found = S.rchk.filter(function (x) { return x.p; });
+    a = '<button class="b" id="b2"' + (S.ri < E.length ? '' : ' disabled') + ' type="button">Kiểm tra cạnh tiếp</button><button class="b" id="b1"' + (r.length ? '' : ' disabled') + ' type="button">Bỏ cạnh thừa</button><button class="b" id="b0" type="button">Làm lại</button>';
+    m = !r.length ? '<b>Đã rút gọn.</b> Còn đúng các cạnh cần thiết, thứ tự học vẫn không đổi.'
+      : '<b>Cách làm:</b> với mỗi cạnh u → v, tạm bỏ nó rồi dùng DFS từ u xem còn tới được v không. Còn đường khác thì cạnh đó thừa.<br><b>Đã kiểm tra:</b> ' + S.ri + '/' + E.length + ' cạnh.' +
+        (found.length ? '<br><b>Cạnh thừa tìm được:</b> ' + found.map(function (x) { return x.e.join(' → '); }).join(', ') + '. Đã có đường khác nên cạnh trực tiếp không thêm thông tin, chỉ làm sơ đồ rối.' : '');
   }
   $('#act').innerHTML = a; $('#msg').innerHTML = m; $('#lg').innerHTML = logTable();
   $('#b0').onclick = reset;
   $('#b1').onclick = mode === 'topo' ? (algo === 'dfs' ? dstep : algo === 'layer' ? lstep : kahn) : mode === 'cyc' ? addCycle : dropRed;
+  if ($('#b2')) $('#b2').onclick = rstep;
   if ($('#k1')) { $('#k1').onclick = function () { algo = 'kahn'; reset(); }; $('#k2').onclick = function () { algo = 'dfs'; reset(); }; $('#k3').onclick = function () { algo = 'layer'; reset(); }; }
 }
 $$('[data-m]').forEach(function (b) {
