@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TT01 Thuật toán Kahn</title>
+<link rel="stylesheet" href="assets/hoc.css">
+<script src="assets/hoc.js"></script>
+<script src="assets/tt.js"></script>
+</head>
+<body>
+<header class="top"><a href="index.html">← Mục lục</a><button class="b" id="tg" type="button">Chế độ tối</button></header>
+<main class="wrap">
+<div class="head"><span class="no">TT01</span><div><h1>Thuật toán Kahn</h1><p class="lede">Xếp các kỹ năng thành một thứ tự học hợp lệ, và phát hiện luôn khi cây có chu trình.</p></div></div>
+
+<div class="nho"><ul>
+<li>Việc của thuật toán: cho cây kỹ năng (DAG), tìm một <mark>thứ tự học</mark> sao cho mỗi kỹ năng đứng sau mọi tiên quyết của nó.</li>
+<li>Ý chính: lấy ra nút <mark>bậc vào = 0</mark> (không còn tiên quyết chưa xếp), rồi "gỡ" nó khỏi đồ thị, lặp lại.</li>
+<li>Xếp được ít nút hơn tổng số nút thì <mark>có chu trình</mark>. Độ phức tạp O(V + E).</li>
+<li>Dùng trong Whybi: sinh thứ tự học, xếp tầng để vẽ cây. Học xong trang này mới sang TT02 và TT03.</li>
+</ul></div>
+
+<h2>Vì sao cần thuật toán này</h2>
+<p>Cây kỹ năng có những mũi tên "phải học X trước Y". Hệ thống cần một danh sách học theo hàng ngang (hoặc theo tầng để vẽ) mà không mũi tên nào bị đi ngược. Giống như xếp lịch môn học: không thể xếp "Cấu trúc dữ liệu" trước "Lập trình cơ bản" nếu môn này là tiên quyết.</p>
+
+<h2>Bước 1: từ vựng nền</h2>
+<div class="tw"><table>
+<thead><tr><th>Từ</th><th>Nghĩa</th><th>Ví dụ trong cây bên dưới</th></tr></thead>
+<tbody>
+<tr><td>Nút</td><td>Một kỹ năng</td><td>N2 · Mảng</td></tr>
+<tr><td>Cạnh có hướng</td><td>Mũi tên "học trước → học sau"</td><td>N2 → N4: học Mảng trước Danh sách LK</td></tr>
+<tr><td>Bậc vào (in-degree)</td><td>Số mũi tên <b>đi vào</b> nút, tức số tiên quyết trực tiếp</td><td>N4 có 3 mũi tên vào (từ N1, N2, N3) nên bậc vào = 3</td></tr>
+<tr><td>Nút nguồn</td><td>Nút có bậc vào = 0, học được ngay</td><td>N1 · Biến và kiểu</td></tr>
+</tbody></table></div>
+<p>Bậc vào ban đầu của cả cây (đếm mũi tên đi vào từng nút):</p>
+<div class="tw"><table>
+<thead><tr><th>Nút</th><th>Mũi tên đi vào</th><th>Bậc vào</th></tr></thead>
+<tbody>
+<tr><td>N1</td><td>không có</td><td>0</td></tr>
+<tr><td>N2</td><td>N1 → N2</td><td>1</td></tr>
+<tr><td>N3</td><td>N1 → N3</td><td>1</td></tr>
+<tr><td>N4</td><td>N1 → N4, N2 → N4, N3 → N4</td><td>3</td></tr>
+<tr><td>N5</td><td>N4 → N5</td><td>1</td></tr>
+</tbody></table></div>
+<p class="cap">Trong cây này có thêm một cạnh thừa N1 → N4 (đã có N1 → N2 → N4). Nó vẫn làm bậc vào của N4 là 3; trang TT03 nói cách bỏ nó. Với Kahn, cạnh thừa không làm sai thứ tự, chỉ làm thêm một phép trừ.</p>
+
+<h2>Bước 2: ý tưởng</h2>
+<p>Hãy hình dung mỗi mũi tên đi vào một nút là một "xiềng" giữ nút đó lại. Nút bậc vào 0 không còn xiềng, nên học được ngay. Khi ta xếp một nút ra, các xiềng nó đang giữ nút khác được tháo (<b>trừ 1</b> bậc vào của mỗi nút nó trỏ tới). Nút nào tháo hết xiềng (bậc vào về 0) thì tới lượt.</p>
+<p>Để nhớ những nút đã sẵn sàng, thuật toán dùng một <mark>hàng đợi</mark> (queue: vào trước, ra trước, giống xếp hàng mua vé).</p>
+
+<h2>Bước 3: chạy từng bước trên cây</h2>
+<p>Viền xanh là nút đang lấy, nền xanh nhạt nét đứt là nút trong hàng đợi, nền xanh lá là nút đã xếp. Bấm "Bước tiếp" để xem bảng dài thêm một dòng.</p>
+<div class="fig" id="k1"></div>
+
+<h2>Những thứ tự nhìn giống đúng nhưng sai</h2>
+<div class="tw"><table>
+<thead><tr><th>Thứ tự</th><th>Hợp lệ?</th><th>Vì sao</th></tr></thead>
+<tbody>
+<tr><td>N1, N2, N3, N4, N5</td><td class="c-ok">✓</td><td>Mỗi nút đứng sau mọi tiên quyết của nó</td></tr>
+<tr><td>N1, N3, N2, N4, N5</td><td class="c-ok">✓</td><td>Đổi chỗ N2 và N3 vẫn được, vì hai nút này không phụ thuộc nhau. Thứ tự học đúng <b>không duy nhất</b></td></tr>
+<tr><td>N1, N4, N2, N3, N5</td><td class="c-bad">✗</td><td>N4 đứng trước N2, trong khi N2 là tiên quyết của N4</td></tr>
+<tr><td>N2, N1, N3, N4, N5</td><td class="c-bad">✗</td><td>N2 đứng trước N1, trong khi N1 là tiên quyết của N2</td></tr>
+</tbody></table></div>
+<p>Hai sai lầm hay gặp khi tự chạy thuật toán:</p>
+<div class="tw"><table>
+<thead><tr><th>Sai lầm</th><th>Vì sao sai</th></tr></thead>
+<tbody>
+<tr><td class="c-bad">✗ Lấy nút có bậc vào <b>nhỏ nhất</b> chứ không phải bằng 0</td><td>Bậc vào 1 vẫn còn một tiên quyết chưa xếp. Chỉ bậc vào <b>đúng bằng 0</b> mới an toàn</td></tr>
+<tr><td class="c-bad">✗ Quên trừ bậc vào của các nút con sau khi lấy một nút</td><td>Các nút con mãi không về 0 nên thuật toán dừng sớm và báo nhầm là có chu trình</td></tr>
+</tbody></table></div>
+
+<h2>Bước 4: khi cây có chu trình</h2>
+<p>Thử thêm cạnh N5 → N3 (bắt học "Cây nhị phân" trước "Con trỏ"). Giờ N3 → N4 → N5 → N3 là một vòng: không nút nào trong vòng có thể đứng trước. Xem Kahn xử lý ra sao:</p>
+<div class="fig" id="k2"></div>
+
+<h3>Quy tắc kết luận</h3>
+<div class="tw"><table>
+<thead><tr><th>Sau khi chạy xong</th><th>Kết luận</th></tr></thead>
+<tbody>
+<tr><td>Số nút đã xếp = tổng số nút</td><td class="c-ok">✓ Đồ thị là DAG, thứ tự xếp là thứ tự học</td></tr>
+<tr><td>Số nút đã xếp &lt; tổng số nút</td><td class="c-bad">✗ Có chu trình. Các nút chưa xếp luôn có bậc vào &gt; 0, kẹt vì chờ nhau</td></tr>
+</tbody></table></div>
+<p class="cap">Lưu ý: các nút chưa xếp gồm cả nút <b>trong</b> vòng (N3, N4, N5 ở trên) lẫn nút phía sau vòng. Kahn chỉ cho biết "có chu trình", không chỉ ra vòng cụ thể; muốn chỉ ra vòng thì dùng DFS ba màu ở TT02.</p>
+
+<h2>Vì sao độ phức tạp là O(V + E)</h2>
+<p>V là số nút, E là số cạnh. Mỗi nút vào hàng đợi đúng một lần và ra đúng một lần: V việc. Mỗi cạnh bị "trừ bậc vào" đúng một lần (lúc nút đầu của nó được lấy ra): E việc. Cộng lại cỡ V + E, rất nhẹ cho cây vài trăm nút. (Đây là phép đếm của mình, khớp với con số O(V + E) trong tài liệu.)</p>
+
+<h2>Dễ bị hỏi</h2>
+<details><summary>Nút N2 và N3 cùng bậc vào 0 cùng lúc, lấy nút nào trước?</summary><p>Nút nào cũng đúng. Hai nút này không phụ thuộc nhau nên thứ tự giữa chúng tùy ý; hàng đợi chỉ cho một thứ tự cụ thể (nút vào hàng đợi trước thì ra trước).</p></details>
+<details><summary>Vì sao hệ thống còn xếp theo "tầng"?</summary><p>Để vẽ cây: các nút cùng tầng đặt cùng một hàng ngang. Cách làm là biến thể của Kahn: mỗi vòng lấy <b>cả lớp</b> nút bậc vào 0 làm một tầng (hàm <code>nx.topological_generations</code>). Xem tab "Theo tầng" ở trang 3.</p></details>
+<details><summary>Kahn khác thuật toán DFS xếp topo thế nào?</summary><p>Kahn đi từ nút nguồn tiến dần về sau và dùng bậc vào. DFS đi sâu rồi ghi nút theo thứ tự xong, cuối cùng đảo ngược. Cả hai cho thứ tự hợp lệ, cùng O(V + E). Kahn báo chu trình bằng "xếp thiếu nút", DFS báo bằng "gặp nút xám" (TT02).</p></details>
+<p class="cap">Trang kế: TT02, DFS ba màu: tìm chu trình, chỉ ra chính xác vòng nào, và xếp topo theo cách khác.</p>
+</main>
+<script>
+var N = { N1: ['Biến & kiểu', 380, 16], N2: ['Mảng', 220, 112], N3: ['Con trỏ', 540, 112], N4: ['Danh sách LK', 380, 208], N5: ['Cây nhị phân', 380, 304] };
+var names = Object.keys(N);
+var BASE = [['N1', 'N2'], ['N1', 'N3'], ['N2', 'N4'], ['N3', 'N4'], ['N4', 'N5'], ['N1', 'N4']];
+var CYC = BASE.concat([['N5', 'N3', 'cong']]);
+function snap(o) { return JSON.parse(JSON.stringify(o)); }
+function kahnFrames(E) {
+  var deg = {}, out = [], q = [], fr = [];
+  names.forEach(function (n) { deg[n] = 0; });
+  E.forEach(function (e) { deg[e[1]]++; });
+  names.forEach(function (n) { if (deg[n] === 0) q.push(n); });
+  function cells() { return [q.join(', ') || '(trống)'].concat(names.map(function (n) { return out.indexOf(n) >= 0 ? '✓' : deg[n]; })); }
+  function view(cur) {
+    var cls = {}, sub = {};
+    names.forEach(function (n) {
+      if (out.indexOf(n) >= 0) { cls[n] = n === cur ? 'cur' : 'ok'; sub[n] = 'xếp thứ ' + (out.indexOf(n) + 1); }
+      else { sub[n] = 'bậc vào = ' + deg[n]; if (q.indexOf(n) >= 0) cls[n] = 'fr'; }
+    });
+    return { cls: cls, sub: sub };
+  }
+  var v = view(null);
+  fr.push({ t: 'Đếm bậc vào của mọi nút. Nút bậc vào 0 là <b>' + q.join(', ') + '</b>, cho vào hàng đợi.', s: 'Đếm bậc vào, cho nút bậc vào 0 vào hàng đợi', cls: v.cls, sub: v.sub, row: cells() });
+  while (q.length) {
+    var n = q.shift(), dec = [], zero = [];
+    out.push(n);
+    E.forEach(function (e) { if (e[0] === n) { deg[e[1]]--; dec.push(e[1]); if (deg[e[1]] === 0) { q.push(e[1]); zero.push(e[1]); } } });
+    v = view(n);
+    var on = E.filter(function (e) { return e[0] === n; });
+    fr.push({
+      t: 'Lấy <b>' + n + '</b> ra khỏi hàng đợi và xếp thứ ' + out.length + '. ' + (dec.length ? 'Trừ 1 bậc vào của ' + dec.join(', ') + '. ' : 'Nó không trỏ tới nút nào. ') + (zero.length ? 'Về 0: <b>' + zero.join(', ') + '</b>, cho vào hàng đợi.' : 'Chưa nút nào về 0.'),
+      s: 'Lấy <b>' + n + '</b>, trừ bậc vào của ' + (dec.join(', ') || 'không nút nào') + (zero.length ? '; về 0: ' + zero.join(', ') : ''),
+      cls: v.cls, sub: v.sub, on: on, row: cells()
+    });
+  }
+  var left = names.filter(function (n) { return out.indexOf(n) < 0; });
+  v = view(null);
+  left.forEach(function (n) { v.cls[n] = 'bad'; });
+  fr.push({
+    t: left.length ? 'Hàng đợi trống nhưng mới xếp <b>' + out.length + '/' + names.length + '</b> nút. Còn ' + left.join(', ') + ' vẫn có bậc vào &gt; 0 vì chờ nhau. Kết luận: <b>có chu trình</b>, từ chối cạnh vừa thêm.' :
+      'Hàng đợi trống và đã xếp đủ <b>' + names.length + '/' + names.length + '</b> nút. Thứ tự học: <b>' + out.join(' → ') + '</b>. Không có chu trình.',
+    s: left.length ? 'Kết luận: xếp ' + out.length + '/' + names.length + ' nút, có chu trình' : 'Kết luận: xếp đủ ' + names.length + '/' + names.length + ' nút, thứ tự: ' + out.join(' → '),
+    cls: v.cls, sub: v.sub, row: cells()
+  });
+  return fr;
+}
+var cols = ['Hàng đợi'].concat(names);
+ttStepper('k1', N, BASE, kahnFrames(BASE), { vb: [760, 360], cols: cols, rowLabel: 'Việc làm', cap: 'Các cột N1–N5 là bậc vào còn lại sau mỗi bước; ✓ là nút đã xếp.' });
+ttStepper('k2', N, CYC, kahnFrames(CYC), { vb: [760, 360], cols: cols, rowLabel: 'Việc làm', cap: 'Mũi tên N5 → N3 vẽ cong bên phải. Nút đỏ là nút kẹt, không xếp được.' });
+</script>
+</body>
+</html>

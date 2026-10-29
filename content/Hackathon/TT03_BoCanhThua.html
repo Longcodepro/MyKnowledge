@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TT03 Bỏ cạnh thừa</title>
+<link rel="stylesheet" href="assets/hoc.css">
+<script src="assets/hoc.js"></script>
+<script src="assets/tt.js"></script>
+</head>
+<body>
+<header class="top"><a href="index.html">← Mục lục</a><button class="b" id="tg" type="button">Chế độ tối</button></header>
+<main class="wrap">
+<div class="head"><span class="no">TT03</span><div><h1>Bỏ cạnh thừa</h1><p class="lede">Rút gọn bắc cầu: xóa những mũi tên mà đường khác đã suy ra được, cho cây gọn mà thứ tự học không đổi.</p></div></div>
+
+<div class="nho"><ul>
+<li>Cạnh <mark>u → v là thừa</mark> nếu bỏ nó đi mà vẫn còn một đường khác từ u tới v.</li>
+<li>Cách kiểm tra: bỏ tạm cạnh, rồi dùng <mark>DFS</mark> từ u xem còn tới được v không.</li>
+<li>Bỏ cạnh thừa <mark>không đổi</mark> thứ tự học nào; chỉ làm sơ đồ bớt rối.</li>
+<li>Làm sau khi đã chắc đồ thị là DAG (TT01 hoặc TT02 kiểm tra trước).</li>
+</ul></div>
+
+<h2>Vì sao cần</h2>
+<p>Giảng viên khi vẽ cây thường thêm cả những mũi tên "cho chắc". Ví dụ vì "Danh sách liên kết" cần cả "Biến và kiểu", họ vẽ thêm N1 → N4, dù N1 → N2 → N4 đã nói điều đó rồi. Mũi tên thừa làm cây rối, và làm các phép đếm tiên quyết trực tiếp (như bậc vào) bị lệch. Đời thường: đã có tuyến Sài Gòn → Cần Thơ → Cà Mau thì không cần vẽ thêm một tuyến "Sài Gòn → Cà Mau" chỉ để nói rằng đi được.</p>
+
+<h2>Bước 1: từ vựng nền</h2>
+<div class="tw"><table>
+<thead><tr><th>Từ</th><th>Nghĩa</th><th>Ví dụ</th></tr></thead>
+<tbody>
+<tr><td>Đường đi</td><td>Chuỗi mũi tên nối tiếp, đi đúng chiều</td><td>N1 → N2 → N4 là một đường từ N1 tới N4</td></tr>
+<tr><td>Bắc cầu (transitive)</td><td>Nếu A tới B và B tới C thì A tới C</td><td>N1 tới N2, N2 tới N4 nên N1 tới N4</td></tr>
+<tr><td>Cạnh thừa</td><td>Cạnh trực tiếp u → v mà đã có đường khác u ⇝ v</td><td>N1 → N4</td></tr>
+</tbody></table></div>
+
+<h2>Bước 2: thuật toán</h2>
+<div class="tw"><table>
+<thead><tr><th>Bước</th><th>Làm gì</th><th>Vì sao</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Lấy một cạnh u → v</td><td>Cần quyết định cạnh này thừa hay không</td></tr>
+<tr><td>2</td><td>Tạm coi như cạnh này không có</td><td>Nếu giữ, DFS đi thẳng u → v và luôn "tìm thấy" v, kết luận vô nghĩa</td></tr>
+<tr><td>3</td><td>DFS từ u, xem có tới được v không</td><td>Tới được nghĩa là có đường khác nói lại đúng điều cạnh này nói</td></tr>
+<tr><td>4</td><td>Tới được: đánh dấu thừa. Không tới được: giữ</td><td>Cạnh không thừa là cạnh duy nhất nối hai phần đó</td></tr>
+<tr><td>5</td><td>Làm cho mọi cạnh, rồi xóa các cạnh đánh dấu thừa</td><td>Kiểm tra trên đồ thị đầy đủ cho kết quả không phụ thuộc thứ tự xét</td></tr>
+</tbody></table></div>
+
+<h2>Bước 3: chạy từng cạnh</h2>
+<p>Mỗi bước xét một cạnh. Nút nền xanh nét đứt là các nút trên đường khác tìm được. Cạnh đỏ nét đứt là cạnh thừa; cạnh xanh đậm là đường khác chứng minh nó thừa.</p>
+<div class="fig" id="r1"></div>
+
+<h2>Những kết luận nhìn giống đúng nhưng sai</h2>
+<div class="tw"><table>
+<thead><tr><th>Kết luận</th><th>Đúng?</th><th>Vì sao</th></tr></thead>
+<tbody>
+<tr><td>Bỏ N2 → N4 vì N4 vẫn có mũi tên khác đi vào</td><td class="c-bad">✗</td><td>Câu hỏi không phải "N4 còn mũi tên vào không" mà là "<b>N2</b> còn tới được N4 không". Bỏ N2 → N4 thì N2 không còn mũi tên nào đi ra, nên hết đường. Phải giữ</td></tr>
+<tr><td>Nút N4 có nhiều mũi tên vào (3) nên các mũi tên đó thừa</td><td class="c-bad">✗</td><td>Số mũi tên vào không quyết định. Chỉ N1 → N4 thừa; N2 → N4 và N3 → N4 đều là đường duy nhất từ N2, N3 tới N4</td></tr>
+<tr><td>Bỏ N1 → N4 thì N4 có thể học trước N1</td><td class="c-bad">✗</td><td>N4 vẫn cần N2 và N3, và hai nút đó cần N1. Thứ tự học không đổi</td></tr>
+<tr><td>Bỏ N1 → N4 vì có đường N1 → N2 → N4</td><td class="c-ok">✓</td><td>Bỏ tạm cạnh, DFS từ N1 vẫn tới được N4</td></tr>
+</tbody></table></div>
+
+<h2>Làm đúng thứ tự: sau khi chắc là DAG</h2>
+<p>Khái niệm "đường khác" chỉ rõ ràng khi đồ thị không có chu trình. Trong chu trình, mỗi cạnh đều có "đường khác" đi vòng, nên thuật toán sẽ đánh dấu thừa lung tung. Vì vậy thứ tự hợp lý là: <b>kiểm tra chu trình trước (TT01 hoặc TT02), bỏ cạnh thừa sau, xếp topo cuối</b>. Đây là suy luận của mình từ cách thuật toán hoạt động, không phải thứ tự ghi trong đề cương.</p>
+
+<h2>Vì sao không đổi thứ tự học</h2>
+<p>Mỗi cạnh thừa u → v chỉ nói "u trước v", mà đường khác u ⇝ v đã đảm bảo u đứng trước v trong mọi thứ tự hợp lệ. Nên tập các thứ tự hợp lệ của cây không đổi sau khi bỏ cạnh thừa. Trên cây ví dụ: trước và sau khi bỏ N1 → N4 đều cho N1, N2, N3, N4, N5 (và N1, N3, N2, N4, N5) là hợp lệ.</p>
+
+<h2>Độ phức tạp</h2>
+<p>Mỗi cạnh chạy một DFS cỡ V + E, có E cạnh nên tổng cỡ E × (V + E). Chậm hơn Kahn và DFS ba màu (chỉ V + E) nhưng với cây vài trăm nút vẫn nhẹ. Đây là phép đếm của mình, không phải con số trong tài liệu.</p>
+<p>Thư viện NetworkX có sẵn hàm <code>nx.transitive_reduction(G)</code> làm đúng việc này. Mình đã chạy thử trên cây ví dụ: hàm trả về đúng 5 cạnh, bỏ mỗi N1 → N4.</p>
+
+<h2>Dễ bị hỏi</h2>
+<details><summary>Vì sao phải bỏ cạnh thừa nếu nó vô hại?</summary><p>Nó không sai nhưng làm cây rối và làm những số đếm theo mũi tên (bậc vào, số tiên quyết hiển thị cho sinh viên) lệch so với thực tế. Cây gọn cũng dễ vẽ và dễ đọc hơn.</p></details>
+<details><summary>Cạnh thừa có ảnh hưởng đến Biên không?</summary><p>Không. Biên là nút chưa Đạt mà mọi tiên quyết đã Đạt. Cạnh thừa N1 → N4 chỉ thêm điều kiện "N1 đã Đạt", mà N1 đã là tiên quyết gián tiếp của N4 (qua N2) nên điều kiện đó luôn đúng khi N2 đã Đạt.</p></details>
+<details><summary>Có cách nào nhanh hơn không?</summary><p>Có những cách dùng ma trận đạt tới (reachability) để làm nhanh hơn trên đồ thị lớn, nhưng với cây kỹ năng nhỏ thì cách xét từng cạnh dễ hiểu hơn và đủ nhanh nên không cần.</p></details>
+<p class="cap">Trang kế: 2.2.6 phần tính điểm w, rồi TT04 (thuật toán Blossom). Trang 3 (2.2.1) tóm lại cả ba thuật toán TT01–TT03 trên cùng một đồ thị.</p>
+</main>
+<script>
+var N = { N1: ['Biến & kiểu', 380, 16], N2: ['Mảng', 220, 112], N3: ['Con trỏ', 540, 112], N4: ['Danh sách LK', 380, 208], N5: ['Cây nhị phân', 380, 304] };
+var names = Object.keys(N);
+var BASE = [['N1', 'N2'], ['N1', 'N3'], ['N2', 'N4'], ['N3', 'N4'], ['N4', 'N5'], ['N1', 'N4']];
+function pathFind(edges, from, to, skip) {
+  var seen = {}, res = null;
+  (function go(u, p) {
+    if (res || seen[u]) return; seen[u] = 1;
+    edges.forEach(function (e) {
+      if (res || e === skip || e[0] !== u) return;
+      var q = p.concat([e[1]]);
+      if (e[1] === to) { res = q; return; }
+      go(e[1], q);
+    });
+  })(from, [from]);
+  return res;
+}
+function k(e) { return e[0] + '>' + e[1]; }
+var fr = [], thua = [];
+fr.push({ t: 'Cây có 6 cạnh. Ta sẽ xét từng cạnh một: bỏ tạm nó rồi dùng DFS từ nút đầu xem còn tới được nút cuối không.', s: 'Cây ban đầu, 6 cạnh', row: ['–', '–'] });
+BASE.forEach(function (e, i) {
+  var p = pathFind(BASE, e[0], e[1], e), cls = {}, on = [], bad = [];
+  if (p) {
+    p.forEach(function (n) { cls[n] = 'fr'; });
+    for (var j = 0; j + 1 < p.length; j++) on.push([p[j], p[j + 1]]);
+    bad.push(e); thua.push(e);
+  } else { cls[e[0]] = 'cur'; cls[e[1]] = 'cur'; on.push(e); }
+  fr.push({
+    t: 'Xét <b>' + e[0] + ' → ' + e[1] + '</b>. Bỏ tạm cạnh này, DFS từ ' + e[0] + ': ' + (p ? 'tới được ' + e[1] + ' qua <b>' + p.join(' → ') + '</b>. Cạnh này <b>thừa</b>.' : 'không còn đường nào tới ' + e[1] + '. Cạnh này <b>cần giữ</b>.'),
+    s: 'Xét <b>' + e[0] + ' → ' + e[1] + '</b>', cls: cls, on: on, bad: bad,
+    row: [p ? p.join(' → ') : 'không có', p ? '✗ Thừa, bỏ được' : '✓ Cần giữ']
+  });
+});
+var rest = BASE.filter(function (e) { return !thua.some(function (x) { return k(x) === k(e); }); });
+fr.push({
+  t: 'Xét xong 6 cạnh. Xóa ' + thua.map(function (e) { return e[0] + ' → ' + e[1]; }).join(', ') + '. Còn <b>' + rest.length + ' cạnh</b>. Thứ tự học hợp lệ vẫn như cũ.',
+  s: 'Xóa cạnh thừa, còn ' + rest.length + ' cạnh', hide: thua, row: ['–', 'Xóa: ' + thua.map(function (e) { return e.join(' → '); }).join(', ')]
+});
+ttStepper('r1', N, BASE, fr, { vb: [760, 360], cols: ['Đường khác tìm được', 'Kết luận'], rowLabel: 'Việc làm', cap: 'Kiểm tra mỗi cạnh trên đồ thị đầy đủ nên kết quả không phụ thuộc thứ tự xét các cạnh.' });
+</script>
+</body>
+</html>

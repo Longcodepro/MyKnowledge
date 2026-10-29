@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TT02 DFS ba màu</title>
+<link rel="stylesheet" href="assets/hoc.css">
+<script src="assets/hoc.js"></script>
+<script src="assets/tt.js"></script>
+</head>
+<body>
+<header class="top"><a href="index.html">← Mục lục</a><button class="b" id="tg" type="button">Chế độ tối</button></header>
+<main class="wrap">
+<div class="head"><span class="no">TT02</span><div><h1>DFS ba màu</h1><p class="lede">Đi sâu vào đồ thị và tô màu để biết có chu trình hay không, đồng thời xếp topo theo cách khác Kahn.</p></div></div>
+
+<div class="nho"><ul>
+<li><mark>DFS</mark> (tìm kiếm theo chiều sâu): đi hết một đường tới cùng rồi mới quay lui thử đường khác.</li>
+<li>Tô <mark>ba màu</mark>: trắng chưa thăm, xám đang đi (còn nằm trên đường), đen đã xong.</li>
+<li>Quy tắc: đang đi mà gặp <mark>nút xám</mark> thì có chu trình. Gặp nút đen thì không sao.</li>
+<li>Đảo ngược thứ tự "xong" của DFS thì được một thứ tự học hợp lệ. O(V + E).</li>
+</ul></div>
+
+<h2>Bước 1: nhắc lại DFS</h2>
+<p>Hình dung đi trong mê cung có một sợi chỉ. Mỗi ngã rẽ, bạn đi theo một lối <b>tới tận cùng</b>; hết đường thì kéo chỉ quay lại ngã rẽ gần nhất và thử lối khác. "Sợi chỉ" chính là đường đang đi (trong code là hàm gọi đệ quy, hoặc một ngăn xếp). Với đồ thị có hướng ta chỉ đi theo chiều mũi tên.</p>
+<div class="tw"><table>
+<thead><tr><th>Từ</th><th>Nghĩa</th></tr></thead>
+<tbody>
+<tr><td>Thăm một nút</td><td>Bắt đầu xử lý nút đó (vào hàm đệ quy)</td></tr>
+<tr><td>Nút xong</td><td>Đã đi hết mọi mũi tên đi ra từ nút đó, trở về nút trước</td></tr>
+<tr><td>Quay lui</td><td>Nút xong thì trở về nút đã dẫn tới nó</td></tr>
+</tbody></table></div>
+
+<h2>Bước 2: vì sao hai màu không đủ</h2>
+<p>Cách làm ngây thơ: nút nào đã thăm thì tô một màu, gặp lại nút đã thăm tức là có chu trình. Thử với cây có hai đường tới N4: N1 → N2 → N4 và N1 → N3 → N4 (không có chu trình).</p>
+<div class="tw"><table>
+<thead><tr><th>Sự kiện</th><th>Cách hai màu</th><th>Thực tế</th></tr></thead>
+<tbody>
+<tr><td>DFS đi N1 → N2 → N4 → N5, quay lui hết, rồi sang N3</td><td>N4 đã thăm</td><td>N4 đã <b>xong</b>, không còn nằm trên đường</td></tr>
+<tr><td>Từ N3 thấy mũi tên N3 → N4</td><td class="c-bad">✗ Báo "chu trình"</td><td class="c-ok">✓ Chỉ là hai đường dẫn tới cùng một nút</td></tr>
+</tbody></table></div>
+<p>Ta cần phân biệt "nút đã thăm và <b>vẫn đang nằm trên đường đi</b>" với "nút đã thăm và <b>xong rồi</b>". Chỉ loại đầu mới tạo vòng: mũi tên dẫn ngược về chỗ ta đang đứng trên đường. Đó là lý do cần ba màu.</p>
+
+<h2>Bước 3: ba màu</h2>
+<div class="tw"><table>
+<thead><tr><th>Màu</th><th>Nghĩa</th><th>Gặp nó khi đang đi thì sao</th></tr></thead>
+<tbody>
+<tr><td>Trắng</td><td>Chưa thăm</td><td>Đi vào nút đó (tô xám)</td></tr>
+<tr><td>Xám</td><td>Đang thăm, còn nằm trên đường</td><td class="c-bad">Có chu trình</td></tr>
+<tr><td>Đen</td><td>Đã xong hết</td><td class="c-ok">Bình thường, bỏ qua</td></tr>
+</tbody></table></div>
+
+<h2>Bước 4: chạy từng bước trên cây không có chu trình</h2>
+<p>Mỗi dòng của bảng là một sự kiện. Xám nền xanh nét đứt, đen nền xanh lá. Để ý hai lần gặp nút đen (N3 → N4 và N1 → N4): chúng bị bỏ qua, không phải chu trình.</p>
+<div class="fig" id="d1"></div>
+<div class="msg" id="d1x"></div>
+
+<h2>Bước 5: xếp topo bằng DFS</h2>
+<p>Quan sát bảng ở trên: nút <b>xong</b> sớm là nút ở cuối chuỗi học (không còn ai phía sau cần nó). N5 xong đầu tiên và quả thật N5 học sau cùng. Vì mọi nút phía sau một nút luôn <b>xong trước</b> nó, nên nếu ta <b>đảo ngược</b> thứ tự xong, nút nào cũng đứng trước các nút phụ thuộc vào nó.</p>
+<div class="tw"><table>
+<thead><tr><th>Thứ tự xong</th><th>Đảo ngược (thứ tự học)</th><th>Hợp lệ?</th></tr></thead>
+<tbody>
+<tr><td>N5, N4, N2, N3, N1</td><td><b>N1, N3, N2, N4, N5</b></td><td class="c-ok">✓ N1 đầu; N4 sau cả N2 và N3; N5 cuối</td></tr>
+<tr><td class="c-bad">✗ N5, N4, N2, N3, N1 đọc nguyên (không đảo)</td><td>Học N5 trước N1</td><td class="c-bad">✗ Ngược tiên quyết</td></tr>
+</tbody></table></div>
+<p class="cap">Thứ tự này khác thứ tự của Kahn (N1, N2, N3, N4, N5) nhưng vẫn hợp lệ, vì N2 và N3 không phụ thuộc nhau.</p>
+
+<h2>Bước 6: khi thêm cạnh gây chu trình</h2>
+<p>Thử thêm cạnh N5 → N1 (bắt học "Cây nhị phân" trước "Biến và kiểu"). DFS đi N1 → N2 → N4 → N5, rồi từ N5 thấy mũi tên về N1:</p>
+<div class="fig" id="d2"></div>
+<p>Vì sao biết đó là chu trình: N1 đang xám tức vẫn nằm trên đường ta vừa đi từ N1 tới N5. Mũi tên N5 → N1 đóng vòng. Vòng chính là đoạn đường từ N1 tới N5, cộng cạnh vừa thêm: <b>N1 → N2 → N4 → N5 → N1</b>.</p>
+
+<h3>Những lỗi hay gặp</h3>
+<div class="tw"><table>
+<thead><tr><th>Lỗi</th><th>Vì sao sai</th></tr></thead>
+<tbody>
+<tr><td class="c-bad">✗ Gặp nút <b>đen</b> cũng báo chu trình</td><td>Đó chính là lỗi ở bước 2. Nút đen đã xong, đường tới nó không vòng ngược</td></tr>
+<tr><td class="c-bad">✗ Quên tô đen khi xong một nút</td><td>Nút vẫn xám mãi, nên lần sau gặp lại sẽ báo nhầm chu trình</td></tr>
+<tr><td class="c-bad">✗ Chỉ chạy DFS từ một nút</td><td>Nút không với tới được từ nút đó sẽ bị bỏ sót, kể cả vòng nằm ở đó. Phải lặp: còn nút trắng nào thì chạy DFS từ nút đó</td></tr>
+</tbody></table></div>
+
+<h2>Dùng ở đâu trong Whybi</h2>
+<p>Khi giảng viên thêm một cạnh tiên quyết, hệ thống phải chặn nếu cạnh đó tạo chu trình (đề cương mục 5.2.5, dịch vụ cây kỹ năng). Việc chặn là: thêm thử cạnh, chạy DFS xem có gặp xám không. Có thì từ chối và có thể báo luôn <b>vòng cụ thể</b> cho giảng viên, điều mà Kahn không làm được.</p>
+
+<h2>Vì sao O(V + E)</h2>
+<p>Mỗi nút bị tô xám đúng một lần và tô đen đúng một lần. Mỗi mũi tên được xét đúng một lần, lúc ta đứng ở nút đầu của nó. Cộng lại cỡ V + E. (Phép đếm của mình; khớp con số trong tài liệu.)</p>
+
+<h2>Dễ bị hỏi</h2>
+<details><summary>Kahn và DFS, nên dùng cái nào?</summary><p>Cả hai O(V + E). Kahn đơn giản, không cần đệ quy, nhưng chỉ cho biết "có chu trình". DFS ba màu chỉ ra chính vòng đó, nên hợp để chặn cạnh khi giảng viên thêm. Mình nghĩ lý do hợp lý là dùng DFS cho việc chặn và Kahn (hoặc bản theo tầng) cho việc xếp; phần này là suy luận của mình, chưa đối chiếu mã nguồn dự án.</p></details>
+<details><summary>Đệ quy sâu có bị tràn không?</summary><p>Với cây vài trăm nút thì không. Nếu cây rất sâu, đệ quy trong Python có giới hạn độ sâu mặc định (khoảng 1000), khi đó viết DFS bằng ngăn xếp tự quản lý.</p></details>
+<details><summary>Có phải mọi DFS đều cần ba màu?</summary><p>Không. Muốn chỉ đi qua mọi nút thì hai màu đủ. Ba màu chỉ cần khi phải biết "nút này còn nằm trên đường hay đã xong", tức khi dò chu trình hoặc xếp topo trên đồ thị có hướng.</p></details>
+<p class="cap">Trang kế: TT03, bỏ cạnh thừa: dùng chính DFS ở trang này để biết một mũi tên có thừa không.</p>
+</main>
+<script>
+var N = { N1: ['Biến & kiểu', 380, 16], N2: ['Mảng', 220, 112], N3: ['Con trỏ', 540, 112], N4: ['Danh sách LK', 380, 208], N5: ['Cây nhị phân', 380, 304] };
+var names = Object.keys(N);
+var BASE = [['N1', 'N2'], ['N1', 'N3'], ['N2', 'N4'], ['N3', 'N4'], ['N4', 'N5'], ['N1', 'N4']];
+var CN = { 0: 'trắng', 1: 'xám', 2: 'đen' };
+function dfsFrames(E, stopAtGray) {
+  var col = {}, fin = [], stack = [], fr = [], found = false;
+  function view(cur, extra) {
+    var cls = {}, sub = {};
+    names.forEach(function (n) {
+      sub[n] = CN[col[n] || 0] + (fin.indexOf(n) >= 0 ? ' · xong thứ ' + (fin.indexOf(n) + 1) : '');
+      if (col[n] === 1) cls[n] = 'fr'; if (col[n] === 2) cls[n] = 'ok';
+    });
+    if (cur) cls[cur] = 'cur';
+    return { cls: cls, sub: sub };
+  }
+  function cells() { return names.map(function (n) { return CN[col[n] || 0]; }).concat([fin.join(', ') || '–']); }
+  function push(t, s, cur, on, bad, bedge) {
+    var v = view(cur);
+    if (bad) bad.forEach(function (n) { v.cls[n] = 'bad'; });
+    fr.push({ t: t, s: s, cls: v.cls, sub: v.sub, on: on, bad: bedge, row: cells() });
+  }
+  push('Chưa thăm nút nào, tất cả đều trắng. DFS bắt đầu từ N1.', 'Bắt đầu, mọi nút trắng', null);
+  function go(u) {
+    col[u] = 1; stack.push(u);
+    push('Vào <b>' + u + '</b>, tô xám.' + (stack.length > 1 ? ' Đường đang đi: ' + stack.join(' → ') + '.' : ''), 'Vào <b>' + u + '</b>, tô xám', u);
+    for (var i = 0; i < E.length && !found; i++) {
+      var e = E[i]; if (e[0] !== u) continue;
+      var v = e[1];
+      if (col[v] === 1) {
+        found = true;
+        var cyc = stack.slice(stack.indexOf(v)).concat(v);
+        push(e[0] + ' → ' + v + ': <b>' + v + ' đang xám</b>, nằm trên đường đi. Có <b>chu trình ' + cyc.join(' → ') + '</b>. Dừng, từ chối cạnh này.', e[0] + '→' + v + ': ' + v + ' đang xám, <b>chu trình!</b>', u, null, stack.slice(stack.indexOf(v)), [e]);
+        return;
+      } else if (col[v] === 2) {
+        push(e[0] + ' → ' + v + ': ' + v + ' đã <b>đen</b> (xong rồi), bỏ qua. Hai đường dẫn tới cùng một nút, không phải chu trình.', e[0] + '→' + v + ': ' + v + ' đen, bỏ qua', u, [e]);
+      } else { go(v); if (found) return; }
+    }
+    col[u] = 2; fin.push(u); stack.pop();
+    push('<b>' + u + '</b> đã đi hết mũi tên ra, tô đen, ghi vào thứ tự xong (thứ ' + fin.length + ').', '<b>' + u + '</b> xong, tô đen (thứ ' + fin.length + ')', null);
+  }
+  names.forEach(function (n) { if (!found && !col[n]) go(n); });
+  return fr;
+}
+var cols = names.concat(['Thứ tự xong']);
+var f1 = dfsFrames(BASE);
+ttStepper('d1', N, BASE, f1, { vb: [760, 360], cols: cols, rowLabel: 'Sự kiện', cap: 'Mỗi dòng là một sự kiện của DFS. Xám là nút đang nằm trên đường đi.' });
+var fin = f1[f1.length - 1].row[names.length].split(', ');
+$('#d1x').innerHTML = 'Khi DFS xong: thứ tự xong là <b>' + fin.join(', ') + '</b>; đảo ngược được thứ tự học <b>' + fin.slice().reverse().join(' → ') + '</b>.';
+ttStepper('d2', N, BASE.concat([['N5', 'N1', 'cong']]), dfsFrames(BASE.concat([['N5', 'N1', 'cong']])), { vb: [760, 360], cols: cols, rowLabel: 'Sự kiện', cap: 'Mũi tên N5 → N1 vẽ cong bên phải; nút đỏ là các nút của chu trình.' });
+</script>
+</body>
+</html>
