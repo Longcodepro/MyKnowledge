@@ -68,8 +68,53 @@ input[type=range]{width:100%;margin:8px 0;accent-color:var(--blue)}
 <div class="msg" id="msg2" aria-live="polite"></div>
 </div>
 
+<h2>Ai dạy, ai học: hai điều kiện khác nhau</h2>
+<p>Khi An dạy Bình một nút X, hai bạn có hai vai khác nhau:</p>
+<div class="tw"><table>
+<thead><tr><th>Vai</th><th>Điều kiện với nút X</th><th>Vì sao</th></tr></thead>
+<tbody>
+<tr><td>Người dạy</td><td class="c-ok">✓ X nằm trong tập <b>Đạt</b> của người dạy</td><td>Phải biết rồi mới dạy được</td></tr>
+<tr><td>Người học</td><td class="c-fr">◎ X nằm trong <b>Biên</b> của người học</td><td>Đủ tiên quyết nên theo kịp, chưa Đạt nên còn cần học</td></tr>
+</tbody></table></div>
+<p>Một nút không thể vừa Đạt vừa nằm trong Biên của cùng một người, nên người dạy luôn là người đã Đạt, không phải người "chưa Đạt mà đi dạy".</p>
+
+<h3>Ví dụ: hai bạn dạy chéo nhau</h3>
+<p>Lấy từ ma trận ở trang 5.2.6 (cây N1 → N2, N3 → N4). Số liệu minh họa do người soạn tự dựng.</p>
+<div class="tw"><table>
+<thead><tr><th>Bạn</th><th>Đã Đạt</th><th>Biên (cần học)</th></tr></thead>
+<tbody>
+<tr><td>Bình</td><td>{N1, N2}</td><td>{N3}</td></tr>
+<tr><td>Chi</td><td>{N1, N3}</td><td>{N2}</td></tr>
+</tbody></table></div>
+<div class="tw"><table>
+<thead><tr><th>Chiều dạy</th><th>Phép tính</th><th>Kết quả</th></tr></thead>
+<tbody>
+<tr><td>Bình dạy Chi</td><td>Đạt(Bình) ∩ Biên(Chi) = {N1, N2} ∩ {N2}</td><td class="c-ok">✓ N2</td></tr>
+<tr><td>Chi dạy Bình</td><td>Đạt(Chi) ∩ Biên(Bình) = {N1, N3} ∩ {N3}</td><td class="c-ok">✓ N3</td></tr>
+</tbody></table></div>
+<p class="cap">Mỗi bạn vừa dạy một nút mình biết, vừa học một nút mình thiếu. Đó là "bù trừ".</p>
+
+<h3>Ví dụ sai: dạy ngược chiều</h3>
+<div class="tw"><table>
+<thead><tr><th>Cặp</th><th>Lỗi</th><th>Vì sao sai</th></tr></thead>
+<tbody>
+<tr><td class="c-bad">✗ An {N1,N2,N3} nhờ Bình {N1} dạy N4</td><td>Người dạy chưa Đạt N4 (Bình còn Khóa N4)</td><td>Bình không có gì để dạy An</td></tr>
+<tr><td class="c-bad">✗ Dũng {N1..N4} học N4 từ An</td><td>Người học đã Đạt N4</td><td>N4 không còn trong Biên của Dũng, không cần học</td></tr>
+<tr><td class="c-ok">✓ Dũng dạy An N4</td><td>Dũng Đạt N4, N4 ở Biên của An</td><td>Đúng chiều</td></tr>
+</tbody></table></div>
+
+<h2>Vì sao tính độ khó dựa trên Biên và trạng thái?</h2>
+<p><mark>Độ khó là tương đối theo từng người</mark>: N4 là Quá khó với Bình, vừa tầm với An, quá dễ với Dũng. Vậy nên không thể gắn một nhãn "dễ" hay "khó" cố định lên nút. Cần một thứ phụ thuộc vào người học, và trạng thái (tập nút đã Đạt) của người đó chính là thứ ấy.</p>
+<div class="tw"><table>
+<thead><tr><th>Cách đo độ khó</th><th>Ưu</th><th>Nhược</th></tr></thead>
+<tbody>
+<tr><td>Nhãn cố định trên nút</td><td>Dễ làm</td><td class="c-bad">✗ Cùng nhãn nhưng mỗi bạn thấy khó khác nhau</td></tr>
+<tr><td>Biên (tính từ cây tiên quyết và trạng thái)</td><td class="c-ok">✓ Tính tự động, đúng theo từng người, không cần thêm dữ liệu</td><td>Chỉ là xấp xỉ, xem lưu ý dưới</td></tr>
+</tbody></table></div>
+<div class="luu-y"><p><b>Giới hạn cần nói thẳng:</b> Biên chỉ cho biết bạn <b>đủ tiên quyết</b>, chưa đo được nút đó khó thật sự bao nhiêu. Hai nút cùng ở Biên của An có thể khó rất khác nhau, và đề cương không ghi cách đo độ khó. Giám khảo có thể hỏi điểm này: câu trả lời trung thực là Biên là phép xấp xỉ rẻ cho ZPD, chưa phải phép đo.</p></div>
+
 <h2>Dễ bị hỏi</h2>
-<details><summary>Vì sao chỉ ghép nút thuộc Biên?</summary><p>Nút ngoài Biên hoặc là đã biết, hoặc là quá khó vì còn thiếu tiên quyết. Chỉ nút ở Biên mới "vừa tầm" để bạn dạy được.</p></details>
+<details><summary>Vì sao chỉ ghép nút thuộc Biên?</summary><p>Xét theo <b>người học</b>: nút ngoài Biên của họ hoặc là đã Đạt (không cần học), hoặc là Khóa vì thiếu tiên quyết (quá khó). Chỉ nút ở Biên mới vừa tầm để họ học. Còn <b>người dạy</b> phải là người đã Đạt nút đó.</p></details>
 <details><summary>Học đồng đẳng lợi gì cho người dạy?</summary><p>Phải giải thích lại cho bạn nên người dạy hiểu sâu hơn. Đây cũng là tinh thần của cả nền tảng: sinh viên làm thầy.</p></details>
 </main>
 <script>

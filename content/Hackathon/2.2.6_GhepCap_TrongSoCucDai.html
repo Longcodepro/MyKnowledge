@@ -39,6 +39,26 @@
 <div class="msg" id="msg" aria-live="polite"></div>
 </div>
 
+<h2>Cạnh và trọng số đến từ đâu</h2>
+<p>Hai bạn a, b có cạnh khi <mark>cả hai chiều</mark> đều dạy được: Đạt(a) ∩ Biên(b) khác rỗng và Đạt(b) ∩ Biên(a) khác rỗng. Trọng số w(a, b) lấy chiều yếu hơn (min), để cặp lệch một phía không được điểm cao. Ví dụ dưới dùng ma trận ở trang 5.2.6 (số minh họa, coi mỗi nút nặng 1).</p>
+<div class="tw"><table>
+<thead><tr><th>Bạn</th><th>Đạt</th><th>Biên</th></tr></thead>
+<tbody>
+<tr><td>An</td><td>{N1, N2, N3}</td><td>{N4}</td></tr>
+<tr><td>Bình</td><td>{N1, N2}</td><td>{N3}</td></tr>
+<tr><td>Chi</td><td>{N1, N3}</td><td>{N2}</td></tr>
+<tr><td>Dũng</td><td>{N1, N2, N3, N4}</td><td>{ }</td></tr>
+</tbody></table></div>
+<div class="tw"><table>
+<thead><tr><th>Cặp</th><th>a dạy b</th><th>b dạy a</th><th>w</th></tr></thead>
+<tbody>
+<tr><td>Bình – Chi</td><td>N2</td><td>N3</td><td class="c-ok">✓ min(1, 1) = 1, có cạnh</td></tr>
+<tr><td>An – Bình</td><td>An dạy Bình N3</td><td>Bình không dạy được An (Bình chưa Đạt N4)</td><td class="c-bad">✗ min(1, 0) = 0, loại (BR-08)</td></tr>
+<tr><td>An – Chi</td><td>An dạy Chi N2</td><td>Chi không dạy được An</td><td class="c-bad">✗ 0, loại</td></tr>
+<tr><td>Dũng – bất kỳ ai</td><td>Dũng dạy được</td><td>Dũng không còn gì để học (Biên rỗng)</td><td class="c-bad">✗ 0, loại</td></tr>
+</tbody></table></div>
+<p class="cap">Kết quả: chỉ Bình – Chi có cạnh. An và Dũng đi theo đường "một chiều" (mentor hoặc hàng chờ), xem câu hỏi bên dưới.</p>
+
 <h2>Vì sao Blossom mà không phải Hungarian</h2>
 <p>Hungarian chỉ chạy trên đồ thị hai phía. Ở đây SV nào cũng có thể ghép với SV nào, nên đồ thị có thể có chu trình lẻ (ví dụ tam giác A, B, C). Blossom xử lý được trường hợp này.</p>
 
