@@ -47,6 +47,27 @@ input[type=range]{width:100%;margin:8px 0;accent-color:var(--blue)}
 <tr><td>Quá khó</td><td>Khóa (thiếu tiên quyết)</td><td>Không</td></tr>
 </tbody></table></div>
 
+<h2>Ví dụ: cùng một nút, ba bạn ở ba vùng</h2>
+<p>Cây mẫu: N1 → N2, N3 → N4 → N5 (N4 cần cả N2 và N3). Vùng của một nút là <mark>tương đối theo từng người học</mark>, không phải nhãn cố định của nút. Ba bạn dưới đây là ví dụ minh họa do người soạn tự dựng.</p>
+<div class="tw"><table>
+<thead><tr><th>Bạn</th><th>Đã Đạt</th><th>Biên (= ZPD)</th><th>Nút N4 với bạn này là</th></tr></thead>
+<tbody>
+<tr><td>Bình</td><td>{N1}</td><td>{N2, N3}</td><td class="c-bad">🔒 Quá khó: N4 còn Khóa vì thiếu N2 và N3</td></tr>
+<tr><td>An</td><td>{N1, N2, N3}</td><td>{N4}</td><td class="c-fr">◎ ZPD: đủ tiên quyết, chưa Đạt N4</td></tr>
+<tr><td>Dũng</td><td>{N1, N2, N3, N4}</td><td>{N5}</td><td class="c-ok">✓ Tự làm được: đã Đạt N4</td></tr>
+</tbody></table></div>
+
+<h3>Xem trên cây</h3>
+<div class="fig">
+<div class="row" id="stu" role="group" aria-label="Chọn bạn để xem cây"></div>
+<svg class="d" viewBox="0 0 720 360" role="img" aria-label="Cây kỹ năng tô theo từng bạn">
+<defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--mut)"/></marker></defs>
+<g id="ed2"></g><g id="nd2"></g>
+</svg>
+<p class="cap">✓ Tự làm được (đã Đạt) · ◎ ZPD (Biên) · 🔒 Quá khó (Khóa). Bấm tên từng bạn để đổi cách tô; hãy nhìn nút N4.</p>
+<div class="msg" id="msg2" aria-live="polite"></div>
+</div>
+
 <h2>Dễ bị hỏi</h2>
 <details><summary>Vì sao chỉ ghép nút thuộc Biên?</summary><p>Nút ngoài Biên hoặc là đã biết, hoặc là quá khó vì còn thiếu tiên quyết. Chỉ nút ở Biên mới "vừa tầm" để bạn dạy được.</p></details>
 <details><summary>Học đồng đẳng lợi gì cho người dạy?</summary><p>Phải giải thích lại cho bạn nên người dạy hiểu sâu hơn. Đây cũng là tinh thần của cả nền tảng: sinh viên làm thầy.</p></details>
@@ -63,6 +84,39 @@ function upd() {
 }
 $('#lv').addEventListener('input', upd);
 upd();
+
+/* Cây ví dụ: ba bạn, tô nút theo vùng (Đạt / Biên = ZPD / Khóa) */
+var TN = { N1: ['Biến & kiểu', 360, 16], N2: ['Mảng', 190, 112], N3: ['Con trỏ', 530, 112], N4: ['Danh sách LK', 360, 208], N5: ['Cây nhị phân', 360, 304] };
+var TE = [['N1', 'N2'], ['N1', 'N3'], ['N2', 'N4'], ['N3', 'N4'], ['N4', 'N5']];
+var STU = { 'Bình': ['N1'], 'An': ['N1', 'N2', 'N3'], 'Dũng': ['N1', 'N2', 'N3', 'N4'] };
+var ZN = { ok: '✓ Tự làm được', fr: '◎ ZPD', lk: '🔒 Quá khó' };
+var who = 'An', TW = 150, TH = 44;
+function pre2(n) { return TE.filter(function (e) { return e[1] === n; }).map(function (e) { return e[0]; }); }
+function zone(n) {
+  var d = STU[who];
+  return d.indexOf(n) >= 0 ? 'ok' : pre2(n).every(function (p) { return d.indexOf(p) >= 0; }) ? 'fr' : 'lk';
+}
+function draw2() {
+  $('#stu').innerHTML = Object.keys(STU).map(function (s) {
+    return '<button class="b" type="button" aria-pressed="' + (s === who) + '" data-s="' + s + '">' + s + '</button>';
+  }).join('');
+  $$('#stu button').forEach(function (b) { b.onclick = function () { who = b.dataset.s; draw2(); }; });
+  $('#ed2').innerHTML = TE.map(function (e) {
+    var a = TN[e[0]], b = TN[e[1]];
+    return '<line class="ed" x1="' + a[1] + '" y1="' + (a[2] + TH) + '" x2="' + b[1] + '" y2="' + (b[2] - 4) + '" marker-end="url(#ar2)"/>';
+  }).join('');
+  $('#nd2').innerHTML = Object.keys(TN).map(function (n) {
+    var z = zone(n), d = TN[n];
+    return '<g class="nd ' + z + '"><rect x="' + (d[1] - TW / 2) + '" y="' + d[2] + '" width="' + TW + '" height="' + TH + '" rx="2"/>' +
+      '<text x="' + d[1] + '" y="' + (d[2] + 19) + '" text-anchor="middle">' + n + ' · ' + d[0] + '</text>' +
+      '<text class="sm" x="' + d[1] + '" y="' + (d[2] + 35) + '" text-anchor="middle">' + ZN[z] + '</text></g>';
+  }).join('');
+  var fr = Object.keys(TN).filter(function (n) { return zone(n) === 'fr'; });
+  $('#msg2').innerHTML = '<b>' + who + '</b> đã Đạt {' + STU[who].join(', ') + '}. ZPD (Biên) của ' + who + ' = <b>{' + fr.join(', ') + '}</b>.<br>' +
+    'Nút <b>N4</b> với ' + who + ': <b>' + ZN[zone('N4')] + '</b>' +
+    (zone('N4') === 'lk' ? ' (thiếu ' + pre2('N4').filter(function (p) { return STU[who].indexOf(p) < 0; }).join(', ') + ').' : zone('N4') === 'fr' ? ' (đủ tiên quyết, chưa Đạt).' : ' (đã Đạt).');
+}
+draw2();
 </script>
 </body>
 </html>
