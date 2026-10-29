@@ -35,6 +35,7 @@
 </svg>
 <div class="row" id="act"></div>
 <div class="msg" id="msg" aria-live="polite"></div>
+<div class="tw" id="lg"></div>
 </div>
 
 <h2>Dễ bị hỏi</h2>
@@ -67,12 +68,14 @@ function threeColor(edges) {
   return cyc;
 }
 function indeg() { var d = {}; names.forEach(function (n) { d[n] = 0; }); E.forEach(function (e) { d[e[1]]++; }); return d; }
-function reset() { E = BASE.map(function (e) { return e.slice(); }); S = { out: [], deg: indeg(), cyc: null, cur: null }; draw(); }
+function reset() { E = BASE.map(function (e) { return e.slice(); }); S = { out: [], deg: indeg(), cyc: null, cur: null, log: [], deg0: indeg() }; draw(); }
 function kahn() {
   var n = names.filter(function (x) { return S.out.indexOf(x) < 0 && S.deg[x] === 0; })[0];
   if (!n) return;
   S.out.push(n); S.cur = n;
-  E.forEach(function (e) { if (e[0] === n) S.deg[e[1]]--; });
+  var dec = [];
+  E.forEach(function (e) { if (e[0] === n) { S.deg[e[1]]--; dec.push(e[1]); } });
+  S.log.push({ n: n, dec: dec, deg: JSON.parse(JSON.stringify(S.deg)), done: S.out.slice() });
   draw();
 }
 function addCycle() { E = BASE.slice(0, 5).map(function (e) { return e.slice(); }).concat([['N5', 'N1']]); S.cyc = threeColor(E); draw(); }
@@ -93,6 +96,17 @@ function draw() {
   }).join('');
   panel();
 }
+function logTable() {
+  if (mode !== 'topo') return '';
+  var h = '<table aria-label="Các bước Kahn"><thead><tr><th>Bước</th><th>Lấy nút</th><th>Trừ 1 bậc vào của</th>' +
+    names.map(function (n) { return '<th>' + n + '</th>'; }).join('') + '</tr></thead><tbody>';
+  h += '<tr><td>Đầu</td><td>(chưa)</td><td>(chưa)</td>' + names.map(function (n) { return '<td>' + S.deg0[n] + '</td>'; }).join('') + '</tr>';
+  S.log.forEach(function (r, i) {
+    h += '<tr' + (i === S.log.length - 1 ? ' class="hit"' : '') + '><td>' + (i + 1) + '</td><td><b>' + r.n + '</b></td><td>' + (r.dec.join(', ') || 'không có') + '</td>' +
+      names.map(function (n) { return '<td>' + (r.done.indexOf(n) >= 0 ? '✓' : r.deg[n]) + '</td>'; }).join('') + '</tr>';
+  });
+  return h + '</tbody></table><p class="cap">Các cột N1–N5 là bậc vào còn lại sau mỗi bước; ✓ là nút đã xếp.</p>';
+}
 function panel() {
   var a, m;
   if (mode === 'topo') {
@@ -110,7 +124,7 @@ function panel() {
     m = r.length ? '<b>Cạnh thừa:</b> ' + r.map(function (e) { return e.join(' → '); }).join(', ') + '. Đã có đường N1 → N2 → N4 nên cạnh trực tiếp N1 → N4 không thêm thông tin, chỉ làm sơ đồ rối.'
       : '<b>Đã rút gọn.</b> Còn đúng các cạnh cần thiết, thứ tự học vẫn không đổi.';
   }
-  $('#act').innerHTML = a; $('#msg').innerHTML = m;
+  $('#act').innerHTML = a; $('#msg').innerHTML = m; $('#lg').innerHTML = logTable();
   $('#b0').onclick = reset;
   $('#b1').onclick = mode === 'topo' ? kahn : mode === 'cyc' ? addCycle : dropRed;
 }
