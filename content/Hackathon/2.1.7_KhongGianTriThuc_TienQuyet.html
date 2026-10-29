@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2.1.7 Không gian tri thức</title>
+<link rel="stylesheet" href="assets/hoc.css">
+<script src="assets/hoc.js"></script>
+<style>.nd{cursor:pointer}.nd:focus{outline:none}.nd:focus rect{stroke-width:4}</style>
+</head>
+<body>
+<header class="top"><a href="index.html">← Mục lục</a><button class="b" id="tg" type="button">Chế độ tối</button></header>
+<main class="wrap">
+<div class="head"><span class="no">2.1.7</span><div><h1>Không gian tri thức và cấu trúc tiên quyết</h1><p class="lede">Biết cái này thì phải đã biết cái kia: quan hệ tiên quyết giới hạn những trạng thái học tập có thể xảy ra.</p></div></div>
+
+<div class="nho"><ul>
+<li><mark>Không gian tri thức</mark> là tập các trạng thái tri thức khả dĩ, xác định bởi quan hệ tiên quyết giữa các mục kiến thức.</li>
+<li>Một trạng thái là khả dĩ khi: đã biết nút nào thì đã biết <mark>mọi tiên quyết</mark> của nút đó.</li>
+<li>Liên hệ hệ thống: môn học là một DAG, và <mark>Biên</mark> (outer fringe) của trạng thái là các nút học tiếp được ngay.</li>
+</ul></div>
+
+<h2>Bấm nút để thêm hoặc bỏ "đã Đạt"</h2>
+<div class="fig">
+<div class="row"><button class="b" id="rs" type="button">Làm lại</button></div>
+<svg class="d" viewBox="0 0 720 360" role="group" aria-label="Cây kỹ năng minh họa">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--mut)"/></marker></defs>
+<g id="ed"></g><g id="ndg"></g>
+</svg>
+<p class="cap">✓ Đạt · ◎ Biên (học tiếp được) · 🔒 Khóa (còn thiếu tiên quyết). Bỏ Đạt một nút thì các nút phụ thuộc nó cũng bị bỏ.</p>
+<div class="msg" id="msg" aria-live="polite"></div>
+</div>
+
+<h2>Con số đáng nhớ</h2>
+<p>Cây 5 nút có 2<sup>5</sup> = 32 cách chọn "đã Đạt" nút nào. Nhưng nhờ ràng buộc tiên quyết, chỉ <b id="n">7</b> cách là khả dĩ. Tiên quyết càng nhiều, không gian tri thức càng nhỏ, và con đường học càng rõ.</p>
+
+<h2>Dễ bị hỏi</h2>
+<details><summary>Biên khác gì "nút kế tiếp"?</summary><p>Biên gồm mọi nút chưa Đạt mà tiên quyết đã Đạt hết, nên có thể có nhiều nút cùng lúc (như N2 và N3 khi mới Đạt N1).</p></details>
+<details><summary>Hệ thống dùng khái niệm này ở đâu?</summary><p>Quyết định nút nào ở trạng thái Sẵn sàng, và chọn nội dung để ghép cặp (chỉ ở Biên).</p></details>
+</main>
+<script>
+var N = { N1: ['Biến & kiểu', 360, 16], N2: ['Mảng', 190, 112], N3: ['Con trỏ', 530, 112], N4: ['Danh sách LK', 360, 208], N5: ['Cây nhị phân', 360, 304] };
+var E = [['N1', 'N2'], ['N1', 'N3'], ['N2', 'N4'], ['N3', 'N4'], ['N4', 'N5']];
+var W = 150, H = 44, names = Object.keys(N), done = {};
+function pre(n) { return E.filter(function (e) { return e[1] === n; }).map(function (e) { return e[0]; }); }
+function st(n) { return done[n] ? 'ok' : pre(n).every(function (p) { return done[p]; }) ? 'fr' : 'lk'; }
+var ICON = { ok: '✓ Đạt', fr: '◎ Biên', lk: '🔒 Khóa' };
+function below(n) { return E.filter(function (e) { return e[0] === n; }).reduce(function (a, e) { return a.concat([e[1]], below(e[1])); }, []); }
+function toggle(n) {
+  if (done[n]) { delete done[n]; below(n).forEach(function (x) { delete done[x]; }); }
+  else if (st(n) === 'fr') done[n] = true;
+  else { $('#msg').innerHTML = '<b>' + n + ' đang Khóa:</b> cần Đạt ' + pre(n).filter(function (p) { return !done[p]; }).join(', ') + ' trước. Một trạng thái tri thức không được thiếu tiên quyết.'; return; }
+  draw();
+}
+function draw() {
+  $('#ed').innerHTML = E.map(function (e) { var a = N[e[0]], b = N[e[1]]; return '<line class="ed" x1="' + a[1] + '" y1="' + (a[2] + H) + '" x2="' + b[1] + '" y2="' + (b[2] - 4) + '" marker-end="url(#ar)"/>'; }).join('');
+  $('#ndg').innerHTML = names.map(function (n) {
+    var s = st(n), d = N[n];
+    return '<g class="nd ' + s + '" tabindex="0" role="button" data-n="' + n + '" aria-label="' + n + ' ' + d[0] + ', ' + ICON[s] + '"><rect x="' + (d[1] - W / 2) + '" y="' + d[2] + '" width="' + W + '" height="' + H + '" rx="2"/>' +
+      '<text x="' + d[1] + '" y="' + (d[2] + 19) + '" text-anchor="middle">' + n + ' · ' + d[0] + '</text><text class="sm" x="' + d[1] + '" y="' + (d[2] + 35) + '" text-anchor="middle">' + ICON[s] + '</text></g>';
+  }).join('');
+  var D = names.filter(function (n) { return done[n]; }), B = names.filter(function (n) { return st(n) === 'fr'; });
+  $('#msg').innerHTML = '<b>Trạng thái tri thức</b> (tập nút đã Đạt): {' + D.join(', ') + '}<br><b>Biên</b> (học tiếp được ngay): {' + B.join(', ') + '}';
+  $$('.nd').forEach(function (g) {
+    g.onclick = function () { toggle(g.dataset.n); };
+    g.onkeydown = function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); toggle(g.dataset.n); } };
+  });
+}
+(function () {                       // đếm số tập con "đã Đạt" thỏa ràng buộc tiên quyết
+  var c = 0;
+  for (var m = 0; m < 32; m++) {
+    var s = names.filter(function (n, i) { return m >> i & 1; });
+    if (s.every(function (n) { return pre(n).every(function (p) { return s.indexOf(p) >= 0; }); })) c++;
+  }
+  $('#n').textContent = c;
+})();
+$('#rs').onclick = function () { done = { N1: true }; draw(); };
+done = { N1: true }; draw();
+</script>
+</body>
+</html>

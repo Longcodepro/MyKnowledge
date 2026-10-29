@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5.4 Thiết kế API</title>
+<link rel="stylesheet" href="assets/hoc.css">
+<script src="assets/hoc.js"></script>
+</head>
+<body>
+<header class="top"><a href="index.html">← Mục lục</a><button class="b" id="tg" type="button">Chế độ tối</button></header>
+<main class="wrap">
+<div class="head"><span class="no">5.4</span><div><h1>Thiết kế API</h1><p class="lede">Quy ước chung, danh sách endpoint theo vai trò và các kênh thời gian thực.</p></div></div>
+
+<div class="nho"><ul>
+<li>REST, JSON, tiền tố <code>/api/v1</code>; xác thực <mark>JWT Bearer</mark>; phân quyền theo vai trò và theo lớp.</li>
+<li>Lỗi thống nhất: <code>{"error": {"code", "message", "details"}}</code>, ví dụ code <code>NODE_LOCKED</code>.</li>
+<li>Tác vụ dài trả <mark>202 Accepted + jobId</mark>, theo dõi tiến độ qua WebSocket.</li>
+</ul></div>
+
+<h2>Danh sách endpoint</h2>
+<div class="row" id="tb" role="group" aria-label="Lọc theo vai trò"></div>
+<div class="cnt" id="cnt" aria-live="polite"></div>
+<div class="tw"><table>
+<thead><tr><th>Phương thức</th><th>Đường dẫn</th><th>Mô tả</th><th>Vai trò</th></tr></thead>
+<tbody id="rows"></tbody></table></div>
+
+<h2>Kênh thời gian thực</h2>
+<div class="tw"><table>
+<thead><tr><th>Kênh</th><th>Sự kiện</th><th>Nội dung chính</th><th>Nhận</th></tr></thead>
+<tbody>
+<tr><td><code>job:{jobId}</code></td><td>job.progress</td><td>percent, step</td><td>GV</td></tr>
+<tr><td><code>job:{jobId}</code></td><td>tree.generated</td><td>versionId</td><td>GV</td></tr>
+<tr><td><code>class:{id}:heatmap</code></td><td>heatmap.cell</td><td>studentId, studentName, nodeId, state</td><td>GV</td></tr>
+<tr><td><code>class:{id}:heatmap</code></td><td>heatmap.node</td><td>nodeId, color, passRate, attemptedRate</td><td>GV</td></tr>
+<tr><td><code>class:{id}:heatmap</code></td><td>heatmap.alert</td><td>nodeId, rootCauseNodeId, message</td><td>GV</td></tr>
+<tr><td><code>user:{id}</code></td><td>notification</td><td>type, title, link</td><td>Mọi người dùng</td></tr>
+<tr><td><code>session:{id}</code></td><td>session.question</td><td>text, audioUrl?, deadline</td><td>SV</td></tr>
+</tbody></table></div>
+
+<h2>Ví dụ gửi một lượt trả lời</h2>
+<div class="tw"><table><tbody>
+<tr><td><code>POST /api/v1/sessions/{id}/turns</code></td><td>Gửi lời giảng hoặc câu trả lời. Với giọng nói, gửi kèm bản chép lời: <code>turnType: "ANSWER"</code>, <code>inputMode: "VOICE"</code>, <code>text: "…"</code>.</td></tr>
+</tbody></table></div>
+
+<h2>Dễ bị hỏi</h2>
+<details><summary>Vì sao tải giáo trình trả 202 mà không đợi xong?</summary><p>Việc đọc và sinh cây mất tới vài phút (mục tiêu ≤ 3 phút). Trả mã tác vụ ngay rồi báo tiến độ qua kênh <code>job:{jobId}</code> để giao diện không bị treo.</p></details>
+<details><summary>Phân quyền "theo vai trò và theo lớp" nghĩa là gì?</summary><p>Vai trò quyết định gọi được endpoint nào (GV, SV, QTV). Quan hệ với lớp quyết định xem được dữ liệu của lớp nào: GV chỉ xem lớp mình phụ trách, SV chỉ xem dữ liệu của mình (NFR-08).</p></details>
+</main>
+<script>
+var E = [
+  ['POST', '/auth/login', 'Đăng nhập, nhận JWT', 'Tất cả'], ['GET', '/me', 'Thông tin người dùng hiện tại', 'Tất cả'],
+  ['POST', '/classes', 'Tạo lớp học phần', 'GV'], ['POST', '/classes/join', 'Tham gia lớp bằng mã', 'SV'],
+  ['POST', '/classes/{id}/syllabi', 'Tải giáo trình, trả jobId', 'GV'], ['GET', '/classes/{id}/tree', 'Lấy cây đang phát hành hoặc bản nháp', 'GV, SV'],
+  ['POST', '/tree-versions/{v}/nodes', 'Thêm nút', 'GV'], ['PATCH', '/nodes/{id}', 'Sửa nút hoặc vị trí', 'GV'],
+  ['POST', '/tree-versions/{v}/edges', 'Thêm cạnh (kiểm tra chu trình)', 'GV'], ['DELETE', '/edges/{id}', 'Xóa cạnh', 'GV'],
+  ['PUT', '/nodes/{id}/rubric', 'Sửa hoặc duyệt rubric', 'GV'], ['POST', '/nodes/{id}/rubric/regenerate', 'Sinh lại rubric bằng AI', 'GV'],
+  ['POST', '/tree-versions/{v}/publish', 'Phát hành phiên bản', 'GV'], ['GET', '/classes/{id}/my-map', 'Bản đồ học tập cá nhân', 'SV'],
+  ['POST', '/sessions', 'Bắt đầu phiên giảng lại {nodeId}', 'SV'], ['POST', '/sessions/{id}/audio', 'Tải âm thanh, nhận bản chép lời', 'SV'],
+  ['POST', '/sessions/{id}/turns', 'Gửi lời giảng hoặc câu trả lời', 'SV'], ['POST', '/sessions/{id}/timeout', 'Báo hết giờ trả lời', 'SV'],
+  ['GET', '/sessions/{id}/result', 'Kết quả chấm', 'GV, SV'], ['GET', '/classes/{id}/heatmap', 'Ảnh chụp bản đồ nhiệt (cây + lưới có tên)', 'GV'],
+  ['GET', '/classes/{id}/nodes/{n}/detail', 'Chi tiết nút, điểm nghẽn gốc', 'GV'], ['GET', '/classes/{id}/students/{s}/profile', 'Hồ sơ năng lực SV', 'GV'],
+  ['PUT', '/classes/{id}/settings', 'Cấu hình ngưỡng', 'GV'], ['POST', '/classes/{id}/matching-rounds', 'Chạy vòng ghép cặp', 'GV'],
+  ['PUT', '/enrollments/{id}/peer-opt-in', 'Bật hoặc tắt ghép cặp', 'SV'], ['POST', '/matches/{m}/accept | decline | studied', 'Phản hồi gợi ý', 'SV'],
+  ['GET', '/admin/flags', 'Danh sách cờ vi phạm', 'QTV'], ['PUT', '/admin/ai-config', 'Cấu hình nhà cung cấp AI', 'QTV']
+];
+var roles = ['', 'GV', 'SV', 'QTV'], f = '';
+function draw() {
+  $('#tb').innerHTML = roles.map(function (r) { return '<button class="b" type="button" aria-pressed="' + (r === f) + '" data-v="' + r + '">' + (r || 'Tất cả vai trò') + '</button>'; }).join('');
+  $$('#tb button').forEach(function (b) { b.onclick = function () { f = b.dataset.v; draw(); }; });
+  var rows = E.filter(function (e) { return !f || e[3] === 'Tất cả' || e[3].split(', ').indexOf(f) >= 0; });
+  $('#cnt').textContent = rows.length + ' / ' + E.length + ' endpoint' + (f ? ' (gồm cả endpoint dùng chung cho mọi vai trò)' : '');
+  $('#rows').innerHTML = rows.map(function (e) { return '<tr><td><b>' + e[0] + '</b></td><td><code>' + e[1] + '</code></td><td>' + e[2] + '</td><td>' + e[3] + '</td></tr>'; }).join('');
+}
+draw();
+</script>
+</body>
+</html>

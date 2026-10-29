@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chương 4 Phân tích hệ thống</title>
+<link rel="stylesheet" href="assets/hoc.css">
+<script src="assets/hoc.js"></script>
+<style>
+.flow{display:flex;flex-wrap:wrap;gap:0;margin:12px 0;padding:0;list-style:none;border:1.5px solid var(--ink)}
+.flow li{flex:1 1 160px;padding:8px 12px;border-right:1px solid var(--rule);font-size:15px}
+.flow li:last-child{border-right:0}
+.flow b{display:block}
+.states{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;padding:0;list-style:none}
+.states li{padding:2px 10px;border:1.5px solid var(--ink);font-size:14px;font-weight:650;border-radius:2px}
+.states li.e{border-color:var(--rule);color:var(--mut);font-weight:500}
+</style>
+</head>
+<body>
+<header class="top"><a href="index.html">← Mục lục</a><button class="b" id="tg" type="button">Chế độ tối</button></header>
+<main class="wrap">
+<div class="head"><span class="no">4</span><div><h1>Phân tích hệ thống</h1><p class="lede">Từ nghiệp vụ tới Use Case, luồng, trạng thái và lớp. Phần lớn chương này là sơ đồ; trang này giữ ý chính cần nhớ.</p></div></div>
+
+<ul class="toc">
+<li><a href="#c41">4.1 Nghiệp vụ</a></li><li><a href="#c42">4.2 Use Case</a></li><li><a href="#c43">4.3 Hoạt động</a></li>
+<li><a href="#c44">4.4 Tuần tự</a></li><li><a href="#c45">4.5 Trạng thái</a></li><li><a href="#c46">4.6 Lớp</a></li>
+</ul>
+
+<h2 id="c41">4.1 Mô hình nghiệp vụ tổng thể</h2>
+<p>Chu trình nghiệp vụ tách thành hai biểu đồ hoạt động có làn bơi, nối nhau ở điểm (A).</p>
+<ol class="flow">
+<li><b>(a) Thiết lập môn học</b>GV khởi động. Mắt xích 1: tải giáo trình, sinh cây, duyệt, phát hành.</li>
+<li><b>Điểm nối (A)</b>Vòng lặp (b) chỉ bắt đầu sau khi cây đã phát hành.</li>
+<li><b>(b) Vòng lặp học tập</b>Lặp liên tục trong học kỳ. Mắt xích 2, 3, 4: giảng lại, bản đồ nhiệt, ghép cặp.</li>
+</ol>
+
+<h2 id="c42">4.2 Use Case</h2>
+<div class="nho"><ul>
+<li><mark>27 Use Case</mark> chia theo phân hệ: cây kỹ năng 6, giảng lại 4, bản đồ nhiệt 6, ghép cặp 4, tài khoản và quản trị 7 (xem trang 3.6).</li>
+<li>"Nhập bằng giọng nói" và "Nhập bằng văn bản" là hai UC <mark>mở rộng (extend)</mark> của "Giảng giải khái niệm" và "Trả lời câu hỏi phản biện", nên SV đổi cách nhập giữa các lượt.</li>
+</ul></div>
+<h3>Đặc tả hai UC quan trọng nhất của GV</h3>
+<details open><summary>UC06 Sinh cây kỹ năng tự động</summary>
+<div class="tw"><table><tbody>
+<tr><td>Tác nhân</td><td>GV (chính), dịch vụ LLM (phụ)</td></tr>
+<tr><td>Tiền điều kiện</td><td>GV đã đăng nhập và phụ trách lớp; tệp hợp lệ (PDF/DOCX, ≤ 20 MB)</td></tr>
+<tr><td>Hậu điều kiện</td><td>Có một TreeVersion trạng thái <b>DRAFT</b> gồm nút, cạnh, rubric; tài liệu chuyển PARSED</td></tr>
+<tr><td>Luồng chính</td><td>Lưu tệp, đưa tác vụ vào hàng đợi và trả mã tác vụ → trích xuất văn bản, nhận diện chương mục → AI trích khái niệm, suy luận tiên quyết, kiểm tra DAG, sinh rubric</td></tr>
+<tr><td>Thay thế</td><td>Bản quét: OCR tiếng Việt trước. JSON lỗi: thử lại tối đa 2 lần</td></tr>
+<tr><td>Ngoại lệ</td><td>Tệp sai định dạng hoặc quá dung lượng: lỗi 422. LLM hết hạn mức: chuyển mô hình dự phòng; vẫn lỗi thì tài liệu FAILED và GV được thông báo, thử lại được</td></tr>
+<tr><td>Phi chức năng</td><td>≤ 3 phút cho đề cương khoảng 30 trang, có hiển thị tiến độ</td></tr>
+</tbody></table></div></details>
+<details><summary>UC07 và UC09 Chỉnh sửa và phát hành cây</summary>
+<div class="tw"><table><tbody>
+<tr><td>Tiền điều kiện</td><td>Có phiên bản cây ở trạng thái DRAFT hoặc EDITING</td></tr>
+<tr><td>Luồng chính</td><td>GV thêm, sửa, xóa, gộp nút và kéo thả cạnh → mỗi cạnh thêm vào được <b>kiểm tra chu trình ngay</b> → duyệt rubric → phát hành</td></tr>
+<tr><td>Thay thế</td><td>Cạnh tạo chu trình: từ chối thao tác, tô đỏ đường đi của chu trình. Lớp đã có phiên bản trước: ánh xạ nút theo khóa và áp dụng BR-14</td></tr>
+<tr><td>Hậu điều kiện</td><td>Phiên bản chuyển <b>PUBLISHED</b>, bản cũ <b>ARCHIVED</b>; mỗi SV có MasteryRecord cho mọi nút và được thông báo</td></tr>
+<tr><td>Quy tắc</td><td>BR-01, BR-02, BR-05, BR-14. Kiểm tra chu trình mỗi thao tác dưới 200 ms</td></tr>
+</tbody></table></div></details>
+
+<h2 id="c43">4.3 Biểu đồ hoạt động</h2>
+<div class="tw"><table>
+<thead><tr><th>Mục</th><th>Luồng được vẽ</th></tr></thead>
+<tbody>
+<tr><td>4.3.1</td><td>Sinh cây kỹ năng tự động, rồi duyệt và phát hành</td></tr>
+<tr><td>4.3.2</td><td>Phiên giảng lại: khởi tạo và giảng giải (giọng nói hoặc văn bản), rồi phản biện và chấm điểm</td></tr>
+<tr><td>4.3.3</td><td>Tổng hợp bản đồ nhiệt và cảnh báo điểm nghẽn</td></tr>
+<tr><td>4.3.4</td><td>Ghép cặp bạn cùng tiến và xác nhận lại</td></tr>
+</tbody></table></div>
+<p>Luồng dài tách làm hai phần (a), (b) nối bằng điểm nối (B), (C) để mỗi hình vừa một trang.</p>
+
+<h2 id="c44">4.4 Biểu đồ tuần tự</h2>
+<p>Mỗi biểu đồ có tối đa 8 đối tượng. Tên lớp và dịch vụ thống nhất với biểu đồ lớp thiết kế ở mục 5.3.</p>
+<div class="tw"><table>
+<thead><tr><th>Mục</th><th>Nội dung</th><th>Use Case</th></tr></thead>
+<tbody>
+<tr><td>4.4.1</td><td>Tải giáo trình; xử lý nền trích xuất và sinh cây</td><td>UC05, UC06</td></tr>
+<tr><td>4.4.2</td><td>Chỉnh sửa, duyệt và phát hành cây</td><td>UC07–UC09</td></tr>
+<tr><td>4.4.3</td><td>Phiên giảng lại, chia 4 hình: khởi tạo · giảng giải · vòng phản biện Socratic · chấm điểm và cập nhật thành thạo</td><td>UC19</td></tr>
+<tr><td>4.4.4</td><td>Cập nhật bản đồ nhiệt thời gian thực và xem chi tiết nút</td><td>UC10, UC11</td></tr>
+<tr><td>4.4.5</td><td>Chạy vòng ghép cặp; phản hồi gợi ý và xác nhận lại</td><td>UC15, UC22, UC23</td></tr>
+</tbody></table></div>
+
+<h2 id="c45">4.5 Biểu đồ trạng thái</h2>
+<h3>MasteryRecord (một ô của ma trận)</h3>
+<div class="tw"><table>
+<thead><tr><th>Từ</th><th>Sự kiện (điều kiện)</th><th>Sang</th></tr></thead>
+<tbody>
+<tr><td>(khởi tạo)</td><td>Phát hành cây</td><td>AVAILABLE nếu nút không có tiên quyết, ngược lại LOCKED</td></tr>
+<tr><td>LOCKED</td><td>Mọi tiên quyết đã MASTERED</td><td>AVAILABLE (thông báo nút mới mở)</td></tr>
+<tr><td>AVAILABLE</td><td>Bắt đầu phiên</td><td>IN_PROGRESS</td></tr>
+<tr><td>IN_PROGRESS</td><td>Chấm xong, PASSED</td><td>MASTERED (lưu điểm, mở khóa nút con, phát sự kiện)</td></tr>
+<tr><td>IN_PROGRESS</td><td>Chấm xong, FAILED</td><td>NOT_PASSED (số lượt tăng 1)</td></tr>
+<tr><td>IN_PROGRESS</td><td>Bỏ dở hoặc hết hạn</td><td>AVAILABLE nếu chưa từng trượt, NOT_PASSED nếu đã trượt</td></tr>
+<tr><td>NOT_PASSED</td><td>Bắt đầu phiên (hết thời gian chờ, BR-11)</td><td>IN_PROGRESS</td></tr>
+<tr><td>MASTERED</td><td>Phát hành bản mới, rubric nút đổi</td><td>NEEDS_REVERIFY</td></tr>
+<tr><td>NEEDS_REVERIFY</td><td>Bắt đầu phiên</td><td>IN_PROGRESS (phiên xác nhận)</td></tr>
+<tr><td>AVAILABLE hoặc NOT_PASSED</td><td>Phát hành bản mới, thêm tiên quyết chưa Đạt</td><td>LOCKED</td></tr>
+</tbody></table></div>
+<h3>Ba máy trạng thái còn lại</h3>
+<p><b>TeachingSession</b> (phiên giảng lại):</p>
+<ul class="states"><li>CREATED</li><li>EXPLAINING</li><li>CHALLENGING</li><li>EVALUATING</li><li>COMPLETED</li><li class="e">ABANDONED</li><li class="e">FLAGGED</li></ul>
+<p><b>TreeVersion</b> (phiên bản cây): DRAFT hoặc EDITING, sang PUBLISHED, rồi ARCHIVED khi có bản mới.</p>
+<p><b>PeerMatch</b> (gợi ý ghép cặp): từ PROPOSED tới VERIFIED, hạn phản hồi 48 giờ.</p>
+
+<h2 id="c46">4.6 Biểu đồ lớp mức phân tích</h2>
+<div class="nho"><ul>
+<li>Tổng <mark>30 lớp</mark>, trình bày hai mức: tổng quan quan hệ và 4 biểu đồ chi tiết theo nhóm.</li>
+<li>Có phân tích theo mẫu <mark>Boundary – Control – Entity</mark> cho UC19 (phiên giảng lại).</li>
+</ul></div>
+<div class="tw"><table>
+<thead><tr><th>Nhóm</th><th>Lớp chính</th></tr></thead>
+<tbody>
+<tr><td>Người dùng, lớp, tài liệu</td><td>User, Lecturer, Student, Admin · Course, ClassSection, Enrollment · SyllabusDocument, DocumentChunk</td></tr>
+<tr><td>Cây kỹ năng, rubric</td><td>SkillTree, TreeVersion · ConceptNode, PrerequisiteEdge · Rubric, KeyPoint, Misconception, ChallengeScenario</td></tr>
+<tr><td>Phiên, chấm, thành thạo</td><td>TeachingSession, SessionTurn · Evaluation, CriterionScore · MasteryRecord</td></tr>
+<tr><td>Bản đồ nhiệt, ghép cặp</td><td>ClassNodeStat · MatchingRound, PeerMatch, PeerMatchItem · SecurityFlag, Notification</td></tr>
+</tbody></table></div>
+
+<h2>Dễ bị hỏi</h2>
+<details><summary>Vì sao kiểm tra chu trình ngay mỗi thao tác chứ không đợi phát hành?</summary><p>Báo lỗi sớm và chỉ rõ đường đi của chu trình thì GV sửa ngay được; để tới lúc phát hành mới báo sẽ khó biết cạnh nào gây lỗi.</p></details>
+<details><summary>Sao cây mới lại làm trạng thái SV đổi?</summary><p>Rubric đổi thì Đạt cũ chưa chắc còn đúng: chuyển thành Cần xác nhận lại. Thêm tiên quyết chưa Đạt thì nút phải Khóa lại (BR-14). Nút giữ khóa ổn định để di chuyển được trạng thái.</p></details>
+<details><summary>Boundary – Control – Entity là gì?</summary><p>Boundary là phần tiếp xúc với người dùng (màn hình, API), Control là phần điều phối nghiệp vụ, Entity là dữ liệu. Hình 4.37 áp dụng mẫu này cho UC19 (phiên giảng lại).</p></details>
+</main>
+</body>
+</html>

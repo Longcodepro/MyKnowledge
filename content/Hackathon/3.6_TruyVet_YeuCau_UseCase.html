@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3.6 Truy vết yêu cầu và Use Case</title>
+<link rel="stylesheet" href="assets/hoc.css">
+<script src="assets/hoc.js"></script>
+<style>
+.uc{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:0;border-top:1px solid var(--rule);border-left:1px solid var(--rule)}
+.u{padding:6px 10px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);font-size:14px;color:var(--mut)}
+.u b{display:block}
+.u.on{background:var(--frbg);color:var(--ink);box-shadow:inset 4px 0 0 var(--blue)}
+</style>
+</head>
+<body>
+<header class="top"><a href="index.html">← Mục lục</a><button class="b" id="tg" type="button">Chế độ tối</button></header>
+<main class="wrap">
+<div class="head"><span class="no">3.6</span><div><h1>Truy vết yêu cầu tới Use Case</h1><p class="lede">Mỗi nhóm yêu cầu chức năng được hiện thực bởi một số Use Case cụ thể.</p></div></div>
+
+<div class="nho"><ul>
+<li>5 nhóm yêu cầu (SK, TB, HM, PM, AD) trải trên <mark>27 Use Case</mark>, mỗi UC thuộc đúng một nhóm.</li>
+<li>Số UC mỗi nhóm: SK 6 · TB 4 · HM 6 · PM 4 · AD 7.</li>
+<li>Ma trận này dùng để kiểm: không có yêu cầu nào "mồ côi" (không UC nào thực hiện) và không UC nào thừa.</li>
+</ul></div>
+
+<h2>Chọn một nhóm để thấy Use Case của nó</h2>
+<div class="row" id="tb" role="group" aria-label="Chọn nhóm yêu cầu"></div>
+<div class="msg" id="info" aria-live="polite"></div>
+<div class="uc" id="uc"></div>
+
+<h2>Dễ bị hỏi</h2>
+<details><summary>Vì sao UC15 (chạy vòng ghép cặp) thuộc nhóm ghép cặp mà tác nhân là GV?</summary><p>Nhóm được xếp theo chức năng (ghép cặp), không theo tác nhân. GV hoặc bộ hẹn giờ kích hoạt, nhưng việc làm là ghép cặp.</p></details>
+<details><summary>Ma trận này nằm ở đâu trong quy trình phân tích?</summary><p>Sau khi có yêu cầu (3.3) và trước khi vẽ biểu đồ (Chương 4). Cột cuối của bảng gốc chỉ tới các hình minh họa của Chương 4.</p></details>
+</main>
+<script>
+var UC = {
+  1: ['Đăng nhập / Đăng xuất', 'Mọi người dùng'], 2: ['Cập nhật hồ sơ', 'Mọi người dùng'], 3: ['Xem thông báo', 'Mọi người dùng'],
+  4: ['Quản lý lớp học phần', 'GV'], 5: ['Tải giáo trình lên', 'GV'], 6: ['Sinh cây kỹ năng tự động', 'GV, LLM'], 7: ['Chỉnh sửa cây kỹ năng', 'GV'],
+  8: ['Duyệt / chỉnh rubric', 'GV, LLM'], 9: ['Phát hành cây kỹ năng', 'GV'], 10: ['Xem bản đồ nhiệt lớp', 'GV'], 11: ['Xem chi tiết nút và điểm nghẽn gốc', 'GV'],
+  12: ['Xem hồ sơ năng lực SV', 'GV'], 13: ['Xem lại transcript phiên', 'GV'], 14: ['Cấu hình ngưỡng', 'GV'], 15: ['Chạy vòng ghép cặp', 'GV, Bộ hẹn giờ'],
+  16: ['Xuất báo cáo lớp', 'GV'], 17: ['Tham gia lớp bằng mã', 'SV'], 18: ['Xem bản đồ học tập cá nhân', 'SV'], 19: ['Thực hiện phiên giảng lại', 'SV, LLM, STT/TTS'],
+  20: ['Xem kết quả và phản hồi', 'SV'], 21: ['Thiết lập tham gia ghép cặp', 'SV'], 22: ['Phản hồi gợi ý ghép cặp', 'SV'], 23: ['Xác nhận lại sau học cặp', 'SV'],
+  24: ['Quản lý tài khoản', 'QTV'], 25: ['Quản lý môn học', 'QTV'], 26: ['Cấu hình AI và hạn mức', 'QTV'], 27: ['Xem nhật ký và cờ vi phạm', 'QTV']
+};
+var G = [
+  ['FR-SK-01 … 10', 'Cây kỹ năng', [4, 5, 6, 7, 8, 9], 'Hình 4.4, 4.9, 4.16'],
+  ['FR-TB-01 … 15', 'Giảng lại cho AI', [17, 18, 19, 20], 'Hình 4.5, 4.11, 4.19'],
+  ['FR-HM-01 … 10', 'Bản đồ nhiệt', [10, 11, 12, 13, 14, 16], 'Hình 4.6, 4.13, 4.22'],
+  ['FR-PM-01 … 08', 'Ghép cặp', [15, 21, 22, 23], 'Hình 4.7, 4.14, 4.23'],
+  ['FR-AD-01 … 08', 'Tài khoản, quản trị', [1, 2, 3, 24, 25, 26, 27], 'Hình 4.8']
+];
+var k = 0;
+function pad(n) { return 'UC' + (n < 10 ? '0' : '') + n; }
+function draw() {
+  $('#tb').innerHTML = G.map(function (g, i) { return '<button class="b" type="button" aria-pressed="' + (i === k) + '" data-i="' + i + '">' + g[1] + '</button>'; }).join('');
+  $$('#tb button').forEach(function (b) { b.onclick = function () { k = +b.dataset.i; draw(); }; });
+  var g = G[k];
+  $('#info').innerHTML = '<b>' + g[0] + '</b> (' + g[1] + ') được thực hiện bởi <mark>' + g[2].map(pad).join(', ') + '</mark> (' + g[2].length + ' UC). Hình minh họa: ' + g[3] + '.';
+  $('#uc').innerHTML = Object.keys(UC).map(function (n) {
+    var on = g[2].indexOf(+n) >= 0;
+    return '<div class="u' + (on ? ' on' : '') + '"><b>' + (on ? '✓ ' : '') + pad(n) + ' ' + UC[n][0] + '</b>' + UC[n][1] + '</div>';
+  }).join('');
+}
+draw();
+</script>
+</body>
+</html>

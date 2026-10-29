@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5.1 Kiến trúc tổng thể</title>
+<link rel="stylesheet" href="assets/hoc.css">
+<script src="assets/hoc.js"></script>
+</head>
+<body>
+<header class="top"><a href="index.html">← Mục lục</a><button class="b" id="tg" type="button">Chế độ tối</button></header>
+<main class="wrap">
+<div class="head"><span class="no">5.1</span><div><h1>Kiến trúc tổng thể</h1><p class="lede">Một khối ứng dụng chia mô-đun, việc nặng giao cho worker, các phần nói chuyện bằng sự kiện.</p></div></div>
+
+<div class="nho"><ul>
+<li>Kiểu kiến trúc: <mark>khối đơn mô-đun hóa</mark> (modular monolith) + worker nền bất đồng bộ + bus sự kiện.</li>
+<li>Việc nặng (đọc giáo trình, tổng hợp bản đồ nhiệt, ghép cặp) chạy ở worker để API luôn trả lời nhanh.</li>
+<li>Đã loại <mark>vi dịch vụ</mark> (vận hành tốn công cho một MVP) và <mark>serverless</mark> (cần WebSocket và tác vụ chạy lâu).</li>
+</ul></div>
+
+<h2>Hai kiểu đi đường</h2>
+<div class="fig">
+<div class="row"><button class="b" id="m-light" aria-pressed="true" type="button">Việc nhẹ</button><button class="b" id="m-heavy" aria-pressed="false" type="button">Việc nặng</button></div>
+<svg class="d" viewBox="0 0 760 300" role="img" aria-label="Sơ đồ kiến trúc: trình duyệt, Nginx, API, PostgreSQL, Redis, Worker, MinIO">
+<defs>
+<marker id="m0" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--mut)"/></marker>
+<marker id="m1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--blue)"/></marker>
+</defs>
+<g class="nd"><rect x="10" y="120" width="110" height="50"/><text x="65" y="150" text-anchor="middle">Trình duyệt</text></g>
+<g class="nd"><rect x="160" y="120" width="90" height="50"/><text x="205" y="150" text-anchor="middle">Nginx</text></g>
+<g class="nd"><rect x="300" y="120" width="120" height="50"/><text x="360" y="150" text-anchor="middle">API FastAPI</text></g>
+<g class="nd"><rect x="300" y="240" width="120" height="48"/><text x="360" y="262" text-anchor="middle">PostgreSQL</text><text class="sm" x="360" y="278" text-anchor="middle">+ pgvector</text></g>
+<g class="nd"><rect x="300" y="10" width="120" height="48"/><text x="360" y="32" text-anchor="middle">Redis</text><text class="sm" x="360" y="48" text-anchor="middle">hàng đợi + sự kiện</text></g>
+<g class="nd"><rect x="520" y="10" width="130" height="48"/><text x="585" y="32" text-anchor="middle">Worker Celery</text><text class="sm" x="585" y="48" text-anchor="middle">việc nặng</text></g>
+<g class="nd"><rect x="520" y="240" width="130" height="48"/><text x="585" y="262" text-anchor="middle">MinIO</text><text class="sm" x="585" y="278" text-anchor="middle">giáo trình, ghi âm</text></g>
+<line class="ed" data-p="light" x1="120" y1="145" x2="158" y2="145"/>
+<line class="ed" data-p="light" x1="250" y1="145" x2="298" y2="145"/>
+<line class="ed" data-p="light" x1="360" y1="170" x2="360" y2="238"/>
+<line class="ed" data-p="heavy" x1="360" y1="120" x2="360" y2="60"/>
+<line class="ed" data-p="heavy" x1="420" y1="34" x2="518" y2="34"/>
+<path class="ed" data-p="heavy" d="M585 58 L585 95 L470 95 L470 145 L422 145"/>
+<path class="ed" data-p="" d="M420 158 L470 158 L470 264 L518 264"/>
+<text class="sm" x="372" y="95">① giao việc</text>
+<text class="sm" x="440" y="22">② nhận việc</text>
+<text class="sm" x="478" y="88">③ phát sự kiện</text>
+<text class="sm" x="372" y="210">đọc / ghi</text>
+</svg>
+<div class="msg" id="msg" aria-live="polite"></div>
+</div>
+
+<h2>Công nghệ theo tầng</h2>
+<div class="tw"><table>
+<thead><tr><th>Tầng</th><th>Công nghệ</th><th>Lý do chọn</th></tr></thead>
+<tbody>
+<tr><td>Frontend</td><td>React + TypeScript, Vite, React Flow, Tailwind</td><td>React Flow hỗ trợ đồ thị kéo thả</td></tr>
+<tr><td>Backend</td><td>Python 3.11, FastAPI, Pydantic, SQLAlchemy</td><td>Cùng ngôn ngữ với phần AI; có WebSocket, async</td></tr>
+<tr><td>Worker</td><td>Celery + Redis, Celery beat</td><td>Tác vụ nền, lịch định kỳ</td></tr>
+<tr><td>CSDL</td><td>PostgreSQL 16 + pgvector</td><td>Dữ liệu quan hệ và vector chung một CSDL</td></tr>
+<tr><td>Bus sự kiện</td><td>Redis Pub/Sub</td><td>Nhẹ, đủ cho một lớp học</td></tr>
+<tr><td>Lưu tệp</td><td>MinIO (tương thích S3)</td><td>Giáo trình, ghi âm; tự host được</td></tr>
+<tr><td>LLM</td><td>Gemini hoặc mô hình tương thích OpenAI, qua Adapter</td><td>Đổi nhà cung cấp không sửa nghiệp vụ</td></tr>
+<tr><td>Thuật toán đồ thị</td><td>NetworkX</td><td>Có sẵn DAG, rút gọn bắc cầu, <code>max_weight_matching</code></td></tr>
+<tr><td>Triển khai</td><td>Docker Compose, Nginx, GitHub Actions</td><td>Chạy nhanh trên một VM</td></tr>
+</tbody></table></div>
+
+<h2>Dễ bị hỏi</h2>
+<details><summary>Vì sao khối đơn mà không vi dịch vụ?</summary><p>Đội nhỏ, thời gian Hackathon ngắn: triển khai một lần, dễ gỡ lỗi. Ranh giới mô-đun vẫn tách rõ để sau này tách thành dịch vụ riêng khi mở rộng.</p></details>
+<details><summary>Vì sao việc nặng phải ra worker?</summary><p>Nếu API tự làm thì mỗi lần đọc giáo trình hay ghép cặp sẽ chặn các yêu cầu khác. Worker làm nền, xong thì phát sự kiện để API báo lại.</p></details>
+<details><summary>Đổi nhà cung cấp LLM thì sửa gì?</summary><p>Chỉ sửa lớp Adapter, không sửa nghiệp vụ (NFR-14).</p></details>
+</main>
+<script>
+var MSG = {
+  light: '<b>Việc nhẹ:</b> trình duyệt → Nginx → API → PostgreSQL, trả lời ngay trong một lượt. Ví dụ: SV xem bản đồ học tập của mình.',
+  heavy: '<b>Việc nặng:</b> ① API ghi việc vào Redis và trả mã tác vụ ngay. ② Worker nhận việc và làm. ③ Worker phát sự kiện, API nhận rồi đẩy xuống trình duyệt qua WebSocket. Ví dụ: sinh cây kỹ năng từ giáo trình.'
+};
+function show(m) {
+  $$('[data-p]').forEach(function (e) {
+    var on = e.getAttribute('data-p') === m;
+    e.classList.toggle('on', on);
+    e.setAttribute('marker-end', 'url(#' + (on ? 'm1' : 'm0') + ')');
+  });
+  $('#m-light').setAttribute('aria-pressed', m === 'light');
+  $('#m-heavy').setAttribute('aria-pressed', m === 'heavy');
+  $('#msg').innerHTML = MSG[m];
+}
+$('#m-light').onclick = function () { show('light'); };
+$('#m-heavy').onclick = function () { show('heavy'); };
+show('light');
+</script>
+</body>
+</html>

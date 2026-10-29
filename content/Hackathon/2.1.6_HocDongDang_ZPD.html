@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2.1.6 Học đồng đẳng và ZPD</title>
+<link rel="stylesheet" href="assets/hoc.css">
+<script src="assets/hoc.js"></script>
+<style>
+.zone{display:flex;height:44px;border:1.5px solid var(--ink)}
+.zone div{display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:650;text-align:center;padding:0 4px}
+.z1{width:50%;background:var(--okbg);color:var(--ok)}
+.z2{width:25%;background:var(--frbg);color:var(--blue);border-left:1.5px solid var(--ink);border-right:1.5px solid var(--ink)}
+.z3{width:25%;background:var(--badbg);color:var(--red)}
+.pin{position:relative;height:26px}
+.pin span{position:absolute;top:0;width:0;height:0;border:9px solid transparent;border-bottom:14px solid var(--ink);border-top:0;transform:translateX(-9px)}
+input[type=range]{width:100%;margin:8px 0;accent-color:var(--blue)}
+</style>
+</head>
+<body>
+<header class="top"><a href="index.html">← Mục lục</a><button class="b" id="tg" type="button">Chế độ tối</button></header>
+<main class="wrap">
+<div class="head"><span class="no">2.1.6</span><div><h1>Học đồng đẳng và vùng phát triển gần</h1><p class="lede">Hai bạn cùng trình độ dạy nhau, và chỉ dạy những gì vừa tầm.</p></div></div>
+
+<div class="nho"><ul>
+<li><mark>Học đồng đẳng</mark> (peer tutoring): lợi cho cả người dạy lẫn người học.</li>
+<li><mark>Vùng phát triển gần</mark> (ZPD): nội dung người học chưa tự làm được nhưng làm được khi có hỗ trợ.</li>
+<li>Liên hệ hệ thống: chỉ ghép nội dung thuộc <mark>Biên</mark> của người học (đã Đạt đủ tiên quyết, chưa Đạt chính nút đó).</li>
+</ul></div>
+
+<h2>Kéo để xem nội dung rơi vào vùng nào</h2>
+<div class="fig">
+<p>Trình độ của người học (số minh họa): tự làm được tới <b>50</b>, làm được khi có bạn hỗ trợ tới <b>75</b>.</p>
+<div class="zone" aria-hidden="true"><div class="z1">Tự làm được</div><div class="z2">ZPD</div><div class="z3">Quá khó</div></div>
+<div class="pin" aria-hidden="true"><span id="pin"></span></div>
+<label for="lv">Độ khó của nội dung: <b id="v">60</b></label>
+<input id="lv" type="range" min="0" max="100" value="60">
+<div class="msg" id="msg" aria-live="polite"></div>
+</div>
+
+<h2>Nối với cây kỹ năng</h2>
+<div class="tw"><table>
+<thead><tr><th>Vùng</th><th>Trạng thái nút</th><th>Ghép cặp có dùng không</th></tr></thead>
+<tbody>
+<tr><td>Tự làm được</td><td>Đạt</td><td>Không làm người học (đã biết). Có thể làm người dạy.</td></tr>
+<tr><td>ZPD</td><td>Biên: Sẵn sàng, Chưa đạt</td><td>Có: đây chính là nội dung được ghép</td></tr>
+<tr><td>Quá khó</td><td>Khóa (thiếu tiên quyết)</td><td>Không</td></tr>
+</tbody></table></div>
+
+<h2>Dễ bị hỏi</h2>
+<details><summary>Vì sao chỉ ghép nút thuộc Biên?</summary><p>Nút ngoài Biên hoặc là đã biết, hoặc là quá khó vì còn thiếu tiên quyết. Chỉ nút ở Biên mới "vừa tầm" để bạn dạy được.</p></details>
+<details><summary>Học đồng đẳng lợi gì cho người dạy?</summary><p>Phải giải thích lại cho bạn nên người dạy hiểu sâu hơn. Đây cũng là tinh thần của cả nền tảng: sinh viên làm thầy.</p></details>
+</main>
+<script>
+var A = 50, B = 75;
+function upd() {
+  var d = +$('#lv').value;
+  $('#v').textContent = d;
+  $('#pin').style.left = d + '%';
+  $('#msg').innerHTML = d <= A ? '<b>Tự làm được.</b> Nội dung này người học đã nắm, không cần ghép để học.'
+    : d <= B ? '<b>Trong ZPD.</b> Người học chưa tự làm được nhưng làm được khi có bạn hỗ trợ. Đây là nội dung nên ghép.'
+    : '<b>Quá khó.</b> Còn thiếu nền tảng nên có bạn dạy cũng khó theo kịp. Cần học tiên quyết trước.';
+}
+$('#lv').addEventListener('input', upd);
+upd();
+</script>
+</body>
+</html>

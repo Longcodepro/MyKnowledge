@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3.4 Yêu cầu phi chức năng</title>
+<link rel="stylesheet" href="assets/hoc.css">
+<script src="assets/hoc.js"></script>
+</head>
+<body>
+<header class="top"><a href="index.html">← Mục lục</a><button class="b" id="tg" type="button">Chế độ tối</button></header>
+<main class="wrap">
+<div class="head"><span class="no">3.4</span><div><h1>Yêu cầu phi chức năng</h1><p class="lede">14 yêu cầu về chất lượng, mỗi yêu cầu có chỉ tiêu và cách đo.</p></div></div>
+
+<div class="nho"><ul>
+<li>01–04: <mark>nhanh và chịu tải</mark> (AI trả lời ≤ 5 giây, bản đồ nhiệt ≤ 3 giây, 100 phiên đồng thời).</li>
+<li>05–06: <mark>AI đáng tin</mark> (Judge khớp người chấm κ ≥ 0,60; 95% câu hỏi không lộ đáp án).</li>
+<li>07–09: <mark>bảo mật và riêng tư</mark>. Hai số "30" dễ nhầm: JWT hết hạn <mark>30 phút</mark>, ghi âm lưu <mark>30 ngày</mark>.</li>
+<li>10–14: dùng tốt và dễ đổi (uptime, điện thoại, màu kèm biểu tượng, chi phí, Adapter).</li>
+</ul></div>
+
+<h2>Tra cứu</h2>
+<div class="row" id="tb" role="group" aria-label="Lọc theo nhóm"></div>
+<div class="cnt" id="cnt" aria-live="polite"></div>
+<div id="list"></div>
+</main>
+<script>
+var D = [
+  ['NFR-01', 'Hiệu năng', 'Độ trễ mỗi lượt câu hỏi của AI (văn bản)', 'p95 ≤ 5 giây', 'Log thời gian, k6'],
+  ['NFR-02', 'Hiệu năng', 'Độ trễ chép lời cho 60 giây âm thanh', 'p95 ≤ 4 giây', 'Log SpeechService'],
+  ['NFR-03', 'Hiệu năng', 'Độ trễ cập nhật bản đồ nhiệt', '≤ 3 giây', 'Đo đầu–cuối'],
+  ['NFR-04', 'Chịu tải', 'Số phiên giảng lại đồng thời trong một tiết học', '≥ 100 phiên, lỗi < 1%', 'Kiểm thử tải'],
+  ['NFR-05', 'Độ tin cậy AI', 'Đồng thuận giữa Judge và người chấm', 'Cohen’s κ ≥ 0,60', 'Bộ dữ liệu hiệu chỉnh'],
+  ['NFR-06', 'Độ tin cậy AI', 'Câu hỏi không lộ đáp án', '≥ 95% câu hỏi qua Guard ở lần sinh đầu', 'Thống kê Guard'],
+  ['NFR-07', 'Bảo mật', 'Mã hóa đường truyền, băm mật khẩu, JWT hết hạn', 'TLS 1.2+, Argon2/bcrypt, JWT 30 phút', 'Kiểm tra cấu hình'],
+  ['NFR-08', 'Riêng tư', 'Chỉ GV phụ trách lớp xem dữ liệu có tên SV; SV không xem được kết quả của nhau', '100% API kiểm tra quyền', 'Kiểm thử phân quyền'],
+  ['NFR-09', 'Riêng tư', 'Lưu ghi âm có thời hạn, xin đồng ý trước khi ghi', 'Mặc định 30 ngày, cấu hình được', 'Tác vụ dọn dẹp'],
+  ['NFR-10', 'Khả dụng', 'Sẵn sàng trong giờ học', '≥ 99% trong khung giờ học', 'Giám sát uptime'],
+  ['NFR-11', 'Trải nghiệm', 'Dùng tốt trên điện thoại; tối đa 3 thao tác để bắt đầu một phiên', 'Responsive ≥ 360 px', 'Kiểm thử người dùng'],
+  ['NFR-12', 'Tiếp cận', 'Màu luôn kèm biểu tượng (người mù màu đỏ–lục)', '100% trạng thái có biểu tượng', 'Rà soát giao diện'],
+  ['NFR-13', 'Chi phí', 'Giới hạn chi phí AI mỗi phiên', '≤ ngân sách token cấu hình', 'Báo cáo hạn mức'],
+  ['NFR-14', 'Bảo trì', 'Đổi nhà cung cấp LLM/STT không sửa nghiệp vụ', 'Qua lớp Adapter', 'Rà soát mã']
+];
+var groups = [''].concat(D.map(function (r) { return r[1]; }).filter(function (g, i, a) { return a.indexOf(g) === i; }));
+var g = '';
+function draw() {
+  $('#tb').innerHTML = groups.map(function (x) { return '<button class="b" type="button" aria-pressed="' + (x === g) + '" data-v="' + x + '">' + (x || 'Tất cả') + '</button>'; }).join('');
+  $$('#tb button').forEach(function (b) { b.onclick = function () { g = b.dataset.v; draw(); }; });
+  var rows = D.filter(function (r) { return !g || r[1] === g; });
+  $('#cnt').textContent = rows.length + ' / ' + D.length + ' yêu cầu';
+  $('#list').innerHTML = rows.map(function (r) { return '<div class="it"><b>' + r[0] + '</b><span>' + r[2] + '<br><mark>' + r[3] + '</mark></span><span class="meta">' + r[1] + ' · đo bằng: ' + r[4] + '</span></div>'; }).join('');
+}
+draw();
+</script>
+</body>
+</html>

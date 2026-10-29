@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5.3 Thiết kế lớp chi tiết</title>
+<link rel="stylesheet" href="assets/hoc.css">
+<script src="assets/hoc.js"></script>
+</head>
+<body>
+<header class="top"><a href="index.html">← Mục lục</a><button class="b" id="tg" type="button">Chế độ tối</button></header>
+<main class="wrap">
+<div class="head"><span class="no">5.3</span><div><h1>Thiết kế lớp chi tiết</h1><p class="lede">Bốn biểu đồ lớp và bảy mẫu thiết kế. Phần cần nhớ là mẫu nào dùng ở đâu và vì sao.</p></div></div>
+
+<div class="nho"><ul>
+<li>4 biểu đồ lớp thiết kế: (1) Adapter cho nhà cung cấp AI và giọng nói · (2) tác tử AI, chiến lược câu hỏi, chuỗi kiểm duyệt · (3) thành thạo, sự kiện, bản đồ nhiệt · (4) ghép cặp, cây kỹ năng, kho dữ liệu.</li>
+<li>Áp dụng <mark>7 mẫu thiết kế</mark>, mỗi mẫu giải quyết một vấn đề cụ thể của hệ thống.</li>
+</ul></div>
+
+<h2>Chọn một mẫu để xem nó giải quyết gì</h2>
+<div class="fig">
+<div class="row" id="tb" role="group" aria-label="Chọn mẫu thiết kế"></div>
+<div class="msg" id="msg" aria-live="polite"></div>
+</div>
+
+<h2>Bảng tóm tắt</h2>
+<div class="tw"><table>
+<thead><tr><th>Mẫu</th><th>Áp dụng ở</th><th>Lý do</th></tr></thead>
+<tbody>
+<tr><td>Adapter</td><td>LLMProvider, STTProvider, TTSProvider</td><td>Đổi nhà cung cấp AI không sửa nghiệp vụ (NFR-14)</td></tr>
+<tr><td>Facade</td><td>SessionOrchestrator</td><td>Che sự phối hợp của nhiều tác tử khỏi tầng API</td></tr>
+<tr><td>Strategy</td><td>QuestionStrategy, MatchingSolver</td><td>Đổi chiến lược hỏi hoặc thuật toán ghép cặp linh hoạt</td></tr>
+<tr><td>Chain of Responsibility</td><td>GuardHandler</td><td>Chuỗi bộ lọc an toàn thêm hoặc bớt được</td></tr>
+<tr><td>State</td><td>MasteryStateMachine</td><td>Chỉ cho các chuyển trạng thái hợp lệ</td></tr>
+<tr><td>Observer (Pub/Sub)</td><td>EventBus, EventHandler</td><td>Bản đồ nhiệt, thông báo, ghép cặp phản ứng với sự kiện mà không phụ thuộc chặt</td></tr>
+<tr><td>Repository</td><td>MasteryRepository, SessionRepository…</td><td>Tách truy cập dữ liệu khỏi nghiệp vụ, dễ kiểm thử</td></tr>
+</tbody></table></div>
+
+<h2>Dễ bị hỏi</h2>
+<details><summary>Facade và Adapter khác nhau thế nào?</summary><p>Adapter bọc <b>một</b> dịch vụ bên ngoài để có giao diện thống nhất (LLM, STT, TTS). Facade gói <b>nhiều</b> thành phần bên trong thành một cửa duy nhất (SessionOrchestrator điều phối các tác tử).</p></details>
+<details><summary>Vì sao dùng Observer thay vì gọi thẳng?</summary><p>Khi SV giảng xong, ma trận đổi, bản đồ nhiệt cần cập nhật, thông báo cần gửi. Nếu gọi thẳng thì nơi ghi ma trận phải biết mọi nơi cần báo; qua sự kiện thì thêm người nghe mới không phải sửa nơi phát.</p></details>
+<details><summary>Strategy dùng cho ghép cặp để làm gì?</summary><p>Hiện dùng Blossom; nếu sau này thay thuật toán (heuristic cho lớp rất đông) chỉ cần thêm một MatchingSolver mới.</p></details>
+</main>
+<script>
+var P = [
+  ['Adapter', 'Mỗi nhà cung cấp AI có cách gọi khác nhau. Lớp LLMProvider, STTProvider, TTSProvider che sự khác biệt đó, nên đổi từ Gemini sang mô hình khác không phải sửa nghiệp vụ (NFR-14).'],
+  ['Facade', 'Một phiên giảng lại cần nhiều tác tử phối hợp (học trò, Guard, Judge…). SessionOrchestrator gom lại thành một cửa; tầng API chỉ gọi một chỗ.'],
+  ['Strategy', 'Câu hỏi phản biện có nhiều chiến lược (ý thiếu, quan niệm sai, tình huống biên, chuyển giao) và ghép cặp có thể đổi thuật toán. Mỗi cái là một Strategy hoán đổi được.'],
+  ['Chain of Responsibility', 'Đầu ra của AI đi qua một chuỗi bộ lọc an toàn (ví dụ chặn lộ đáp án). Mỗi bộ lọc là một mắt xích, thêm hoặc bớt không đụng các mắt khác.'],
+  ['State', 'Trạng thái của một ô ma trận chỉ đổi theo các sự kiện hợp lệ (xem bảng chuyển ở chương 4.5). MasteryStateMachine từ chối những bước nhảy sai.'],
+  ['Observer (Pub/Sub)', 'Khi có sự kiện như session.completed, các bên quan tâm (bản đồ nhiệt, thông báo, ghép cặp) tự lắng nghe qua EventBus mà không cần nơi phát biết tới họ.'],
+  ['Repository', 'Mỗi loại dữ liệu có một Repository riêng. Nghiệp vụ gọi Repository thay vì viết truy vấn, nên dễ thay bằng bản giả khi kiểm thử.']
+];
+var k = 0;
+function draw() {
+  $('#tb').innerHTML = P.map(function (p, i) { return '<button class="b" type="button" aria-pressed="' + (i === k) + '" data-i="' + i + '">' + p[0] + '</button>'; }).join('');
+  $$('#tb button').forEach(function (b) { b.onclick = function () { k = +b.dataset.i; draw(); }; });
+  $('#msg').innerHTML = '<b>' + P[k][0] + '.</b> ' + P[k][1];
+}
+draw();
+</script>
+</body>
+</html>

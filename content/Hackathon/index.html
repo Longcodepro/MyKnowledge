@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mục lục ôn tập Whybi AI</title>
+<link rel="stylesheet" href="assets/hoc.css">
+<script src="assets/hoc.js"></script>
+<style>
+.ls{margin:0 0 8px;padding:0;list-style:none;border-top:2px solid var(--ink)}
+.ls li{border-bottom:1px solid var(--rule)}
+.ls a{display:grid;grid-template-columns:84px 1fr;gap:2px 12px;padding:10px 4px;color:var(--ink);text-decoration:none}
+.ls a:hover{background:var(--panel)}
+.ls .n{font-weight:800;font-variant-numeric:tabular-nums;color:var(--blue);font-size:19px}
+.ls .t{font-weight:650}
+.ls .d{grid-column:2;color:var(--mut);font-size:15px}
+.ls a.todo{pointer-events:none;color:var(--mut)}
+@media (max-width:560px){.ls a{grid-template-columns:70px 1fr}}
+.pic{margin:14px 0 0}
+.pic img{display:block;width:100%;height:auto;border:1.5px solid var(--ink)}
+</style>
+</head>
+<body>
+<header class="top"><span><b>Whybi AI</b></span><button class="b" id="tg" type="button">Chế độ tối</button></header>
+<main class="wrap">
+<div class="head"><span class="no">Long</span><div><h1>Mục lục ôn tập</h1><p class="lede">Phần nền tảng (C2). Mỗi mục một trang, chỉ giữ ý quan trọng và vài ví dụ nghịch được.</p></div></div>
+
+<h2>Buổi 1 · T3 27/10 · phần chung</h2>
+<ul class="ls">
+<li><a href="5.1_KienTruc_TongQuan.html"><span class="n">5.1</span><span class="t">Kiến trúc tổng thể</span><span class="d">Khối đơn mô-đun, worker nền, bus sự kiện; việc nhẹ và việc nặng.</span></a></li>
+<li><a href="5.2.6_MaTranThanhThao.html"><span class="n">5.2.6</span><span class="t">Ma trận thành thạo</span><span class="d">Mỗi ô một dòng; MX2 ghi, MX3 đọc cột, MX4 đọc hàng.</span></a></li>
+</ul>
+
+<h2>Buổi 2 · T6 30/10 · đợt A</h2>
+<ul class="ls">
+<li><a href="2.1.6_HocDongDang_ZPD.html"><span class="n">2.1.6</span><span class="t">Học đồng đẳng và ZPD</span><span class="d">Chỉ ghép nội dung vừa tầm, tức Biên của người học.</span></a></li>
+<li><a href="2.1.7_KhongGianTriThuc_TienQuyet.html"><span class="n">2.1.7</span><span class="t">Không gian tri thức</span><span class="d">Trạng thái khả dĩ do tiên quyết quy định; Biên là nút học tiếp ngay.</span></a></li>
+<li><a href="2.2.1_DAG_Topo_BacCau.html"><span class="n">2.2.1</span><span class="t">DAG, sắp xếp topo, bắc cầu</span><span class="d">Kahn, DFS ba màu, rút gọn cạnh thừa.</span></a></li>
+<li><a href="2.2.6_GhepCap_TrongSoCucDai.html"><span class="n">2.2.6</span><span class="t">Ghép cặp trọng số cực đại</span><span class="d">Blossom O(V³); vì sao tham lam không đủ.</span></a></li>
+<li><a href="2.2.7_ThoiGianThuc_WebSocket.html"><span class="n">2.2.7</span><span class="t">Giao tiếp thời gian thực</span><span class="d">WebSocket và Redis Pub/Sub.</span></a></li>
+<li><a href="3.3_YeuCauChucNang.html"><span class="n">3.3</span><span class="t">Yêu cầu chức năng</span><span class="d">51 yêu cầu, 5 phân hệ, ưu tiên M, S, C.</span></a></li>
+<li><a href="3.4_YeuCauPhiChucNang.html"><span class="n">3.4</span><span class="t">Yêu cầu phi chức năng</span><span class="d">14 chỉ tiêu: nhanh, AI đáng tin, bảo mật, riêng tư.</span></a></li>
+<li><a href="3.6_TruyVet_YeuCau_UseCase.html"><span class="n">3.6</span><span class="t">Truy vết yêu cầu tới Use Case</span><span class="d">5 nhóm yêu cầu trải trên 27 UC.</span></a></li>
+<li><a href="4_PhanTichHeThong.html"><span class="n">Ch. 4</span><span class="t">Phân tích hệ thống</span><span class="d">Nghiệp vụ, Use Case, hoạt động, tuần tự, trạng thái, lớp.</span></a></li>
+<li><a href="5.2_ThietKeDuLieu.html"><span class="n">5.2</span><span class="t">Thiết kế dữ liệu</span><span class="d">30 bảng, lưu đồ thị tiên quyết, các bảng cốt lõi.</span></a></li>
+<li><a href="5.3_ThietKeLop_MauThietKe.html"><span class="n">5.3</span><span class="t">Thiết kế lớp và mẫu thiết kế</span><span class="d">Bảy mẫu: Adapter, Facade, Strategy, Chain, State, Observer, Repository.</span></a></li>
+<li><a href="5.4_ThietKeAPI.html"><span class="n">5.4</span><span class="t">Thiết kế API</span><span class="d">Quy ước, endpoint theo vai trò, kênh WebSocket.</span></a></li>
+</ul>
+
+<h2>Buổi 3 và 4</h2>
+<ul class="ls">
+<li><a class="todo" href="#"><span class="n">Buổi 3</span><span class="t">5.6, 5.7, 6.1.4, 6.5, 6.6, 7.1–7.3</span><span class="d">Chưa làm.</span></a></li>
+<li><a class="todo" href="#"><span class="n">Buổi 4</span><span class="t">Tóm tắt toàn bộ phần nền tảng</span><span class="d">Chưa làm.</span></a></li>
+</ul>
+
+<h2>Ghi chú thêm</h2>
+<ul class="ls">
+<li><a href="whybi-overview.html"><span class="n">WhyBi</span><span class="t">Tổng quan workflow</span><span class="d">Sơ đồ luồng tổng thể của hệ thống (trang có sẵn trong thư mục này).</span></a></li>
+</ul>
+
+<div class="pic"><img src="LichCacBuoiHop_4Buoi_PhanCongMuc.jpg" alt="Bảng lịch 4 buổi họp và phần việc của từng người"><p class="cap">Lịch 4 buổi họp và phân công mục.</p></div>
+</main>
+</body>
+</html>

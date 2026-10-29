@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3.3 Yêu cầu chức năng</title>
+<link rel="stylesheet" href="assets/hoc.css">
+<script src="assets/hoc.js"></script>
+</head>
+<body>
+<header class="top"><a href="index.html">← Mục lục</a><button class="b" id="tg" type="button">Chế độ tối</button></header>
+<main class="wrap">
+<div class="head"><span class="no">3.3</span><div><h1>Yêu cầu chức năng</h1><p class="lede">51 yêu cầu chia theo 5 phân hệ, mỗi yêu cầu có mức ưu tiên.</p></div></div>
+
+<div class="nho"><ul>
+<li>Ưu tiên <mark>M</mark>: bắt buộc cho bản Hackathon (MVP). <mark>S</mark>: nên có. <mark>C</mark>: mở rộng nếu còn thời gian.</li>
+<li>Mã có dạng <code>FR-SK-01</code>: SK cây kỹ năng, TB giảng lại, HM bản đồ nhiệt, PM ghép cặp, AD quản trị.</li>
+<li>Trang mở sẵn ở mức M để ôn phần quan trọng trước.</li>
+</ul></div>
+
+<h2>Tra cứu</h2>
+<div class="row" id="t1" role="group" aria-label="Chọn phân hệ"></div>
+<div class="row" id="t2" role="group" aria-label="Lọc theo ưu tiên"></div>
+<div class="cnt" id="cnt" aria-live="polite"></div>
+<div id="list"></div>
+</main>
+<script>
+var D = {
+  'Cây kỹ năng': [
+    ['FR-SK-01', 'Tạo lớp học phần (môn, học kỳ, tên lớp), sinh mã tham gia 8 ký tự', 'GV', 'M'],
+    ['FR-SK-02', 'Tải giáo trình PDF/DOCX ≤ 20 MB; kiểm tra định dạng, dung lượng', 'GV', 'M'],
+    ['FR-SK-03', 'Phân tích tài liệu nền, hiển thị tiến độ theo thời gian thực; OCR khi là bản quét', 'Hệ thống', 'M'],
+    ['FR-SK-04', 'Trích xuất khái niệm, suy luận quan hệ tiên quyết, đảm bảo kết quả là DAG', 'Hệ thống', 'M'],
+    ['FR-SK-05', 'Sinh rubric cho từng nút: ý chính bắt buộc, quan niệm sai, tình huống phản biện, mức Bloom, có trích dẫn trang', 'Hệ thống', 'M'],
+    ['FR-SK-06', 'Trình sửa cây kéo thả: thêm / sửa / xóa / gộp nút, thêm / xóa cạnh, tự sắp xếp', 'GV', 'M'],
+    ['FR-SK-07', 'Chặn thao tác tạo chu trình và chỉ rõ đường đi của chu trình', 'Hệ thống', 'M'],
+    ['FR-SK-08', 'Duyệt / sửa rubric; sinh lại rubric bằng AI cho một nút', 'GV', 'M'],
+    ['FR-SK-09', 'Phát hành cây; khởi tạo hoặc di chuyển trạng thái thành thạo của SV', 'GV, Hệ thống', 'M'],
+    ['FR-SK-10', 'Quản lý phiên bản: xem lịch sử, so sánh, khôi phục', 'GV', 'S']],
+  'Giảng lại cho AI': [
+    ['FR-TB-01', 'Tham gia lớp bằng mã; xem bản đồ học tập cá nhân dạng cây với trạng thái từng nút', 'SV', 'M'],
+    ['FR-TB-02', 'Chỉ cho phép bắt đầu phiên ở nút Sẵn sàng / Chưa đạt / Cần xác nhận lại; chỉ ra tiên quyết còn thiếu', 'Hệ thống', 'M'],
+    ['FR-TB-03', 'AI mở đầu phiên với vai “học trò tò mò”, nhờ SV giảng khái niệm', 'Hệ thống', 'M'],
+    ['FR-TB-04', 'Nhập lời giảng và câu trả lời bằng văn bản; ghi nhận sự kiện dán và tốc độ gõ', 'SV', 'M'],
+    ['FR-TB-05', 'Nhập bằng giọng nói: ghi âm ≤ 3 phút, hiển thị dạng sóng, ghi lại, dừng', 'SV', 'M'],
+    ['FR-TB-06', 'Chuyển giọng nói thành văn bản tiếng Việt, chuẩn hóa thuật ngữ của nút', 'Hệ thống', 'M'],
+    ['FR-TB-07', 'Khi độ tin cậy STT thấp: hiển thị bản chép lời, gạch chân từ không chắc, cho SV chỉnh nhỏ; ghi nhận chỉnh sửa', 'SV, Hệ thống', 'M'],
+    ['FR-TB-08', 'Sinh 3–5 câu hỏi phản biện theo chiến lược (ý thiếu, quan niệm sai, tình huống biên, chuyển giao)', 'Hệ thống', 'M'],
+    ['FR-TB-09', 'Không giảng hộ, không lộ đáp án trong câu hỏi (kiểm duyệt đầu ra)', 'Hệ thống', 'M'],
+    ['FR-TB-10', 'Đọc câu hỏi bằng giọng nói (TTS) khi SV bật', 'SV', 'S'],
+    ['FR-TB-11', 'Đếm giờ trả lời mỗi câu; ghi nhận hết giờ', 'Hệ thống', 'S'],
+    ['FR-TB-12', 'Chấm theo 5 tiêu chí bằng tác tử chấm độc lập; áp dụng quy tắc Đạt (BR-03)', 'Hệ thống', 'M'],
+    ['FR-TB-13', 'Hiển thị kết quả: điểm từng tiêu chí, điểm mạnh, gợi ý ôn dạng câu hỏi gợi mở, trang giáo trình', 'Hệ thống', 'M'],
+    ['FR-TB-14', 'Phát hiện và gắn cờ jailbreak / lạc đề / dán bất thường', 'Hệ thống', 'M'],
+    ['FR-TB-15', 'Xem lịch sử phiên của bản thân, nghe lại ghi âm', 'SV', 'C']],
+  'Bản đồ nhiệt': [
+    ['FR-HM-01', 'Hiển thị bản đồ nhiệt dạng cây: màu mỗi nút theo tỉ lệ Đạt / đã thử', 'GV', 'M'],
+    ['FR-HM-02', 'Hiển thị lưới SV × Nút có tên và MSSV, trạng thái từng ô, tiến độ mỗi SV', 'GV', 'M'],
+    ['FR-HM-03', 'Cập nhật thời gian thực (≤ 3 giây) qua WebSocket', 'Hệ thống', 'M'],
+    ['FR-HM-04', 'Phân biệt “chưa đủ mẫu / chưa thử” với “chưa đạt”', 'Hệ thống', 'M'],
+    ['FR-HM-05', 'Truy vết và cảnh báo điểm nghẽn gốc (“Nên giảng lại X”)', 'Hệ thống', 'M'],
+    ['FR-HM-06', 'Xem chi tiết nút: SV theo trạng thái (có tên), quan niệm sai phổ biến, nút gốc', 'GV', 'M'],
+    ['FR-HM-07', 'Xem hồ sơ năng lực một SV và transcript / ghi âm các phiên', 'GV', 'S'],
+    ['FR-HM-08', 'Cấu hình ngưỡng màu, cỡ mẫu tối thiểu, ngưỡng Đạt, số câu phản biện', 'GV', 'S'],
+    ['FR-HM-09', 'Lọc, tìm theo tên; chế độ trình chiếu (có tùy chọn ẩn tên khi chiếu lên màn hình lớp)', 'GV', 'S'],
+    ['FR-HM-10', 'Xuất báo cáo lớp CSV / PDF', 'GV', 'C']],
+  'Ghép cặp': [
+    ['FR-PM-01', 'SV bật / tắt tham gia ghép cặp', 'SV', 'M'],
+    ['FR-PM-02', 'Chạy vòng ghép cặp theo lệnh GV hoặc định kỳ', 'GV, Bộ hẹn giờ', 'M'],
+    ['FR-PM-03', 'Tính trọng số bù trừ hai chiều, giải ghép cặp trọng số cực đại', 'Hệ thống', 'M'],
+    ['FR-PM-04', 'Ưu tiên nút đang là điểm nghẽn của lớp', 'Hệ thống', 'S'],
+    ['FR-PM-05', 'Gửi gợi ý (hạn 48 giờ): bạn ghép, nút mình dạy, nút mình học; chấp nhận / từ chối', 'SV', 'M'],
+    ['FR-PM-06', 'Đánh dấu “Đã học cùng”; mở yêu cầu xác nhận lại', 'SV, Hệ thống', 'M'],
+    ['FR-PM-07', 'Xác nhận lại bằng phiên giảng lại; cập nhật trạng thái cặp', 'SV, Hệ thống', 'M'],
+    ['FR-PM-08', 'GV xem danh sách cặp, điều chỉnh thủ công, thống kê hiệu quả', 'GV', 'S']],
+  'Tài khoản, quản trị': [
+    ['FR-AD-01', 'Đăng nhập / đăng xuất, quên mật khẩu, cập nhật hồ sơ', 'Mọi người dùng', 'M'],
+    ['FR-AD-02', 'Phân quyền theo vai trò (GV, SV, QTV)', 'Hệ thống', 'M'],
+    ['FR-AD-03', 'Quản lý tài khoản; nhập danh sách SV từ CSV', 'QTV', 'S'],
+    ['FR-AD-04', 'Quản lý danh mục môn học', 'QTV', 'S'],
+    ['FR-AD-05', 'Cấu hình nhà cung cấp LLM, STT, TTS; mô hình dự phòng', 'QTV', 'M'],
+    ['FR-AD-06', 'Đặt hạn mức token / phút ghi âm theo lớp, theo SV', 'QTV', 'S'],
+    ['FR-AD-07', 'Xem nhật ký, xử lý cờ vi phạm', 'QTV', 'S'],
+    ['FR-AD-08', 'Thông báo trong ứng dụng và email', 'Hệ thống', 'S']]
+};
+var PN = { M: 'M · bắt buộc', S: 'S · nên có', C: 'C · mở rộng' };
+var keys = Object.keys(D), cur = keys[0], pr = 'M';
+function chips(id, items, get, set) {
+  var el = $(id);
+  el.innerHTML = items.map(function (it) { return '<button class="b" type="button" aria-pressed="' + (get() === it[0]) + '" data-v="' + it[0] + '">' + it[1] + '</button>'; }).join('');
+  $$('button', el).forEach(function (b) { b.onclick = function () { set(b.dataset.v); draw(); }; });
+}
+function draw() {
+  chips('#t1', keys.map(function (k) { return [k, k + ' (' + D[k].length + ')']; }), function () { return cur; }, function (v) { cur = v; });
+  chips('#t2', [['', 'Tất cả']].concat(Object.keys(PN).map(function (p) { return [p, PN[p]]; })), function () { return pr; }, function (v) { pr = v; });
+  var rows = D[cur].filter(function (r) { return !pr || r[3] === pr; });
+  $('#cnt').textContent = rows.length + ' / ' + D[cur].length + ' yêu cầu';
+  $('#list').innerHTML = rows.map(function (r) { return '<div class="it"><b>' + r[0] + '</b><span>' + r[1] + '</span><span class="meta">Tác nhân: ' + r[2] + ' · ưu tiên ' + r[3] + '</span></div>'; }).join('');
+}
+draw();
+</script>
+</body>
+</html>

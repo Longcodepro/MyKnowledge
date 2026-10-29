@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5.2 Thiết kế dữ liệu</title>
+<link rel="stylesheet" href="assets/hoc.css">
+<script src="assets/hoc.js"></script>
+</head>
+<body>
+<header class="top"><a href="index.html">← Mục lục</a><button class="b" id="tg" type="button">Chế độ tối</button></header>
+<main class="wrap">
+<div class="head"><span class="no">5.2</span><div><h1>Thiết kế dữ liệu</h1><p class="lede">30 bảng chia 4 nhóm. Nhớ nhóm nào chứa gì, rồi nhớ vài bảng cốt lõi.</p></div></div>
+
+<div class="nho"><ul>
+<li>Mô hình dữ liệu có <mark>30 bảng</mark>; ERD vẽ tổng quan rồi chi tiết theo 4 nhóm.</li>
+<li>Bảng cốt lõi nhất là <mark>mastery_records</mark> (ma trận thành thạo), xem trang 5.2.6.</li>
+<li>Đồ thị tiên quyết lưu theo <mark>danh sách cạnh</mark>; chặn chu trình ở tầng dịch vụ, không phải ở CSDL.</li>
+</ul></div>
+
+<h2>30 bảng chia theo nhóm</h2>
+<div class="tw"><table>
+<thead><tr><th>Nhóm</th><th>Bảng</th></tr></thead>
+<tbody>
+<tr><td>Người dùng, lớp, tài liệu</td><td><code>users</code>, <code>lecturers</code>, <code>students</code> · <code>courses</code>, <code>class_sections</code>, <code>enrollments</code> · <code>syllabus_documents</code>, <code>document_chunks</code> (vector pgvector) · <code>notifications</code></td></tr>
+<tr><td>Cây kỹ năng, rubric</td><td><code>skill_trees</code>, <code>tree_versions</code> · <code>concept_nodes</code>, <code>prerequisite_edges</code> · <code>rubrics</code>, <code>rubric_criteria</code>, <code>key_points</code>, <code>misconceptions</code>, <code>challenge_scenarios</code></td></tr>
+<tr><td>Phiên, chấm, thành thạo</td><td><code>teaching_sessions</code>, <code>session_turns</code> · <code>evaluations</code>, <code>criterion_scores</code> · <code>mastery_records</code></td></tr>
+<tr><td>Thống kê, ghép cặp, cấu hình</td><td><code>class_node_stats</code> · <code>matching_rounds</code>, <code>peer_matches</code>, <code>peer_match_items</code> · <code>security_flags</code> · <code>ai_provider_configs</code>, <code>audit_logs</code></td></tr>
+</tbody></table></div>
+
+<h2>Lưu đồ thị tiên quyết và ràng buộc DAG (5.2.5)</h2>
+<div class="nho"><ul>
+<li>Lưu dạng <mark>danh sách cạnh</mark> (<code>prerequisite_edges</code>) theo từng phiên bản cây.</li>
+<li><b>Khóa (key) của nút ổn định</b> giữa các phiên bản, để di chuyển trạng thái SV khi phát hành cây mới.</li>
+<li>Chặn chu trình bằng <code>DagValidator</code> ở tầng dịch vụ, trước mỗi lần ghi cạnh: DFS từ nút "đến" xem có tới được nút "từ" không. Độ phức tạp O(V + E), cây ≤ 200 nút nên không đáng kể.</li>
+<li>CSDL chỉ bổ sung hai ràng buộc: <code>UNIQUE(version_id, from_node_id, to_node_id)</code> và <code>CHECK(from_node_id &lt;&gt; to_node_id)</code>.</li>
+</ul></div>
+
+<h2>Các bảng cốt lõi, chỉ cột quan trọng</h2>
+<details open><summary>mastery_records (một ô SV × nút)</summary>
+<p><code>student_id</code>, <code>node_id</code>, <code>class_id</code>, <code>state</code> (6 trạng thái), <code>best_score</code>, <code>attempts</code>. Ràng buộc: <code>UNIQUE(student_id, node_id)</code>, <code>INDEX(class_id, node_id, state)</code>.</p></details>
+<details><summary>teaching_sessions (một phiên giảng lại)</summary>
+<p><code>status</code>: CREATED, EXPLAINING, CHALLENGING, EVALUATING, COMPLETED, ABANDONED, FLAGGED. Thêm <code>attempt_no</code> (lượt thử thứ mấy), <code>is_peer_followup</code> (phiên xác nhận sau học cặp), <code>tts_enabled</code>.</p></details>
+<details><summary>session_turns (từng lượt hội thoại)</summary>
+<p><code>speaker</code> (STUDENT hoặc TUTEE), <code>turn_type</code> (OPENING, EXPLANATION, QUESTION, ANSWER, SYSTEM_NOTICE), <code>content</code>, <code>input_mode</code> (TEXT hoặc VOICE). Chỉ số chống gian lận: <code>paste_ratio</code>, <code>response_time_ms</code>; chỉ số giọng nói: <code>stt_confidence</code>, <code>transcript_edited</code>.</p></details>
+<details><summary>evaluations (kết quả chấm)</summary>
+<p>Một phiên một kết quả (<code>session_id</code> duy nhất). <code>total_score</code> 0–100, <code>verdict</code> PASSED hoặc FAILED, <code>covered_points</code>, <code>missing_points</code>, <code>detected_misconceptions</code>, <code>judge_runs</code> (2 hoặc 3 lần chấm). <code>feedback</code> không chứa đáp án.</p></details>
+<details><summary>class_node_stats (số liệu bản đồ nhiệt, theo cột)</summary>
+<p><code>attempted_count</code>, <code>passed_count</code>, <code>pass_rate</code> = passed / attempted, <code>color</code> (GREY, GREEN, YELLOW, RED), <code>root_cause_node_id</code> và điểm nút gốc gây nghẽn.</p></details>
+<details><summary>peer_matches và peer_match_items (ghép cặp)</summary>
+<p><code>peer_matches</code>: hai SV, <code>weight</code> = w(A, B), <code>status</code>, hai cờ chấp nhận, <code>expires_at</code>. <code>peer_match_items</code>: ai dạy ai nút nào, và <code>verified</code> khi người học Đạt lúc xác nhận lại.</p></details>
+
+<h2>Dễ bị hỏi</h2>
+<details><summary>Vì sao không dùng CHECK của CSDL để chặn chu trình?</summary><p>Chu trình dài hơn một cạnh nên không kiểm bằng một ràng buộc đơn giản được; cần duyệt đồ thị. Vì vậy kiểm ở tầng dịch vụ, CSDL chỉ chặn cạnh tự trỏ vào chính nó và cạnh trùng.</p></details>
+<details><summary>Vì sao nút cần khóa ổn định?</summary><p>Phát hành bản cây mới sinh ra các nút mới (khác id). Khóa ổn định cho phép nối nút cũ với nút mới để giữ trạng thái SV (BR-14).</p></details>
+</main>
+</body>
+</html>

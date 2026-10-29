@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5.2.6 Ma trận thành thạo</title>
+<link rel="stylesheet" href="assets/hoc.css">
+<script src="assets/hoc.js"></script>
+</head>
+<body>
+<header class="top"><a href="index.html">← Mục lục</a><button class="b" id="tg" type="button">Chế độ tối</button></header>
+<main class="wrap">
+<div class="head"><span class="no">5.2.6</span><div><h1>Ma trận thành thạo</h1><p class="lede">Cấu trúc dữ liệu trung tâm: hàng là sinh viên, cột là nút kỹ năng, mỗi ô là trạng thái của SV ở nút đó.</p></div></div>
+
+<div class="nho"><ul>
+<li>Mỗi ô là <mark>một dòng</mark> của bảng <code>mastery_records</code>.</li>
+<li><mark>MX2 ghi</mark> một ô, <mark>MX3 đọc theo cột</mark>, <mark>MX4 đọc theo hàng</mark>.</li>
+<li>Lớp 100 SV × 50 nút = 5.000 ô, nạp hết vào bộ nhớ của worker ghép cặp trong vài chục mili-giây.</li>
+</ul></div>
+
+<h2>Ba mắt xích, ba cách dùng</h2>
+<div class="fig">
+<div class="row" role="group" aria-label="Chọn mắt xích">
+<button class="b" data-m="mx2" aria-pressed="true" type="button">MX2 ghi một ô</button>
+<button class="b" data-m="mx3" aria-pressed="false" type="button">MX3 đọc theo cột</button>
+<button class="b" data-m="mx4" aria-pressed="false" type="button">MX4 đọc theo hàng</button>
+</div>
+<div class="tw"><table id="t" aria-label="Ma trận minh họa"></table></div>
+<p class="cap">Ví dụ 4 SV × 4 nút. ✓ Đạt · ◎ Sẵn sàng · ✗ Chưa đạt · 🔒 Khóa.</p>
+<div class="msg" id="msg" aria-live="polite"></div>
+</div>
+
+<h2>Lưu trong cơ sở dữ liệu</h2>
+<div class="tw"><table>
+<thead><tr><th>Cột</th><th>Ý nghĩa</th></tr></thead>
+<tbody>
+<tr><td><code>student_id</code>, <code>node_id</code></td><td>Tọa độ của ô: SV nào, nút nào</td></tr>
+<tr><td><code>class_id</code></td><td>Lớp học phần, lặp lại có chủ ý để truy vấn nhanh</td></tr>
+<tr><td><code>state</code></td><td>LOCKED, AVAILABLE, IN_PROGRESS, MASTERED, NOT_PASSED, NEEDS_REVERIFY</td></tr>
+<tr><td><code>best_score</code>, <code>attempts</code></td><td>Điểm cao nhất và số lượt đã chấm</td></tr>
+</tbody></table></div>
+<div class="nho"><ul>
+<li><code>UNIQUE(student_id, node_id)</code>: một SV chỉ có một ô cho mỗi nút.</li>
+<li><code>INDEX(class_id, node_id, state)</code>: gom theo cột (bản đồ nhiệt) chạy nhanh.</li>
+</ul></div>
+
+<h2>Dễ bị hỏi</h2>
+<details><summary>Vì sao mastery_records có cả class_id?</summary><p>Đây là phi chuẩn hóa có chủ ý: lọc thẳng theo lớp mà không phải nối bảng, nên tổng hợp bản đồ nhiệt nhanh hơn.</p></details>
+<details><summary>Ai được ghi vào ma trận?</summary><p>Chỉ mắt xích 2 (SV giảng lại cho AI), và chỉ qua <code>MasteryService</code>. MX3 và MX4 chỉ đọc.</p></details>
+<details><summary>Vì sao nạp cả ma trận vào bộ nhớ được?</summary><p>5.000 ô là rất nhỏ, nên worker ghép cặp đọc một lần rồi chạy thuật toán, không cần truy vấn từng cặp.</p></details>
+</main>
+<script>
+var SV = ['An', 'Bình', 'Chi', 'Dũng'], ND = ['N1', 'N2', 'N3', 'N4'];
+var G = { 'An': 'ĐĐĐS', 'Bình': 'ĐĐSK', 'Chi': 'ĐCĐK', 'Dũng': 'ĐĐĐĐ' };
+var C = { 'Đ': ['c-ok', '✓'], 'S': ['c-fr', '◎'], 'C': ['c-bad', '✗'], 'K': ['c-lk', '🔒'] };
+var M = {
+  mx2: { cell: [0, 3], say: '<b>MX2 ghi một ô.</b> An vừa giảng xong N4 và được chấm Đạt: chỉ <b>một dòng</b> (An, N4) bị <code>UPDATE</code>. Các ô khác không đổi.' },
+  mx3: { col: 1, say: '<b>MX3 đọc theo cột.</b> Muốn biết nút N2 của cả lớp ra sao thì gom cả cột bằng <code>GROUP BY node_id</code>. Ở đây 3/4 SV đã Đạt N2, đó là số dùng để tô màu nút trên bản đồ nhiệt.' },
+  mx4: { row: 1, say: '<b>MX4 đọc theo hàng.</b> Muốn ghép cặp cho Bình thì lấy cả hàng của Bình (theo <code>student_id</code>): Đạt {N1, N2}, Biên {N3}.' }
+};
+function draw(k) {
+  var m = M[k];
+  var h = '<thead><tr><th>SV</th>' + ND.map(function (n, j) { return '<th' + (m.col === j ? ' class="hit"' : '') + '>' + n + '</th>'; }).join('') + '</tr></thead><tbody>';
+  SV.forEach(function (s, i) {
+    h += '<tr><th' + (m.row === i ? ' class="hit"' : '') + '>' + s + '</th>';
+    G[s].split('').forEach(function (c, j) {
+      var hit = (m.cell && m.cell[0] === i && m.cell[1] === j) || m.col === j || m.row === i;
+      h += '<td class="' + C[c][0] + (hit ? ' hit' : '') + '">' + C[c][1] + '</td>';
+    });
+    h += '</tr>';
+  });
+  $('#t').innerHTML = h + '</tbody>';
+  $('#msg').innerHTML = m.say;
+  $$('[data-m]').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.m === k); });
+}
+$$('[data-m]').forEach(function (b) { b.onclick = function () { draw(b.dataset.m); }; });
+draw('mx2');
+</script>
+</body>
+</html>

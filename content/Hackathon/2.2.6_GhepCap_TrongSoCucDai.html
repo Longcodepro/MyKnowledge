@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2.2.6 Ghép cặp trọng số cực đại</title>
+<link rel="stylesheet" href="assets/hoc.css">
+<script src="assets/hoc.js"></script>
+<style>
+.eg{cursor:pointer}
+.eg:focus{outline:none}
+.eg .e{stroke:var(--mut);stroke-width:3}
+.eg:focus .e{stroke:var(--blue)}
+.eg.sel .e{stroke:var(--ok);stroke-width:7}
+.eg.dup .e{stroke:var(--red);stroke-width:7}
+.vx{fill:var(--paper);stroke:var(--ink);stroke-width:1.5}
+.vx.on{fill:var(--okbg);stroke:var(--ok);stroke-width:2.5}
+.lb{fill:var(--paper);stroke:var(--rule)}
+</style>
+</head>
+<body>
+<header class="top"><a href="index.html">← Mục lục</a><button class="b" id="tg" type="button">Chế độ tối</button></header>
+<main class="wrap">
+<div class="head"><span class="no">2.2.6</span><div><h1>Ghép cặp trọng số cực đại</h1><p class="lede">Chọn các cặp không chung người sao cho tổng điểm bù trừ lớn nhất.</p></div></div>
+
+<div class="nho"><ul>
+<li>Cho đồ thị vô hướng có trọng số, tìm tập cạnh <mark>không chung đỉnh</mark> có tổng trọng số lớn nhất.</li>
+<li>Thuật toán <mark>Blossom</mark> của Edmonds giải trên đồ thị tổng quát, độ phức tạp O(V³), có sẵn trong NetworkX (<code>max_weight_matching</code>).</li>
+<li>Trong hệ thống: đỉnh là SV, cạnh là hai bạn bù cho nhau, trọng số là w(a, b).</li>
+</ul></div>
+
+<h2>Tham lam không đủ</h2>
+<div class="fig">
+<div class="row"><button class="b" id="gr" type="button">Chọn tham lam</button><button class="b" id="op" type="button">Chọn tối ưu</button><button class="b" id="cl" type="button">Xóa chọn</button></div>
+<svg class="d" viewBox="0 0 760 190" role="group" aria-label="Đồ thị 4 đỉnh, bấm vào cạnh để chọn">
+<g id="g"></g>
+</svg>
+<p class="cap">Bấm vào cạnh để tự chọn. Tham lam: lấy cạnh nặng nhất trước.</p>
+<div class="msg" id="msg" aria-live="polite"></div>
+</div>
+
+<h2>Vì sao Blossom mà không phải Hungarian</h2>
+<p>Hungarian chỉ chạy trên đồ thị hai phía. Ở đây SV nào cũng có thể ghép với SV nào, nên đồ thị có thể có chu trình lẻ (ví dụ tam giác A, B, C). Blossom xử lý được trường hợp này.</p>
+
+<h2>Dễ bị hỏi</h2>
+<details><summary>Mỗi người chỉ vào một cặp, vậy người lẻ thì sao?</summary><p>Người không có cặp được ghép một chiều với một mentor hoặc vào hàng chờ.</p></details>
+<details><summary>Cạnh có trọng số 0 thì sao?</summary><p>Không được tạo cạnh: cặp mà một bên không dạy được gì bị loại (BR-08).</p></details>
+</main>
+<script>
+var V = { C: 90, A: 290, B: 490, D: 690 };
+var E = [['C', 'A', 2], ['A', 'B', 3], ['B', 'D', 2]];
+var sel = {};
+function key(e) { return e[0] + e[1]; }
+function check() {
+  var use = {}, ok = true, sum = 0;
+  E.filter(function (e) { return sel[key(e)]; }).forEach(function (e) { sum += e[2]; [e[0], e[1]].forEach(function (v) { use[v] = (use[v] || 0) + 1; if (use[v] > 1) ok = false; }); });
+  return { use: use, ok: ok, sum: sum };
+}
+function draw() {
+  var r = check();
+  var h = E.map(function (e) {
+    var x1 = V[e[0]], x2 = V[e[1]], mx = (x1 + x2) / 2, on = sel[key(e)];
+    var dup = on && !r.ok && (r.use[e[0]] > 1 || r.use[e[1]] > 1);
+    return '<g class="eg' + (on ? ' sel' : '') + (dup ? ' dup' : '') + '" tabindex="0" role="button" aria-pressed="' + !!on + '" aria-label="Cạnh ' + e[0] + '-' + e[1] + ' trọng số ' + e[2] + '" data-k="' + key(e) + '">' +
+      '<line x1="' + x1 + '" y1="100" x2="' + x2 + '" y2="100" stroke="transparent" stroke-width="30"/><line class="e" x1="' + x1 + '" y1="100" x2="' + x2 + '" y2="100"/>' +
+      '<rect class="lb" x="' + (mx - 20) + '" y="58" width="40" height="26" rx="2"/><text x="' + mx + '" y="76" text-anchor="middle">' + e[2] + '</text></g>';
+  }).join('');
+  h += Object.keys(V).map(function (v) { return '<circle class="vx' + (r.use[v] ? ' on' : '') + '" cx="' + V[v] + '" cy="100" r="26"/><text x="' + V[v] + '" y="105" text-anchor="middle">' + v + '</text>'; }).join('');
+  $('#g').innerHTML = h;
+  var names = E.filter(function (e) { return sel[key(e)]; }).map(function (e) { return e[0] + '–' + e[1] + ' (' + e[2] + ')'; });
+  $('#msg').innerHTML = '<b>Đang chọn:</b> ' + (names.join(' + ') || '(chưa chọn)') + '<br>' +
+    (r.ok ? '<b>Hợp lệ.</b> Tổng = <b>' + r.sum + '</b>' + (r.sum === 4 ? ': đây là tối ưu.' : r.sum === 3 ? '. C và D bị bỏ lẻ, có cách được 4.' : '.')
+      : '<b class="bad">Không hợp lệ:</b> có người bị chọn hai lần (cạnh đỏ). Mỗi người chỉ vào một cặp.') +
+    '<br>Tham lam lấy A–B (3) trước nên chặn mất C và D: tổng 3. Tối ưu lấy C–A (2) + B–D (2): tổng 4.';
+  $$('.eg').forEach(function (g) {
+    var t = function () { var k = g.dataset.k; if (sel[k]) delete sel[k]; else sel[k] = true; draw(); };
+    g.onclick = t; g.onkeydown = function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); t(); } };
+  });
+}
+$('#gr').onclick = function () { sel = { AB: true }; draw(); };
+$('#op').onclick = function () { sel = { CA: true, BD: true }; draw(); };
+$('#cl').onclick = function () { sel = {}; draw(); };
+draw();
+</script>
+</body>
+</html>
