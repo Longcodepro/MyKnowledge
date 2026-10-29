@@ -84,13 +84,38 @@
 
 <h2>Tham lam không đủ</h2>
 <div class="fig">
-<div class="row"><button class="b" id="gr" type="button">Chọn tham lam</button><button class="b" id="op" type="button">Chọn tối ưu</button><button class="b" id="cl" type="button">Xóa chọn</button></div>
+<div class="row"><button class="b" id="gr" type="button">Chọn tham lam</button><button class="b" id="op" type="button">Chọn tối ưu</button><button class="b" id="gs" type="button">Tham lam từng bước</button><button class="b" id="cl" type="button">Xóa chọn</button></div>
 <svg class="d" viewBox="0 0 760 190" role="group" aria-label="Đồ thị 4 đỉnh, bấm vào cạnh để chọn">
 <g id="g"></g>
 </svg>
 <p class="cap">Bấm vào cạnh để tự chọn. Tham lam: lấy cạnh nặng nhất trước.</p>
 <div class="msg" id="msg" aria-live="polite"></div>
+<div class="tw" id="gl"></div>
 </div>
+
+<h3>Tham lam là gì</h3>
+<p><mark>Thuật toán tham lam</mark> (greedy) là lấy lựa chọn <b>tốt nhất ngay lúc này</b>, chốt luôn, không quay lại sửa. Ở đây: xếp các cạnh từ nặng đến nhẹ, xét lần lượt, cạnh nào <b>cả hai đầu còn rảnh</b> thì lấy, ngược lại bỏ. Dễ làm, chạy nhanh, nhưng chỉ nhìn "cái trước mắt".</p>
+
+<h3>Thử mọi cách để thấy tối ưu cần nhìn toàn cục</h3>
+<div class="tw"><table>
+<thead><tr><th>Cách ghép hợp lệ</th><th>Cạnh</th><th>Tổng</th></tr></thead>
+<tbody>
+<tr><td>Không ghép</td><td>(không có)</td><td>0</td></tr>
+<tr><td>Chỉ C–A</td><td>C–A</td><td>2</td></tr>
+<tr><td>Chỉ A–B</td><td>A–B</td><td>3 (tham lam chọn cách này)</td></tr>
+<tr><td>Chỉ B–D</td><td>B–D</td><td>2</td></tr>
+<tr><td class="c-ok">C–A cùng B–D</td><td>C–A, B–D</td><td class="c-ok">4, lớn nhất</td></tr>
+</tbody></table></div>
+<p class="cap">A–B không đi chung được với C–A hay B–D vì chung đỉnh. Chỉ có 5 cách hợp lệ nên liệt kê hết được; với cả lớp số cách tăng rất nhanh, nên cần Blossom để không phải liệt kê.</p>
+
+<h3>Tham lam sai khi nào, đúng khi nào</h3>
+<div class="tw"><table>
+<thead><tr><th>Trọng số (C–A, A–B, B–D)</th><th>Tham lam</th><th>Tối ưu</th><th>Kết luận</th></tr></thead>
+<tbody>
+<tr><td>2, 3, 2</td><td>3</td><td>4</td><td class="c-bad">✗ Tham lam thua</td></tr>
+<tr><td>1, 3, 1</td><td>3</td><td>3 (A–B đã lớn hơn 1 + 1 = 2)</td><td class="c-ok">✓ Tham lam đúng</td></tr>
+</tbody></table></div>
+<p>Tham lam sai khi cạnh nặng nhất <b>chặn mất hai cạnh nhỏ cộng lại lớn hơn nó</b>. Tuy vậy, tham lam theo trọng số luôn đạt ít nhất <b>một nửa</b> tối ưu (một kết quả đã biết), nên đề cương giữ nó làm <b>phương án dự phòng</b>, còn phương án chính là Blossom.</p>
 
 <h2>Ví dụ: tính w cho 4 bạn</h2>
 <p>Cặp (a, b) có cạnh khi <mark>cả hai chiều</mark> đều dạy được (T<sub>ab</sub> và T<sub>ba</sub> đều khác rỗng). Ví dụ dưới dùng ma trận ở trang 5.2.6 (số minh họa, coi mỗi nút nặng 1). Lưu ý: ma trận này chỉ có <b>4 nút N1–N4</b>, không có N5, nên Dũng đã Đạt hết và Biên rỗng. (Ở trang 2.1.6 cây có thêm N5 nên Biên của Dũng là {N5}; hai trang dùng hai cây khác nhau.)</p>
@@ -124,6 +149,28 @@
 var V = { C: 90, A: 290, B: 490, D: 690 };
 var E = [['C', 'A', 2], ['A', 'B', 3], ['B', 'D', 2]];
 var sel = {};
+var GE = E.slice().sort(function (a, b) { return b[2] - a[2]; });   // xét cạnh nặng trước
+var gi = 0, glog = [], gused = {}, gsum = 0;
+function greset() { gi = 0; glog = []; gused = {}; gsum = 0; }
+function gstep() {
+  if (gi >= GE.length) return;
+  if (gi === 0) sel = {};
+  var e = GE[gi], busy = [e[0], e[1]].filter(function (v) { return gused[v]; }), free = !busy.length;
+  if (free) { gused[e[0]] = gused[e[1]] = true; sel[key(e)] = true; gsum += e[2]; }
+  glog.push({ e: e, free: free, busy: busy, sum: gsum });
+  gi++; draw();
+}
+function gTable() {
+  if (!glog.length) return '<p class="cap">Bấm "Tham lam từng bước" để xét từng cạnh theo thứ tự nặng đến nhẹ.</p>';
+  var h = '<table aria-label="Các bước tham lam"><thead><tr><th>Bước</th><th>Cạnh</th><th>Điểm</th><th>Hai đầu</th><th>Quyết định</th><th>Tổng</th></tr></thead><tbody>';
+  glog.forEach(function (r, i) {
+    h += '<tr' + (i === glog.length - 1 ? ' class="hit"' : '') + '><td>' + (i + 1) + '</td><td><b>' + r.e[0] + '–' + r.e[1] + '</b></td><td>' + r.e[2] + '</td><td>' +
+      (r.free ? 'cả hai còn rảnh' : r.busy.join(', ') + ' đã có cặp') + '</td><td class="' + (r.free ? 'c-ok' : 'c-bad') + '">' + (r.free ? '✓ Chọn' : '✗ Bỏ') + '</td><td>' + r.sum + '</td></tr>';
+  });
+  h += '</tbody></table>';
+  if (gi >= GE.length) h += '<p class="cap">Xong. Tham lam được tổng ' + gsum + '; bạn bị lẻ: ' + (Object.keys(V).filter(function (v) { return !gused[v]; }).join(', ') || 'không ai') + '. Tối ưu là 4.</p>';
+  return h;
+}
 function key(e) { return e[0] + e[1]; }
 function check() {
   var use = {}, ok = true, sum = 0;
@@ -141,19 +188,21 @@ function draw() {
   }).join('');
   h += Object.keys(V).map(function (v) { return '<circle class="vx' + (r.use[v] ? ' on' : '') + '" cx="' + V[v] + '" cy="100" r="26"/><text x="' + V[v] + '" y="105" text-anchor="middle">' + v + '</text>'; }).join('');
   $('#g').innerHTML = h;
+  $('#gs').disabled = gi >= GE.length; $('#gl').innerHTML = gTable();
   var names = E.filter(function (e) { return sel[key(e)]; }).map(function (e) { return e[0] + '–' + e[1] + ' (' + e[2] + ')'; });
   $('#msg').innerHTML = '<b>Đang chọn:</b> ' + (names.join(' + ') || '(chưa chọn)') + '<br>' +
     (r.ok ? '<b>Hợp lệ.</b> Tổng = <b>' + r.sum + '</b>' + (r.sum === 4 ? ': đây là tối ưu.' : r.sum === 3 ? '. C và D bị bỏ lẻ, có cách được 4.' : '.')
       : '<b class="bad">Không hợp lệ:</b> có người bị chọn hai lần (cạnh đỏ). Mỗi người chỉ vào một cặp.') +
     '<br>Tham lam lấy A–B (3) trước nên chặn mất C và D: tổng 3. Tối ưu lấy C–A (2) + B–D (2): tổng 4.';
   $$('.eg').forEach(function (g) {
-    var t = function () { var k = g.dataset.k; if (sel[k]) delete sel[k]; else sel[k] = true; draw(); };
+    var t = function () { greset(); var k = g.dataset.k; if (sel[k]) delete sel[k]; else sel[k] = true; draw(); };
     g.onclick = t; g.onkeydown = function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); t(); } };
   });
 }
-$('#gr').onclick = function () { sel = { AB: true }; draw(); };
-$('#op').onclick = function () { sel = { CA: true, BD: true }; draw(); };
-$('#cl').onclick = function () { sel = {}; draw(); };
+$('#gr').onclick = function () { greset(); sel = { AB: true }; draw(); };
+$('#op').onclick = function () { greset(); sel = { CA: true, BD: true }; draw(); };
+$('#cl').onclick = function () { greset(); sel = {}; draw(); };
+$('#gs').onclick = gstep;
 draw();
 </script>
 </body>
