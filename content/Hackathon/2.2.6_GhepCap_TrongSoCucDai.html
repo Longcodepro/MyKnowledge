@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>2.2.6 Ghép cặp trọng số cực đại</title>
+<title>2.2.6 Chọn cặp cho cả lớp</title>
 <link rel="stylesheet" href="assets/hoc.css">
 <script src="assets/hoc.js"></script>
 <style>
@@ -21,66 +21,16 @@
 <body>
 <header class="top"><a href="index.html">← Mục lục</a><button class="b" id="tg" type="button">Chế độ tối</button></header>
 <main class="wrap">
-<div class="head"><span class="no">2.2.6</span><div><h1>Ghép cặp trọng số cực đại</h1><p class="lede">Chọn các cặp không chung người sao cho tổng điểm bù trừ lớn nhất.</p></div></div>
+<div class="head"><span class="no">2.2.6</span><div><h1>Chọn cặp cho cả lớp: tham lam và Blossom</h1><p class="lede">Phần 2 của mục 2.2.6: có điểm w của mọi cặp rồi, chọn các cặp không chung người sao cho tổng điểm lớn nhất.</p></div></div>
 
 <div class="nho"><ul>
 <li>Cho đồ thị vô hướng có trọng số, tìm tập cạnh <mark>không chung đỉnh</mark> có tổng trọng số lớn nhất.</li>
 <li>Thuật toán <mark>Blossom</mark> của Edmonds giải trên đồ thị tổng quát, độ phức tạp O(V³), có sẵn trong NetworkX (<code>max_weight_matching</code>).</li>
-<li>Trong hệ thống: đỉnh là SV, cạnh là hai bạn bù cho nhau, trọng số là w(a, b).</li>
+<li>Trong hệ thống: đỉnh là SV, cạnh là hai bạn bù cho nhau, trọng số là w(a, b) (cách tính ở trang phần 1).</li>
 </ul></div>
 
-<h2>Công thức w(a, b): hai bạn bù cho nhau bao nhiêu</h2>
-<p>Trước khi chọn cặp, hệ thống cho mỗi cặp (a, b) một điểm w. Điểm càng cao thì hai bạn càng <mark>cùng có lợi</mark>: a dạy b được điều b cần học, và b dạy a được điều a cần học. Tính w qua ba bước:</p>
-<div class="tw"><table>
-<thead><tr><th>Bước</th><th>Công thức</th><th>Nghĩa</th></tr></thead>
-<tbody>
-<tr><td>1</td><td>T<sub>ab</sub> = Đạt(a) ∩ Biên(b)<br>T<sub>ba</sub> = Đạt(b) ∩ Biên(a)</td><td>Các nút a dạy được cho b, và b dạy được cho a (người dạy đã Đạt, người học có nút trong Biên)</td></tr>
-<tr><td>2</td><td>S<sub>ab</sub> = Σ p(n), n ∈ T<sub>ab</sub><br>S<sub>ba</sub> = Σ p(n), n ∈ T<sub>ba</sub></td><td>Cộng điểm ưu tiên p(n) của các nút đó. Σ đọc là "tổng"</td></tr>
-<tr><td>3</td><td><b>w(a, b) = min(S<sub>ab</sub>, S<sub>ba</sub>)</b></td><td>Lấy chiều <b>yếu hơn</b>. Một chiều bằng 0 thì w = 0 và cặp bị loại (BR-08)</td></tr>
-</tbody></table></div>
-
-<h3>p(n): vì sao không phải nút nào cũng nặng như nhau</h3>
-<p>Nút ít bạn Đạt là điểm nghẽn của lớp, nên dạy nút đó đáng hơn. Đề cương đặt:</p>
-<p><b>p(n) = 1 + α · (1 − tỉ lệ Đạt của n)</b>, với α mặc định = 1.</p>
-<div class="tw"><table>
-<thead><tr><th>Tỉ lệ Đạt của nút</th><th>p(n) khi α = 1</th><th>Ý nghĩa</th></tr></thead>
-<tbody>
-<tr><td>100%</td><td>1,00</td><td>Ai cũng Đạt, nút bình thường (nhỏ nhất)</td></tr>
-<tr><td>75%</td><td>1,25</td><td></td></tr>
-<tr><td>25%</td><td>1,75</td><td></td></tr>
-<tr><td>0%</td><td>2,00</td><td>Chẳng ai Đạt, ưu tiên cao nhất</td></tr>
-</tbody></table></div>
-<p class="cap">Luôn có 1 ≤ p(n) ≤ 1 + α. Số "1 +" giữ cho mọi nút có giá trị tối thiểu 1, α chỉnh mức nhấn vào nút khó.</p>
-
-<h3>Điểm nghẽn: nút mà nhiều bạn bị kẹt</h3>
-<p><mark>Điểm nghẽn</mark> (bottleneck) là chỗ nhiều người bị kẹt lại, như đoạn đường hay kẹt xe. Ở Whybi đó là nút mà <b>ít bạn Đạt</b>. "Nặng" chỉ là cách nói điểm giá trị p(n): nút càng nghẽn thì cặp dạy đúng nút đó càng được điểm cao.</p>
-<div class="tw"><table>
-<thead><tr><th>Nút</th><th>Tỉ lệ Đạt</th><th>Nhận xét</th><th>p(n)</th></tr></thead>
-<tbody>
-<tr><td>N2</td><td>90%</td><td>Hầu như ai cũng qua, ít người cần học thêm</td><td>1,10</td></tr>
-<tr><td>N5</td><td>25%</td><td>Nhiều bạn kẹt ở đây</td><td>1,75</td></tr>
-</tbody></table></div>
-<p class="cap">Hai tỉ lệ 90% và 25% là số minh họa do người soạn tự đặt.</p>
-<p>Vì sao hợp lý: (1) nút nhiều bạn kẹt thì nhiều bạn cần học nó, và một bạn học xong lại dạy được bạn khác; (2) nút kẹt thì các nút con phía sau cũng kẹt theo, vì nút con cần nút cha Đạt trước.</p>
-<p><b>Nói thẳng ba giới hạn:</b></p>
-<ul>
-<li>Đây là lựa chọn thiết kế, chưa có số liệu chứng minh ghép theo p(n) tốt hơn coi mọi nút như nhau.</li>
-<li>"Ít bạn Đạt" có thể do nút khó, cũng có thể do bài giảng chưa tốt hoặc đề chấm quá chặt; p(n) không phân biệt được.</li>
-<li>Tỉ lệ Đạt tính trên số bạn đã thử, nên lớp ít bạn thử thì con số thiếu tin cậy.</li>
-</ul>
-
-<h3>p(n) tính từ đâu</h3>
-<p><b>tỉ lệ Đạt = số bạn Đạt ÷ số bạn đã thử</b> (chỉ đếm bạn đã thử), lấy từ cột của nút trong ma trận thành thạo (trang 5.2.6). Rồi thế vào công thức p(n).</p>
-<p>Ví dụ cột N2 của ma trận 4 bạn: cả 4 bạn đã thử, 3 bạn Đạt, nên tỉ lệ Đạt = 3 ÷ 4 = 0,75 và p(N2) = 1 + 1 × (1 − 0,75) = <b>1,25</b>.</p>
-
-<h3>Vì sao dùng min mà không cộng</h3>
-<div class="tw"><table>
-<thead><tr><th>Cặp</th><th>a dạy b</th><th>b dạy a</th><th>Cộng</th><th>min</th></tr></thead>
-<tbody>
-<tr><td>X – Y</td><td>5</td><td>0</td><td>5</td><td class="c-bad">0, loại</td></tr>
-<tr><td>P – Q</td><td>2</td><td>2</td><td>4</td><td class="c-ok">2, giữ</td></tr>
-</tbody></table></div>
-<p>Nếu cộng, cặp một chiều X – Y (Y không dạy được gì) thắng cặp bù trừ P – Q. Mà mục tiêu là học đồng đẳng, nên min được chọn để <mark>ép bù trừ hai chiều</mark>.</p>
+<h2>Điểm của mỗi cạnh lấy từ đâu</h2>
+<p>Trong bài toán dưới, mỗi cạnh có một số (2, 3, 2 ở ví dụ). Ở đây các số đó là <mark>số đặt sẵn để minh họa</mark>. Trong hệ thống thật, mỗi số là điểm <b>w(a, b)</b> tính từ ma trận thành thạo: lấy các nút a dạy được cho b và b dạy được cho a, cộng điểm ưu tiên p(n) của từng nút, rồi lấy số nhỏ hơn. Cách tính từng bước nằm ở trang <a href="2.2.6_TinhDiemW_TuMaTran.html">2.2.6 phần 1: Tính điểm w của mỗi cặp</a>. Trang này giả sử các điểm w đã tính xong và chỉ bàn chuyện <b>chọn cặp nào</b>.</p>
 
 <h2>Tham lam không đủ</h2>
 <div class="fig">
@@ -116,27 +66,6 @@
 <tr><td>1, 3, 1</td><td>3</td><td>3 (A–B đã lớn hơn 1 + 1 = 2)</td><td class="c-ok">✓ Tham lam đúng</td></tr>
 </tbody></table></div>
 <p>Tham lam sai khi cạnh nặng nhất <b>chặn mất hai cạnh nhỏ cộng lại lớn hơn nó</b>. Tuy vậy, tham lam theo trọng số luôn đạt ít nhất <b>một nửa</b> tối ưu (một kết quả đã biết), nên đề cương giữ nó làm <b>phương án dự phòng</b>, còn phương án chính là Blossom.</p>
-
-<h2>Ví dụ: tính w cho 4 bạn</h2>
-<p>Cặp (a, b) có cạnh khi <mark>cả hai chiều</mark> đều dạy được (T<sub>ab</sub> và T<sub>ba</sub> đều khác rỗng). Ví dụ dưới dùng ma trận ở trang 5.2.6 (số minh họa, coi mỗi nút nặng 1). Lưu ý: ma trận này chỉ có <b>4 nút N1–N4</b>, không có N5, nên Dũng đã Đạt hết và Biên rỗng. (Ở trang 2.1.6 cây có thêm N5 nên Biên của Dũng là {N5}; hai trang dùng hai cây khác nhau.)</p>
-<div class="tw"><table>
-<thead><tr><th>Bạn</th><th>Đạt</th><th>Biên</th></tr></thead>
-<tbody>
-<tr><td>An</td><td>{N1, N2, N3}</td><td>{N4}</td></tr>
-<tr><td>Bình</td><td>{N1, N2}</td><td>{N3}</td></tr>
-<tr><td>Chi</td><td>{N1, N3}</td><td>{N2}</td></tr>
-<tr><td>Dũng</td><td>{N1, N2, N3, N4}</td><td>{ }</td></tr>
-</tbody></table></div>
-<div class="tw"><table>
-<thead><tr><th>Cặp</th><th>a dạy b</th><th>b dạy a</th><th>w</th></tr></thead>
-<tbody>
-<tr><td>Bình – Chi</td><td>N2</td><td>N3</td><td class="c-ok">✓ min(1, 1) = 1, có cạnh</td></tr>
-<tr><td>An – Bình</td><td>An dạy Bình N3</td><td>Bình không dạy được An (Bình chưa Đạt N4)</td><td class="c-bad">✗ min(1, 0) = 0, loại (BR-08)</td></tr>
-<tr><td>An – Chi</td><td>An dạy Chi N2</td><td>Chi không dạy được An</td><td class="c-bad">✗ 0, loại</td></tr>
-<tr><td>Dũng – bất kỳ ai</td><td>Dũng dạy được</td><td>Dũng không còn gì để học (Biên rỗng)</td><td class="c-bad">✗ 0, loại</td></tr>
-</tbody></table></div>
-<p>Nếu dùng p thật thay cho "mỗi nút nặng 1": giả sử N2 có 75% bạn Đạt (p = 1,25) và N3 có 100% (p = 1,00). Bình dạy Chi N2 được 1,25; Chi dạy Bình N3 được 1,00. Khi đó w(Bình, Chi) = min(1,25 ; 1,00) = <b>1,00</b>.</p>
-<p class="cap">Kết quả: chỉ Bình – Chi có cạnh. An và Dũng đi theo đường "một chiều" (mentor hoặc hàng chờ), xem câu hỏi bên dưới.</p>
 
 <h2>Vì sao Blossom mà không phải Hungarian</h2>
 <p>Hungarian chỉ chạy trên đồ thị hai phía. Ở đây SV nào cũng có thể ghép với SV nào, nên đồ thị có thể có chu trình lẻ (ví dụ tam giác A, B, C). Blossom xử lý được trường hợp này.</p>

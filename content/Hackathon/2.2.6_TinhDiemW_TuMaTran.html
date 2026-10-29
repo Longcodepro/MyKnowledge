@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2.2.6 Tính điểm w của mỗi cặp</title>
+<link rel="stylesheet" href="assets/hoc.css">
+<script src="assets/hoc.js"></script>
+<style>pre{overflow-x:auto;margin:10px 0;padding:10px 12px;border:1px solid var(--rule);background:var(--panel);font-size:14px}pre code{background:none;border:0;padding:0}</style>
+</head>
+<body>
+<header class="top"><a href="index.html">← Mục lục</a><button class="b" id="tg" type="button">Chế độ tối</button></header>
+<main class="wrap">
+<div class="head"><span class="no">2.2.6</span><div><h1>Tính điểm w của mỗi cặp</h1><p class="lede">Từng bước biến bảng "ai Đạt, ai ở Biên" thành một con số cho mỗi cặp bạn. Phần 1 của mục 2.2.6.</p></div></div>
+
+<div class="nho"><ul>
+<li>Mỗi cặp bạn (a, b) có một điểm <mark>w(a, b)</mark>: hai bạn bù cho nhau được bao nhiêu.</li>
+<li>Tính qua các bước: Đạt và Biên của từng bạn, rồi các nút dạy được cho nhau, rồi cộng điểm ưu tiên p(n), rồi lấy số nhỏ hơn của hai chiều.</li>
+<li>Các điểm này là trọng số của đồ thị ở trang kế (chọn cặp cho cả lớp).</li>
+</ul></div>
+
+<h2>Bước 0: dữ liệu đầu vào</h2>
+<p>Hệ thống chỉ có một thứ để bắt đầu: <mark>ma trận thành thạo</mark> (trang 5.2.6). Ví dụ 4 bạn, 4 nút, cây tiên quyết N1 → N2, N3 → N4. Số liệu minh họa do người soạn tự dựng, trùng với ma trận ở trang 5.2.6.</p>
+<div class="tw"><table id="mx" aria-label="Ma trận 4 bạn"></table></div>
+<p class="cap">✓ Đạt · ◎ Sẵn sàng · ✗ Chưa đạt (đã thử) · 🔒 Khóa.</p>
+
+<h2>Bước 1: Đạt và Biên của từng bạn</h2>
+<p>Đọc từng hàng của ma trận. <b>Đạt</b> là các ô ✓. <b>Biên</b> là các ô ◎ hoặc ✗ (chưa Đạt nhưng đủ tiên quyết). Ô 🔒 không thuộc Biên.</p>
+<div class="tw"><table id="db" aria-label="Đạt và Biên"></table></div>
+
+<h2>Bước 2: điểm ưu tiên p(n) của mỗi nút</h2>
+<p>Nút ít bạn Đạt là <mark>điểm nghẽn</mark>: chỗ nhiều bạn bị kẹt, như đoạn đường hay kẹt xe. Dạy đúng nút đó đáng hơn, nên nút đó được "nặng" hơn (điểm cao hơn). Công thức của đề cương:</p>
+<p><b>tỉ lệ Đạt = số bạn Đạt ÷ số bạn đã thử</b> (đã thử nghĩa là ô ✓ hoặc ✗)<br><b>p(n) = 1 + α · (1 − tỉ lệ Đạt)</b>, α mặc định = 1</p>
+<div class="tw"><table id="pt" aria-label="Điểm ưu tiên của nút"></table></div>
+<p class="cap">Luôn có 1 ≤ p(n) ≤ 1 + α. Nút chưa bạn nào thử thì chưa tính được tỉ lệ; ở đây tạm quy ước p = 1 (đề cương chưa nói rõ).</p>
+
+<h2>Bước 3 đến 7: tính w cho một cặp, từng bước</h2>
+<div class="fig">
+<p><b>Chọn bạn a:</b></p>
+<div class="row" id="pa" role="group" aria-label="Chọn bạn a"></div>
+<p><b>Chọn bạn b:</b></p>
+<div class="row" id="pb" role="group" aria-label="Chọn bạn b"></div>
+<div class="row"><button class="b" id="st" type="button">Bước tiếp</button><button class="b" id="rs" type="button">Làm lại</button></div>
+<div class="tw" id="lg"></div>
+<div class="msg" id="msg" aria-live="polite"></div>
+</div>
+
+<h2>Đọc ký hiệu trong công thức</h2>
+<div class="tw"><table>
+<thead><tr><th>Ký hiệu</th><th>Đọc là</th><th>Nghĩa</th></tr></thead>
+<tbody>
+<tr><td>T<sub>ab</sub> = Đạt(a) ∩ Biên(b)</td><td>"T a b bằng Đạt a giao Biên b"</td><td>Các nút <b>vừa</b> thuộc Đạt của a, <b>vừa</b> thuộc Biên của b. Chính là các nút a dạy được cho b</td></tr>
+<tr><td>S<sub>ab</sub> = Σ p(n), n ∈ T<sub>ab</sub></td><td>"S a b bằng tổng p n, với n thuộc T a b"</td><td>Cộng p của mọi nút n nằm trong T<sub>ab</sub></td></tr>
+<tr><td>w(a, b) = min(S<sub>ab</sub>, S<sub>ba</sub>)</td><td>"w bằng min của hai số"</td><td>Lấy số nhỏ hơn trong hai chiều</td></tr>
+</tbody></table></div>
+<p>Phép cộng Σ chính là vòng lặp này:</p>
+<pre><code>S_ab = 0
+for n in T_ab:          # với mỗi nút n mà a dạy được cho b
+    S_ab += p[n]        # cộng điểm ưu tiên của nút đó</code></pre>
+<p>Chữ nhỏ <sub>ab</sub> chỉ là nhãn "từ a sang b", không phải phép nhân.</p>
+
+<h2>Bước 8: tất cả các cặp, ra đồ thị trọng số</h2>
+<div class="tw"><table id="all" aria-label="Điểm w của mọi cặp"></table></div>
+<p class="cap" id="allcap"></p>
+
+<h2>Vì sao lấy min mà không cộng</h2>
+<div class="tw"><table>
+<thead><tr><th>Cặp</th><th>a dạy b</th><th>b dạy a</th><th>Cộng</th><th>min</th></tr></thead>
+<tbody>
+<tr><td>X – Y</td><td>5</td><td>0</td><td>5</td><td class="c-bad">0, loại</td></tr>
+<tr><td>P – Q</td><td>2</td><td>2</td><td>4</td><td class="c-ok">2, giữ</td></tr>
+</tbody></table></div>
+<p>Nếu cộng, cặp một chiều X – Y (Y không dạy được gì) thắng cặp bù trừ P – Q. Mục tiêu là học đồng đẳng, nên min <mark>ép bù trừ hai chiều</mark>.</p>
+
+<h2>Điểm nghẽn: vì sao nút nhiều bạn kẹt lại "nặng" hơn</h2>
+<div class="tw"><table>
+<thead><tr><th>Nút</th><th>Tỉ lệ Đạt</th><th>Nhận xét</th><th>p(n)</th></tr></thead>
+<tbody>
+<tr><td>N2</td><td>90%</td><td>Hầu như ai cũng qua, ít người cần học thêm</td><td>1,10</td></tr>
+<tr><td>N5</td><td>25%</td><td>Nhiều bạn kẹt ở đây</td><td>1,75</td></tr>
+</tbody></table></div>
+<p class="cap">Hai tỉ lệ 90% và 25% là số minh họa do người soạn tự đặt.</p>
+<p>Vì sao hợp lý: (1) nút nhiều bạn kẹt thì nhiều bạn cần học nó, và một bạn học xong lại dạy được bạn khác; (2) nút kẹt thì các nút con phía sau cũng kẹt theo.</p>
+<div class="luu-y"><p><b>Nói thẳng ba giới hạn:</b> (1) đây là lựa chọn thiết kế, chưa có số liệu chứng minh ghép theo p(n) tốt hơn coi mọi nút như nhau; (2) "ít bạn Đạt" có thể do nút khó, cũng có thể do bài giảng chưa tốt hoặc đề chấm quá chặt, p(n) không phân biệt được; (3) tỉ lệ Đạt tính trên số bạn đã thử, lớp ít bạn thử thì con số thiếu tin cậy, như N3 và N4 ở bảng trên (đều p = 1,00 vì mẫu quá nhỏ).</p></div>
+
+<h2>Dễ bị hỏi</h2>
+<details><summary>p(n) khác Biên ở chỗ nào?</summary><p>Biên cho biết mỗi bạn <b>cần</b> nút nào. p(n) cho biết nút đó <b>đáng</b> bao nhiêu, và chỉ phụ thuộc vào nút (tỉ lệ cả lớp Đạt), không phụ thuộc bạn nào học.</p></details>
+<details><summary>Vì sao cặp có w = 0 bị loại?</summary><p>w = 0 nghĩa là một bên không dạy được bên kia điều gì, tức là ghép một chiều. Mục tiêu là bù trừ, nên loại (quy tắc BR-08). Bạn chỉ có cặp một chiều được xử lý riêng ở trang kế (mentor hoặc hàng chờ).</p></details>
+<details><summary>w(a, b) có khác w(b, a) không?</summary><p>Không. Đổi vai a và b chỉ đổi chỗ hai vế trong min, nên w luôn như nhau.</p></details>
+<p class="cap">Trang kế (2.2.6 phần 2): có các điểm w rồi thì chọn cặp nào cho cả lớp, tham lam hay Blossom.</p>
+</main>
+<script>
+var SV = ['An', 'Bình', 'Chi', 'Dũng'], ND = ['N1', 'N2', 'N3', 'N4'];
+var G = { 'An': 'ĐĐĐS', 'Bình': 'ĐĐSK', 'Chi': 'ĐCĐK', 'Dũng': 'ĐĐĐĐ' };
+var SYM = { 'Đ': ['c-ok', '✓'], 'S': ['c-fr', '◎'], 'C': ['c-bad', '✗'], 'K': ['c-lk', '🔒'] };
+var ALPHA = 1, A = 'Bình', B = 'Chi', k = 0;
+function f2(x) { return x.toFixed(2).replace('.', ','); }
+function setStr(a) { return a.length ? '{' + a.join(', ') + '}' : '{ } (rỗng)'; }
+function cell(s, j) { return G[s].charAt(j); }
+function dat(s) { return ND.filter(function (n, j) { return cell(s, j) === 'Đ'; }); }
+function bien(s) { return ND.filter(function (n, j) { return cell(s, j) === 'S' || cell(s, j) === 'C'; }); }
+var P = {}, RATE = {};
+ND.forEach(function (n, j) {
+  var tried = 0, ok = 0;
+  SV.forEach(function (s) { var c = cell(s, j); if (c === 'Đ' || c === 'C') tried++; if (c === 'Đ') ok++; });
+  RATE[n] = { tried: tried, ok: ok };
+  P[n] = tried ? 1 + ALPHA * (1 - ok / tried) : 1;
+});
+function inter(x, y) { return x.filter(function (n) { return y.indexOf(n) >= 0; }); }
+function sum(set) { return set.reduce(function (t, n) { return t + P[n]; }, 0); }
+function calc(a, b) {
+  var tab = inter(dat(a), bien(b)), tba = inter(dat(b), bien(a)), sab = sum(tab), sba = sum(tba);
+  return { tab: tab, tba: tba, sab: sab, sba: sba, w: Math.min(sab, sba) };
+}
+function sumStr(set) {
+  if (!set.length) return '0 (không có nút nào)';
+  return set.map(function (n) { return 'p(' + n + ')'; }).join(' + ') + ' = ' + set.map(function (n) { return f2(P[n]); }).join(' + ') + (set.length > 1 ? ' = ' + f2(sum(set)) : '');
+}
+/* Bước 0, 1, 2 */
+$('#mx').innerHTML = '<thead><tr><th>Bạn</th>' + ND.map(function (n) { return '<th>' + n + '</th>'; }).join('') + '</tr></thead><tbody>' +
+  SV.map(function (s) { return '<tr><th>' + s + '</th>' + ND.map(function (n, j) { var c = SYM[cell(s, j)]; return '<td class="' + c[0] + '">' + c[1] + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody>';
+$('#db').innerHTML = '<thead><tr><th>Bạn</th><th>Đạt</th><th>Biên</th></tr></thead><tbody>' +
+  SV.map(function (s) { return '<tr><td><b>' + s + '</b></td><td>' + setStr(dat(s)) + '</td><td>' + setStr(bien(s)) + '</td></tr>'; }).join('') + '</tbody>';
+$('#pt').innerHTML = '<thead><tr><th>Nút</th><th>Đã thử</th><th>Đạt</th><th>Tỉ lệ Đạt</th><th>p(n) = 1 + 1 · (1 − tỉ lệ)</th></tr></thead><tbody>' +
+  ND.map(function (n) {
+    var r = RATE[n];
+    return '<tr><td><b>' + n + '</b></td><td>' + r.tried + '</td><td>' + r.ok + '</td><td>' + (r.tried ? r.ok + '/' + r.tried + ' = ' + f2(r.ok / r.tried) : 'chưa ai thử') + '</td><td><b>' + f2(P[n]) + '</b></td></tr>';
+  }).join('') + '</tbody>';
+/* Bước 3 đến 7 */
+function steps() {
+  var a = A, b = B, c = calc(a, b);
+  return [
+    ['3', 'Nút <b>' + a + '</b> dạy được cho <b>' + b + '</b>', 'T<sub>ab</sub> = Đạt(' + a + ') ∩ Biên(' + b + ') = ' + setStr(dat(a)) + ' ∩ ' + setStr(bien(b)), setStr(c.tab)],
+    ['4', 'Nút <b>' + b + '</b> dạy được cho <b>' + a + '</b>', 'T<sub>ba</sub> = Đạt(' + b + ') ∩ Biên(' + a + ') = ' + setStr(dat(b)) + ' ∩ ' + setStr(bien(a)), setStr(c.tba)],
+    ['5', 'Cộng điểm một chiều ' + a + ' → ' + b, 'S<sub>ab</sub> = ' + sumStr(c.tab), f2(c.sab)],
+    ['6', 'Cộng điểm chiều ' + b + ' → ' + a, 'S<sub>ba</sub> = ' + sumStr(c.tba), f2(c.sba)],
+    ['7', 'Lấy số nhỏ hơn', 'w(' + a + ', ' + b + ') = min(' + f2(c.sab) + ' ; ' + f2(c.sba) + ')', '<b>' + f2(c.w) + '</b>']
+  ];
+}
+function draw() {
+  $('#pa').innerHTML = SV.map(function (s) { return '<button class="b" type="button" aria-pressed="' + (s === A) + '" data-s="' + s + '">' + s + '</button>'; }).join('');
+  $('#pb').innerHTML = SV.map(function (s) { return '<button class="b" type="button" aria-pressed="' + (s === B) + '" data-s="' + s + '">' + s + '</button>'; }).join('');
+  $$('#pa button').forEach(function (x) { x.onclick = function () { A = x.dataset.s; k = 0; draw(); }; });
+  $$('#pb button').forEach(function (x) { x.onclick = function () { B = x.dataset.s; k = 0; draw(); }; });
+  var same = A === B, st = same ? [] : steps();
+  $('#st').disabled = same || k >= st.length;
+  if (same) { $('#lg').innerHTML = ''; $('#msg').innerHTML = '<b>Chọn hai bạn khác nhau.</b> Một bạn không ghép với chính mình.'; }
+  else {
+    $('#lg').innerHTML = k ? '<table aria-label="Các bước tính w"><thead><tr><th>Bước</th><th>Việc làm</th><th>Phép tính</th><th>Kết quả</th></tr></thead><tbody>' +
+      st.slice(0, k).map(function (r, i) { return '<tr' + (i === k - 1 ? ' class="hit"' : '') + '><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td><td>' + r[3] + '</td></tr>'; }).join('') + '</tbody></table>' :
+      '<p class="cap">Bấm "Bước tiếp" để tính w(' + A + ', ' + B + ') từng bước. Bước 1, 2 đã làm ở các bảng phía trên.</p>';
+    var c = calc(A, B);
+    $('#msg').innerHTML = k < st.length ? 'Đã làm ' + k + '/' + st.length + ' bước.' :
+      c.w > 0 ? '<b>w(' + A + ', ' + B + ') = ' + f2(c.w) + ' &gt; 0</b>: cả hai chiều đều dạy được, cặp này <b>có cạnh</b> trong đồ thị.'
+        : '<b>w(' + A + ', ' + B + ') = 0</b>: ' + (c.tab.length ? B : A) + ' không dạy được bạn kia nút nào, chỉ là ghép một chiều nên <b>cặp bị loại</b> (BR-08).';
+  }
+  allPairs();
+}
+function allPairs() {
+  var rows = '', edges = [];
+  for (var i = 0; i < SV.length; i++) for (var j = i + 1; j < SV.length; j++) {
+    var a = SV[i], b = SV[j], c = calc(a, b), cur = (a === A && b === B) || (a === B && b === A);
+    if (c.w > 0) edges.push(a + '–' + b + ' (' + f2(c.w) + ')');
+    rows += '<tr' + (cur ? ' class="hit"' : '') + '><td><b>' + a + ' – ' + b + '</b></td><td>' + setStr(c.tab) + ' = ' + f2(c.sab) + '</td><td>' + setStr(c.tba) + ' = ' + f2(c.sba) + '</td><td class="' + (c.w > 0 ? 'c-ok' : 'c-bad') + '">' + (c.w > 0 ? '✓ ' + f2(c.w) + ', có cạnh' : '✗ 0, loại') + '</td></tr>';
+  }
+  $('#all').innerHTML = '<thead><tr><th>Cặp</th><th>a dạy b: T và S</th><th>b dạy a: T và S</th><th>w</th></tr></thead><tbody>' + rows + '</tbody>';
+  $('#allcap').innerHTML = 'Có ' + edges.length + ' cạnh: ' + (edges.join(', ') || 'không có') + '. Cạnh này là đầu vào của bài toán chọn cặp cho cả lớp. Trong ví dụ nhỏ này chỉ có một cạnh nên chọn thế nào cũng như nhau; lớp thật có nhiều cạnh chồng nhau nên mới cần tham lam hoặc Blossom.';
+}
+$('#st').onclick = function () { if (A !== B) { k++; draw(); } };
+$('#rs').onclick = function () { k = 0; draw(); };
+draw();
+</script>
+</body>
+</html>
