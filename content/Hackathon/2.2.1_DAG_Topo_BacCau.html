@@ -47,7 +47,7 @@
 var N = { N1: ['Biến & kiểu', 380, 16], N2: ['Mảng', 220, 112], N3: ['Con trỏ', 540, 112], N4: ['Danh sách LK', 380, 208], N5: ['Cây nhị phân', 380, 304] };
 var W = 150, H = 44, names = Object.keys(N);
 var BASE = [['N1', 'N2'], ['N1', 'N3'], ['N2', 'N4'], ['N3', 'N4'], ['N4', 'N5'], ['N1', 'N4']];   // N1→N4 thừa vì đã có N1→N2→N4
-var E, mode = 'topo', S;
+var E, mode = 'topo', algo = 'kahn', S;
 function path(edges, from, to, skip) {
   var seen = {};
   (function go(u) { if (!seen[u]) { seen[u] = 1; edges.forEach(function (e) { if (e !== skip && e[0] === u) go(e[1]); }); } })(from);
@@ -68,7 +68,31 @@ function threeColor(edges) {
   return cyc;
 }
 function indeg() { var d = {}; names.forEach(function (n) { d[n] = 0; }); E.forEach(function (e) { d[e[1]]++; }); return d; }
-function reset() { E = BASE.map(function (e) { return e.slice(); }); S = { out: [], deg: indeg(), cyc: null, cur: null, log: [], deg0: indeg() }; draw(); }
+function reset() { E = BASE.map(function (e) { return e.slice(); }); S = { out: [], deg: indeg(), cyc: null, cur: null, log: [], deg0: indeg(), ev: dfsEvents(E), i: 0, col: {}, fin: [], dlog: [] }; draw(); }
+var CN = { 0: 'trắng', 1: 'xám', 2: 'đen' };
+function dfsEvents(edges) {          // chạy DFS một lần, ghi lại từng sự kiện để bấm xem từng bước
+  var col = {}, ev = [];
+  function go(u) {
+    col[u] = 1; ev.push({ t: 'in', n: u });
+    edges.forEach(function (e) {
+      if (e[0] !== u) return;
+      if (!col[e[1]]) go(e[1]); else ev.push({ t: 'skip', f: u, n: e[1], c: col[e[1]] });
+    });
+    col[u] = 2; ev.push({ t: 'out', n: u });
+  }
+  names.forEach(function (n) { if (!col[n]) go(n); });
+  return ev;
+}
+function dstep() {
+  var v = S.ev[S.i]; if (!v) return;
+  var txt;
+  if (v.t === 'in') { S.col[v.n] = 1; txt = 'Vào <b>' + v.n + '</b>, tô xám'; }
+  else if (v.t === 'out') { S.col[v.n] = 2; S.fin.push(v.n); txt = '<b>' + v.n + '</b> xong, tô đen, ghi vào thứ tự xong'; }
+  else txt = v.f + '→' + v.n + ': ' + v.n + ' đang <b>' + CN[v.c] + '</b>' + (v.c === 2 ? ', bỏ qua (hai đường tới một nút, không phải chu trình)' : ', <b>chu trình!</b>');
+  S.i++;
+  S.dlog.push({ txt: txt, col: JSON.parse(JSON.stringify(S.col)), fin: S.fin.slice() });
+  draw();
+}
 function kahn() {
   var n = names.filter(function (x) { return S.out.indexOf(x) < 0 && S.deg[x] === 0; })[0];
   if (!n) return;
@@ -89,15 +113,25 @@ function draw() {
     return '<line class="ed' + (bad ? ' bad' : '') + '" x1="' + a[1] + '" y1="' + (a[2] + H) + '" x2="' + b[1] + '" y2="' + (b[2] - 4) + '" marker-end="url(#' + (bad ? 'a1' : 'a0') + ')"/>';
   }).join('');
   $('#ndg').innerHTML = names.map(function (n) {
-    var d = N[n], c = S.cyc && S.cyc.indexOf(n) >= 0 ? ' bad' : mode === 'topo' && S.out.indexOf(n) >= 0 ? (n === S.cur ? ' cur' : ' ok') : '';
-    var sub = mode === 'topo' ? (S.out.indexOf(n) >= 0 ? 'thứ ' + (S.out.indexOf(n) + 1) : 'bậc vào = ' + S.deg[n]) : '';
+    var dfs = mode === 'topo' && algo === 'dfs';
+    var d = N[n], c = S.cyc && S.cyc.indexOf(n) >= 0 ? ' bad' : dfs ? (S.col[n] === 1 ? ' fr' : S.col[n] === 2 ? ' ok' : '') : mode === 'topo' && S.out.indexOf(n) >= 0 ? (n === S.cur ? ' cur' : ' ok') : '';
+    var sub = dfs ? CN[S.col[n] || 0] + (S.fin.indexOf(n) >= 0 ? ' · xong thứ ' + (S.fin.indexOf(n) + 1) : '') : mode === 'topo' ? (S.out.indexOf(n) >= 0 ? 'thứ ' + (S.out.indexOf(n) + 1) : 'bậc vào = ' + S.deg[n]) : '';
     return '<g class="nd' + c + '"><rect x="' + (d[1] - W / 2) + '" y="' + d[2] + '" width="' + W + '" height="' + H + '" rx="2"/>' +
       '<text x="' + d[1] + '" y="' + (d[2] + 19) + '" text-anchor="middle">' + n + ' · ' + d[0] + '</text><text class="sm" x="' + d[1] + '" y="' + (d[2] + 35) + '" text-anchor="middle">' + sub + '</text></g>';
   }).join('');
   panel();
 }
+function dfsTable() {
+  var h = '<table aria-label="Các bước DFS"><thead><tr><th>Bước</th><th>Sự kiện</th>' + names.map(function (n) { return '<th>' + n + '</th>'; }).join('') + '<th>Thứ tự xong</th></tr></thead><tbody>';
+  S.dlog.forEach(function (r, i) {
+    h += '<tr' + (i === S.dlog.length - 1 ? ' class="hit"' : '') + '><td>' + (i + 1) + '</td><td>' + r.txt + '</td>' +
+      names.map(function (n) { return '<td>' + CN[r.col[n] || 0] + '</td>'; }).join('') + '<td>' + (r.fin.join(', ') || '–') + '</td></tr>';
+  });
+  return S.dlog.length ? h + '</tbody></table><p class="cap">Mỗi bước là một sự kiện của DFS. Gặp nút đen thì bình thường, chỉ gặp nút xám mới là chu trình.</p>' : '<p class="cap">Bấm "Bước tiếp" để DFS bắt đầu từ N1.</p>';
+}
 function logTable() {
   if (mode !== 'topo') return '';
+  if (algo === 'dfs') return dfsTable();
   var h = '<table aria-label="Các bước Kahn"><thead><tr><th>Bước</th><th>Lấy nút</th><th>Trừ 1 bậc vào của</th>' +
     names.map(function (n) { return '<th>' + n + '</th>'; }).join('') + '</tr></thead><tbody>';
   h += '<tr><td>Đầu</td><td>(chưa)</td><td>(chưa)</td>' + names.map(function (n) { return '<td>' + S.deg0[n] + '</td>'; }).join('') + '</tr>';
@@ -110,10 +144,15 @@ function logTable() {
 function panel() {
   var a, m;
   if (mode === 'topo') {
-    var left = names.length - S.out.length;
-    a = '<button class="b" id="b1"' + (left ? '' : ' disabled') + ' type="button">Bước tiếp</button><button class="b" id="b0" type="button">Làm lại</button>';
+    var left = algo === 'dfs' ? S.ev.length - S.i : names.length - S.out.length;
+    var tg = '<button class="b" id="k1" aria-pressed="' + (algo === 'kahn') + '" type="button">Cách Kahn</button><button class="b" id="k2" aria-pressed="' + (algo === 'dfs') + '" type="button">Cách DFS</button> ';
+    a = tg + '<button class="b" id="b1"' + (left ? '' : ' disabled') + ' type="button">Bước tiếp</button><button class="b" id="b0" type="button">Làm lại</button>';
     m = '<b>Kahn:</b> lấy nút có bậc vào = 0 (không còn tiên quyết chưa xếp), xếp nó ra, rồi trừ 1 bậc vào của các nút nó trỏ tới. Lặp lại tới hết.<br><b>Thứ tự học:</b> ' + (S.out.join(' → ') || '(chưa có)') +
       (left ? '' : '<br>Xếp đủ 5 nút nên đồ thị không có chu trình.');
+    if (algo === 'dfs') {
+      m = '<b>DFS:</b> đi sâu hết một đường; nút nào <b>xong</b> (đen) thì ghi lại. Nút xong sau cùng đứng đầu danh sách học nên cuối cùng ta <b>đảo ngược</b> thứ tự xong.<br><b>Thứ tự xong:</b> ' + (S.fin.join(', ') || '(chưa có)') +
+        (left ? '' : '<br><b>Đảo ngược = thứ tự học:</b> ' + S.fin.slice().reverse().join(' → ') + '. Không gặp nút xám nào nên đồ thị không có chu trình.');
+    }
   } else if (mode === 'cyc') {
     a = '<button class="b" id="b1"' + (S.cyc ? ' disabled' : '') + ' type="button">Thêm cạnh N5 → N1</button><button class="b" id="b0" type="button">Làm lại</button>';
     m = S.cyc ? '<b>DFS ba màu:</b> trắng là chưa thăm, xám là đang thăm, đen là xong. Từ N5 đi tiếp gặp <b>N1 đang xám</b>, vậy có chu trình <b>' + S.cyc.join(' → ') + '</b>. Hệ thống <b>từ chối</b> cạnh này vì cây phải là DAG.'
@@ -126,7 +165,8 @@ function panel() {
   }
   $('#act').innerHTML = a; $('#msg').innerHTML = m; $('#lg').innerHTML = logTable();
   $('#b0').onclick = reset;
-  $('#b1').onclick = mode === 'topo' ? kahn : mode === 'cyc' ? addCycle : dropRed;
+  $('#b1').onclick = mode === 'topo' ? (algo === 'dfs' ? dstep : kahn) : mode === 'cyc' ? addCycle : dropRed;
+  if ($('#k1')) { $('#k1').onclick = function () { algo = 'kahn'; reset(); }; $('#k2').onclick = function () { algo = 'dfs'; reset(); }; }
 }
 $$('[data-m]').forEach(function (b) {
   b.onclick = function () { mode = b.dataset.m; $$('[data-m]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); reset(); };
