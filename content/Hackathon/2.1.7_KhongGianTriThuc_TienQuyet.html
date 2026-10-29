@@ -30,6 +30,30 @@
 <div class="msg" id="msg" aria-live="polite"></div>
 </div>
 
+<h2>Ví dụ sai: trạng thái không khả dĩ</h2>
+<p>Dùng chính cây ở trên (N1 → N2, N3 → N4 → N5). Mỗi dòng dưới đây là một trạng thái <mark>bị loại</mark>, kèm lý do và cách sửa. Đây là các ví dụ minh họa do người soạn tự dựng.</p>
+<div class="tw"><table>
+<thead><tr><th>Trạng thái (nút đã Đạt)</th><th>Vì sao sai</th><th>Sửa thành</th></tr></thead>
+<tbody>
+<tr><td class="c-bad">✗ {N2}</td><td>N2 cần N1 nhưng N1 không có trong tập</td><td>{N1, N2}</td></tr>
+<tr><td class="c-bad">✗ {N1, N4}</td><td>N4 cần cả N2 và N3, cả hai đều thiếu</td><td>{N1, N2, N3, N4}</td></tr>
+<tr><td class="c-bad">✗ {N1, N2, N4}</td><td>N4 đủ N2 nhưng còn thiếu N3 (phải đủ <b>tất cả</b> tiên quyết, không phải một trong số đó)</td><td>{N1, N2, N3, N4}</td></tr>
+<tr><td class="c-bad">✗ {N1, N2, N3, N5}</td><td>N5 cần N4 nhưng N4 không có (N4 đã đủ điều kiện nên chỉ thiếu việc Đạt N4)</td><td>{N1, N2, N3, N4, N5}</td></tr>
+</tbody></table></div>
+<p class="cap">Mẹo kiểm tra: với mỗi nút trong tập, nhìn các mũi tên đi vào nó. Chỉ cần một mũi tên xuất phát từ nút ngoài tập là trạng thái đó sai.</p>
+
+<h2>Ví dụ sai: tính Biên nhầm</h2>
+<p>Biên = các nút <mark>chưa Đạt</mark> mà <mark>mọi tiên quyết đã Đạt</mark>. Ba lỗi hay gặp khi tính:</p>
+<div class="tw"><table>
+<thead><tr><th>Trạng thái</th><th>Tính sai</th><th>Lỗi ở đâu</th><th>Đúng là</th></tr></thead>
+<tbody>
+<tr><td>{N1}</td><td class="c-bad">✗ Biên = {N1, N2, N3}</td><td>N1 đã Đạt rồi, Biên chỉ gồm nút chưa Đạt</td><td class="c-ok">✓ {N2, N3}</td></tr>
+<tr><td>{N1, N2}</td><td class="c-bad">✗ Biên = {N3, N4}</td><td>N4 cần cả N3, mà N3 chưa Đạt nên N4 chưa vào Biên</td><td class="c-ok">✓ {N3}</td></tr>
+<tr><td>{N1, N2, N3}</td><td class="c-bad">✗ Biên = {N4, N5}</td><td>N5 cần N4, mà N4 chưa Đạt nên N5 vẫn Khóa</td><td class="c-ok">✓ {N4}</td></tr>
+</tbody></table></div>
+
+<div class="luu-y"><p><b>Đừng nhầm hai lỗi này:</b> trạng thái sai là tập nút "đã Đạt" tự mâu thuẫn với cây; còn Biên sai là tính nhầm từ một trạng thái đúng. Trang bấm nút ở trên sẽ chặn lỗi thứ nhất: bấm vào nút đang 🔒 Khóa thì hệ thống báo thiếu tiên quyết nào.</p></div>
+
 <h2>Con số đáng nhớ</h2>
 <p>Cây 5 nút có 2<sup>5</sup> = 32 cách chọn "đã Đạt" nút nào. Nhưng nhờ ràng buộc tiên quyết, chỉ <b id="n">7</b> cách là khả dĩ. Tiên quyết càng nhiều, không gian tri thức càng nhỏ, và con đường học càng rõ.</p>
 
