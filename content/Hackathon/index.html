@@ -6,6 +6,7 @@
 <title>Mục lục ôn tập Whybi AI</title>
 <link rel="stylesheet" href="assets/hoc.css">
 <script src="assets/hoc.js"></script>
+<script src="assets/phongto.js" defer></script>
 <style>
 .ls{margin:0 0 8px;padding:0;list-style:none;border-top:2px solid var(--ink)}
 .ls li{border-bottom:1px solid var(--rule)}
@@ -16,6 +17,24 @@
 .ls .d{grid-column:2;color:var(--mut);font-size:15px}
 .ls a.todo{pointer-events:none;color:var(--mut)}
 @media (max-width:560px){.ls a{grid-template-columns:70px 1fr}}
+.mx rect{fill:var(--paper);stroke:var(--ink);stroke-width:1.5}
+.mx.out rect,.mx.band rect{stroke:var(--mut);stroke-dasharray:6 3}
+.mx.core rect{fill:var(--frbg);stroke:var(--blue);stroke-width:2.5}
+svg.d .lb{paint-order:stroke;stroke:var(--paper);stroke-width:4px;stroke-linejoin:round}
+.pin{cursor:pointer;outline:none}
+.pin rect.pr{fill:var(--paper);stroke:var(--ink);stroke-width:1.5}
+.pin .ha{fill:transparent;stroke:none}
+svg.d .pin text{font:700 14px system-ui,sans-serif}
+.pin:hover rect.pr,.pin:focus rect.pr{fill:var(--frbg);stroke:var(--blue);stroke-width:3}
+.pin.cur rect.pr{fill:var(--frbg);stroke:var(--blue);stroke-width:3.5}
+.info{min-height:9em;font-size:15px}
+.info a{color:var(--blue);font-weight:650}
+.info .n2{display:block;margin-top:6px;color:var(--mut)}
+.h-p,.h-z{display:none}
+html.ph .mapfig.zv .info{min-height:0}
+html.ph .h-d{display:none}
+html.ph .mapfig.zv .h-p{display:inline}
+html.ph .mapfig.zin .h-z{display:inline}
 .pic{margin:14px 0 0}
 .pic img{display:block;width:100%;height:auto;border:1.5px solid var(--ink)}
 </style>
@@ -24,6 +43,30 @@
 <header class="top"><span><b>Whybi AI</b></span><button class="b" id="tg" type="button">Chế độ tối</button></header>
 <main class="wrap">
 <div class="head"><span class="no">Long</span><div><h1>Mục lục ôn tập</h1><p class="lede">Phần nền tảng (C2). Mỗi mục một trang, chỉ giữ ý quan trọng và vài ví dụ nghịch được.</p></div></div>
+
+<h2>Bản đồ 4 mắt xích: mỗi mục nằm ở đâu</h2>
+<p class="cap">Mỗi ô số là một mục trong danh sách bên dưới (cùng số thứ tự). Ô nằm trong mắt xích nào thì mục đó được dùng ở mắt xích ấy. Mũi tên là dữ liệu đi từ đâu tới đâu.</p>
+<div class="fig mapfig" id="mapfig" data-zoom>
+<svg class="d" id="map" viewBox="-4 -4 768 428" role="group" aria-label="Bản đồ bốn mắt xích và vị trí các mục học">
+<defs><marker id="mpA" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--mut)"/></marker></defs>
+<line class="ed" x1="200" y1="80" x2="288" y2="146" marker-end="url(#mpA)"/>
+<line class="ed" x1="200" y1="245" x2="288" y2="204" marker-end="url(#mpA)"/>
+<line class="ed" x1="470" y1="146" x2="558" y2="80" marker-end="url(#mpA)"/>
+<line class="ed" x1="470" y1="204" x2="558" y2="245" marker-end="url(#mpA)"/>
+<text class="sm lb" x="244" y="102" text-anchor="middle">phát hành cây</text>
+<text class="sm lb" x="244" y="236" text-anchor="middle">ghi ô</text>
+<text class="sm lb" x="514" y="102" text-anchor="middle">đọc cột</text>
+<text class="sm lb" x="514" y="236" text-anchor="middle">đọc hàng</text>
+<g class="mx"><rect x="0" y="0" width="200" height="150" rx="2"/><text x="10" y="22">MX1 Cây kỹ năng</text><text class="sm" x="10" y="40">GV nạp giáo trình, AI sinh DAG</text></g>
+<g class="mx out"><rect x="0" y="170" width="200" height="150" rx="2"/><text x="10" y="192">MX2 SV giảng lại cho AI</text><text class="sm" x="10" y="210">AI hỏi phản biện, Judge chấm</text><text class="sm" x="10" y="248">Chưa có mục riêng</text><text class="sm" x="10" y="264">trong danh sách</text></g>
+<g class="mx core"><rect x="290" y="100" width="180" height="150" rx="2"/><text x="380" y="124" text-anchor="middle">Ma trận thành thạo</text><text class="sm" x="380" y="142" text-anchor="middle">hàng = SV, cột = nút</text><text class="sm" x="380" y="224" text-anchor="middle">mỗi ô một trong 6 trạng thái</text></g>
+<g class="mx out"><rect x="560" y="0" width="200" height="150" rx="2"/><text x="570" y="22">MX3 Bản đồ nhiệt</text><text class="sm" x="570" y="40">tô màu nút, truy vết nút gốc</text><text class="sm" x="570" y="78">Chưa có mục riêng</text><text class="sm" x="570" y="94">trong danh sách</text></g>
+<g class="mx"><rect x="560" y="170" width="200" height="150" rx="2"/><text x="570" y="192">MX4 Ghép cặp bạn cùng tiến</text><text class="sm" x="570" y="210">chọn các cặp dạy chéo nhau</text></g>
+<g class="mx band"><rect x="0" y="344" width="760" height="76" rx="2"/><text x="10" y="362">Nền dùng chung cho cả 4 mắt xích (mục 6 đến 14, chưa học)</text></g>
+<g id="mapPins"></g>
+</svg>
+<div class="msg info" id="mapInfo" aria-live="polite"></div>
+</div>
 
 <h2>Thứ tự nên học</h2>
 <p class="cap">Xếp theo mức phụ thuộc: học trang trước thì trang sau dễ hiểu hơn. Các mục chia theo buổi họp nằm bên dưới.</p>
@@ -89,5 +132,62 @@
 
 <div class="pic"><img src="LichCacBuoiHop_4Buoi_PhanCongMuc.jpg" alt="Bảng lịch 4 buổi họp và phần việc của từng người"><p class="cap">Lịch 4 buổi họp và phân công mục.</p></div>
 </main>
+<script>
+(function () {
+  var SUY = 'Vị trí và thứ tự áp dụng là suy luận, chưa đối chiếu mã nguồn.';
+  var D = {
+    '1': ['2.1.7 Không gian tri thức', '2.1.7_KhongGianTriThuc_TienQuyet.html', 'MX1 · cây kỹ năng', 'Định nghĩa DAG và Biên (nút học tiếp được ngay). Là từ vựng nền: MX1 dựng cây, MX4 chỉ ghép nút thuộc Biên.', ''],
+    '2': ['2.1.6 Học đồng đẳng và ZPD', '2.1.6_HocDongDang_ZPD.html', 'MX4 · ghép cặp', 'Lý do chỉ ghép nút thuộc Biên của người học (vừa tầm) và luật ai dạy ai học: Đạt của người dạy ∩ Biên của người học.', 'Học sớm (số 2) vì dùng chung khái niệm Biên với mục 1, nhưng dùng ở MX4.'],
+    '2a': ['TT01 Thuật toán Kahn', 'TT01_ThuatToanKahn.html', 'MX1 · cây kỹ năng', 'Xếp thứ tự học hợp lệ bằng bậc vào và xếp tầng để vẽ cây. Nếu xếp thiếu nút thì đồ thị có chu trình.', SUY],
+    '2b': ['TT02 DFS ba màu', 'TT02_DFS_BaMau.html', 'MX1 · cây kỹ năng', 'Dò chu trình và chỉ ra vòng. Dùng để chặn cạnh làm hỏng DAG trước khi ghi cạnh mới.', SUY],
+    '2c': ['TT03 Bỏ cạnh thừa', 'TT03_BoCanhThua.html', 'MX1 · cây kỹ năng', 'Rút gọn bắc cầu: bỏ cạnh A→C khi đã có đường A→…→C. Cây gọn hơn mà thứ tự học không đổi.', SUY],
+    '3': ['2.2.1 DAG, sắp xếp topo, bắc cầu', '2.2.1_DAG_Topo_BacCau.html', 'MX1 · cây kỹ năng', 'Gom ba thuật toán TT01 đến TT03 trên cùng một đồ thị. Hay bị hỏi về chu trình.', 'DAG còn được MX3 dùng để truy vết nút gốc (theo bản đọc mã ngày 29/10).'],
+    '4': ['5.2.6 Ma trận thành thạo', '5.2.6_MaTranThanhThao.html', 'Ở giữa: MX2 ghi, MX3 đọc theo cột, MX4 đọc theo hàng', 'Bảng sinh viên × nút, mỗi ô một trong 6 trạng thái. MX2 ghi kết quả chấm vào ô; bản đồ nhiệt và ghép cặp đọc ra từ đây.', ''],
+    '5a': ['2.2.6 Tính điểm w của mỗi cặp', '2.2.6_TinhDiemW_TuMaTran.html', 'MX4 · ghép cặp', 'Từ ma trận, đổi bảng "ai Đạt, ai ở Biên" thành một điểm w cho mỗi cặp bạn: hai bạn bù cho nhau được bao nhiêu.', 'w là trọng số cạnh cho Blossom ở 5b và 5c.'],
+    '5b': ['TT04 Thuật toán Blossom', 'TT04_ThuatToanBlossom.html', 'MX4 · ghép cặp', 'Ghép cặp trọng số cực đại, xử lý được chu trình lẻ (bông hoa) mà cách tham lam bỏ sót.', 'Trong mã: NetworkX max-weight matching (theo bản đọc mã ngày 29/10).'],
+    '5c': ['2.2.6 Chọn cặp cho cả lớp', '2.2.6_GhepCap_TrongSoCucDai.html', 'MX4 · ghép cặp', 'Lấy điểm w làm trọng số, chọn bộ cặp tốt nhất cho cả lớp bằng Blossom O(V³); giải thích vì sao tham lam không đủ.', ''],
+    '6': ['5.1 Kiến trúc tổng thể', '5.1_KienTruc_TongQuan.html', 'Nền dùng chung', 'Khối đơn mô-đun + worker nền + bus sự kiện. Việc nặng (đọc giáo trình, bản đồ nhiệt, ghép cặp) chạy ở worker để API trả lời nhanh.', ''],
+    '7': ['2.2.7 Giao tiếp thời gian thực', '2.2.7_ThoiGianThuc_WebSocket.html', 'Nền dùng chung, chủ yếu cho MX3', 'WebSocket để máy chủ đẩy tin tới GV, bản đồ nhiệt đổi màu không cần tải lại; Redis Pub/Sub là bus sự kiện nội bộ.', ''],
+    '8': ['5.2 Thiết kế dữ liệu', '5.2_ThietKeDuLieu.html', 'Nền dùng chung', '30 bảng chia 4 nhóm. Bảng cốt lõi là mastery_records (ma trận thành thạo); đồ thị tiên quyết lưu theo danh sách cạnh.', ''],
+    '9': ['5.3 Thiết kế lớp và mẫu thiết kế', '5.3_ThietKeLop_MauThietKe.html', 'Nền dùng chung', '4 biểu đồ lớp và 7 mẫu thiết kế: mẫu nào dùng ở đâu và vì sao.', ''],
+    '10': ['5.4 Thiết kế API', '5.4_ThietKeAPI.html', 'Nền dùng chung', 'REST/JSON tiền tố /api/v1, xác thực JWT, endpoint theo vai trò, lỗi thống nhất; tác vụ dài trả 202 kèm jobId, theo dõi qua WebSocket.', ''],
+    '11': ['3.3 Yêu cầu chức năng', '3.3_YeuCauChucNang.html', 'Nền dùng chung', '51 yêu cầu chia 5 phân hệ, ưu tiên M, S, C. Bốn phân hệ ứng với 4 mắt xích: SK cây kỹ năng, TB giảng lại, HM bản đồ nhiệt, PM ghép cặp; thêm AD quản trị.', ''],
+    '12': ['3.4 Yêu cầu phi chức năng', '3.4_YeuCauPhiChucNang.html', 'Nền dùng chung', '14 chỉ tiêu chất lượng: nhanh (AI ≤ 5 giây, bản đồ nhiệt ≤ 3 giây), AI đáng tin, bảo mật và riêng tư, dùng tốt.', ''],
+    '13': ['3.6 Truy vết yêu cầu tới Use Case', '3.6_TruyVet_YeuCau_UseCase.html', 'Nền dùng chung', '5 nhóm yêu cầu trải trên 27 Use Case; kiểm không có yêu cầu mồ côi và không có UC thừa.', ''],
+    '14': ['Chương 4 Phân tích hệ thống', '4_PhanTichHeThong.html', 'Nền dùng chung', 'Nghiệp vụ, Use Case, hoạt động, tuần tự, trạng thái, lớp; 27 UC chia theo phân hệ.', '']
+  };
+  var G = [                       // [các mục, x đầu, y đầu, số cột, bước x, bước y]
+    [['1', '2a', '2b', '2c', '3'], 10, 54, 3, 62, 42],
+    [['4'], 353, 172, 1, 62, 42],
+    [['2', '5a', '5b', '5c'], 570, 226, 3, 62, 42],
+    [['6', '7', '8', '9', '10', '11', '12', '13', '14'], 10, 374, 9, 64, 42]
+  ];
+  var NS = 'http://www.w3.org/2000/svg', box = document.getElementById('mapPins'), info = document.getElementById('mapInfo'), cur = null;
+  function el(n, a) { var e = document.createElementNS(NS, n); for (var k in a) e.setAttribute(k, a[k]); return e; }
+  function show(id) {
+    var d = D[id];
+    [].forEach.call(box.children, function (g) { g.classList.toggle('cur', g.getAttribute('data-id') === id); });
+    cur = id;
+    info.innerHTML = '<b>' + id + ' · ' + d[0] + '</b><br>Vị trí: ' + d[2] + '<br>' + d[3] +
+      (d[4] ? '<span class="n2">' + d[4] + '</span>' : '') +
+      '<span class="n2"><a href="' + d[1] + '">Mở trang này →</a></span>';
+  }
+  G.forEach(function (g) {
+    g[0].forEach(function (id, i) {
+      var x = g[1] + (i % g[3]) * g[4], y = g[2] + Math.floor(i / g[3]) * g[5];
+      var p = el('g', { 'class': 'pin', 'data-id': id, tabindex: '0', role: 'button', 'aria-label': id + ' ' + D[id][0] + '. ' + D[id][2], transform: 'translate(' + x + ' ' + y + ')' });
+      p.appendChild(el('rect', { 'class': 'ha', x: -5, y: -5, width: 64, height: 44 }));
+      p.appendChild(el('rect', { 'class': 'pr', x: 0, y: 0, width: 54, height: 34, rx: 2 }));
+      var t = el('text', { x: 27, y: 22, 'text-anchor': 'middle' }); t.textContent = id; p.appendChild(t);
+      p.addEventListener('mouseenter', function () { show(id); });
+      p.addEventListener('focus', function () { show(id); });
+      p.addEventListener('click', function () { show(id); });
+      p.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(id); } });
+      box.appendChild(p);
+    });
+  });
+  info.innerHTML = '<b>Chọn một ô số</b><br><span class="h-d">Trỏ chuột vào một ô số để xem mục đó dùng làm gì và nằm ở đâu.</span><span class="h-p">Bấm Phóng to ở góc trên để xoay ngang và chạm vào từng ô số.</span><span class="h-z">Chạm vào một ô số để xem mục đó dùng làm gì và nằm ở đâu.</span>';
+})();
+</script>
 </body>
 </html>

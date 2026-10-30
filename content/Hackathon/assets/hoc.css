@@ -65,3 +65,25 @@ svg.d .sm{font-size:11.5px;font-weight:500;fill:var(--mut)}
 .toc a{color:var(--blue)}
 @media (max-width:560px){body{font-size:16px}.head{flex-direction:column;align-items:flex-start;gap:6px}.it{grid-template-columns:1fr}.it .meta{grid-column:1}}
 @media print{.top{display:none}body{background-image:none}}
+
+/* Điện thoại: sơ đồ chỉ xem ở trang chính, bấm "Phóng to" mới thao tác (phongto.js gắn html.ph, .zv, .zin) */
+html.ph .fig.zv{position:relative;padding-top:52px;overflow:hidden}
+html.ph .fig.zv>*:not(.zb){pointer-events:none;-webkit-user-select:none;user-select:none}
+html.ph .fig.zv svg.d{min-width:0}
+html.ph .zb{position:absolute;top:8px;right:8px;z-index:2;pointer-events:auto}
+html.ph .zin>.zb{display:none}
+html.zo-open,html.zo-open body{overflow:hidden}
+.zo{position:fixed;left:0;top:0;z-index:100;display:flex;flex-direction:column;overflow:hidden;background-color:var(--paper);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;color:var(--ink)}
+.zo[hidden]{display:none}
+.zo.rot{transform-origin:0 0;transform:rotate(90deg) translateY(-100%)}
+.zh{flex:none;display:flex;align-items:center;gap:12px;padding:4px 10px;min-height:46px;border-bottom:1px solid var(--rule);background:var(--paper)}
+.zt{font-weight:650;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.zbd{flex:1;min-height:0;overflow:auto;padding:8px 12px}
+.zbd .fig{margin:0;padding:0;border:0;overflow:visible;background:transparent}
+.zbd .fig.zg{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:0 14px;align-items:start}
+.zbd .fig.zg>svg.d{grid-column:1;grid-row:1 / span 20;min-width:0;width:100%;max-height:calc(var(--zbh,300px) - 16px)}
+.zbd .fig.zg>*:not(svg.d){grid-column:2;min-width:0;margin:0 0 10px}
+.zbd .fig.zg>div.tw{grid-column:1 / -1}
+.zbd .fig:not(.zg) svg.d{min-width:0;width:100%;max-height:calc(var(--zbh,300px) - 16px)}
+.zbd .fig.mapfig.zg{grid-template-columns:auto minmax(170px,1fr)}
+.zbd .fig.mapfig.zg>svg.d{width:auto;max-width:none;height:calc(var(--zbh,300px) - 16px);max-height:none}
