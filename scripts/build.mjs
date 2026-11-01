@@ -1,4 +1,4 @@
-import { cpSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const SRC = 'content';
@@ -45,6 +45,25 @@ function filterCopy(src) {
 }
 
 cpSync(SRC, OUT, { recursive: true, filter: filterCopy });
+
+// Đảm bảo các file nối ẩn (_*.html) vẫn được tạo bản sao không có gạch dưới trong dist/
+// để các liên kết href="ten_file.html" từ trang mục lục (index.html) vẫn mở được bình thường
+function mirrorHiddenFiles(dir) {
+  const entries = readdirSync(dir, { withFileTypes: true });
+  for (const ent of entries) {
+    const full = join(dir, ent.name);
+    if (ent.isDirectory()) {
+      mirrorHiddenFiles(full);
+    } else if (ent.isFile() && ent.name.startsWith('_') && ent.name.endsWith('.html')) {
+      const aliasName = ent.name.slice(1);
+      const aliasPath = join(dir, aliasName);
+      if (!existsSync(aliasPath)) {
+        cpSync(full, aliasPath);
+      }
+    }
+  }
+}
+mirrorHiddenFiles(OUT);
 
 // Đọc content/_ten.json: { "Thư mục/File.html": "Tên hiển thị" }
 let titles = {};

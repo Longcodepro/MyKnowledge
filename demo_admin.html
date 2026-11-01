@@ -294,7 +294,7 @@ select { font: inherit; font-size: 13px; color: var(--fg); background: var(--car
 
   <div class="warn" role="note">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 20h20L12 3Z"/><path d="M12 10v4M12 17.5v.01"/></svg>
-    <span>Link Vercel <b>công khai với bất kỳ ai có link</b>. Đừng đưa vào file chứa mật khẩu, khoá API hay bài tập chưa muốn công khai. File nào chưa muốn đăng thì bật <b>Ẩn</b> (tên file được thêm tiền tố <code>_</code>).</span>
+    <span>Link Vercel <b>công khai với bất kỳ ai có link</b>. Đừng đưa vào file chứa mật khẩu, khoá API hay bài tập chưa muốn công khai. <b>Ẩn</b> (thêm tiền tố <code>_</code>) chỉ giấu bài khỏi trang chủ: file vẫn được đưa lên web và ai có link tới vẫn mở được, nên đừng dùng Ẩn để giấu nội dung riêng tư.</span>
   </div>
 
   <section class="flow" aria-label="Quy trình đăng bài">
@@ -369,18 +369,38 @@ select { font: inherit; font-size: 13px; color: var(--fg); background: var(--car
 <div class="toast" id="toast" role="status" hidden><span id="tmsg"></span><button id="tact" type="button" hidden></button></div>
 
 <script>
-// Dữ liệu mẫu dùng khi mở file trực tiếp (file://). Khi chạy qua server (http://), dữ liệu thật được tải qua /api/data
+// Dữ liệu mẫu dùng khi mở file trực tiếp (file://) và chưa kết nối được server
 const SEED = [
-  ['Docker and Github', 'docker-knowledge.html', 'Docker Basic'],
-  ['Docker and Github', 'github-knowledge.html', 'Github Basic'],
-  ['OOAD', 'Lab Sơ đồ OOAD.html', 'Lab sơ đồ OOAD'],
-  ['OOAD', 'ban-do-workflow-backend.html', 'Bản đồ workflow backend'],
-  ['SE', 'BrewLite qua 5 mô hình(SE).html', 'BrewLite qua 5 mô hình'],
-  ['ML', 'Lab-TV2-Tuan1,2.html', 'Phòng lab tuần 1 và 2'],
-  ['NLP', 'Lab nơ-ron (NLP).html', 'Lab nơ-ron (NLP)'],
-  ['Hackathon', 'whybi-overview.html', 'WhyBi: tổng quan workflow'],
-  ['LabIT', 'labit.html', 'LabIT: workflow'],
-  ['TestBackend', 'Postman Lab.html', 'Postman Lab'],
+  ['Docker and Github', 'docker-knowledge.html', 'Docker Basic', false],
+  ['Docker and Github', 'github-knowledge.html', 'Github Basic', false],
+  ['OOAD', 'Lab Sơ đồ OOAD.html', 'Lab sơ đồ OOAD', false],
+  ['OOAD', 'ban-do-workflow-backend.html', 'Bản đồ workflow backend', false],
+  ['SE', 'BrewLite qua 5 mô hình(SE).html', 'BrewLite qua 5 mô hình', false],
+  ['ML', 'Lab-TV2-Tuan1,2.html', 'Phòng lab tuần 1 và 2', false],
+  ['NLP', 'Lab nơ-ron (NLP).html', 'Lab nơ-ron (NLP)', false],
+  ['Hackathon', 'index.html', 'Mục lục ôn tập Whybi AI (mở trang này trước)', false],
+  ['Hackathon', 'whybi-overview.html', 'WhyBi: tổng quan workflow', false],
+  ['Hackathon', '2.1.7_KhongGianTriThuc_TienQuyet.html', '1 · 2.1.7 Không gian tri thức', true],
+  ['Hackathon', '2.1.6_HocDongDang_ZPD.html', '2 · 2.1.6 Học đồng đẳng và ZPD', true],
+  ['Hackathon', 'TT01_ThuatToanKahn.html', '2a · TT01 Thuật toán Kahn', true],
+  ['Hackathon', 'TT02_DFS_BaMau.html', '2b · TT02 DFS ba màu', true],
+  ['Hackathon', 'TT03_BoCanhThua.html', '2c · TT03 Bỏ cạnh thừa', true],
+  ['Hackathon', '2.2.1_DAG_Topo_BacCau.html', '3 · 2.2.1 DAG, sắp xếp topo, bắc cầu', true],
+  ['Hackathon', '5.2.6_MaTranThanhThao.html', '4 · 5.2.6 Ma trận thành thạo', true],
+  ['Hackathon', '2.2.6_TinhDiemW_TuMaTran.html', '5a · 2.2.6 Tính điểm w của mỗi cặp (phần 1)', true],
+  ['Hackathon', 'TT04_ThuatToanBlossom.html', '5b · TT04 Thuật toán Blossom (phần 2)', true],
+  ['Hackathon', '2.2.6_GhepCap_TrongSoCucDai.html', '5c · 2.2.6 Chọn cặp cho cả lớp: tham lam và Blossom (phần 3)', true],
+  ['Hackathon', '5.1_KienTruc_TongQuan.html', '6 · 5.1 Kiến trúc tổng thể', true],
+  ['Hackathon', '2.2.7_ThoiGianThuc_WebSocket.html', '7 · 2.2.7 Giao tiếp thời gian thực', true],
+  ['Hackathon', '5.2_ThietKeDuLieu.html', '8 · 5.2 Thiết kế dữ liệu', true],
+  ['Hackathon', '5.3_ThietKeLop_MauThietKe.html', '9 · 5.3 Thiết kế lớp và mẫu thiết kế', true],
+  ['Hackathon', '5.4_ThietKeAPI.html', '10 · 5.4 Thiết kế API', true],
+  ['Hackathon', '3.3_YeuCauChucNang.html', '11 · 3.3 Yêu cầu chức năng', true],
+  ['Hackathon', '3.4_YeuCauPhiChucNang.html', '12 · 3.4 Yêu cầu phi chức năng', true],
+  ['Hackathon', '3.6_TruyVet_YeuCau_UseCase.html', '13 · 3.6 Truy vết yêu cầu tới Use Case', true],
+  ['Hackathon', '4_PhanTichHeThong.html', '14 · Chương 4 Phân tích hệ thống', true],
+  ['LabIT', 'labit.html', 'LabIT: workflow', false],
+  ['TestBackend', 'Postman Lab.html', 'Postman Lab', false],
 ];
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -399,8 +419,9 @@ const FOLDER_ICONS = {
 const FOLDER = '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>';
 const HUE = [215, 160, 28, 280, 340, 190, 95, 50];
 
-const isServer = window.location.protocol.startsWith('http');
-let items = SEED.map(([f, file, name]) => ({ folder: f, file, name, hidden: false, isNew: false }));
+const API_BASE = window.location.protocol.startsWith('http') ? '' : 'http://localhost:3030';
+let isServer = window.location.protocol.startsWith('http');
+let items = SEED.map(([f, file, name, hidden]) => ({ folder: f, file, name, hidden: !!hidden, isNew: false }));
 let folders = [...new Set(items.map((i) => i.folder))];
 let filter = 'all';
 let phase = 'clean';
@@ -444,7 +465,7 @@ function edited() {
 
 async function syncSave() {
   try {
-    const res = await fetch('/api/save', {
+    const res = await fetch(API_BASE + '/api/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ items }),
@@ -494,13 +515,16 @@ function render() {
   $('dest').value = lastDest && folders.includes(lastDest) ? lastDest : folders[0];
   const html = folders.map((f) => {
     const all = items.filter((i) => i.folder === f);
+    const pubList = all.filter((i) => !i.hidden);
+    const hidList = all.filter((i) => i.hidden);
     const rows = all.filter(visible);
     if (!rows.length && filter !== 'all') return '';
+    const countBadge = hidList.length ? `${pubList.length} hiện · ${hidList.length} ẩn` : `${all.length} file`;
     return `<section class="grp" style="--h:${hue(f)}" aria-label="Thư mục ${esc(f)}">
       <div class="grp-h">
         ${ico(f)}
         <h2>${esc(f)}</h2>
-        <span class="c">${all.length} file</span>
+        <span class="c">${countBadge}</span>
         <button class="btn icon danger" data-del-fol="${esc(f)}" title="Xoá thư mục ${esc(f)}" aria-label="Xoá thư mục ${esc(f)}" style="margin-left: 6px;">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
         </button>
@@ -514,11 +538,15 @@ function render() {
           </div>
           <div class="main">
             <input class="nm" value="${esc(it.name)}" placeholder="${esc(it.file.replace(/\.html$/, ''))}" aria-label="Tên hiển thị của ${esc(it.file)}">
-            <div class="pth">${it.isNew ? '<span class="tag new">MỚI</span>' : ''}${it.hidden ? '<span class="tag hid">ẨN</span>' : ''}<span>${esc(shownPath(it))}</span></div>
+            <div class="pth">${it.isNew ? '<span class="tag new">MỚI</span>' : ''}${it.hidden ? '<span class="tag hid">ẨN KHỎI TRANG CHỦ</span>' : ''}<span>${esc(shownPath(it))}</span></div>
           </div>
           <div class="ctrl">
             <select data-a="move" aria-label="Thư mục của ${esc(it.file)}">${folders.map((x) => `<option ${x === f ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>
-            <label class="sw"><input type="checkbox" role="switch" data-a="hide" aria-label="Ẩn ${esc(it.file)} khỏi trang chủ" ${it.hidden ? 'checked' : ''}><span class="tr"></span>Ẩn</label>
+            <label class="sw" title="${it.hidden ? 'Bấm để hiển thị lên trang chủ' : 'Bấm để ẩn khỏi trang chủ'}">
+              <input type="checkbox" role="switch" data-a="hide" aria-label="Ẩn ${esc(it.file)} khỏi trang chủ" ${it.hidden ? 'checked' : ''}>
+              <span class="tr"></span>
+              <span style="font-size:12.5px; font-weight:500;">${it.hidden ? 'Đã ẩn' : 'Ẩn'}</span>
+            </label>
             <button class="btn danger" data-a="del" aria-label="Xoá ${esc(it.file)}">Xoá</button>
           </div>
         </li>`;
@@ -567,7 +595,7 @@ $('groups').addEventListener('click', async (e) => {
     edited(); render();
     if (isServer) {
       try {
-        const res = await fetch('/api/delete', {
+        const res = await fetch(API_BASE + '/api/delete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ folder: it.folder, file: it.file, isHidden: it.hidden }),
@@ -604,7 +632,7 @@ $('groups').addEventListener('change', async (e) => {
     }
     if (isServer) {
       try {
-        const res = await fetch('/api/move', {
+        const res = await fetch(API_BASE + '/api/move', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ fromFolder, toFolder: to, file: it.file, isHidden: it.hidden }),
@@ -637,7 +665,7 @@ $('newf').addEventListener('submit', async (e) => {
   if (folders.includes(n)) return toast('Thư mục này đã có');
   if (isServer) {
     try {
-      const res = await fetch('/api/create-folder', {
+      const res = await fetch(API_BASE + '/api/create-folder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: n }),
@@ -668,7 +696,7 @@ async function addFiles(list) {
           r.onerror = rej;
           r.readAsDataURL(file);
         });
-        const res = await fetch('/api/upload', {
+        const res = await fetch(API_BASE + '/api/upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ folder: f, fileName: file.name, contentBase64: base64, isHidden: false }),
@@ -708,7 +736,7 @@ $('build').onclick = async () => {
   appendTerm('mu', '> node scripts/build.mjs');
   if (isServer) {
     try {
-      const res = await fetch('/api/build', { method: 'POST' });
+      const res = await fetch(API_BASE + '/api/build', { method: 'POST' });
       const d = await res.json();
       if (d.logs) {
         for (const [cls, txt] of d.logs) {
@@ -716,7 +744,7 @@ $('build').onclick = async () => {
         }
       }
       try {
-        const gRes = await fetch('/api/git-status');
+        const gRes = await fetch(API_BASE + '/api/git-status');
         const gd = await gRes.json();
         if (gd && gd.isClean && getSnapshot() === savedSnapshot) {
           phase = 'clean';
@@ -749,7 +777,7 @@ $('push').onclick = async () => {
   appendTerm('p', `$ git commit -m "${m}"`);
   if (isServer) {
     try {
-      const res = await fetch('/api/push', {
+      const res = await fetch(API_BASE + '/api/push', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ msg: m }),
@@ -792,7 +820,7 @@ async function deleteFolder(fol) {
 
   if (isServer) {
     try {
-      const res = await fetch('/api/delete-folder', {
+      const res = await fetch(API_BASE + '/api/delete-folder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ folder: fol }),
@@ -827,7 +855,7 @@ function formatTime(iso) {
 async function updateTrashBadge() {
   if (!isServer) return;
   try {
-    const res = await fetch('/api/trash');
+    const res = await fetch(API_BASE + '/api/trash');
     const d = await res.json();
     if (d.ok && Array.isArray(d.items)) {
       const badge = $('trash-badge');
@@ -864,7 +892,7 @@ async function renderTrashList() {
     return;
   }
   try {
-    const res = await fetch('/api/trash');
+    const res = await fetch(API_BASE + '/api/trash');
     const d = await res.json();
     const list = d.ok && Array.isArray(d.items) ? d.items : [];
     updateTrashBadge();
@@ -917,7 +945,7 @@ $('trash-list').addEventListener('click', async (e) => {
   } else if (act === 'delete') {
     if (!confirm('Bạn có chắc muốn xoá vĩnh viễn mục này không? Thao tác này không thể hoàn tác!')) return;
     try {
-      const res = await fetch('/api/delete-trash-item', {
+      const res = await fetch(API_BASE + '/api/delete-trash-item', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
@@ -938,7 +966,7 @@ $('trash-list').addEventListener('click', async (e) => {
 $('empty-trash').onclick = async () => {
   if (!confirm('Bạn có chắc chắn muốn dọn sạch toàn bộ thùng rác không? Tất cả các mục sẽ bị xoá vĩnh viễn và không thể khôi phục!')) return;
   try {
-    const res = await fetch('/api/empty-trash', { method: 'POST' });
+    const res = await fetch(API_BASE + '/api/empty-trash', { method: 'POST' });
     const d = await res.json();
     if (d.ok) {
       toast('Đã dọn sạch thùng rác');
@@ -954,7 +982,7 @@ $('empty-trash').onclick = async () => {
 async function restoreTrashItem(id) {
   if (!isServer) return false;
   try {
-    const res = await fetch('/api/restore-trash', {
+    const res = await fetch(API_BASE + '/api/restore-trash', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
@@ -978,7 +1006,7 @@ async function restoreTrashItem(id) {
 async function reloadData() {
   if (isServer) {
     try {
-      const res = await fetch('/api/data');
+      const res = await fetch(API_BASE + '/api/data');
       const d = await res.json();
       if (d && Array.isArray(d.items)) {
         folders = d.folders;
@@ -1007,25 +1035,24 @@ function setTheme(t) {
 $('theme').onclick = () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
 setTheme(document.documentElement.dataset.theme);
 
-// Khởi tạo: nếu chạy qua server thì lấy dữ liệu thật từ ổ đĩa
+// Khởi tạo: lấy dữ liệu thật từ server (hỗ trợ cả chạy qua http:// lẫn mở trực tiếp file://)
 async function init() {
-  if (isServer) {
-    try {
-      const res = await fetch('/api/data');
-      const d = await res.json();
-      if (d && Array.isArray(d.items)) {
-        folders = d.folders;
-        items = d.items;
-      }
-      const gRes = await fetch('/api/git-status');
-      const gd = await gRes.json();
-      if (gd && gd.isClean) {
-        phase = 'clean';
-      }
-      updateTrashBadge();
-    } catch (e) {
-      console.warn('Không thể kết nối /api/data, dùng dữ liệu khởi tạo', e);
+  try {
+    const res = await fetch(API_BASE + '/api/data?t=' + Date.now());
+    const d = await res.json();
+    if (d && Array.isArray(d.items)) {
+      folders = d.folders;
+      items = d.items;
+      isServer = true;
     }
+    const gRes = await fetch(API_BASE + '/api/git-status?t=' + Date.now());
+    const gd = await gRes.json();
+    if (gd && gd.isClean) {
+      phase = 'clean';
+    }
+    updateTrashBadge();
+  } catch (e) {
+    console.warn('Chưa kết nối được server admin, dùng dữ liệu khởi tạo', e);
   }
   savedSnapshot = getSnapshot();
   render();
