@@ -588,6 +588,50 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  // 10. Phục vụ static files: bản xem trước trang đọc (/preview/*) và content/
+  const MIME = {
+    '.html': 'text/html; charset=utf-8',
+    '.css': 'text/css; charset=utf-8',
+    '.js': 'text/javascript; charset=utf-8',
+    '.mjs': 'text/javascript; charset=utf-8',
+    '.json': 'application/json; charset=utf-8',
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.svg': 'image/svg+xml',
+    '.ico': 'image/x-icon',
+    '.webp': 'image/webp',
+    '.pdf': 'application/pdf',
+  };
+
+  if (req.method === 'GET') {
+    let targetFile = null;
+    if (pathname === '/preview' || pathname === '/preview/') {
+      targetFile = join(ROOT, 'dist', 'index.html');
+    } else if (pathname.startsWith('/preview/')) {
+      const sub = decodeURIComponent(pathname.replace(/^\/preview\//, ''));
+      targetFile = join(ROOT, 'dist', sub);
+    } else if (pathname.startsWith('/content/')) {
+      const sub = decodeURIComponent(pathname.replace(/^\/content\//, ''));
+      targetFile = join(ROOT, 'content', sub);
+    } else if (pathname === '/demo_reader.html') {
+      targetFile = join(ROOT, 'demo_reader.html');
+    }
+
+    if (targetFile && existsSync(targetFile)) {
+      try {
+        const ext = targetFile.slice(targetFile.lastIndexOf('.')).toLowerCase();
+        const mime = MIME[ext] || 'application/octet-stream';
+        const content = readFileSync(targetFile);
+        res.writeHead(200, { 'Content-Type': mime, 'Cache-Control': 'no-cache' });
+        res.end(content);
+        return;
+      } catch (e) {
+        console.error('Lỗi đọc static file:', e);
+      }
+    }
+  }
+
   res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
   res.end('Not Found');
 });

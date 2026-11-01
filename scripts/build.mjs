@@ -243,7 +243,10 @@ mark { background: var(--hl); color: var(--hl-fg); border-radius: 4px; padding: 
         <span class="logo" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2V5z"/><path d="M8 8h7"/></svg></span>
         MyKnowledge
       </div>
-      <button class="btn" id="theme" type="button"></button>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <a class="btn" id="admin-link" href="/" style="display: none; text-decoration: none; font-size: 13px;" title="Vào trang quản lý">⚙️ Quản lý</a>
+        <button class="btn" id="theme" type="button"></button>
+      </div>
     </div>
     <div class="hero">
       <span class="pill"><i aria-hidden="true"></i><span id="pill"></span></span>
@@ -351,6 +354,13 @@ function setTheme(t) {
 }
 $('theme').onclick = () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
 setTheme(document.documentElement.dataset.theme);
+if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+  const al = $('admin-link');
+  if (al) {
+    al.href = location.port === '3030' ? '/' : 'http://localhost:3030';
+    al.style.display = 'inline-block';
+  }
+}
 render();
 setTimeout(() => $('list').classList.remove('boot'), 900);
 </script>
