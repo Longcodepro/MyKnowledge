@@ -1,3 +1,4 @@
 dist/
 node_modules/
 .trash/
+.admin.log
