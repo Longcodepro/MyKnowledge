@@ -2,6 +2,7 @@
   "name": "kho-tri-thuc",
   "private": true,
   "scripts": {
-    "build": "node scripts/build.mjs"
+    "build": "node scripts/build.mjs",
+    "admin": "node scripts/admin.mjs"
   }
 }

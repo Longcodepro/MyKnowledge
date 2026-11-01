@@ -1,15 +1,15 @@
-import { cpSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const SRC = 'content';
 const OUT = 'dist';
-const hidden = (name) => name.startsWith('.') || name.startsWith('_');
 
-// Đệ quy lấy đường dẫn (mảng segment) của mọi .html, bỏ qua mục bắt đầu bằng . hoặc _
+// Quét đệ quy lấy danh sách file .html công khai (bỏ qua file và thư mục bắt đầu bằng . hoặc _)
 function scan(rel = []) {
   const files = [];
-  for (const e of readdirSync(join(SRC, ...rel), { withFileTypes: true })) {
-    if (hidden(e.name)) continue;
+  const dirPath = join(SRC, ...rel);
+  for (const e of readdirSync(dirPath, { withFileTypes: true })) {
+    if (e.name.startsWith('.') || e.name.startsWith('_')) continue;
     if (e.isDirectory()) files.push(...scan([...rel, e.name]));
     else if (e.isFile() && e.name.endsWith('.html')) files.push([...rel, e.name]);
   }
@@ -19,132 +19,343 @@ function scan(rel = []) {
 mkdirSync(SRC, { recursive: true });
 const files = scan();
 
-rmSync(OUT, { recursive: true, force: true }); // chỉ xoá dist/
-// Không chép mục ẩn/_ để file nháp (vd _mau/) không bị công khai
-cpSync(SRC, OUT, {
-  recursive: true,
-  filter: (src) => src === SRC || !hidden(src.split('/').pop()),
+// Làm sạch và chép sang dist/
+rmSync(OUT, { recursive: true, force: true });
+mkdirSync(OUT, { recursive: true });
+
+// Bộ lọc chép file:
+// - Bỏ qua thư mục nháp/ẩn bắt đầu bằng . hoặc _ (vd _mau/)
+// - Bỏ qua file cấu hình nội bộ như _ten.json hoặc file ẩn hệ thống .gitkeep
+// - VẪN CHÉP các file nối (file bắt đầu bằng _) để các trang chính có thể gọi/iframe được
+function filterCopy(src) {
+  if (src === SRC) return true;
+  const rel = src.slice(SRC.length + 1);
+  const parts = rel.split('/');
+  for (let i = 0; i < parts.length - 1; i++) {
+    if (parts[i].startsWith('.') || parts[i].startsWith('_')) return false;
+  }
+  const last = parts[parts.length - 1];
+  if (last.startsWith('.')) return false;
+  if (last.startsWith('_') && last.endsWith('.json')) return false;
+  try {
+    const st = statSync(src);
+    if (st.isDirectory() && last.startsWith('_')) return false;
+  } catch (err) {}
+  return true;
+}
+
+cpSync(SRC, OUT, { recursive: true, filter: filterCopy });
+
+// Đọc content/_ten.json: { "Thư mục/File.html": "Tên hiển thị" }
+let titles = {};
+try {
+  titles = JSON.parse(readFileSync(join(SRC, '_ten.json'), 'utf8'));
+} catch (e) {
+  if (e.code !== 'ENOENT') throw e;
+}
+
+// Sắp xếp thứ tự hiển thị đúng theo thứ tự khoá trong _ten.json; file không có trong đó xếp sau theo A→Z
+const rank = Object.fromEntries(Object.keys(titles).map((k, i) => [k, i]));
+const sortedFiles = [...files].sort((a, b) => {
+  const pa = a.join('/');
+  const pb = b.join('/');
+  const ra = rank[pa] ?? 1e9;
+  const rb = rank[pb] ?? 1e9;
+  if (ra !== rb) return ra - rb;
+  return pa.localeCompare(pb, 'vi', { numeric: true });
 });
 
-// content/_ten.json: { "Thư mục/File.html": "Tên hiển thị" } (tuỳ chọn, không đổi tên file thật)
-let titles = {};
-try { titles = JSON.parse(readFileSync(join(SRC, '_ten.json'), 'utf8')); } catch (e) { if (e.code !== 'ENOENT') throw e; }
-const paths = new Set(files.map((s) => s.join('/')));
-for (const k of Object.keys(titles)) if (!paths.has(k)) console.warn(`Cảnh báo: _ten.json có "${k}" nhưng không có file này`);
+// Tạo mảng dữ liệu cho trang đọc
+const items = sortedFiles.map((segs) => {
+  const folder = segs.length > 1 ? segs.slice(0, -1).join(' / ') : 'Chung';
+  const file = segs[segs.length - 1];
+  const relPath = segs.join('/');
+  const name = titles[relPath] ?? file.replace(/\.html$/, '');
+  const href = segs.map(encodeURIComponent).join('/');
+  return { folder, file, name, href };
+});
 
-// Thứ tự hiển thị = thứ tự khoá trong _ten.json; mục không có trong đó xếp sau, theo A→Z
-const rank = Object.fromEntries(Object.keys(titles).map((k, i) => [k, i]));
-const items = files.map((segs) => ({
-  name: titles[segs.join('/')] ?? segs[segs.length - 1].replace(/\.html$/, ''),
-  group: segs.length > 1 ? segs.slice(0, -1).join(' / ') : 'Chung',
-  href: segs.map(encodeURIComponent).join('/'),
-  o: rank[segs.join('/')] ?? 1e9,
-}));
-// Thứ tự nhóm = thứ hạng nhỏ nhất trong nhóm
-const groupRank = {};
-for (const it of items) groupRank[it.group] = Math.min(groupRank[it.group] ?? 1e9, it.o);
-for (const it of items) it.go = groupRank[it.group];
-// "<" thoát thành < để dữ liệu không đóng nhầm thẻ <script>
-const data = JSON.stringify(items).replace(/</g, '\\u003c');
+const dataJson = JSON.stringify(items).replace(/</g, '\\u003c');
 
-writeFileSync(join(OUT, 'index.html'), `<!doctype html>
+// Đọc icon và favicon nếu có
+const htmlContent = `<!doctype html>
 <html lang="vi">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Kho tri thức</title>
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script>
+// Luôn sáng mặc định; chỉ tối khi người đọc tự bấm nút đổi (không theo hệ điều hành)
+(function () {
+  var t = null;
+  try { t = localStorage.getItem('theme'); } catch (e) {}
+  document.documentElement.dataset.theme = t === 'dark' ? 'dark' : 'light';
+})();
+</script>
 <style>
-:root{--bg:#fff;--fg:#1a1a1a;--mut:#666;--line:#ddd;--acc:#0b5fd6;--card:#f6f7f9}
-:root[data-theme=dark]{--bg:#15171a;--fg:#e8e8e8;--mut:#9a9a9a;--line:#33373d;--acc:#7ab2ff;--card:#1e2126}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif}
-main{max-width:760px;margin:0 auto;padding:16px}
-header{display:flex;gap:8px;align-items:center;margin-bottom:16px}
-h1{font-size:1.4rem;margin:0;flex:1}
-input,button{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px}
-input{width:100%;margin-bottom:16px}
-button{cursor:pointer}
-:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-details{border:1px solid var(--line);border-radius:8px;margin-bottom:12px;background:var(--card)}
-summary{cursor:pointer;padding:10px 12px;font-weight:600;overflow-wrap:anywhere}
-summary span{color:var(--mut);font-weight:400}
-ul{list-style:none;margin:0;padding:0 12px 8px}
-li a{display:block;padding:8px 0;color:var(--acc);text-decoration:none;overflow-wrap:anywhere;border-top:1px solid var(--line)}
-li a:hover{text-decoration:underline}
-#empty{color:var(--mut)}
+:root {
+  --bg: #f6f8fc; --card: #ffffff; --fg: #0f172a; --muted: #566277; --line: #e2e8f2; --hov: #f3f6fc;
+  --accent: #2563eb; --accent2: #7c3aed; --accent-soft: #eaf0ff; --hl: #fff0a8; --hl-fg: #5c4600;
+  --grad: linear-gradient(120deg, #2563eb, #7c3aed);
+  --mono: ui-monospace, "Cascadia Code", Consolas, Menlo, monospace;
+  --grid: rgba(15, 23, 42, .05);
+  --sh: 0 1px 2px rgba(15, 23, 42, .05), 0 8px 24px -12px rgba(15, 23, 42, .12);
+  --sh-hi: 0 2px 4px rgba(15, 23, 42, .06), 0 18px 40px -14px rgba(37, 99, 235, .28);
+  --ts: 92%; --tl: 94%; --tcl: 42%;
+  --glow1: rgba(37, 99, 235, .16); --glow2: rgba(124, 58, 237, .13);
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --bg: #0a0e16; --card: #121826; --fg: #e8edf6; --muted: #9aa6ba; --line: #212a3b; --hov: #18202f;
+  --accent: #7ab2ff; --accent2: #a78bfa; --accent-soft: #15233d; --hl: #4a3d00; --hl-fg: #ffe58a;
+  --grad: linear-gradient(120deg, #7ab2ff, #a78bfa);
+  --grid: rgba(232, 237, 246, .045);
+  --sh: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px -12px rgba(0, 0, 0, .5);
+  --sh-hi: 0 2px 4px rgba(0, 0, 0, .4), 0 18px 40px -14px rgba(122, 178, 255, .25);
+  --ts: 45%; --tl: 20%; --tcl: 74%;
+  --glow1: rgba(122, 178, 255, .13); --glow2: rgba(167, 139, 250, .11);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; scrollbar-width: none; }
+*::-webkit-scrollbar { display: none; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg); min-height: 100vh;
+  font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased;
+}
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.skip { position: absolute; left: 12px; top: -56px; z-index: 30; background: var(--accent); color: #fff; padding: 9px 16px; border-radius: 10px; text-decoration: none; font-weight: 600; }
+:root[data-theme="dark"] .skip { color: #0b1220; }
+.skip:focus { top: 12px; }
+
+/* Nền vệt sáng và lưới ô mờ */
+.bg {
+  position: absolute; inset: 0 0 auto; height: 560px; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(640px 320px at 12% -4%, var(--glow1), transparent 70%),
+    radial-gradient(560px 300px at 88% 6%, var(--glow2), transparent 70%),
+    linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: auto, auto, 32px 32px, 32px 32px;
+  -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent);
+}
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px 64px; }
+
+.topbar { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; }
+.brand { display: flex; align-items: center; gap: 11px; font-weight: 700; letter-spacing: -.01em; }
+.logo { width: 34px; height: 34px; border-radius: 10px; background: var(--grad); display: grid; place-items: center; color: #fff; box-shadow: 0 6px 16px -6px var(--accent); }
+:root[data-theme="dark"] .logo { color: #0b1220; }
+.btn {
+  font: inherit; font-size: 13px; font-weight: 500; color: var(--fg); background: var(--card);
+  border: 1px solid var(--line); border-radius: 10px; padding: 7px 14px; min-height: 38px; cursor: pointer; box-shadow: var(--sh);
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.hero { padding: 40px 0 8px; }
+.pill {
+  display: inline-flex; align-items: center; gap: 8px; padding: 5px 13px 5px 10px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--card); font: 600 12.5px system-ui, sans-serif; color: var(--muted); box-shadow: var(--sh);
+}
+.pill i { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 4px rgba(34, 197, 94, .18); }
+h1 { font-size: clamp(2.4rem, 7vw, 4rem); line-height: 1.04; letter-spacing: -.04em; font-weight: 800; margin: 18px 0 14px; }
+.grad { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lead { max-width: 580px; color: var(--muted); font-size: 1.08rem; margin: 0 0 30px; }
+.lead b { color: var(--fg); font-weight: 600; }
+
+.search { position: relative; max-width: 720px; }
+.search svg { position: absolute; left: 20px; top: 50%; translate: 0 -50%; color: var(--muted); pointer-events: none; }
+.search input {
+  width: 100%; height: 58px; font: inherit; font-size: 17px; color: var(--fg); background: var(--card);
+  border: 1px solid var(--line); border-radius: 16px; padding: 0 64px 0 52px; box-shadow: var(--sh); transition: box-shadow .2s, border-color .2s;
+}
+.search input::placeholder { color: var(--muted); }
+.search input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft), var(--sh-hi); }
+.search kbd {
+  position: absolute; right: 16px; top: 50%; translate: 0 -50%; font: 12px var(--mono); color: var(--muted);
+  border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 7px; padding: 1px 9px; background: var(--bg);
+}
+.search input:not(:placeholder-shown) ~ kbd { display: none; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 34px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 8px; font: inherit; font-size: 13.5px; font-weight: 500; color: var(--fg);
+  background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px 6px 12px; min-height: 36px; cursor: pointer; transition: all .15s;
+}
+.chip i { width: 8px; height: 8px; border-radius: 50%; background: hsl(var(--h, 215) 70% 52%); }
+.chip i.all { background: var(--grad); }
+.chip em { font: normal 12px var(--mono); color: var(--muted); }
+.chip:hover { border-color: var(--accent); transform: translateY(-1px); }
+.chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.chip[aria-pressed="true"] em { color: inherit; opacity: .7; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 20px; align-items: start; }
+.card {
+  position: relative; overflow: hidden; background: var(--card); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--sh);
+  transition: transform .25s, box-shadow .25s, border-color .25s;
+}
+.card::before { content: ""; position: absolute; inset: 0 0 auto; height: 3px; background: linear-gradient(90deg, hsl(var(--h) 75% 55%), hsl(calc(var(--h) + 45) 75% 62%)); }
+.card::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .25s;
+  background: radial-gradient(380px circle at var(--mx, 50%) var(--my, 0%), hsl(var(--h) 90% 60% / .11), transparent 60%);
+}
+.card:hover { transform: translateY(-3px); box-shadow: var(--sh-hi); border-color: hsl(var(--h) 60% 70% / .55); }
+.card:hover::after { opacity: 1; }
+.card-h { display: flex; align-items: center; gap: 14px; padding: 20px 20px 12px; }
+.ico { width: 44px; height: 44px; border-radius: 13px; flex: none; display: grid; place-items: center; background: hsl(var(--h) var(--ts) var(--tl)); color: hsl(var(--h) 65% var(--tcl)); }
+.card-h h2 { font-size: 1.08rem; letter-spacing: -.015em; margin: 0; line-height: 1.25; }
+.card-h p { margin: 1px 0 0; font: 12px var(--mono); color: var(--muted); }
+.card ul { list-style: none; margin: 0; padding: 0 10px 12px; position: relative; z-index: 1; }
+.item { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 12px; color: inherit; text-decoration: none; transition: background .15s; }
+.item:hover, .item:focus-visible { background: var(--hov); }
+.item .tx { flex: 1; min-width: 0; }
+.item .nm { display: block; font-weight: 600; overflow-wrap: anywhere; }
+.item .fn { display: block; font: 12px var(--mono); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item .go { flex: none; color: var(--muted); opacity: .6; transition: transform .2s, color .2s, opacity .2s; }
+.item:hover .go, .item:focus-visible .go { color: var(--accent); opacity: 1; transform: translateX(3px); }
+.item:hover .nm { color: var(--accent); }
+mark { background: var(--hl); color: var(--hl-fg); border-radius: 4px; padding: 0 2px; }
+
+#list.boot .card { animation: rise .5s cubic-bezier(.2, .7, .2, 1) both; }
+#list.boot .card:nth-child(2) { animation-delay: .05s; } #list.boot .card:nth-child(3) { animation-delay: .1s; }
+#list.boot .card:nth-child(4) { animation-delay: .15s; } #list.boot .card:nth-child(n+5) { animation-delay: .2s; }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+
+.empty { grid-column: 1 / -1; background: var(--card); border: 1px dashed var(--line); border-radius: 20px; padding: 56px 20px; text-align: center; color: var(--muted); }
+.empty b { display: block; color: var(--fg); font-size: 1.1rem; margin-bottom: 4px; }
+.empty .btn { margin-top: 16px; }
+.foot { margin-top: 44px; padding-top: 18px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; color: var(--muted); font-size: 13px; }
+.foot kbd { font: 12px var(--mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 6px; padding: 0 7px; background: var(--card); }
+
+@media (max-width: 640px) { .wrap { padding: 0 16px 48px; } .hero { padding-top: 20px; } .search input { height: 52px; font-size: 16px; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+@media (forced-colors: active) { .card, .chip[aria-pressed="true"] { border: 1px solid; } }
 </style>
 </head>
 <body>
-<main>
-<header><h1>Kho tri thức</h1><button id="theme" type="button"></button></header>
-<input id="q" type="search" placeholder="Tìm theo tên…" aria-label="Tìm theo tên" autocomplete="off">
-<div id="list"></div>
-</main>
+<a class="skip" href="#list">Bỏ qua tới danh sách bài</a>
+<div class="bg" aria-hidden="true"></div>
+<div class="wrap">
+  <header>
+    <div class="topbar">
+      <div class="brand">
+        <span class="logo" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2V5z"/><path d="M8 8h7"/></svg></span>
+        MyKnowledge
+      </div>
+      <button class="btn" id="theme" type="button"></button>
+    </div>
+    <div class="hero">
+      <span class="pill"><i aria-hidden="true"></i><span id="pill"></span></span>
+      <h1>Kho <span class="grad">tri thức</span></h1>
+      <p class="lead">Các bài lab tương tác về Docker, OOAD, NLP, ML… <b>Mở là chạy</b>, nghịch thử ngay trên trình duyệt, không cần cài gì.</p>
+      <div class="search" role="search">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="Tìm bài, vd: no ron, docker…" aria-label="Tìm bài" autocomplete="off">
+        <kbd aria-hidden="true">/</kbd>
+      </div>
+      <div class="chips" id="chips" role="group" aria-label="Lọc theo chủ đề"></div>
+    </div>
+  </header>
+
+  <main id="list" class="boot grid" tabindex="-1"></main>
+  <p class="sr-only" id="count" role="status"></p>
+
+  <footer class="foot">
+    <span>Nội dung công khai với bất kỳ ai có link.</span>
+    <span><kbd>/</kbd> để tìm · <kbd>Esc</kbd> để xoá</span>
+  </footer>
+</div>
+
 <script>
-const ITEMS = ${data};
+const DATA = ${dataJson};
+
+const ICONS = {
+  'Docker and Github': '<path d="M3 8l9-5 9 5v8l-9 5-9-5V8z"/><path d="m3 8 9 5 9-5M12 13v8"/>',
+  OOAD: '<rect x="3" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="15" width="8" height="6" rx="1.5"/><path d="M7 9v3a3 3 0 0 0 3 3h3"/>',
+  SE: '<path d="m12 3 9 5-9 5-9-5 9-5z"/><path d="m3 13 9 5 9-5"/>',
+  ML: '<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/>',
+  NLP: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M8.5 11h7M8.5 14h4"/>',
+  Hackathon: '<path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/>',
+  LabIT: '<path d="M9 3h6M10 3v6l-5.5 9.5A2 2 0 0 0 6.2 21h11.6a2 2 0 0 0 1.7-2.5L14 9V3"/><path d="M7.5 15h9"/>',
+  TestBackend: '<rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/>',
+};
+const FOLDER = '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>';
+const svg = (p, s = 22) => '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>';
+
 const $ = (id) => document.getElementById(id);
-const norm = (s) => s.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase().replace(/[^\\p{L}\\p{N}]+/gu, ' ').trim();
-const cmp = (a, b) => a.localeCompare(b, 'vi', { numeric: true });
-const closed = new Set();
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fold = (s) => [...s].map((c) => /đ/i.test(c) ? 'd' : c.normalize('NFD')[0].toLowerCase()).join('').replace(/[-_]/g, ' ');
+
+const folders = [...new Set(DATA.map((d) => d.folder))];
+const HUE = [215, 160, 28, 280, 340, 190, 95, 50];
+const hue = (f) => HUE[folders.indexOf(f) % HUE.length];
+let topic = null;
+
+function mark(text, q) {
+  if (!q) return esc(text);
+  const i = fold(text).indexOf(q);
+  if (i < 0) return esc(text);
+  return esc(text.slice(0, i)) + '<mark>' + esc(text.slice(i, i + q.length)) + '</mark>' + esc(text.slice(i + q.length));
+}
 
 function render() {
-  const q = norm($('q').value.trim());
-  const groups = new Map();
-  for (const it of ITEMS) {
-    if (q && !norm(it.name).includes(q)) continue;
-    if (!groups.has(it.group)) groups.set(it.group, []);
-    groups.get(it.group).push(it);
-  }
-  const box = $('list');
-  box.textContent = '';
-  if (!groups.size) {
-    const p = document.createElement('p');
-    p.id = 'empty';
-    p.textContent = ITEMS.length ? 'Không có kết quả' : 'Chưa có file nào';
-    box.append(p);
+  const q = fold($('q').value.trim());
+  const hit = DATA.filter((d) => (!topic || d.folder === topic) && (!q || fold(d.name + ' ' + d.folder + ' ' + d.file).includes(q)));
+  $('pill').textContent = DATA.length + ' bài lab · ' + folders.length + ' chủ đề' + (hit.length !== DATA.length ? ' · hiện ' + hit.length : '');
+
+  $('chips').innerHTML = [[null, 'Tất cả', DATA.length]].concat(folders.map((f) => [f, f, DATA.filter((d) => d.folder === f).length]))
+    .map(([f, label, n]) => '<button class="chip" type="button" data-f="' + esc(f ?? '') + '" aria-pressed="' + (f === topic) + '"><i class="' + (f ? '' : 'all') + '" ' + (f ? 'style="--h:' + hue(f) + '"' : '') + ' aria-hidden="true"></i>' + esc(label) + ' <em>' + n + '</em></button>').join('');
+
+  $('count').textContent = hit.length ? 'Đang hiện ' + hit.length + ' trên ' + DATA.length + ' bài' : 'Không có bài nào khớp';
+  if (!hit.length) {
+    $('list').innerHTML = '<div class="empty"><b>Không có bài nào khớp</b>Thử gõ ngắn hơn, hoặc bỏ lọc chủ đề.<br><button class="btn" type="button" id="clear">Xoá tìm kiếm</button></div>';
     return;
   }
-  const names = [...groups.keys()].sort((a, b) => a === 'Chung' ? -1 : b === 'Chung' ? 1 : groups.get(a)[0].go - groups.get(b)[0].go || cmp(a, b));
-  for (const g of names) {
-    const d = document.createElement('details');
-    d.open = q ? true : !closed.has(g);
-    d.addEventListener('toggle', () => { if (!q) d.open ? closed.delete(g) : closed.add(g); });
-    const s = document.createElement('summary');
-    s.append(g + ' ');
-    const n = document.createElement('span');
-    n.textContent = '(' + groups.get(g).length + ')';
-    s.append(n);
-    const ul = document.createElement('ul');
-    for (const it of groups.get(g).sort((a, b) => a.o - b.o || cmp(a.name, b.name))) {
-      const li = document.createElement('li');
-      const a = document.createElement('a');
-      a.href = it.href;
-      a.textContent = it.name;
-      li.append(a);
-      ul.append(li);
-    }
-    d.append(s, ul);
-    box.append(d);
-  }
+  $('list').innerHTML = folders.filter((f) => hit.some((d) => d.folder === f)).map((f) => {
+    const rows = hit.filter((d) => d.folder === f);
+    return '<section class="card" style="--h:' + hue(f) + '" aria-label="' + esc(f) + '">' +
+      '<div class="card-h"><span class="ico">' + svg(ICONS[f] || FOLDER) + '</span><div><h2>' + esc(f) + '</h2><p>' + rows.length + ' bài</p></div></div>' +
+      '<ul>' + rows.map((d) => '<li><a class="item" href="' + esc(d.href) + '">' +
+        '<span class="tx"><span class="nm">' + mark(d.name, q) + '</span><span class="fn">' + esc(d.file) + '</span></span>' +
+        svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 16).replace('<svg ', '<svg class="go" ') +
+      '</a></li>').join('') + '</ul></section>';
+  }).join('');
 }
+
+$('chips').addEventListener('click', (e) => {
+  const b = e.target.closest('.chip');
+  if (!b) return;
+  topic = b.dataset.f || null; render();
+  [...$('chips').querySelectorAll('.chip')].find((x) => (x.dataset.f || null) === topic)?.focus();
+});
+$('list').addEventListener('click', (e) => {
+  if (e.target.id === 'clear') { $('q').value = ''; topic = null; render(); $('q').focus(); }
+});
+$('list').addEventListener('pointermove', (e) => {
+  const c = e.target.closest('.card'); if (!c) return;
+  const r = c.getBoundingClientRect();
+  c.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+  c.style.setProperty('--my', (e.clientY - r.top) + 'px');
+});
+$('q').addEventListener('input', render);
+document.addEventListener('keydown', (e) => {
+  if (e.key === '/' && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)) { e.preventDefault(); $('q').focus(); }
+  if (e.key === 'Escape' && document.activeElement === $('q')) { $('q').value = ''; render(); }
+});
 
 function setTheme(t) {
   document.documentElement.dataset.theme = t;
-  $('theme').textContent = t === 'dark' ? 'Sáng' : 'Tối';
-}
-let saved = null;
-try { saved = localStorage.getItem('theme'); } catch (e) {}
-setTheme(saved === 'dark' ? 'dark' : 'light');
-$('theme').onclick = () => {
-  const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-  setTheme(t);
+  $('theme').textContent = t === 'dark' ? 'Giao diện sáng' : 'Giao diện tối';
   try { localStorage.setItem('theme', t); } catch (e) {}
-};
-$('q').addEventListener('input', render);
+}
+$('theme').onclick = () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+setTheme(document.documentElement.dataset.theme);
 render();
+setTimeout(() => $('list').classList.remove('boot'), 900);
 </script>
 </body>
-</html>
-`);
+</html>`;
 
-console.log(`Tìm thấy ${files.length} file .html`);
+writeFileSync(join(OUT, 'index.html'), htmlContent);
+console.log(`Đã dựng xong dist/index.html với ${files.length} bài lab.`);

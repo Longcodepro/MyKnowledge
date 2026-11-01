@@ -1,0 +1,1032 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quản lý kho tri thức</title>
+<link rel="icon" href="content/favicon.ico" sizes="32x32">
+<link rel="icon" href="content/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="content/apple-touch-icon.png">
+<script>
+// Luôn sáng mặc định; chỉ tối khi chính bạn bấm nút đổi (không theo hệ điều hành)
+(function () {
+  var t = null;
+  try { t = localStorage.getItem('theme'); } catch (e) {}
+  document.documentElement.dataset.theme = t === 'dark' ? 'dark' : 'light';
+})();
+</script>
+<style>
+:root {
+  --bg: #f6f8fc; --card: #ffffff; --fg: #0f172a; --muted: #566277; --line: #e2e8f2; --hov: #f3f6fc;
+  --accent: #2563eb; --accent2: #7c3aed; --accent-soft: #eaf0ff; --hl: #fff0a8; --hl-fg: #5c4600;
+  --grad: linear-gradient(120deg, #2563eb, #7c3aed);
+  --warn-bg: #fffbeb; --warn-fg: #8a3b0a; --warn-line: #f3dfa2;
+  --ok: #15803d; --ok-bg: #e5f6ec; --danger: #b42318; --danger-bg: #fdebe9;
+  --term-bg: #0b1220; --term-fg: #e2e8f0; --code-bg: #fbfcfe;
+  --mono: ui-monospace, "Cascadia Code", Consolas, Menlo, monospace;
+  --grid: rgba(15, 23, 42, .05);
+  --sh: 0 1px 2px rgba(15, 23, 42, .05), 0 8px 24px -12px rgba(15, 23, 42, .12);
+  --ts: 92%; --tl: 94%; --tcl: 42%;
+  --glow1: rgba(37, 99, 235, .15); --glow2: rgba(124, 58, 237, .12);
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --bg: #0a0e16; --card: #121826; --fg: #e8edf6; --muted: #9aa6ba; --line: #212a3b; --hov: #18202f;
+  --accent: #7ab2ff; --accent2: #a78bfa; --accent-soft: #15233d; --hl: #4a3d00; --hl-fg: #ffe58a;
+  --grad: linear-gradient(120deg, #7ab2ff, #a78bfa);
+  --warn-bg: #2a2209; --warn-fg: #f5d58a; --warn-line: #4d3f12;
+  --ok: #5fd28a; --ok-bg: #12301f; --danger: #ff8a80; --danger-bg: #3a1714;
+  --term-bg: #070a12; --code-bg: #0e1420;
+  --grid: rgba(232, 237, 246, .045);
+  --sh: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px -12px rgba(0, 0, 0, .5);
+  --ts: 45%; --tl: 20%; --tcl: 74%;
+  --glow1: rgba(122, 178, 255, .12); --glow2: rgba(167, 139, 250, .1);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; scrollbar-width: none; }
+*::-webkit-scrollbar { display: none; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg); min-height: 100vh;
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased;
+}
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+code { font-family: var(--mono); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.skip { position: absolute; left: 12px; top: -56px; z-index: 60; background: var(--accent); color: #fff; padding: 9px 16px; border-radius: 10px; text-decoration: none; font-weight: 600; }
+:root[data-theme="dark"] .skip { color: #0b1220; }
+.skip:focus { top: 12px; }
+
+.bg {
+  position: absolute; inset: 0 0 auto; height: 480px; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(620px 300px at 10% -6%, var(--glow1), transparent 70%),
+    radial-gradient(520px 280px at 90% 4%, var(--glow2), transparent 70%),
+    linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: auto, auto, 32px 32px, 32px 32px;
+  -webkit-mask-image: linear-gradient(#000 50%, transparent); mask-image: linear-gradient(#000 50%, transparent);
+}
+.wrap { max-width: 1240px; margin: 0 auto; padding: 0 24px 64px; }
+
+/* Thanh ứng dụng */
+.bar { position: sticky; top: 0; z-index: 40; background: color-mix(in srgb, var(--bg) 78%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent); }
+.bar-in { max-width: 1240px; margin: 0 auto; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 11px; font-weight: 700; letter-spacing: -.01em; }
+.brand small { font-weight: 500; color: var(--muted); margin-left: 2px; }
+.brand small::before { content: "/"; margin-right: 8px; opacity: .5; }
+.logo { width: 32px; height: 32px; border-radius: 10px; background: var(--grad); display: grid; place-items: center; color: #fff; box-shadow: 0 6px 16px -6px var(--accent); }
+:root[data-theme="dark"] .logo { color: #0b1220; }
+.bar-r { display: flex; align-items: center; gap: 10px; }
+
+.btn {
+  font: inherit; font-size: 13px; font-weight: 500; color: var(--fg); background: var(--card);
+  border: 1px solid var(--line); border-radius: 10px; padding: 6px 14px; min-height: 36px; cursor: pointer; white-space: nowrap; transition: border-color .15s, filter .15s, background .15s;
+}
+.btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.primary { background: var(--grad); border-color: transparent; color: #fff; font-weight: 600; box-shadow: 0 8px 20px -10px var(--accent); }
+:root[data-theme="dark"] .btn.primary { color: #0b1220; }
+.btn.primary:hover:not(:disabled) { color: #fff; filter: brightness(1.08); }
+:root[data-theme="dark"] .btn.primary:hover:not(:disabled) { color: #0b1220; }
+.btn.ghost { background: transparent; color: var(--muted); }
+.icon { width: 28px; height: 24px; min-height: 0; padding: 0; display: inline-grid; place-items: center; border-radius: 7px; border-color: transparent; background: transparent; color: var(--muted); }
+.btn.danger { color: var(--danger); background: none; border-color: transparent; }
+.btn.danger:hover:not(:disabled) { background: var(--danger-bg); color: var(--danger); border-color: transparent; }
+.chip { font: 700 11px system-ui, sans-serif; letter-spacing: .05em; text-transform: uppercase; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); background: var(--card); }
+.chip.edited { background: var(--hl); color: var(--hl-fg); border-color: transparent; }
+.chip.built { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.clean { background: var(--ok-bg); color: var(--ok); border-color: transparent; }
+
+/* Giới thiệu + thống kê */
+.intro { padding: 34px 0 6px; }
+h1 { font-size: clamp(1.8rem, 4.6vw, 2.6rem); line-height: 1.1; letter-spacing: -.035em; font-weight: 800; margin: 0 0 8px; }
+.grad { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lead { margin: 0; color: var(--muted); max-width: 640px; }
+.lead code { color: var(--fg); background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; font-size: 12.5px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin: 24px 0 18px; }
+.stat { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; box-shadow: var(--sh); }
+.stat .k { display: block; font: 600 11px system-ui, sans-serif; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.stat b { display: block; font-size: 1.7rem; letter-spacing: -.03em; line-height: 1.25; margin-top: 2px; }
+.stat b.txt { font-size: 1.05rem; padding: 8px 0 3px; letter-spacing: -.01em; }
+
+.warn { display: flex; gap: 10px; align-items: flex-start; background: var(--warn-bg); color: var(--warn-fg); border: 1px solid var(--warn-line); border-radius: 14px; padding: 11px 16px; margin-bottom: 18px; font-size: 13px; }
+.warn svg { flex: none; margin-top: 2px; }
+
+/* Quy trình */
+.flow { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; padding: 14px 18px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; margin-bottom: 24px; box-shadow: var(--sh); }
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; flex: 1 1 340px; min-width: 0; }
+.step { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 13px; white-space: nowrap; }
+.step:not(:last-child) { flex: 1 1 auto; }
+.step:not(:last-child)::after { content: ""; flex: 1; min-width: 14px; height: 2px; background: var(--line); border-radius: 2px; margin-left: 4px; }
+.step i { font: 600 12px var(--mono); font-style: normal; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line); background: var(--bg); }
+.step.on { color: var(--fg); font-weight: 600; }
+.step.on i { background: var(--grad); border-color: transparent; color: #fff; box-shadow: 0 0 0 4px var(--accent-soft); }
+:root[data-theme="dark"] .step.on i { color: #0b1220; }
+.step.done i { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); }
+.flow-act { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.flow-act input { font: 13px var(--mono); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 6px 12px; min-height: 36px; width: 230px; max-width: 100%; }
+.flow-act input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+.flow-act input:disabled { opacity: .5; }
+
+/* Bố cục */
+.cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (min-width: 1080px) { .cols { grid-template-columns: minmax(0, 1fr) 390px; } }
+@media (min-width: 1080px) and (min-height: 940px) { .side { position: sticky; top: 76px; } }
+
+.drop { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 18px 20px; margin-bottom: 18px; border: 1.5px dashed color-mix(in srgb, var(--accent) 45%, var(--line)); border-radius: 16px; background: color-mix(in srgb, var(--accent-soft) 55%, var(--card)); transition: border-color .15s, background .15s, transform .15s; }
+.drop:hover, .drop.over, .drop:focus-within { border-color: var(--accent); background: var(--accent-soft); }
+.drop.over { transform: scale(1.01); }
+.drop .up { width: 44px; height: 44px; border-radius: 13px; background: var(--grad); color: #fff; display: grid; place-items: center; flex: none; }
+:root[data-theme="dark"] .drop .up { color: #0b1220; }
+.drop .t { flex: 1 1 240px; }
+.drop b { display: block; }
+.drop small { color: var(--muted); }
+.drop .sel { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+select { font: inherit; font-size: 13px; color: var(--fg); background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 5px 10px; min-height: 34px; max-width: 100%; }
+
+.tools { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.seg { display: inline-flex; padding: 3px; gap: 2px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+.seg button { font: inherit; font-size: 13px; font-weight: 500; color: var(--muted); background: none; border: 0; padding: 6px 14px; border-radius: 9px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.newf { display: flex; gap: 6px; }
+.newf input { font: 13px var(--mono); color: var(--fg); background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 5px 12px; min-height: 36px; width: 180px; }
+.newf input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+
+/* Nhóm thư mục + dòng */
+.grp { background: var(--card); border: 1px solid var(--line); border-radius: 18px; margin-bottom: 16px; overflow: hidden; box-shadow: var(--sh); }
+.grp-h { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); background: linear-gradient(90deg, hsl(var(--h) 90% 60% / .07), transparent 60%); }
+.ico { width: 34px; height: 34px; border-radius: 10px; flex: none; display: grid; place-items: center; background: hsl(var(--h) var(--ts) var(--tl)); color: hsl(var(--h) 65% var(--tcl)); }
+.grp-h h2 { font-size: 14.5px; letter-spacing: -.01em; margin: 0; }
+.grp-h span.c { margin-left: auto; font: 12px var(--mono); color: var(--muted); }
+.grp ul { list-style: none; margin: 0; padding: 0; }
+.row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px 14px; align-items: center; padding: 11px 16px; border-top: 1px solid var(--line); transition: background .15s; }
+.row:first-child { border-top: 0; }
+.row:hover { background: var(--hov); }
+.row.hid .main { opacity: .55; }
+.mv { display: flex; flex-direction: column; gap: 2px; }
+.icon:hover:not(:disabled) { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.main { min-width: 0; }
+.nm { width: calc(100% + 16px); font: inherit; font-weight: 600; font-size: 14.5px; color: var(--fg); background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 3px 8px; margin: 0 -8px; min-height: 30px; }
+.nm:hover { border-color: var(--line); }
+.nm:focus { outline: none; border-color: var(--accent); background: var(--card); box-shadow: 0 0 0 4px var(--accent-soft); }
+.pth { display: flex; align-items: center; gap: 6px; font: 12px var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+.tag { font: 700 10px system-ui, sans-serif; letter-spacing: .06em; padding: 1px 7px; border-radius: 5px; flex: none; }
+.tag.new { background: var(--hl); color: var(--hl-fg); }
+.tag.hid { background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
+.ctrl { display: flex; align-items: center; gap: 12px; }
+.sw { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); cursor: pointer; user-select: none; position: relative; }
+.sw input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.sw .tr { width: 34px; height: 20px; border-radius: 99px; background: var(--line); position: relative; transition: background .15s; flex: none; }
+.sw .tr::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: transform .15s; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+.sw input:checked + .tr { background: var(--accent); }
+.sw input:checked + .tr::after { transform: translateX(14px); }
+.sw input:focus-visible + .tr { outline: 2px solid var(--accent); outline-offset: 2px; }
+.empty { padding: 20px 16px; color: var(--muted); font-size: 13px; }
+.none { border: 1px dashed var(--line); border-radius: 18px; padding: 40px 20px; text-align: center; color: var(--muted); background: var(--card); }
+
+/* Cửa sổ kiểu editor/terminal (không có thanh cuộn: nội dung tự giãn) */
+.win { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; margin-bottom: 18px; background: var(--card); box-shadow: var(--sh); }
+.win-h { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--hov); }
+.lights { display: flex; gap: 6px; }
+.lights i { width: 10px; height: 10px; border-radius: 50%; background: #ff5f57; }
+.lights i:nth-child(2) { background: #febc2e; } .lights i:nth-child(3) { background: #28c840; }
+.win-h h2 { font: 600 12px var(--mono); margin: 0; }
+.win-h small { margin-left: auto; font: 11px var(--mono); color: var(--muted); text-align: right; }
+.code { margin: 0; padding: 14px; font: 12px/1.75 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; background: var(--code-bg); }
+.code .k { color: var(--accent); } .code .s { color: var(--ok); } .code .n { color: var(--muted); user-select: none; display: inline-block; width: 2ch; margin-right: 1.2ch; text-align: right; opacity: .7; }
+.term { margin: 0; padding: 14px; min-height: 150px; background: var(--term-bg); color: var(--term-fg); font: 12.5px/1.65 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.term .p { color: #7dd3fc; } .term .ok { color: #86efac; } .term .mu { color: #94a3b8; }
+
+.toast { position: fixed; left: 50%; bottom: 22px; translate: -50% 0; z-index: 70; display: flex; align-items: center; gap: 14px; background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 13px; max-width: calc(100vw - 32px); box-shadow: 0 12px 36px rgba(0,0,0,.28); }
+.toast[hidden] { display: none; }
+.toast button { font: inherit; font-weight: 700; background: none; border: 0; color: #7ab2ff; cursor: pointer; padding: 0; }
+:root[data-theme="dark"] .toast button { color: #1d4ed8; }
+
+/* Modal thùng rác */
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 100;
+  background: color-mix(in srgb, #000 48%, transparent);
+  -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.modal-backdrop[hidden] { display: none; }
+.modal-card {
+  background: var(--card); border: 1px solid var(--line); border-radius: 20px;
+  width: 100%; max-width: 680px; max-height: 85vh; display: flex; flex-direction: column;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .28); overflow: hidden;
+}
+.modal-h {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 16px 20px; border-bottom: 1px solid var(--line);
+}
+.modal-h-t { display: flex; align-items: center; gap: 10px; }
+.modal-h-t h2 { font-size: 16px; margin: 0; font-weight: 700; }
+.modal-b {
+  padding: 16px 20px; overflow-y: auto; flex: 1 1 auto;
+}
+.trash-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.trash-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--bg);
+  transition: border-color .15s, background .15s;
+}
+.trash-item:hover { border-color: var(--accent); background: var(--card); }
+.trash-main { min-width: 0; flex: 1 1 auto; }
+.trash-t { font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+.trash-sub { font-size: 12px; color: var(--muted); font-family: var(--mono); margin-top: 2px; }
+.trash-time { font-size: 11.5px; color: var(--muted); margin-top: 4px; display: flex; align-items: center; gap: 5px; }
+.trash-acts { display: flex; align-items: center; gap: 8px; flex: none; }
+.modal-f {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 14px 20px; border-top: 1px solid var(--line); background: var(--hov);
+}
+
+@media (max-width: 720px) {
+  .wrap, .bar-in { padding-left: 16px; padding-right: 16px; }
+  .row { grid-template-columns: auto minmax(0, 1fr); }
+  .ctrl { grid-column: 1 / -1; flex-wrap: wrap; }
+  .flow-act input { width: 100%; }
+  .brand small { display: none; }
+  .trash-item { flex-direction: column; align-items: flex-start; }
+  .trash-acts { width: 100%; justify-content: flex-end; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+@media (forced-colors: active) { .grp, .win, .stat, .modal-card { border: 1px solid; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Bỏ qua tới danh sách file</a>
+<div class="bg" aria-hidden="true"></div>
+
+<header class="bar">
+  <div class="bar-in">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2V5z"/><path d="M8 8h7"/></svg></span>
+      <span>MyKnowledge<small>Quản lý</small></span>
+    </div>
+    <div class="bar-r">
+      <button class="btn" id="open-trash" type="button" aria-label="Xem thùng rác">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2.5px; margin-right: 3px;"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+        <span>Thùng rác</span>
+        <span class="chip" id="trash-badge" style="display:none; padding: 2px 7px; font-size: 11px; margin-left: 4px; vertical-align: middle;">0</span>
+      </button>
+      <span class="chip" id="chip" role="status"></span>
+      <button class="btn" id="theme" type="button"></button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="intro">
+    <h1>Quản lý <span class="grad">kho tri thức</span></h1>
+    <p class="lead">Thêm bài, đổi tên hiển thị, sắp xếp thứ tự rồi đẩy lên Vercel. Mọi thay đổi được ghi vào <code>content/_ten.json</code>.</p>
+  </section>
+
+  <section class="stats" aria-label="Thống kê">
+    <div class="stat"><span class="k">Công khai</span><b id="s-pub"></b></div>
+    <div class="stat"><span class="k">Đã ẩn</span><b id="s-hid"></b></div>
+    <div class="stat"><span class="k">Thư mục</span><b id="s-fol"></b></div>
+    <div class="stat"><span class="k">Việc tiếp theo</span><b class="txt" id="s-next"></b></div>
+  </section>
+
+  <div class="warn" role="note">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 20h20L12 3Z"/><path d="M12 10v4M12 17.5v.01"/></svg>
+    <span>Link Vercel <b>công khai với bất kỳ ai có link</b>. Đừng đưa vào file chứa mật khẩu, khoá API hay bài tập chưa muốn công khai. File nào chưa muốn đăng thì bật <b>Ẩn</b> (tên file được thêm tiền tố <code>_</code>).</span>
+  </div>
+
+  <section class="flow" aria-label="Quy trình đăng bài">
+    <ol class="steps" id="steps" aria-label="Các bước đăng bài"></ol>
+    <div class="flow-act">
+      <button class="btn" id="build" type="button">Build thử</button>
+      <input id="msg" type="text" value="Thêm bài mới" aria-label="Lời nhắn commit" spellcheck="false">
+      <button class="btn primary" id="push" type="button">Đẩy lên Vercel</button>
+    </div>
+  </section>
+
+  <div class="cols">
+    <main id="main" tabindex="-1">
+      <div class="drop" id="drop">
+        <span class="up" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></span>
+        <span class="t"><b>Kéo thả file .html vào đây hoặc bấm "Chọn file"</b><small>Ảnh, css, js đi kèm để cạnh file html. Tên file thật giữ nguyên.</small></span>
+        <label class="sel" for="dest">vào thư mục <select id="dest"></select></label>
+        <button class="btn" id="pick" type="button">Chọn file…</button>
+        <input id="file" type="file" accept=".html,text/html" multiple hidden>
+      </div>
+
+      <div class="tools">
+        <div class="seg" role="group" aria-label="Lọc">
+          <button type="button" data-f="all" aria-pressed="true">Tất cả</button>
+          <button type="button" data-f="pub" aria-pressed="false">Công khai</button>
+          <button type="button" data-f="hid" aria-pressed="false">Đã ẩn</button>
+        </div>
+        <form class="newf" id="newf">
+          <input id="nf" type="text" placeholder="tên thư mục mới" aria-label="Tên thư mục mới" autocomplete="off" spellcheck="false">
+          <button class="btn" type="submit">+ Thư mục</button>
+        </form>
+      </div>
+
+      <div id="groups"></div>
+    </main>
+
+    <aside class="side" aria-label="Xem trước và nhật ký lệnh">
+      <div class="win">
+        <div class="win-h"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span><h2>content/_ten.json</h2><small>thứ tự dòng = thứ tự trên web</small></div>
+        <pre class="code" id="json" tabindex="0" aria-label="Xem trước _ten.json"></pre>
+      </div>
+      <div class="win">
+        <div class="win-h"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span><h2>Terminal</h2><small>mô phỏng, chưa chạy lệnh thật</small></div>
+        <pre class="term" id="term" role="log" aria-live="polite"><span class="mu">Sẵn sàng. Sửa gì đó rồi bấm "Build thử" để chạy node scripts/build.mjs</span></pre>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- Modal Thùng rác -->
+<div class="modal-backdrop" id="trash-modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="trash-title">
+    <div class="modal-h">
+      <div class="modal-h-t">
+        <span class="logo" style="width:28px; height:28px;" aria-hidden="true">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+        </span>
+        <h2 id="trash-title">Thùng rác</h2>
+      </div>
+      <button class="btn icon" id="close-trash" type="button" aria-label="Đóng thùng rác">✕</button>
+    </div>
+    <div class="modal-b" id="trash-body">
+      <ul class="trash-list" id="trash-list"></ul>
+    </div>
+    <div class="modal-f">
+      <button class="btn danger" id="empty-trash" type="button">Dọn sạch thùng rác</button>
+      <button class="btn" id="close-trash-btn" type="button">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" hidden><span id="tmsg"></span><button id="tact" type="button" hidden></button></div>
+
+<script>
+// Dữ liệu mẫu dùng khi mở file trực tiếp (file://). Khi chạy qua server (http://), dữ liệu thật được tải qua /api/data
+const SEED = [
+  ['Docker and Github', 'docker-knowledge.html', 'Docker Basic'],
+  ['Docker and Github', 'github-knowledge.html', 'Github Basic'],
+  ['OOAD', 'Lab Sơ đồ OOAD.html', 'Lab sơ đồ OOAD'],
+  ['OOAD', 'ban-do-workflow-backend.html', 'Bản đồ workflow backend'],
+  ['SE', 'BrewLite qua 5 mô hình(SE).html', 'BrewLite qua 5 mô hình'],
+  ['ML', 'Lab-TV2-Tuan1,2.html', 'Phòng lab tuần 1 và 2'],
+  ['NLP', 'Lab nơ-ron (NLP).html', 'Lab nơ-ron (NLP)'],
+  ['Hackathon', 'whybi-overview.html', 'WhyBi: tổng quan workflow'],
+  ['LabIT', 'labit.html', 'LabIT: workflow'],
+  ['TestBackend', 'Postman Lab.html', 'Postman Lab'],
+];
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const svg = (p, s = 18, w = 1.8) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const ICON = { up: svg('<path d="m6 15 6-6 6 6"/>', 13, 2.4), down: svg('<path d="m6 9 6 6 6-6"/>', 13, 2.4) };
+const FOLDER_ICONS = {
+  'Docker and Github': '<path d="M3 8l9-5 9 5v8l-9 5-9-5V8z"/><path d="m3 8 9 5 9-5M12 13v8"/>',
+  OOAD: '<rect x="3" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="15" width="8" height="6" rx="1.5"/><path d="M7 9v3a3 3 0 0 0 3 3h3"/>',
+  SE: '<path d="m12 3 9 5-9 5-9-5 9-5z"/><path d="m3 13 9 5 9-5"/>',
+  ML: '<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/>',
+  NLP: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M8.5 11h7M8.5 14h4"/>',
+  Hackathon: '<path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/>',
+  LabIT: '<path d="M9 3h6M10 3v6l-5.5 9.5A2 2 0 0 0 6.2 21h11.6a2 2 0 0 0 1.7-2.5L14 9V3"/><path d="M7.5 15h9"/>',
+  TestBackend: '<rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/>',
+};
+const FOLDER = '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>';
+const HUE = [215, 160, 28, 280, 340, 190, 95, 50];
+
+const isServer = window.location.protocol.startsWith('http');
+let items = SEED.map(([f, file, name]) => ({ folder: f, file, name, hidden: false, isNew: false }));
+let folders = [...new Set(items.map((i) => i.folder))];
+let filter = 'all';
+let phase = 'clean';
+let busy = false;
+let lastDest = null;
+let saveTimer = null;
+
+const hue = (f) => HUE[folders.indexOf(f) % HUE.length];
+const ico = (f) => `<span class="ico" style="--h:${hue(f)}">${svg(FOLDER_ICONS[f] || FOLDER, 18)}</span>`;
+const path = (it) => it.folder + '/' + it.file;
+const shownPath = (it) => it.folder + '/' + (it.hidden ? '_' : '') + it.file;
+const pub = () => items.filter((i) => !i.hidden);
+
+function getSnapshot() {
+  return JSON.stringify(items.map((i) => ({
+    f: i.folder,
+    file: i.file,
+    name: (i.name || '').trim(),
+    h: !!i.hidden,
+  })));
+}
+
+let savedSnapshot = '';
+
+function edited() {
+  const isDirty = (getSnapshot() !== savedSnapshot);
+  if (!isDirty) {
+    clearTimeout(saveTimer);
+    phase = 'clean';
+    status();
+    if (isServer) syncSave();
+    return;
+  }
+  phase = 'edited';
+  status();
+  if (isServer) {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(syncSave, 400);
+  }
+}
+
+async function syncSave() {
+  try {
+    const res = await fetch('/api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items }),
+    });
+    const d = await res.json();
+    if (!d.ok) toast('Lỗi lưu: ' + (d.error || 'không xác định'));
+  } catch (e) {
+    console.error('Lỗi syncSave:', e);
+  }
+}
+
+/* ---------- Trạng thái quy trình ---------- */
+function status() {
+  const label = { clean: 'Đã đồng bộ', edited: 'Có thay đổi chưa build', built: 'Sẵn sàng đẩy lên' }[phase];
+  $('chip').textContent = label;
+  $('chip').className = 'chip ' + phase;
+  const st = phase === 'clean' ? ['done', 'done', 'done'] : phase === 'edited' ? ['on', '', ''] : ['done', 'done', 'on'];
+  $('steps').innerHTML = ['Chỉnh sửa', 'Build thử', 'Đẩy lên Vercel'].map((t, i) =>
+    `<li class="step ${st[i]}"${st[i] === 'on' ? ' aria-current="step"' : ''}><i aria-hidden="true">${st[i] === 'done' ? '✓' : i + 1}</i>${t}${st[i] === 'done' ? '<span class="sr-only"> (xong)</span>' : ''}</li>`).join('');
+  $('build').disabled = busy || phase === 'clean';
+  $('push').disabled = busy || phase !== 'built';
+  $('msg').disabled = phase !== 'built';
+  $('s-pub').textContent = pub().length;
+  $('s-hid').textContent = items.length - pub().length;
+  $('s-fol').textContent = folders.length;
+  $('s-next').textContent = { clean: 'Không có gì cần làm', edited: 'Bấm "Build thử"', built: 'Bấm "Đẩy lên Vercel"' }[phase];
+}
+
+/* ---------- Xem trước _ten.json ---------- */
+function jsonView() {
+  const rows = [];
+  for (const it of items) {
+    if (!it.hidden && it.name.trim()) rows.push([path(it), it.name.trim()]);
+  }
+  const q = (s) => esc(JSON.stringify(s));
+  $('json').innerHTML = !rows.length ? '{}' :
+    '<span class="n"> </span>{\n' + rows.map(([k, v], i) =>
+      `<span class="n">${i + 1}</span>  <span class="k">${q(k)}</span>: <span class="s">${q(v)}</span>${i < rows.length - 1 ? ',' : ''}`).join('\n') +
+    '\n<span class="n"> </span>}';
+}
+
+/* ---------- Danh sách ---------- */
+const visible = (it) => filter === 'all' || (filter === 'hid') === it.hidden;
+
+function render() {
+  $('dest').innerHTML = folders.map((f) => `<option>${esc(f)}</option>`).join('');
+  $('dest').value = lastDest && folders.includes(lastDest) ? lastDest : folders[0];
+  const html = folders.map((f) => {
+    const all = items.filter((i) => i.folder === f);
+    const rows = all.filter(visible);
+    if (!rows.length && filter !== 'all') return '';
+    return `<section class="grp" style="--h:${hue(f)}" aria-label="Thư mục ${esc(f)}">
+      <div class="grp-h">
+        ${ico(f)}
+        <h2>${esc(f)}</h2>
+        <span class="c">${all.length} file</span>
+        <button class="btn icon danger" data-del-fol="${esc(f)}" title="Xoá thư mục ${esc(f)}" aria-label="Xoá thư mục ${esc(f)}" style="margin-left: 6px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+        </button>
+      </div>` +
+      (rows.length ? '<ul>' + rows.map((it) => {
+        const i = all.indexOf(it);
+        return `<li class="row ${it.hidden ? 'hid' : ''}" data-k="${esc(path(it))}">
+          <div class="mv">
+            <button class="btn icon" data-a="up" aria-label="Chuyển lên: ${esc(it.file)}" ${i === 0 ? 'disabled' : ''}>${ICON.up}</button>
+            <button class="btn icon" data-a="down" aria-label="Chuyển xuống: ${esc(it.file)}" ${i === all.length - 1 ? 'disabled' : ''}>${ICON.down}</button>
+          </div>
+          <div class="main">
+            <input class="nm" value="${esc(it.name)}" placeholder="${esc(it.file.replace(/\.html$/, ''))}" aria-label="Tên hiển thị của ${esc(it.file)}">
+            <div class="pth">${it.isNew ? '<span class="tag new">MỚI</span>' : ''}${it.hidden ? '<span class="tag hid">ẨN</span>' : ''}<span>${esc(shownPath(it))}</span></div>
+          </div>
+          <div class="ctrl">
+            <select data-a="move" aria-label="Thư mục của ${esc(it.file)}">${folders.map((x) => `<option ${x === f ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>
+            <label class="sw"><input type="checkbox" role="switch" data-a="hide" aria-label="Ẩn ${esc(it.file)} khỏi trang chủ" ${it.hidden ? 'checked' : ''}><span class="tr"></span>Ẩn</label>
+            <button class="btn danger" data-a="del" aria-label="Xoá ${esc(it.file)}">Xoá</button>
+          </div>
+        </li>`;
+      }).join('') + '</ul>' : '<div class="empty">Thư mục trống: sẽ không hiện trên web cho tới khi có file.</div>') + '</section>';
+  }).join('');
+  $('groups').innerHTML = html || '<div class="none">Không có file nào trong mục này.</div>';
+  jsonView(); status();
+}
+
+const find = (el) => { const k = el.closest('.row')?.dataset.k; return items.find((i) => path(i) === k); };
+function focusRow(it, a) {
+  const li = [...document.querySelectorAll('.row')].find((r) => r.dataset.k === path(it));
+  (li?.querySelector(a === 'nm' ? '.nm' : `[data-a="${a}"]:not(:disabled)`) || li?.querySelector('.mv button:not(:disabled), .nm'))?.focus();
+}
+
+$('groups').addEventListener('input', (e) => {
+  if (!e.target.classList.contains('nm')) return;
+  find(e.target).name = e.target.value;
+  jsonView(); edited();
+});
+
+$('groups').addEventListener('click', async (e) => {
+  const delFolBtn = e.target.closest('button[data-del-fol]');
+  if (delFolBtn) {
+    const fol = delFolBtn.dataset.delFol;
+    const count = items.filter((i) => i.folder === fol).length;
+    const msg = count > 0 
+      ? `Bạn có chắc muốn xoá thư mục "${fol}" cùng ${count} file bên trong không?\n(Toàn bộ sẽ được chuyển an toàn vào Thùng rác và có thể khôi phục bất cứ lúc nào)`
+      : `Bạn có chắc muốn xoá thư mục "${fol}" không?`;
+    if (!confirm(msg)) return;
+    deleteFolder(fol);
+    return;
+  }
+
+  const b = e.target.closest('button[data-a]'); if (!b) return;
+  const it = find(b), a = b.dataset.a;
+  if (a === 'up' || a === 'down') {
+    const sib = items.filter((i) => i.folder === it.folder);
+    const other = sib[sib.indexOf(it) + (a === 'up' ? -1 : 1)];
+    const x = items.indexOf(it), y = items.indexOf(other);
+    [items[x], items[y]] = [items[y], items[x]];
+    edited(); render(); focusRow(it, a);
+  } else if (a === 'del') {
+    const at = items.indexOf(it);
+    items.splice(at, 1);
+    edited(); render();
+    if (isServer) {
+      try {
+        const res = await fetch('/api/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ folder: it.folder, file: it.file, isHidden: it.hidden }),
+        });
+        const d = await res.json();
+        if (d.ok && d.id) {
+          updateTrashBadge();
+          toast(`Đã chuyển "${it.file}" vào thùng rác`, 'Hoàn tác', async () => {
+            await restoreTrashItem(d.id);
+          });
+          return;
+        }
+      } catch (err) { console.error(err); }
+    }
+    if (items.length) focusRow(items[Math.min(at, items.length - 1)], 'nm');
+    toast(`Đã xoá "${it.file}" khỏi content/`);
+  }
+});
+
+$('groups').addEventListener('change', async (e) => {
+  const a = e.target.dataset.a; if (!a) return;
+  const it = find(e.target);
+  if (a === 'hide') {
+    it.hidden = e.target.checked;
+    edited(); render(); focusRow(it, 'hide');
+  }
+  if (a === 'move') {
+    const fromFolder = it.folder;
+    const to = e.target.value;
+    if (items.some((i) => i.folder === to && i.file === it.file)) {
+      toast(`Thư mục "${to}" đã có file tên này`);
+      render();
+      return;
+    }
+    if (isServer) {
+      try {
+        const res = await fetch('/api/move', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fromFolder, toFolder: to, file: it.file, isHidden: it.hidden }),
+        });
+        const d = await res.json();
+        if (!d.ok) { toast('Lỗi chuyển: ' + (d.error || '')); render(); return; }
+      } catch (err) { console.error(err); }
+    }
+    it.folder = to;
+    items.splice(items.indexOf(it), 1);
+    items.push(it);
+    edited(); render(); focusRow(it, 'move');
+    toast(`Đã chuyển sang "${to}"`);
+  }
+});
+
+/* ---------- Lọc, thư mục mới, tải file ---------- */
+document.querySelector('.seg').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  filter = b.dataset.f;
+  document.querySelectorAll('.seg button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+  render();
+});
+
+$('newf').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const n = $('nf').value.trim();
+  if (!n) return;
+  if (/^[._]/.test(n) || /[\\/]/.test(n)) return toast('Tên không được bắt đầu bằng . hoặc _ và không chứa / \\');
+  if (folders.includes(n)) return toast('Thư mục này đã có');
+  if (isServer) {
+    try {
+      const res = await fetch('/api/create-folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: n }),
+      });
+      const d = await res.json();
+      if (!d.ok) { toast('Lỗi tạo thư mục: ' + (d.error || '')); return; }
+    } catch (err) { console.error(err); }
+  }
+  folders.push(n);
+  lastDest = n;
+  $('nf').value = '';
+  render();
+  toast(`Đã tạo thư mục "${n}"`);
+});
+
+async function addFiles(list) {
+  const f = $('dest').value; lastDest = f;
+  let added = 0, skipped = 0;
+  for (const file of list) {
+    if (!/\.html$/i.test(file.name) || /^[._]/.test(file.name) || items.some((i) => i.folder === f && i.file === file.name)) {
+      skipped++; continue;
+    }
+    if (isServer) {
+      try {
+        const base64 = await new Promise((res, rej) => {
+          const r = new FileReader();
+          r.onload = () => res(r.result.split(',')[1]);
+          r.onerror = rej;
+          r.readAsDataURL(file);
+        });
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ folder: f, fileName: file.name, contentBase64: base64, isHidden: false }),
+        });
+        const d = await res.json();
+        if (!d.ok) { skipped++; continue; }
+      } catch (err) {
+        console.error(err); skipped++; continue;
+      }
+    }
+    items.push({ folder: f, file: file.name, name: file.name.replace(/\.html$/i, ''), hidden: false, isNew: true });
+    added++;
+  }
+  if (added) { edited(); render(); }
+  toast(added ? `Đã thêm ${added} file vào "${f}"` + (skipped ? `, bỏ qua ${skipped}` : '') : 'Chỉ nhận file .html chưa có trong thư mục này');
+}
+
+$('file').addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; });
+const drop = $('drop');
+$('pick').onclick = () => $('file').click();
+drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+drop.addEventListener('drop', (e) => { e.preventDefault(); drop.classList.remove('over'); addFiles(e.dataTransfer.files); });
+$('dest').addEventListener('change', () => { lastDest = $('dest').value; });
+
+/* ---------- Terminal & Actions ---------- */
+function appendTerm(cls, txt) {
+  const t = $('term');
+  t.insertAdjacentHTML('beforeend', `<span class="${cls}">${esc(txt)}</span>\n`);
+  t.scrollTop = t.scrollHeight;
+}
+
+$('build').onclick = async () => {
+  busy = true; status();
+  const t = $('term'); t.innerHTML = '';
+  appendTerm('p', '$ npm run build');
+  appendTerm('mu', '> node scripts/build.mjs');
+  if (isServer) {
+    try {
+      const res = await fetch('/api/build', { method: 'POST' });
+      const d = await res.json();
+      if (d.logs) {
+        for (const [cls, txt] of d.logs) {
+          if (cls !== 'p' && cls !== 'mu') appendTerm(cls, txt);
+        }
+      }
+      try {
+        const gRes = await fetch('/api/git-status');
+        const gd = await gRes.json();
+        if (gd && gd.isClean && getSnapshot() === savedSnapshot) {
+          phase = 'clean';
+          appendTerm('ok', '✓ Không có thay đổi nào so với Git (kho sạch)');
+        } else {
+          phase = 'built';
+        }
+      } catch (err) {
+        phase = 'built';
+      }
+    } catch (e) {
+      appendTerm('danger', 'Lỗi kết nối: ' + e.message);
+    }
+  } else {
+    // Giả lập khi chạy offline
+    const hid = items.length - pub().length;
+    if (hid) appendTerm('mu', `(bỏ qua ${hid} file bắt đầu bằng _)`);
+    appendTerm('ok', `Tìm thấy ${pub().length} file .html`);
+    phase = 'built';
+  }
+  busy = false; status();
+};
+
+$('push').onclick = async () => {
+  const m = $('msg').value.trim();
+  if (!m) { toast('Nhập lời nhắn commit trước đã'); return $('msg').focus(); }
+  busy = true; status();
+  const t = $('term'); t.innerHTML = '';
+  appendTerm('p', '$ git add .');
+  appendTerm('p', `$ git commit -m "${m}"`);
+  if (isServer) {
+    try {
+      const res = await fetch('/api/push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ msg: m }),
+      });
+      const d = await res.json();
+      if (d.logs) {
+        for (const [cls, txt] of d.logs) {
+          if (cls !== 'p') appendTerm(cls, txt);
+        }
+      }
+      if (d.ok) {
+        savedSnapshot = getSnapshot();
+        phase = 'clean';
+        items.forEach((i) => (i.isNew = false));
+        render();
+      }
+    } catch (e) {
+      appendTerm('danger', 'Lỗi push: ' + e.message);
+    }
+  } else {
+    appendTerm('mu', `[main] ${m}`);
+    appendTerm('p', '$ git push');
+    appendTerm('mu', 'Vercel đang triển khai…');
+    appendTerm('ok', '✓ Đã cập nhật. Trang chủ có bài mới sau ít giây');
+    savedSnapshot = getSnapshot();
+    phase = 'clean';
+    items.forEach((i) => (i.isNew = false));
+    render();
+  }
+  busy = false; status();
+};
+
+/* ---------- Xoá thư mục ---------- */
+async function deleteFolder(fol) {
+  items = items.filter((i) => i.folder !== fol);
+  folders = folders.filter((f) => f !== fol);
+  if (lastDest === fol) lastDest = folders[0] || null;
+  edited();
+  render();
+
+  if (isServer) {
+    try {
+      const res = await fetch('/api/delete-folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folder: fol }),
+      });
+      const d = await res.json();
+      if (d.ok && d.id) {
+        updateTrashBadge();
+        toast(`Đã chuyển thư mục "${fol}" vào thùng rác`, 'Hoàn tác', async () => {
+          await restoreTrashItem(d.id);
+        });
+        return;
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+  toast(`Đã xoá thư mục "${fol}"`);
+}
+
+/* ---------- Thùng rác (Trash Bin) ---------- */
+function formatTime(iso) {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso);
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())} · ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+  } catch (e) {
+    return iso;
+  }
+}
+
+async function updateTrashBadge() {
+  if (!isServer) return;
+  try {
+    const res = await fetch('/api/trash');
+    const d = await res.json();
+    if (d.ok && Array.isArray(d.items)) {
+      const badge = $('trash-badge');
+      if (d.items.length > 0) {
+        badge.textContent = d.items.length;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+  } catch (e) {}
+}
+
+async function openTrashModal() {
+  $('trash-modal').hidden = false;
+  await renderTrashList();
+}
+
+function closeTrashModal() {
+  $('trash-modal').hidden = true;
+}
+
+$('open-trash').onclick = openTrashModal;
+$('close-trash').onclick = closeTrashModal;
+$('close-trash-btn').onclick = closeTrashModal;
+$('trash-modal').onclick = (e) => {
+  if (e.target === $('trash-modal')) closeTrashModal();
+};
+
+async function renderTrashList() {
+  if (!isServer) {
+    $('trash-list').innerHTML = '<li class="none" style="border:none; padding:24px 0;">Đang mở file trực tiếp, chỉ xem được thùng rác khi chạy server qua <code>npm run admin</code>.</li>';
+    $('empty-trash').disabled = true;
+    return;
+  }
+  try {
+    const res = await fetch('/api/trash');
+    const d = await res.json();
+    const list = d.ok && Array.isArray(d.items) ? d.items : [];
+    updateTrashBadge();
+
+    if (!list.length) {
+      $('trash-list').innerHTML = '<li class="none" style="border:none; padding:32px 0;">Thùng rác trống. Khi bạn xoá file hoặc thư mục, các mục sẽ được lưu an toàn tại đây để khôi phục bất cứ lúc nào.</li>';
+      $('empty-trash').disabled = true;
+      return;
+    }
+
+    $('empty-trash').disabled = false;
+    $('trash-list').innerHTML = list.map((it) => {
+      const isFol = it.type === 'folder';
+      const countText = isFol ? ` (${(it.files || []).length} file)` : '';
+      const iconSvg = isFol
+        ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${FOLDER}</svg>`
+        : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`;
+      const timeStr = formatTime(it.deletedAt);
+      return `<li class="trash-item" data-id="${esc(it.id)}">
+        <div class="trash-main">
+          <div class="trash-t">${iconSvg} <span>${esc(isFol ? it.folder : it.name || it.file)}</span>${countText}</div>
+          <div class="trash-sub">Vị trí gốc: <code>content/${esc(it.folder)}${!isFol ? '/' + esc(it.realFile) : ''}</code></div>
+          <div class="trash-time">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>Thời gian xoá: ${esc(timeStr)}</span>
+          </div>
+        </div>
+        <div class="trash-acts">
+          <button class="btn primary" data-trash-act="restore" style="padding: 5px 12px; min-height: 32px; font-size: 12.5px;">Khôi phục</button>
+          <button class="btn danger" data-trash-act="delete" style="padding: 5px 10px; min-height: 32px; font-size: 12.5px;">Xoá hẳn</button>
+        </div>
+      </li>`;
+    }).join('');
+  } catch (e) {
+    $('trash-list').innerHTML = `<li class="none" style="border:none; color:var(--danger);">Lỗi tải thùng rác: ${esc(e.message)}</li>`;
+  }
+}
+
+$('trash-list').addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-trash-act]');
+  if (!btn) return;
+  const li = btn.closest('.trash-item');
+  const id = li?.dataset.id;
+  if (!id) return;
+
+  const act = btn.dataset.trashAct;
+  if (act === 'restore') {
+    await restoreTrashItem(id);
+    await renderTrashList();
+  } else if (act === 'delete') {
+    if (!confirm('Bạn có chắc muốn xoá vĩnh viễn mục này không? Thao tác này không thể hoàn tác!')) return;
+    try {
+      const res = await fetch('/api/delete-trash-item', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      const d = await res.json();
+      if (d.ok) {
+        toast('Đã xoá vĩnh viễn khỏi thùng rác');
+        await renderTrashList();
+      } else {
+        toast('Lỗi xoá: ' + (d.error || ''));
+      }
+    } catch (err) {
+      toast('Lỗi kết nối khi xoá');
+    }
+  }
+});
+
+$('empty-trash').onclick = async () => {
+  if (!confirm('Bạn có chắc chắn muốn dọn sạch toàn bộ thùng rác không? Tất cả các mục sẽ bị xoá vĩnh viễn và không thể khôi phục!')) return;
+  try {
+    const res = await fetch('/api/empty-trash', { method: 'POST' });
+    const d = await res.json();
+    if (d.ok) {
+      toast('Đã dọn sạch thùng rác');
+      await renderTrashList();
+    } else {
+      toast('Lỗi dọn thùng rác: ' + (d.error || ''));
+    }
+  } catch (e) {
+    toast('Lỗi kết nối khi dọn thùng rác');
+  }
+};
+
+async function restoreTrashItem(id) {
+  if (!isServer) return false;
+  try {
+    const res = await fetch('/api/restore-trash', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    });
+    const d = await res.json();
+    if (d.ok) {
+      const name = d.restored ? (d.restored.type === 'folder' ? `thư mục "${d.restored.folder}"` : `"${d.restored.file}"`) : 'mục';
+      toast(`Đã khôi phục thành công ${name}`);
+      await reloadData();
+      return true;
+    } else {
+      toast('Lỗi khôi phục: ' + (d.error || ''));
+      return false;
+    }
+  } catch (e) {
+    toast('Lỗi kết nối khi khôi phục');
+    return false;
+  }
+}
+
+async function reloadData() {
+  if (isServer) {
+    try {
+      const res = await fetch('/api/data');
+      const d = await res.json();
+      if (d && Array.isArray(d.items)) {
+        folders = d.folders;
+        items = d.items;
+      }
+    } catch (e) {}
+  }
+  savedSnapshot = getSnapshot();
+  phase = 'clean';
+  render();
+  updateTrashBadge();
+}
+
+/* ---------- Toast, theme & Init ---------- */
+let tt;
+function toast(msg, label, fn) {
+  $('tmsg').textContent = msg;
+  $('tact').hidden = !label; $('tact').textContent = label || ''; $('tact').onclick = () => { $('toast').hidden = true; fn(); };
+  $('toast').hidden = false; clearTimeout(tt); tt = setTimeout(() => ($('toast').hidden = true), label ? 7000 : 2600);
+}
+function setTheme(t) {
+  document.documentElement.dataset.theme = t;
+  $('theme').textContent = t === 'dark' ? 'Giao diện sáng' : 'Giao diện tối';
+  try { localStorage.setItem('theme', t); } catch (e) {}
+}
+$('theme').onclick = () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+setTheme(document.documentElement.dataset.theme);
+
+// Khởi tạo: nếu chạy qua server thì lấy dữ liệu thật từ ổ đĩa
+async function init() {
+  if (isServer) {
+    try {
+      const res = await fetch('/api/data');
+      const d = await res.json();
+      if (d && Array.isArray(d.items)) {
+        folders = d.folders;
+        items = d.items;
+      }
+      const gRes = await fetch('/api/git-status');
+      const gd = await gRes.json();
+      if (gd && gd.isClean) {
+        phase = 'clean';
+      }
+      updateTrashBadge();
+    } catch (e) {
+      console.warn('Không thể kết nối /api/data, dùng dữ liệu khởi tạo', e);
+    }
+  }
+  savedSnapshot = getSnapshot();
+  render();
+}
+init();
+</script>
+</body>
+</html>

@@ -6,7 +6,17 @@ Bỏ file `.html` vào `content/`, trang chủ tự liệt kê tất cả. Tri�
 
 Link Vercel production là **CÔNG KHAI với bất kỳ ai có link**. Đừng bỏ vào đây file chứa mật khẩu, khoá API, hay mã nguồn bài tập chưa muốn công khai. (Trang đã gửi header `noindex` để Google không lập chỉ mục, nhưng ai có link vẫn mở được.)
 
-## Thêm file
+## Quản lý bằng giao diện Web (Khuyên dùng)
+
+```bash
+npm run admin
+```
+
+- Mở trình duyệt tại `http://localhost:3030`.
+- Kéo thả file `.html` để thêm bài, sửa tên hiển thị trực tiếp, sắp xếp thứ tự hiển thị bằng nút lên/xuống, bật/tắt cờ **Ẩn** cho file nối.
+- Bấm **Build thử** để chạy `node scripts/build.mjs` và **Đẩy lên Vercel** để tự động git commit & push.
+
+## Thêm file thủ công (nếu không dùng web)
 
 - Chép file `.html` vào `content/`. Có thể tạo thư mục con (mỗi thư mục thành một nhóm trên trang chủ). Tên có dấu và khoảng trắng đều được.
 - Ảnh, css, js đi kèm cứ để cạnh file html, sẽ được chép sang nguyên cấu trúc.
