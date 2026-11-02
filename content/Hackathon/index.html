@@ -71,6 +71,7 @@ html.ph .mapfig.zin .h-z{display:inline}
 <h2>Thứ tự nên học</h2>
 <p class="cap">Xếp theo mức phụ thuộc: học trang trước thì trang sau dễ hiểu hơn. Các mục chia theo buổi họp nằm bên dưới.</p>
 <ul class="ls">
+<li><a href="LT01_DAG_DoThiCoHuong.html"><span class="n">0</span><span class="t">LT01 DAG: đồ thị có hướng, không chu trình</span><span class="d">Lý thuyết nền: định nghĩa, thuật ngữ, cây kỹ năng là DAG, topo và rút gọn.</span></a></li>
 <li><a href="2.1.7_KhongGianTriThuc_TienQuyet.html"><span class="n">1</span><span class="t">2.1.7 Không gian tri thức</span><span class="d">Nền của mọi thứ: DAG, trạng thái khả dĩ, Biên.</span></a></li>
 <li><a href="2.1.6_HocDongDang_ZPD.html"><span class="n">2</span><span class="t">2.1.6 Học đồng đẳng và ZPD</span><span class="d">Vì sao chỉ ghép nút thuộc Biên.</span></a></li>
 <li><a href="TT01_ThuatToanKahn.html"><span class="n">2a</span><span class="t">TT01 Thuật toán Kahn</span><span class="d">Xếp thứ tự học bằng bậc vào; phát hiện chu trình.</span></a></li>
@@ -100,6 +101,7 @@ html.ph .mapfig.zin .h-z{display:inline}
 
 <h2>Buổi 2 · T6 30/10 · đợt A</h2>
 <ul class="ls">
+<li><a href="LT01_DAG_DoThiCoHuong.html"><span class="n">LT01</span><span class="t">LT01 DAG: đồ thị có hướng, không chu trình</span><span class="d">Lý thuyết nền về DAG: định nghĩa, thuật ngữ, topo, rút gọn.</span></a></li>
 <li><a href="2.1.6_HocDongDang_ZPD.html"><span class="n">2.1.6</span><span class="t">Học đồng đẳng và ZPD</span><span class="d">Chỉ ghép nội dung vừa tầm, tức Biên của người học.</span></a></li>
 <li><a href="2.1.7_KhongGianTriThuc_TienQuyet.html"><span class="n">2.1.7</span><span class="t">Không gian tri thức</span><span class="d">Trạng thái khả dĩ do tiên quyết quy định; Biên là nút học tiếp ngay.</span></a></li>
 <li><a href="TT01_ThuatToanKahn.html"><span class="n">TT01</span><span class="t">Thuật toán Kahn</span><span class="d">Bậc vào, hàng đợi, phát hiện chu trình.</span></a></li>
@@ -136,6 +138,7 @@ html.ph .mapfig.zin .h-z{display:inline}
 (function () {
   var SUY = 'Vị trí và thứ tự áp dụng là suy luận, chưa đối chiếu mã nguồn.';
   var D = {
+    '0': ['LT01 DAG: đồ thị có hướng, không chu trình', 'LT01_DAG_DoThiCoHuong.html', 'MX1 · cây kỹ năng', 'Lý thuyết nền: DAG là gì, thuật ngữ, vì sao cây kỹ năng là DAG chứ không phải cây, và hai khái niệm đi kèm (sắp xếp topo, rút gọn bắc cầu).', 'Học trước 2.1.7. Khái niệm theo bài IBM về DAG; phần nối với Whybi là của đề tài.'],
     '1': ['2.1.7 Không gian tri thức', '2.1.7_KhongGianTriThuc_TienQuyet.html', 'MX1 · cây kỹ năng', 'Định nghĩa DAG và Biên (nút học tiếp được ngay). Là từ vựng nền: MX1 dựng cây, MX4 chỉ ghép nút thuộc Biên.', ''],
     '2': ['2.1.6 Học đồng đẳng và ZPD', '2.1.6_HocDongDang_ZPD.html', 'MX4 · ghép cặp', 'Lý do chỉ ghép nút thuộc Biên của người học (vừa tầm) và luật ai dạy ai học: Đạt của người dạy ∩ Biên của người học.', 'Học sớm (số 2) vì dùng chung khái niệm Biên với mục 1, nhưng dùng ở MX4.'],
     '2a': ['TT01 Thuật toán Kahn', 'TT01_ThuatToanKahn.html', 'MX1 · cây kỹ năng', 'Xếp thứ tự học hợp lệ bằng bậc vào và xếp tầng để vẽ cây. Nếu xếp thiếu nút thì đồ thị có chu trình.', SUY],
@@ -157,7 +160,7 @@ html.ph .mapfig.zin .h-z{display:inline}
     '14': ['Chương 4 Phân tích hệ thống', '4_PhanTichHeThong.html', 'Nền dùng chung', 'Nghiệp vụ, Use Case, hoạt động, tuần tự, trạng thái, lớp; 27 UC chia theo phân hệ.', '']
   };
   var G = [                       // [các mục, x đầu, y đầu, số cột, bước x, bước y]
-    [['1', '2a', '2b', '2c', '3'], 10, 54, 3, 62, 42],
+    [['0', '1', '2a', '2b', '2c', '3'], 10, 54, 3, 62, 42],
     [['4'], 353, 172, 1, 62, 42],
     [['2', '5a', '5b', '5c'], 570, 226, 3, 62, 42],
     [['6', '7', '8', '9', '10', '11', '12', '13', '14'], 10, 374, 9, 64, 42]

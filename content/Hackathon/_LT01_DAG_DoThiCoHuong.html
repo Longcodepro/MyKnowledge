@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LT01 DAG: đồ thị có hướng không chu trình</title>
+<link rel="stylesheet" href="assets/hoc.css">
+<script src="assets/hoc.js"></script>
+<script src="assets/phongto.js" defer></script>
+</head>
+<body>
+<header class="top"><a href="index.html">← Mục lục</a><button class="b" id="tg" type="button">Chế độ tối</button></header>
+<main class="wrap">
+<div class="head"><span class="no">LT01</span><div><h1>DAG: đồ thị có hướng, không chu trình</h1><p class="lede">Lý thuyết nền của cây kỹ năng: DAG là gì, vì sao hợp với quan hệ "học X trước Y", và ba khái niệm đi kèm.</p></div></div>
+
+<div class="nho"><ul>
+<li><mark>DAG</mark> = đồ thị mà mọi cạnh <b>có hướng</b> (một chiều) và <b>không có chu trình</b>: đi theo mũi tên từ bất kỳ nút nào, không bao giờ quay về chính nó.</li>
+<li>Hợp với quan hệ phụ thuộc và thứ tự: việc nào phải xong trước việc nào. Đó là lý do cây kỹ năng là một DAG.</li>
+<li>Có DAG thì mới có <mark>thứ tự topo</mark>; thêm một cạnh gây chu trình là mất thứ tự học hợp lệ.</li>
+<li><mark>Rút gọn bắc cầu</mark> bỏ cạnh thừa mà vẫn tới được những nút như cũ.</li>
+</ul></div>
+
+<h2>1. DAG là gì: hai tính chất</h2>
+<p>Hai chữ "có hướng" và "không chu trình" là hai điều kiện riêng, cả hai đều cần:</p>
+<div class="tw"><table>
+<thead><tr><th>Tính chất</th><th>Nghĩa</th><th>Nếu thiếu thì sao (cây kỹ năng)</th></tr></thead>
+<tbody>
+<tr><td><b>Có hướng</b></td><td>Mỗi cạnh là một mũi tên, chỉ đi một chiều</td><td class="c-bad">Mất "ai học trước": N1 – N2 không cho biết bạn phải học N1 trước hay N2 trước</td></tr>
+<tr><td><b>Không chu trình</b></td><td>Đi theo mũi tên không bao giờ quay về điểm xuất phát</td><td class="c-bad">Có vòng: N1 cần N5, N5 cần N1, không ai học được trước</td></tr>
+</tbody></table></div>
+<p>Bấm các nút để xem ba trạng thái của cùng một đồ thị tiên quyết.</p>
+<div class="fig">
+<div class="row" role="group" aria-label="Chọn trạng thái đồ thị">
+<button class="b" data-s="dag" aria-pressed="true" type="button">DAG hợp lệ</button>
+<button class="b" data-s="cyc" aria-pressed="false" type="button">Thêm N5 → N1</button>
+<button class="b" data-s="und" aria-pressed="false" type="button">Bỏ hướng</button>
+</div>
+<svg class="d" viewBox="0 0 760 360" role="img" aria-label="Đồ thị tiên quyết N1 đến N5 ở ba trạng thái">
+<defs>
+<marker id="m0" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--mut)"/></marker>
+<marker id="m1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--red)"/></marker>
+</defs>
+<g id="eg"></g><g id="ng"></g>
+</svg>
+<div class="msg" id="msg" aria-live="polite"></div>
+</div>
+
+<h2>2. Thành phần và thuật ngữ</h2>
+<div class="tw"><table>
+<thead><tr><th>Thuật ngữ</th><th>Nghĩa</th><th>Trong cây kỹ năng</th></tr></thead>
+<tbody>
+<tr><td>Nút (đỉnh)</td><td>Một đối tượng hay biến, vẽ bằng hình tròn hoặc hộp</td><td>Một khái niệm cần học (N1, N2…)</td></tr>
+<tr><td>Cạnh có hướng</td><td>Kết nối đi được theo một chiều, vẽ bằng mũi tên</td><td>X → Y: phải hiểu X trước khi học Y</td></tr>
+<tr><td>Đồ thị có hướng</td><td>Đồ thị chỉ gồm cạnh có hướng</td><td>Toàn bộ cây tiên quyết của một môn</td></tr>
+<tr><td>Đường đi có hướng</td><td>Dãy cạnh nối tiếp nhau theo đúng chiều mũi tên</td><td>N1 → N2 → N4: học N4 gián tiếp cần N1</td></tr>
+<tr><td>Nút gốc / nút cuối</td><td>Gốc: không mũi tên vào. Cuối: không mũi tên ra</td><td>N1 (không tiên quyết), N5 (không ai cần nó)</td></tr>
+</tbody></table></div>
+<p class="cap">"Gốc / nút cuối" là cách gọi thông dụng của lý thuyết đồ thị (bài IBM không định nghĩa); các dòng còn lại theo bài IBM.</p>
+
+<h2>3. Cây kỹ năng là DAG, không phải "cây" đúng nghĩa</h2>
+<p>Trong khoa học máy tính, một <b>cây</b> là DAG đặc biệt: mọi nút trừ gốc có <b>đúng một</b> cạnh đi vào. Cây kỹ năng của Whybi thì khác: N4 có hai tiên quyết (N2 và N3), tức hai cạnh đi vào, nên nó không phải cây mà là DAG tổng quát. Tên "cây" chỉ là cách gọi cho dễ hình dung. Hệ quả: một nút có thể được tới bằng nhiều đường, và có thể có cạnh thừa. Đó là lý do cần rút gọn bắc cầu.</p>
+
+<h2>4. Hai khái niệm project dùng</h2>
+<div class="tw"><table>
+<thead><tr><th>Khái niệm</th><th>Ý</th><th>Trên cây N1…N5</th></tr></thead>
+<tbody>
+<tr><td><b>Sắp xếp topo</b></td><td>Xếp các nút thành một hàng sao cho nút trỏ tới đứng <b>trước</b> nút bị trỏ tới. Chỉ làm được khi đồ thị là DAG, và thường có nhiều cách xếp</td><td>N1, N2, N3, N4, N5 hoặc N1, N3, N2, N4, N5 (đều hợp lệ)</td></tr>
+<tr><td><b>Rút gọn bắc cầu</b></td><td>Bỏ cạnh A → C khi đã có đường dài hơn A → … → C. Tới được cùng những nút như cũ nhưng ít cạnh nhất. Một DAG chỉ có một rút gọn duy nhất</td><td>Nếu giảng viên thêm N1 → N4 thì cạnh đó thừa (đã có N1 → N2 → N4), bị bỏ</td></tr>
+</tbody></table></div>
+<p>Topo cho biết <b>học theo thứ tự nào</b> (xếp tầng để vẽ cây, xem TT01 và TT02); rút gọn giữ cây <b>gọn mà không đổi thứ tự học</b> (TT03).</p>
+
+<h2>5. Trong Whybi: DAG được giữ như thế nào</h2>
+<div class="tw"><table>
+<thead><tr><th>Yêu cầu</th><th>Ở đâu</th></tr></thead>
+<tbody>
+<tr><td>BR-01: cạnh tiên quyết của một phiên bản cây phải tạo thành DAG, không chu trình, không cạnh tự trỏ</td><td>Đề cương 5.2.5</td></tr>
+<tr><td>Cơ sở dữ liệu: không trùng cạnh, không cạnh tự trỏ</td><td><code>models/tree.py:65-66</code>: <code>UniqueConstraint(version_id, from, to)</code>, <code>CheckConstraint(from &lt;&gt; to)</code></td></tr>
+<tr><td>Phát hiện chu trình, chỉ ra vòng</td><td><code>dag.py:26</code> <code>find_cycle</code> (xem TT02)</td></tr>
+<tr><td>Chặn một cạnh mới trước khi ghi</td><td><code>dag.py:35</code> <code>would_create_cycle</code></td></tr>
+<tr><td>Phá chu trình khi AI sinh cây</td><td><code>dag.py:57</code> <code>break_cycles</code>: bỏ cạnh AI yếu nhất</td></tr>
+<tr><td>Rút gọn bắc cầu, xếp tầng</td><td><code>dag.py:70</code> <code>transitive_reduction</code> (xem TT03), <code>dag.py:79</code> <code>layers</code> (xem TT01)</td></tr>
+<tr><td>Biên của SV</td><td><code>dag.py:95</code> <code>frontier</code>: nút chưa Đạt mà mọi tiên quyết đã Đạt</td></tr>
+</tbody></table></div>
+
+<h2>Dễ bị hỏi</h2>
+<details><summary>DAG khác cây ở điểm nào?</summary><p>Cây là DAG mà mỗi nút (trừ gốc) chỉ có một cạnh đi vào. DAG cho phép một nút có nhiều cạnh vào, như N4 có hai tiên quyết. Cây kỹ năng là DAG chứ không phải cây.</p></details>
+<details><summary>Vì sao không được có chu trình?</summary><p>Chu trình nghĩa là A cần B trước và B cần A trước: không có nút nào học đầu tiên được. Về mặt toán, một đồ thị có hướng chỉ xếp topo được khi nó không có chu trình.</p></details>
+<details><summary>Thứ tự topo có duy nhất không?</summary><p>Thường là không. Ở cây N1…N5, N2 và N3 không phụ thuộc nhau nên học trước hay sau đều được. Chỉ cần mọi tiên quyết đứng trước nút cần chúng.</p></details>
+<details><summary>Rút gọn bắc cầu có làm đổi thứ tự học không?</summary><p>Không. Cạnh bị bỏ chỉ lặp lại điều đã suy ra được qua đường dài hơn, nên tập nút tới được và các thứ tự topo hợp lệ giữ nguyên.</p></details>
+
+<p class="cap">Nguồn khái niệm (diễn đạt lại, chỉ lấy phần project dùng): <a href="https://www.ibm.com/think/topics/directed-acyclic-graph" rel="noopener">IBM, "What is a directed acyclic graph?"</a>. Các phần nối với Whybi (cây N1…N5, BR-01, mã nguồn) là của đề tài. Trang kế: TT01 Kahn, TT02 DFS ba màu, TT03 bỏ cạnh thừa.</p>
+</main>
+<script>
+var N = { N1: ['Biến & kiểu', 380, 16], N2: ['Mảng', 220, 112], N3: ['Con trỏ', 540, 112], N4: ['Danh sách LK', 380, 208], N5: ['Cây nhị phân', 380, 304] };
+var E = [['N1', 'N2'], ['N1', 'N3'], ['N2', 'N4'], ['N3', 'N4'], ['N4', 'N5']];
+var W = 150, H = 44;
+var ST = {
+  dag: { t: '<b>DAG hợp lệ.</b> Mọi mũi tên đi từ tiên quyết tới nút cần nó, đi theo mũi tên không bao giờ quay lại. Xếp topo được: N1, N2, N3, N4, N5.', bad: [], arrows: true, extra: false },
+  cyc: { t: '<b>Có chu trình.</b> Cạnh N5 → N1 nối đuôi N1 → N2 → N4 → N5 thành vòng: học N1 cần N5, mà N5 cần N1. Không còn thứ tự topo, không nút nào học trước được. Đây là cạnh hệ thống phải chặn (BR-01).', bad: ['N1', 'N2', 'N4', 'N5'], arrows: true, extra: true },
+  und: { t: '<b>Bỏ hướng.</b> Chỉ còn các đường nối: biết N1 và N2 liên quan nhau nhưng không biết học cái nào trước. Mất điều quan trọng nhất của quan hệ tiên quyết.', bad: [], arrows: false, extra: false }
+};
+function line(a, b, bad, arrows) {
+  var A = N[a], B = N[b], x1 = A[1], y1 = A[2] + H, x2 = B[1], y2 = B[2];
+  var dx = x2 - x1, dy = y2 - y1, L = Math.sqrt(dx * dx + dy * dy), t = (L - 4) / L;   // chừa chỗ cho đầu mũi tên
+  return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + (x1 + dx * (arrows ? t : 1)).toFixed(1) + '" y2="' + (y1 + dy * (arrows ? t : 1)).toFixed(1) + '" stroke="' + (bad ? 'var(--red)' : 'var(--mut)') + '" stroke-width="2.5"' + (arrows ? ' marker-end="url(#m' + (bad ? 1 : 0) + ')"' : '') + '/>';
+}
+function draw(k) {
+  var s = ST[k], e = '', n = '';
+  E.forEach(function (x) { e += line(x[0], x[1], s.bad.indexOf(x[0]) >= 0 && s.bad.indexOf(x[1]) >= 0, s.arrows); });
+  if (s.extra) e += '<path d="M455 326 C 690 326 690 38 455 38" fill="none" stroke="var(--red)" stroke-width="3" stroke-dasharray="8 4" marker-end="url(#m1)"/><text x="660" y="184" style="fill:var(--red)">N5 → N1</text>';
+  Object.keys(N).forEach(function (id) {
+    var v = N[id];
+    n += '<g class="nd' + (s.bad.indexOf(id) >= 0 ? ' bad' : '') + '"><rect x="' + (v[1] - W / 2) + '" y="' + v[2] + '" width="' + W + '" height="' + H + '" rx="3"/><text x="' + v[1] + '" y="' + (v[2] + 27) + '" text-anchor="middle">' + id + ' ' + v[0] + '</text></g>';
+  });
+  document.getElementById('eg').innerHTML = e; document.getElementById('ng').innerHTML = n;
+  document.getElementById('msg').innerHTML = s.t;
+  document.querySelectorAll('[data-s]').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.s === k); });
+}
+document.querySelectorAll('[data-s]').forEach(function (b) { b.onclick = function () { draw(b.dataset.s); }; });
+draw('dag');
+</script>
+</body>
+</html>

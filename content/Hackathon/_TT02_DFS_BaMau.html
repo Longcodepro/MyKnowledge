@@ -89,6 +89,39 @@
 <details><summary>Kahn và DFS, nên dùng cái nào?</summary><p>Cả hai O(V + E). Kahn đơn giản, không cần đệ quy, nhưng chỉ cho biết "có chu trình". DFS ba màu chỉ ra chính vòng đó, nên hợp để chặn cạnh khi giảng viên thêm. Mình nghĩ lý do hợp lý là dùng DFS cho việc chặn và Kahn (hoặc bản theo tầng) cho việc xếp; phần này là suy luận của mình, chưa đối chiếu mã nguồn dự án.</p></details>
 <details><summary>Đệ quy sâu có bị tràn không?</summary><p>Với cây vài trăm nút thì không. Nếu cây rất sâu, đệ quy trong Python có giới hạn độ sâu mặc định (khoảng 1000), khi đó viết DFS bằng ngăn xếp tự quản lý.</p></details>
 <details><summary>Có phải mọi DFS đều cần ba màu?</summary><p>Không. Muốn chỉ đi qua mọi nút thì hai màu đủ. Ba màu chỉ cần khi phải biết "nút này còn nằm trên đường hay đã xong", tức khi dò chu trình hoặc xếp topo trên đồ thị có hướng.</p></details>
+<h2>So sánh với các thuật toán khác trong Whybi</h2>
+<p>Bài toán thật của project có hai chỗ cần biết "có chu trình không": mỗi lần giảng viên thêm một cạnh tiên quyết (UC07, cây tối đa 200 nút, phải trả lời dưới 200 ms) và khi làm sạch cây AI vừa sinh (đề cương 6.1.4). Phần này đặt DFS cạnh bốn cách khác. Cây kỹ năng thực tế thưa: số cạnh E cỡ <b>2 lần</b> số nút V.</p>
+
+<h3>Hình 1. Số bước theo lý thuyết, cây có V nút và E = 2V</h3>
+<div class="fig" id="c1"></div>
+<p class="cap">Trục dọc là thang log (mỗi vạch gấp 10 lần). Đường xanh dương (DFS, Kahn, BFS) thấp nhất: ở 200 nút chỉ cỡ 600 bước. Floyd–Warshall cao hơn hơn 10 nghìn lần (8 triệu bước). Đường đỏ "quên đánh dấu" vượt 10¹² từ khoảng 80 nút và ở 200 nút là cỡ 10³⁰, ra khỏi khung hình.</p>
+
+<div class="tw"><table>
+<thead><tr><th>Cách</th><th>Độ phức tạp</th><th>Đặc điểm</th><th>Trong Whybi</th></tr></thead>
+<tbody>
+<tr><td><b>DFS ba màu</b></td><td>O(V + E)</td><td>Chỉ ra chính vòng chu trình</td><td class="c-ok">Dùng: <code>find_cycle</code> (<code>dag.py:26</code>), báo <code>CYCLE_DETECTED</code> kèm đường vòng</td></tr>
+<tr><td><b>Kahn</b></td><td>O(V + E)</td><td>Rất nhanh, chỉ trả lời có / không</td><td class="c-ok">Dùng để xếp tầng: <code>layers</code> (<code>dag.py:79</code>)</td></tr>
+<tr><td><b>BFS từ nút đích</b> (kiểm một cạnh mới)</td><td>O(V + E), thường nhỏ hơn nhiều</td><td>Không cần duyệt cả cây, chỉ hỏi "có đường <code>to</code> → <code>from</code> không"</td><td class="c-ok">Dùng: <code>would_create_cycle</code> (<code>dag.py:35</code>)</td></tr>
+<tr><td>Floyd–Warshall (bao đóng bắc cầu)</td><td>O(V³)</td><td>Biết mọi cặp nút tới được nhau, thừa cho việc chỉ hỏi chu trình</td><td class="c-lk">Không dùng</td></tr>
+<tr><td>Thử mọi đường, quên đánh dấu đã thăm</td><td>Mũ: 2<sup>(V−1)/2</sup> ở xấu nhất</td><td>Đúng lỗi "hai màu" ở Bước 2 khi cây có nhiều lối tới cùng một nút</td><td class="c-lk">Không dùng</td></tr>
+</tbody></table></div>
+
+<h3>Hình 2. Đo thật bằng code của project</h3>
+<p>Chạy trên cây ngẫu nhiên có E ≈ 2V, kích thước từ 25 tới 800 nút, mỗi điểm là lần chạy nhanh nhất trong nhiều lần. "Hai chuỗi dài" là trường hợp xấu nhất khi kiểm một cạnh: hai chuỗi tiên quyết rời nhau, BFS phải đi hết từng chuỗi.</p>
+<div class="fig" id="c2"></div>
+<p class="cap">Thang log cả hai trục dọc; vạch ngang đỏ là giới hạn 200 ms của UC07, vạch dọc là cây tối đa 200 nút. Floyd–Warshall chỉ đo tới 300 nút vì sau đó quá chậm với Python thuần.</p>
+
+<details><summary>Bảng số đã đo (ms)</summary><div class="tw"><table id="c2t"></table></div></details>
+
+<h3>Đọc kết quả</h3>
+<ul>
+<li><b>Ba cách O(V + E) khác nhau về hằng số, không khác về hướng đi.</b> Ở 200 nút, DFS khoảng 0,5 ms, Kahn khoảng 0,07 ms (nhanh cỡ 7 lần), kiểm một cạnh bằng BFS vài phần nghìn đến 0,03 ms. Nhân đôi V từ 100 lên 200 thì DFS chỉ chậm khoảng 1,9 lần.</li>
+<li><b>Floyd–Warshall vẫn lọt dưới 200 ms ở 200 nút</b> (khoảng 11 ms), nhưng nhân đôi V từ 100 lên 200 thì chậm khoảng 5 lần (2,1 → 10,8 ms) và đã tới 32 ms ở 300 nút. Cây lớn gấp vài lần là hết biên an toàn. Với O(V + E), cây 800 nút vẫn dưới 3 ms.</li>
+<li><b>Vì sao project vẫn chọn DFS khi Kahn nhanh hơn?</b> Chặn cạnh cần nói được "vòng nào" để báo cho giảng viên; Kahn chỉ biết có / không. Chênh 0,5 ms so với 0,07 ms không đáng kể ở cỡ cây này.</li>
+<li><b>Lỗi đắt nhất là lỗi thuật toán, không phải lỗi hằng số:</b> quên phân biệt xám / đen thì có thể đi lại cùng một nút theo cấp số nhân.</li>
+</ul>
+<p class="cap">Số đo trên máy của mình (Python 3.13, NetworkX), chỉ để so tương đối giữa các cách; máy khác sẽ ra số khác. "DFS" ở đây là <code>find_cycle</code> của NetworkX (duyệt sâu theo cạnh), không phải bản ba màu viết tay ở các bước trên.</p>
+
 <p class="cap">Trang kế: TT03, bỏ cạnh thừa: dùng chính DFS ở trang này để biết một mũi tên có thừa không.</p>
 </main>
 <script>
@@ -141,6 +174,76 @@ ttStepper('d1', N, BASE, f1, { vb: [760, 360], cols: cols, rowLabel: 'Sự kiệ
 var fin = f1[f1.length - 1].row[names.length].split(', ');
 $('#d1x').innerHTML = 'Khi DFS xong: thứ tự xong là <b>' + fin.join(', ') + '</b>; đảo ngược được thứ tự học <b>' + fin.slice().reverse().join(' → ') + '</b>.';
 ttStepper('d2', N, BASE.concat([['N5', 'N1', 'cong']]), dfsFrames(BASE.concat([['N5', 'N1', 'cong']])), { vb: [760, 360], cols: cols, rowLabel: 'Sự kiện', cap: 'Mũi tên N5 → N1 vẽ cong bên phải; nút đỏ là các nút của chu trình.' });
+</script>
+<script>
+/* Biểu đồ đường, trục dọc log. o: { x:[min,max], xt:[vạch x], y:[số mũ min, số mũ max], yl:fn(số mũ)→nhãn, series:[{n,c,d,m,p:[[x,y]]}], vl:[[x,nhãn]], hl:[[y,nhãn]], xlab } */
+function lineChart(id, o) {
+  var W = 760, H = 360, L = 66, R = 175, T = 14, B = 50, pw = W - L - R, ph = H - T - B, s = '';
+  function X(v) { return L + (v - o.x[0]) / (o.x[1] - o.x[0]) * pw; }
+  function Y(v) { return T + ph - (Math.log10(v) - o.y[0]) / (o.y[1] - o.y[0]) * ph; }
+  function mk(m, x, y, c) {
+    var a = 'fill="var(--paper)" stroke="' + c + '" stroke-width="2"';
+    return m === 0 ? '<circle cx="' + x + '" cy="' + y + '" r="4" ' + a + '/>' :
+      m === 1 ? '<rect x="' + (x - 4) + '" y="' + (y - 4) + '" width="8" height="8" ' + a + '/>' :
+      m === 2 ? '<path d="M' + x + ' ' + (y - 5) + 'L' + (x + 5) + ' ' + (y + 4) + 'L' + (x - 5) + ' ' + (y + 4) + 'Z" ' + a + '/>' :
+      m === 3 ? '<path d="M' + x + ' ' + (y - 5) + 'L' + (x + 5) + ' ' + y + 'L' + x + ' ' + (y + 5) + 'L' + (x - 5) + ' ' + y + 'Z" ' + a + '/>' :
+      '<path d="M' + (x - 4) + ' ' + (y - 4) + 'L' + (x + 4) + ' ' + (y + 4) + 'M' + (x + 4) + ' ' + (y - 4) + 'L' + (x - 4) + ' ' + (y + 4) + '" stroke="' + c + '" stroke-width="2.4"/>';
+  }
+  for (var k = o.y[0]; k <= o.y[1]; k++) {
+    var y = Y(Math.pow(10, k));
+    s += '<line x1="' + L + '" x2="' + (L + pw) + '" y1="' + y + '" y2="' + y + '" stroke="var(--rule)"/><text class="sm" x="' + (L - 8) + '" y="' + (y + 4) + '" text-anchor="end">' + o.yl(k) + '</text>';
+  }
+  o.xt.forEach(function (v) { s += '<line x1="' + X(v) + '" x2="' + X(v) + '" y1="' + (T + ph) + '" y2="' + (T + ph + 5) + '" stroke="var(--mut)"/><text class="sm" x="' + X(v) + '" y="' + (T + ph + 20) + '" text-anchor="middle">' + v + '</text>'; });
+  s += '<line x1="' + L + '" x2="' + (L + pw) + '" y1="' + (T + ph) + '" y2="' + (T + ph) + '" stroke="var(--ink)" stroke-width="1.5"/><line x1="' + L + '" x2="' + L + '" y1="' + T + '" y2="' + (T + ph) + '" stroke="var(--ink)" stroke-width="1.5"/>';
+  s += '<text class="sm" x="' + (L + pw / 2) + '" y="' + (H - 6) + '" text-anchor="middle">' + o.xlab + '</text>';
+  (o.vl || []).forEach(function (v) { s += '<line x1="' + X(v[0]) + '" x2="' + X(v[0]) + '" y1="' + T + '" y2="' + (T + ph) + '" stroke="var(--mut)" stroke-dasharray="3 4"/><text class="sm" x="' + (X(v[0]) + 4) + '" y="' + (T + 12) + '">' + v[1] + '</text>'; });
+  (o.hl || []).forEach(function (h) { s += '<line x1="' + L + '" x2="' + (L + pw) + '" y1="' + Y(h[0]) + '" y2="' + Y(h[0]) + '" stroke="var(--red)" stroke-width="1.8" stroke-dasharray="8 4"/><text class="sm" x="' + (L + pw - 4) + '" y="' + (Y(h[0]) - 5) + '" text-anchor="end" style="fill:var(--red)">' + h[1] + '</text>'; });
+  o.series.forEach(function (r) {
+    var d = r.p.map(function (q, i) { return (i ? 'L' : 'M') + X(q[0]).toFixed(1) + ' ' + Y(q[1]).toFixed(1); }).join('');
+    s += '<path d="' + d + '" fill="none" stroke="' + r.c + '" stroke-width="2.4"' + (r.d ? ' stroke-dasharray="' + r.d + '"' : '') + '/>';
+    if (o.marks) r.p.forEach(function (q) { s += mk(r.m, X(q[0]).toFixed(1), Y(q[1]).toFixed(1), r.c); });
+    var e = r.p[r.p.length - 1];
+    s += (r.up ? '<text x="' + (X(e[0]) + 7) + '" y="' + (Y(e[1]) + 4) + '" style="fill:' + r.c + '">↑ ' + r.n + '</text>' : '<text x="' + (X(e[0]) + 8) + '" y="' + (Y(e[1]) + 4) + '" style="fill:' + r.c + '">' + r.n + '</text>');
+  });
+  document.getElementById(id).innerHTML = '<svg class="d" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + o.alt + '">' + s + '</svg>';
+}
+var SUP = '⁰¹²³⁴⁵⁶⁷⁸⁹';
+function pw10(k) { return '10' + String(k).split('').map(function (c) { return c === '-' ? '⁻' : SUP[+c]; }).join(''); }
+/* Hình 1: đếm bước, E = 2V, V từ 5 tới 200 */
+var th = function (f, cap) { var p = []; for (var v = 5; v <= 200; v += 5) { var y = f(v); if (y > cap) { var x0 = p.length ? p[p.length - 1] : null; break; } p.push([v, y]); } return p; };
+var expo = []; for (var v = 5; v <= 80; v += 5) expo.push([v, Math.pow(2, (v - 1) / 2)]); expo.push([80.8, 1e12]);
+lineChart('c1', {
+  x: [0, 200], xt: [0, 50, 100, 150, 200], y: [0, 12], yl: function (k) { return pw10(k); }, xlab: 'Số nút V (cây tối đa 200 nút)',
+  vl: [[200, '']], alt: 'Số bước theo V: DFS, Kahn, BFS tăng tuyến tính; V nhân V và V mũ ba tăng nhanh hơn; thử mọi đường quên đánh dấu tăng theo hàm mũ và vượt 10 mũ 12 từ khoảng 80 nút.',
+  series: [
+    { n: 'DFS = Kahn = BFS: V+E', c: 'var(--blue)', p: th(function (v) { return 3 * v; }, 1e13) },
+    { n: 'DFS từ mọi nút: V·(V+E)', c: 'var(--ok)', d: '8 4', p: th(function (v) { return 3 * v * v; }, 1e13) },
+    { n: 'Floyd–Warshall: V³', c: 'var(--ink)', d: '2 3', p: th(function (v) { return v * v * v; }, 1e13) },
+    { n: 'quên đánh dấu: 2^((V−1)/2)', c: 'var(--red)', d: '10 3 2 3', p: expo, up: true }
+  ]
+});
+/* Hình 2: đo thật (ms) */
+var BM = {"V": [25, 50, 100, 150, 200, 300, 400, 600, 800], "dfs": [0.0673, 0.1329, 0.2858, 0.4179, 0.5412, 0.8244, 1.1556, 1.735, 2.3743], "kahn": [0.0111, 0.0196, 0.0389, 0.0575, 0.0745, 0.1159, 0.1587, 0.2475, 0.3471], "bfs1": [0.0037, 0.0034, 0.0099, 0.0121, 0.0042, 0.0191, 0.0131, 0.0095, 0.0103], "bfs1w": [0.0052, 0.0081, 0.0151, 0.0205, 0.0269, 0.0403, 0.0526, 0.078, 0.1065], "fw": [0.0772, 0.3991, 2.0804, 5.223, 10.7731, 31.3515, null, null, null], "E": [48, 96, 192, 298, 402, 610, 816, 1198, 1600]};
+function pts(a) { var p = []; BM.V.forEach(function (v, i) { if (a[i] != null) p.push([v, a[i]]); }); return p; }
+lineChart('c2', {
+  x: [0, 800], xt: [0, 100, 200, 300, 400, 600, 800], y: [-3, 3], marks: true, xlab: 'Số nút V (E ≈ 2V)',
+  yl: function (k) { return k < -2 ? '1 µs' : k === -2 ? '10 µs' : k === -1 ? '100 µs' : k === 0 ? '1 ms' : k === 1 ? '10 ms' : k === 2 ? '100 ms' : '1 s'; },
+  vl: [[200, 'cây tối đa 200 nút']], hl: [[200, 'giới hạn UC07: 200 ms']],
+  alt: 'Thời gian đo thật theo số nút: Floyd–Warshall tăng nhanh, đạt 32 ms ở 300 nút; DFS, Kahn và kiểm một cạnh bằng BFS đều dưới 3 ms ở 800 nút.',
+  series: [
+    { n: 'Floyd–Warshall', c: 'var(--ink)', d: '2 3', m: 2, p: pts(BM.fw) },
+    { n: 'DFS (find_cycle)', c: 'var(--blue)', m: 0, p: pts(BM.dfs) },
+    { n: 'Kahn (topo)', c: 'var(--ok)', d: '8 4', m: 1, p: pts(BM.kahn) },
+    { n: 'BFS 1 cạnh: hai chuỗi dài', c: 'var(--red)', d: '10 3 2 3', m: 3, p: pts(BM.bfs1w) },
+    { n: 'BFS 1 cạnh: ngẫu nhiên', c: 'var(--mut)', d: '3 3', m: 4, p: pts(BM.bfs1) }
+  ]
+});
+(function () {
+  var f = function (x) { return x == null ? '–' : x < 0.1 ? x.toFixed(3).replace('.', ',') : x < 10 ? x.toFixed(2).replace('.', ',') : x.toFixed(1).replace('.', ','); };
+  var h = '<tr><th>V</th><th>E</th><th>DFS</th><th>Kahn</th><th>BFS 1 cạnh (hai chuỗi dài)</th><th>BFS 1 cạnh (ngẫu nhiên)</th><th>Floyd–Warshall</th></tr>';
+  BM.V.forEach(function (v, i) { h += '<tr><td>' + v + '</td><td>' + BM.E[i] + '</td><td>' + f(BM.dfs[i]) + '</td><td>' + f(BM.kahn[i]) + '</td><td>' + f(BM.bfs1w[i]) + '</td><td>' + f(BM.bfs1[i]) + '</td><td>' + f(BM.fw[i]) + '</td></tr>'; });
+  document.getElementById('c2t').innerHTML = h;
+})();
 </script>
 </body>
 </html>
