@@ -6,7 +6,6 @@
 <title>2.1.6 Học đồng đẳng và ZPD</title>
 <link rel="stylesheet" href="assets/hoc.css">
 <script src="assets/hoc.js"></script>
-<script src="assets/phongto.js" defer></script>
 <style>
 .zone{display:flex;height:44px;border:1.5px solid var(--ink)}
 .zone div{display:flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:650;text-align:center;padding:0 4px}
@@ -48,74 +47,8 @@ input[type=range]{width:100%;margin:8px 0;accent-color:var(--blue)}
 <tr><td>Quá khó</td><td>Khóa (thiếu tiên quyết)</td><td>Không</td></tr>
 </tbody></table></div>
 
-<h2>Ví dụ: cùng một nút, ba bạn ở ba vùng</h2>
-<p>Cây mẫu: N1 → N2, N3 → N4 → N5 (N4 cần cả N2 và N3). Vùng của một nút là <mark>tương đối theo từng người học</mark>, không phải nhãn cố định của nút. Ba bạn dưới đây là ví dụ minh họa do người soạn tự dựng.</p>
-<div class="tw"><table>
-<thead><tr><th>Bạn</th><th>Đã Đạt</th><th>Biên (= ZPD)</th><th>Nút N4 với bạn này là</th></tr></thead>
-<tbody>
-<tr><td>Bình</td><td>{N1}</td><td>{N2, N3}</td><td class="c-bad">🔒 Quá khó: N4 còn Khóa vì thiếu N2 và N3</td></tr>
-<tr><td>An</td><td>{N1, N2, N3}</td><td>{N4}</td><td class="c-fr">◎ ZPD: đủ tiên quyết, chưa Đạt N4</td></tr>
-<tr><td>Dũng</td><td>{N1, N2, N3, N4}</td><td>{N5}</td><td class="c-ok">✓ Tự làm được: đã Đạt N4</td></tr>
-</tbody></table></div>
-
-<h3>Xem trên cây</h3>
-<div class="fig">
-<div class="row" id="stu" role="group" aria-label="Chọn bạn để xem cây"></div>
-<svg class="d" viewBox="0 0 720 360" role="img" aria-label="Cây kỹ năng tô theo từng bạn">
-<defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--mut)"/></marker></defs>
-<g id="ed2"></g><g id="nd2"></g>
-</svg>
-<p class="cap">✓ Tự làm được (đã Đạt) · ◎ ZPD (Biên) · 🔒 Quá khó (Khóa). Bấm tên từng bạn để đổi cách tô; hãy nhìn nút N4.</p>
-<div class="msg" id="msg2" aria-live="polite"></div>
-</div>
-
-<h2>Ai dạy, ai học: hai điều kiện khác nhau</h2>
-<p>Khi An dạy Bình một nút X, hai bạn có hai vai khác nhau:</p>
-<div class="tw"><table>
-<thead><tr><th>Vai</th><th>Điều kiện với nút X</th><th>Vì sao</th></tr></thead>
-<tbody>
-<tr><td>Người dạy</td><td class="c-ok">✓ X nằm trong tập <b>Đạt</b> của người dạy</td><td>Phải biết rồi mới dạy được</td></tr>
-<tr><td>Người học</td><td class="c-fr">◎ X nằm trong <b>Biên</b> của người học</td><td>Đủ tiên quyết nên theo kịp, chưa Đạt nên còn cần học</td></tr>
-</tbody></table></div>
-<p>Một nút không thể vừa Đạt vừa nằm trong Biên của cùng một người, nên người dạy luôn là người đã Đạt, không phải người "chưa Đạt mà đi dạy".</p>
-
-<h3>Ví dụ: hai bạn dạy chéo nhau</h3>
-<p>Cùng cây N1 → N2, N3 → N4 ở trên, nhưng đây là <mark>hai bạn khác</mark> (Hà và Khoa, không phải Bình và An ở bảng trước). Số liệu minh họa do người soạn tự dựng.</p>
-<div class="tw"><table>
-<thead><tr><th>Bạn</th><th>Đã Đạt</th><th>Biên (cần học)</th></tr></thead>
-<tbody>
-<tr><td>Hà</td><td>{N1, N2}</td><td>{N3}</td></tr>
-<tr><td>Khoa</td><td>{N1, N3}</td><td>{N2}</td></tr>
-</tbody></table></div>
-<div class="tw"><table>
-<thead><tr><th>Chiều dạy</th><th>Phép tính</th><th>Kết quả</th></tr></thead>
-<tbody>
-<tr><td>Hà dạy Khoa</td><td>Đạt(Hà) ∩ Biên(Khoa) = {N1, N2} ∩ {N2}</td><td class="c-ok">✓ N2</td></tr>
-<tr><td>Khoa dạy Hà</td><td>Đạt(Khoa) ∩ Biên(Hà) = {N1, N3} ∩ {N3}</td><td class="c-ok">✓ N3</td></tr>
-</tbody></table></div>
-<p class="cap">Mỗi bạn vừa dạy một nút mình biết, vừa học một nút mình thiếu. Đó là "bù trừ".</p>
-
-<h3>Ví dụ sai: dạy ngược chiều</h3>
-<div class="tw"><table>
-<thead><tr><th>Cặp</th><th>Lỗi</th><th>Vì sao sai</th></tr></thead>
-<tbody>
-<tr><td class="c-bad">✗ An {N1,N2,N3} nhờ Bình {N1} dạy N4</td><td>Người dạy chưa Đạt N4 (Bình còn Khóa N4)</td><td>Bình không có gì để dạy An</td></tr>
-<tr><td class="c-bad">✗ Dũng {N1..N4} học N4 từ An</td><td>Người học đã Đạt N4</td><td>N4 không còn trong Biên của Dũng, không cần học</td></tr>
-<tr><td class="c-ok">✓ Dũng dạy An N4</td><td>Dũng Đạt N4, N4 ở Biên của An</td><td>Đúng chiều</td></tr>
-</tbody></table></div>
-
-<h2>Vì sao tính độ khó dựa trên Biên và trạng thái?</h2>
-<p><mark>Độ khó là tương đối theo từng người</mark>: N4 là Quá khó với Bình, vừa tầm với An, quá dễ với Dũng. Vậy nên không thể gắn một nhãn "dễ" hay "khó" cố định lên nút. Cần một thứ phụ thuộc vào người học, và trạng thái (tập nút đã Đạt) của người đó chính là thứ ấy.</p>
-<div class="tw"><table>
-<thead><tr><th>Cách đo độ khó</th><th>Ưu</th><th>Nhược</th></tr></thead>
-<tbody>
-<tr><td>Nhãn cố định trên nút</td><td>Dễ làm</td><td class="c-bad">✗ Cùng nhãn nhưng mỗi bạn thấy khó khác nhau</td></tr>
-<tr><td>Biên (tính từ cây tiên quyết và trạng thái)</td><td class="c-ok">✓ Tính tự động, đúng theo từng người, không cần thêm dữ liệu</td><td>Chỉ là xấp xỉ, xem lưu ý dưới</td></tr>
-</tbody></table></div>
-<div class="luu-y"><p><b>Giới hạn cần nói thẳng:</b> Biên chỉ cho biết bạn <b>đủ tiên quyết</b>, chưa đo được nút đó khó thật sự bao nhiêu. Hai nút cùng ở Biên của An có thể khó rất khác nhau, và đề cương không ghi cách đo độ khó. Giám khảo có thể hỏi điểm này: câu trả lời trung thực là Biên là phép xấp xỉ rẻ cho ZPD, chưa phải phép đo.</p></div>
-
 <h2>Dễ bị hỏi</h2>
-<details><summary>Vì sao chỉ ghép nút thuộc Biên?</summary><p>Xét theo <b>người học</b>: nút ngoài Biên của họ hoặc là đã Đạt (không cần học), hoặc là Khóa vì thiếu tiên quyết (quá khó). Chỉ nút ở Biên mới vừa tầm để họ học. Còn <b>người dạy</b> phải là người đã Đạt nút đó.</p></details>
+<details><summary>Vì sao chỉ ghép nút thuộc Biên?</summary><p>Nút ngoài Biên hoặc là đã biết, hoặc là quá khó vì còn thiếu tiên quyết. Chỉ nút ở Biên mới "vừa tầm" để bạn dạy được.</p></details>
 <details><summary>Học đồng đẳng lợi gì cho người dạy?</summary><p>Phải giải thích lại cho bạn nên người dạy hiểu sâu hơn. Đây cũng là tinh thần của cả nền tảng: sinh viên làm thầy.</p></details>
 </main>
 <script>
@@ -130,39 +63,6 @@ function upd() {
 }
 $('#lv').addEventListener('input', upd);
 upd();
-
-/* Cây ví dụ: ba bạn, tô nút theo vùng (Đạt / Biên = ZPD / Khóa) */
-var TN = { N1: ['Biến & kiểu', 360, 16], N2: ['Mảng', 190, 112], N3: ['Con trỏ', 530, 112], N4: ['Danh sách LK', 360, 208], N5: ['Cây nhị phân', 360, 304] };
-var TE = [['N1', 'N2'], ['N1', 'N3'], ['N2', 'N4'], ['N3', 'N4'], ['N4', 'N5']];
-var STU = { 'Bình': ['N1'], 'An': ['N1', 'N2', 'N3'], 'Dũng': ['N1', 'N2', 'N3', 'N4'] };
-var ZN = { ok: '✓ Tự làm được', fr: '◎ ZPD', lk: '🔒 Quá khó' };
-var who = 'An', TW = 150, TH = 44;
-function pre2(n) { return TE.filter(function (e) { return e[1] === n; }).map(function (e) { return e[0]; }); }
-function zone(n) {
-  var d = STU[who];
-  return d.indexOf(n) >= 0 ? 'ok' : pre2(n).every(function (p) { return d.indexOf(p) >= 0; }) ? 'fr' : 'lk';
-}
-function draw2() {
-  $('#stu').innerHTML = Object.keys(STU).map(function (s) {
-    return '<button class="b" type="button" aria-pressed="' + (s === who) + '" data-s="' + s + '">' + s + '</button>';
-  }).join('');
-  $$('#stu button').forEach(function (b) { b.onclick = function () { who = b.dataset.s; draw2(); }; });
-  $('#ed2').innerHTML = TE.map(function (e) {
-    var a = TN[e[0]], b = TN[e[1]];
-    return '<line class="ed" x1="' + a[1] + '" y1="' + (a[2] + TH) + '" x2="' + b[1] + '" y2="' + (b[2] - 4) + '" marker-end="url(#ar2)"/>';
-  }).join('');
-  $('#nd2').innerHTML = Object.keys(TN).map(function (n) {
-    var z = zone(n), d = TN[n];
-    return '<g class="nd ' + z + '"><rect x="' + (d[1] - TW / 2) + '" y="' + d[2] + '" width="' + TW + '" height="' + TH + '" rx="2"/>' +
-      '<text x="' + d[1] + '" y="' + (d[2] + 19) + '" text-anchor="middle">' + n + ' · ' + d[0] + '</text>' +
-      '<text class="sm" x="' + d[1] + '" y="' + (d[2] + 35) + '" text-anchor="middle">' + ZN[z] + '</text></g>';
-  }).join('');
-  var fr = Object.keys(TN).filter(function (n) { return zone(n) === 'fr'; });
-  $('#msg2').innerHTML = '<b>' + who + '</b> đã Đạt {' + STU[who].join(', ') + '}. ZPD (Biên) của ' + who + ' = <b>{' + fr.join(', ') + '}</b>.<br>' +
-    'Nút <b>N4</b> với ' + who + ': <b>' + ZN[zone('N4')] + '</b>' +
-    (zone('N4') === 'lk' ? ' (thiếu ' + pre2('N4').filter(function (p) { return STU[who].indexOf(p) < 0; }).join(', ') + ').' : zone('N4') === 'fr' ? ' (đủ tiên quyết, chưa Đạt).' : ' (đã Đạt).');
-}
-draw2();
 </script>
 </body>
 </html>

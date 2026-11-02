@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>2.2.6 Chọn cặp cho cả lớp</title>
+<title>2.2.6 Ghép cặp trọng số cực đại</title>
 <link rel="stylesheet" href="assets/hoc.css">
 <script src="assets/hoc.js"></script>
 <style>
@@ -21,56 +21,209 @@
 <body>
 <header class="top"><a href="index.html">← Mục lục</a><button class="b" id="tg" type="button">Chế độ tối</button></header>
 <main class="wrap">
-<div class="head"><span class="no">2.2.6</span><div><h1>Chọn cặp cho cả lớp: tham lam và Blossom</h1><p class="lede">Phần 3 của mục 2.2.6: có điểm w của mọi cặp rồi, chọn các cặp không chung người sao cho tổng điểm lớn nhất.</p></div></div>
+<div class="head"><span class="no">2.2.6</span><div><h1>Ghép cặp trọng số cực đại</h1><p class="lede">Chọn các cặp không chung người sao cho tổng điểm bù trừ lớn nhất.</p></div></div>
 
 <div class="nho"><ul>
 <li>Cho đồ thị vô hướng có trọng số, tìm tập cạnh <mark>không chung đỉnh</mark> có tổng trọng số lớn nhất.</li>
 <li>Thuật toán <mark>Blossom</mark> của Edmonds giải trên đồ thị tổng quát, độ phức tạp O(V³), có sẵn trong NetworkX (<code>max_weight_matching</code>).</li>
-<li>Trong hệ thống: đỉnh là SV, cạnh là hai bạn bù cho nhau, trọng số là w(a, b) (cách tính ở trang phần 1).</li>
+<li>Trong hệ thống: đỉnh là SV, cạnh là hai bạn bù cho nhau, trọng số là w(a, b).</li>
 </ul></div>
-
-<h2>Điểm của mỗi cạnh lấy từ đâu</h2>
-<p>Trong bài toán dưới, mỗi cạnh có một số (2, 3, 2 ở ví dụ). Ở đây các số đó là <mark>số đặt sẵn để minh họa</mark>. Trong hệ thống thật, mỗi số là điểm <b>w(a, b)</b> tính từ ma trận thành thạo: lấy các nút a dạy được cho b và b dạy được cho a, cộng điểm ưu tiên p(n) của từng nút, rồi lấy số nhỏ hơn. Cách tính từng bước nằm ở trang <a href="2.2.6_TinhDiemW_TuMaTran.html">2.2.6 phần 1: Tính điểm w của mỗi cặp</a>. Trang này giả sử các điểm w đã tính xong và chỉ bàn chuyện <b>chọn cặp nào</b>.</p>
 
 <h2>Tham lam không đủ</h2>
 <div class="fig">
-<div class="row"><button class="b" id="gr" type="button">Chọn tham lam</button><button class="b" id="op" type="button">Chọn tối ưu</button><button class="b" id="gs" type="button">Tham lam từng bước</button><button class="b" id="cl" type="button">Xóa chọn</button></div>
+<div class="row"><button class="b" id="gr" type="button">Chọn tham lam</button><button class="b" id="op" type="button">Chọn tối ưu</button><button class="b" id="cl" type="button">Xóa chọn</button></div>
 <svg class="d" viewBox="0 0 760 190" role="group" aria-label="Đồ thị 4 đỉnh, bấm vào cạnh để chọn">
 <g id="g"></g>
 </svg>
 <p class="cap">Bấm vào cạnh để tự chọn. Tham lam: lấy cạnh nặng nhất trước.</p>
 <div class="msg" id="msg" aria-live="polite"></div>
-<div class="tw" id="gl"></div>
 </div>
 
-<h3>Tham lam là gì</h3>
-<p><mark>Thuật toán tham lam</mark> (greedy) là lấy lựa chọn <b>tốt nhất ngay lúc này</b>, chốt luôn, không quay lại sửa. Ở đây: xếp các cạnh từ nặng đến nhẹ, xét lần lượt, cạnh nào <b>cả hai đầu còn rảnh</b> thì lấy, ngược lại bỏ. Dễ làm, chạy nhanh, nhưng chỉ nhìn "cái trước mắt".</p>
-
-<h3>Thử mọi cách để thấy tối ưu cần nhìn toàn cục</h3>
+<h2>Bố cục bài nói</h2>
 <div class="tw"><table>
-<thead><tr><th>Cách ghép hợp lệ</th><th>Cạnh</th><th>Tổng</th></tr></thead>
-<tbody>
-<tr><td>Không ghép</td><td>(không có)</td><td>0</td></tr>
-<tr><td>Chỉ C–A</td><td>C–A</td><td>2</td></tr>
-<tr><td>Chỉ A–B</td><td>A–B</td><td>3 (tham lam chọn cách này)</td></tr>
-<tr><td>Chỉ B–D</td><td>B–D</td><td>2</td></tr>
-<tr><td class="c-ok">C–A cùng B–D</td><td>C–A, B–D</td><td class="c-ok">4, lớn nhất</td></tr>
-</tbody></table></div>
-<p class="cap">A–B không đi chung được với C–A hay B–D vì chung đỉnh. Chỉ có 5 cách hợp lệ nên liệt kê hết được; với cả lớp số cách tăng rất nhanh, nên cần Blossom để không phải liệt kê.</p>
+<tr><th>Phần</th><th>Nội dung</th><th>Thời gian gợi ý</th></tr>
+<tr><td>A</td><td>Cốt lõi của Blossom (ví dụ 4 SV, chưa nói co và nở)</td><td>3 phút</td></tr>
+<tr><td>B</td><td>Khi nào tìm tiếp, khi nào dừng</td><td>2 phút</td></tr>
+<tr><td>C</td><td>Co và nở bông hoa (ví dụ 6 SV)</td><td>4 phút</td></tr>
+</table></div>
 
-<h3>Tham lam sai khi nào, đúng khi nào</h3>
+<h2>Phần A. Cốt lõi của Blossom: ví dụ 4 SV</h2>
+<p>Cạnh: A–B = 3, A–C = 2, B–C = 3, C–D = 2. Nét xanh dày là cạnh đã ghép.</p>
+<div class="fig">
+<div class="row">
+<svg class="d" viewBox="0 0 400 190" role="img" aria-label="Trước: ghép tạm B–C, A và D lẻ">
+<g stroke="var(--mut)" stroke-width="3" fill="none"><line x1="120" y1="40" x2="60" y2="150"/><line x1="120" y1="40" x2="200" y2="150"/><line x1="200" y1="150" x2="340" y2="150"/></g>
+<line x1="60" y1="150" x2="200" y2="150" stroke="var(--ok)" stroke-width="7"/>
+<g class="lb"><rect x="76" y="80" width="30" height="22" rx="2"/><rect x="170" y="80" width="30" height="22" rx="2"/><rect x="110" y="156" width="30" height="22" rx="2"/><rect x="255" y="156" width="30" height="22" rx="2"/></g>
+<g text-anchor="middle"><text x="91" y="96">3</text><text x="185" y="96">2</text><text x="125" y="172">3</text><text x="270" y="172">2</text></g>
+<g class="vx"><circle cx="120" cy="40" r="22"/><circle cx="60" cy="150" r="22"/><circle cx="200" cy="150" r="22"/><circle cx="340" cy="150" r="22"/></g>
+<g text-anchor="middle"><text x="120" y="45">A</text><text x="60" y="155">B</text><text x="200" y="155">C</text><text x="340" y="155">D</text></g>
+</svg>
+<svg class="d" viewBox="0 0 400 190" role="img" aria-label="Sau: ghép A–B và C–D, tổng 5">
+<g stroke="var(--mut)" stroke-width="3" fill="none"><line x1="120" y1="40" x2="200" y2="150"/><line x1="60" y1="150" x2="200" y2="150"/></g>
+<g stroke="var(--ok)" stroke-width="7"><line x1="120" y1="40" x2="60" y2="150"/><line x1="200" y1="150" x2="340" y2="150"/></g>
+<g class="vx on"><circle cx="120" cy="40" r="22"/><circle cx="60" cy="150" r="22"/><circle cx="200" cy="150" r="22"/><circle cx="340" cy="150" r="22"/></g>
+<g text-anchor="middle"><text x="120" y="45">A</text><text x="60" y="155">B</text><text x="200" y="155">C</text><text x="340" y="155">D</text></g>
+</svg>
+</div>
+<p class="cap">Trên: ghép tạm B–C (tổng 3), A và D chưa có cặp. Dưới: sau khi lật đường A–B–C–D, được A–B + C–D (tổng 5).</p>
+</div>
+
+<h3>A1. Bốn từ cần hiểu</h3>
+<ul>
+<li><b>Cạnh đã ghép:</b> cặp đang được chọn tạm.</li>
+<li><b>Cạnh chưa ghép:</b> cạnh còn lại.</li>
+<li><b>Người lẻ:</b> người chưa có cặp nào.</li>
+<li><b>Đường xen kẽ:</b> đi theo thứ tự "chưa ghép, đã ghép, chưa ghép, đã ghép...".</li>
+</ul>
+
+<h3>A2. Ý tưởng: ghép tạm rồi sửa dần</h3>
+<p>Blossom không tìm đáp án ngay. Nó ghép đại một cách, rồi <b>sửa dần</b> bằng cách đổi cặp cho đến khi không sửa thêm được.</p>
+<p>Ví dụ: ghép tạm B–C (3). A và D bị lẻ. Câu hỏi: có cách đổi cặp để cả A và D đều có cặp không? (Tham lam dừng ở đây, tổng chỉ là 3.)</p>
+
+<h3>A3. Vì sao phải đi xen kẽ</h3>
+<p>Thử lật đường D–C–B–A: cạnh chưa ghép thành đã ghép (C–D, A–B), cạnh đã ghép thành chưa ghép (B–C). Kết quả là A–B và C–D, <b>mỗi người vẫn chỉ có đúng 1 cặp</b>, và hai người lẻ ban đầu đều có cặp.</p>
+<p>Nếu đường không xen kẽ thì có người bị 2 cặp. Ví dụ đi D–C rồi C–A (cả hai đều chưa ghép) thì C có hai cặp C–D và C–A, không hợp lệ. Vì vậy bắt buộc xen kẽ.</p>
+
+<h3>A4. Tìm đường từ A, rồi lật</h3>
+<p>Xuất phát từ người lẻ A, theo hai luật:</p>
+<ol>
+<li>Từ người lẻ (hoặc sau một cạnh đã ghép): chỉ được đi cạnh <b>chưa ghép</b>.</li>
+<li>Sau một cạnh chưa ghép: chỉ được đi cạnh <b>đã ghép</b> của người vừa tới.</li>
+</ol>
+<p>Dừng khi đi cạnh chưa ghép mà tới một người lẻ khác. Đó là <mark>đường tăng</mark>. Dò trên đồ thị của ta (đang ghép tạm B–C):</p>
+<ul>
+<li><b>A có hai cạnh chưa ghép</b> (A–B, A–C), thử lần lượt.</li>
+<li><b>Nhánh 1, A→B:</b> B đã có cặp B–C nên bắt buộc đi B→C. Ở C đi cạnh chưa ghép: C→D (D lẻ, <b>xong</b>) hoặc C→A (quay về điểm xuất phát, bỏ).</li>
+<li><b>Nhánh 2, A→C:</b> C đã có cặp C–B nên bắt buộc đi C→B. Ở B đi cạnh chưa ghép chỉ còn B–A, quay về A, <b>bế tắc</b>.</li>
+</ul>
+<pre style="font:14px/1.5 ui-monospace,Consolas,monospace;background:var(--panel);padding:10px 14px;overflow-x:auto;max-width:68ch">A (lẻ)
+├─ B ── C ─┬─ D   ← người lẻ: ĐƯỜNG TĂNG A–B–C–D
+│          └─ A   ← quay lại, bỏ
+└─ C ── B ──── A  ← quay lại, bỏ</pre>
+<p>Cây này nhỏ vì sau mỗi cạnh đã ghép, lựa chọn bị ép còn đúng một đường. Với đồ thị lớn thuật toán cũng chạy y như vậy, chỉ là cây rộng hơn.</p>
+<p><b>Lật đường A–B–C–D:</b> bỏ B–C, thêm A–B và C–D. Tổng mới = 3 + 2 = <b>5</b>, hơn 3 ban đầu (lợi +2, đáng lật). Không còn người lẻ nên dừng.</p>
+
+<h3>Tóm tắt phần cốt lõi</h3>
+<ol>
+<li>Ghép tạm một cách.</li>
+<li>Từ một người lẻ, đi xen kẽ để tìm một người lẻ khác. Đó là <mark>đường tăng</mark>.</li>
+<li>Lật đường nếu lợi &gt; 0 (lợi = tổng cạnh thêm − tổng cạnh bỏ).</li>
+<li>Lặp lại cho đến khi không còn đường nào có lợi.</li>
+</ol>
+
+<h2>Phần B. Khi nào tìm tiếp, khi nào dừng</h2>
+<h3>B1. Quy tắc: lợi &gt; 0 thì tìm tiếp, hết lợi thì dừng</h3>
+<p>Sau khi có A–B + C–D = 5, có cần tìm nữa không? <b>Không.</b> Quy tắc chung: mỗi lần đổi cặp, tính <b>lợi = tổng cạnh thêm vào − tổng cạnh bỏ đi</b>.</p>
+<ul>
+<li><b>Tìm tiếp</b> khi còn một đường xen kẽ mà lật ra <mark>lợi &gt; 0</mark>. Ví dụ ở bước ghép tạm B–C = 3: đường A–B–C–D thêm A–B (3) và C–D (2), bỏ B–C (3), lợi = 3 + 2 − 3 = <b>+2</b>, nên lật. Đường này có thể kết thúc ở người lẻ, hoặc ở người đang có cặp (bỏ cặp cũ, người đó thành lẻ). Chỉ cần lợi dương.</li>
+<li><b>Dừng</b> khi <mark>không còn đường đổi nào có lợi &gt; 0</mark>.</li>
+</ul>
+<p>Kiểm tra ở A–B + C–D (tổng 5):</p>
 <div class="tw"><table>
-<thead><tr><th>Trọng số (C–A, A–B, B–D)</th><th>Tham lam</th><th>Tối ưu</th><th>Kết luận</th></tr></thead>
-<tbody>
-<tr><td>2, 3, 2</td><td>3</td><td>4</td><td class="c-bad">✗ Tham lam thua</td></tr>
-<tr><td>1, 3, 1</td><td>3</td><td>3 (A–B đã lớn hơn 1 + 1 = 2)</td><td class="c-ok">✓ Tham lam đúng</td></tr>
-</tbody></table></div>
-<p>Tham lam sai khi cạnh nặng nhất <b>chặn mất hai cạnh nhỏ cộng lại lớn hơn nó</b>. Tuy vậy, tham lam theo trọng số luôn đạt ít nhất <b>một nửa</b> tối ưu (một kết quả đã biết), nên đề cương giữ nó làm <b>phương án dự phòng</b>, còn phương án chính là Blossom.</p>
+<tr><th>Thử đổi</th><th>Thêm</th><th>Bỏ</th><th>Lợi</th></tr>
+<tr><td>Bỏ A–B, thêm A–C</td><td>2</td><td>3</td><td>−1</td></tr>
+<tr><td>Bỏ C–D, thêm A–C</td><td>2</td><td>2</td><td>0 (không đổi)</td></tr>
+<tr><td>Thêm B–D</td><td colspan="3">không có cạnh B–D nên không làm được</td></tr>
+</table></div>
+<p>Không đổi nào có lợi dương, và bảng ở mục B2 bên dưới đã liệt kê mọi cách ghép (tối đa là 5), nên dừng là đúng.</p>
+<p><b>Hai lưu ý hay nhầm:</b></p>
+<ol>
+<li><b>Hết người lẻ chưa chắc đã tối ưu</b> khi có trọng số. Ghép hết 4 người nhưng tổng chỉ 4 thì vẫn có thể còn đổi lên 5. Phải kiểm tra lợi, không chỉ nhìn ai còn lẻ.</li>
+<li><b>Còn người lẻ vẫn có thể dừng.</b> Bài toán là tổng w lớn nhất, không bắt buộc ai cũng có cặp. Nếu mọi cách ghép thêm người lẻ đều có lợi ≤ 0 (hoặc cạnh bị loại vì w = 0, BR-08) thì người đó cứ lẻ, rồi được ghép một chiều với mentor hoặc vào hàng chờ.</li>
+</ol>
+<p>Trong thực tế không ai tự chạy vòng lặp này: NetworkX <code>max_weight_matching</code> tự dừng đúng lúc. Bạn chỉ cần nhớ điều kiện dừng là "không còn đường đổi nào có lợi &gt; 0".</p>
 
-<h2>Vì sao Blossom mà không phải Hungarian</h2>
-<p>Hungarian chỉ chạy trên đồ thị hai phía. Ở đây SV nào cũng có thể ghép với SV nào, nên đồ thị có thể có chu trình lẻ (ví dụ tam giác A, B, C). Blossom xử lý được trường hợp này. Cách Blossom hoạt động được giảng từng bước ở trang <a href="TT04_ThuatToanBlossom.html">2.2.6 phần 2: Thuật toán Blossom</a>.</p>
+<h3>B2. Kiểm chứng bằng cách liệt kê mọi cách ghép</h3>
+<p>Liệt kê mọi cách ghép có thể có:</p>
+<div class="tw"><table>
+<tr><th>Cách ghép</th><th>Tổng</th></tr>
+<tr><td>A–B + C–D</td><td><b>5</b></td></tr>
+<tr><td>B–C</td><td>3</td></tr>
+<tr><td>A–B</td><td>3</td></tr>
+<tr><td>A–C</td><td>2</td></tr>
+<tr><td>C–D</td><td>2</td></tr>
+</table></div>
+<p>5 là lớn nhất nên Blossom đúng. Tham lam chọn B–C trước nên chỉ được 3.</p>
+
+<h2>Phần C. Co và nở bông hoa: ví dụ 6 SV</h2>
+<p>Để đơn giản, mọi cạnh có w bằng nhau (cách tìm đường giống hệt khi có trọng số). Cạnh: R–P, P–K, K–X, K–Y, X–Y, Y–E. Đang ghép tạm <b>P–K</b> và <b>X–Y</b> (nét xanh lá dày). R và E là người lẻ. Tam giác K–X–Y là bông hoa, K là <b>đáy</b> (nơi đường đi vào).</p>
+<div class="fig">
+<svg class="d" viewBox="0 0 460 200" role="img" aria-label="Trước khi gộp: tam giác K X Y, cạnh ra ngoài ở Y">
+<line x1="30" y1="100" x2="110" y2="100" stroke="var(--mut)" stroke-width="3"/><line x1="200" y1="100" x2="290" y2="40" stroke="var(--mut)" stroke-width="3"/><line x1="200" y1="100" x2="290" y2="160" stroke="var(--mut)" stroke-width="3"/><line x1="290" y1="160" x2="400" y2="160" stroke="var(--mut)" stroke-width="3"/><line x1="110" y1="100" x2="200" y2="100" stroke="var(--ok)" stroke-width="7"/><line x1="290" y1="40" x2="290" y2="160" stroke="var(--ok)" stroke-width="7"/><g class="vx"><circle cx="30" cy="100" r="20"/><circle cx="110" cy="100" r="20"/><circle cx="200" cy="100" r="20"/><circle cx="290" cy="40" r="20"/><circle cx="290" cy="160" r="20"/><circle cx="400" cy="160" r="20"/></g><g text-anchor="middle"><text x="30" y="105">R</text><text x="110" y="105">P</text><text x="200" y="105">K</text><text x="290" y="45">X</text><text x="290" y="165">Y</text><text x="400" y="165">E</text></g>
+</svg>
+<p class="cap">Hình 1. Trước khi gộp: R và E lẻ, cạnh ra ngoài xuất phát từ Y.</p>
+</div>
+
+<h3>Bước 1. Dò từ R</h3>
+<p>R→P (cạnh chưa ghép), P→K (cạnh đã ghép). Tới K bằng cạnh đã ghép nên K được <b>tự chọn</b> mọi cạnh chưa ghép: K–X và K–Y.</p>
+
+<h3>Bước 2. Rẽ nhánh tại K và gặp rắc rối</h3>
+<p>Luật dò đường quyết định vai của mỗi người:</p>
+<ul>
+<li><b>Tới bằng cạnh chưa ghép:</b> bước kế tiếp bắt buộc là cạnh đã ghép của họ. Họ <b>không tự chọn</b>.</li>
+<li><b>Tới bằng cạnh đã ghép:</b> được tự chọn mọi cạnh chưa ghép. Họ <b>tự do</b>.</li>
+</ul>
+<p>Từ K tới Y có hai lối, và cả hai đều hợp lệ:</p>
+<div class="tw"><table>
+<tr><th>Lối từ K tới Y</th><th>Số bước</th><th>Tới Y bằng cạnh</th><th>Vai của Y</th></tr>
+<tr><td>K → Y</td><td>1</td><td>chưa ghép</td><td>bị ép: chỉ đi Y–X, <b>không thử được Y–E</b></td></tr>
+<tr><td>K → X → Y</td><td>2</td><td>đã ghép (X–Y)</td><td>tự do: <b>thử được Y–E</b></td></tr>
+</table></div>
+<p>Vậy <b>cùng một người Y có hai vai</b>, tùy bạn đi vòng tam giác theo chiều nào. Thuật toán chỉ gắn cho mỗi người một vai. Nếu đi K→Y trước thì Y bị gắn "bị ép", cạnh Y–E không bao giờ được thử, trong khi Y–E mới là chỗ có người lẻ E. Kết luận sai là "hết đường".</p>
+<p><b>Vì sao chỉ vòng lẻ mới bị?</b> Ở vòng 3 cạnh, từ K tới Y đi 1 bước hay 2 bước, chênh nhau 1 bước nên vai khác nhau. Ở vòng 4 cạnh (K, X, Y, Z), từ K tới Y đi qua X hay qua Z đều mất 2 bước, cùng vai, nên không mâu thuẫn. Vòng lẻ như vậy gọi là <mark>blossom (bông hoa)</mark>.</p>
+
+<h3>Bước 3. Co: gộp bông hoa lại</h3>
+<p>Gộp K, X, Y thành một nút H. Vì trong tam giác 3 người chỉ ghép được 1 cặp, luôn có 1 người thừa và ta chọn được ai thừa, nên với bên ngoài cả tam giác chỉ như một nút. Nút H được thử <b>mọi cạnh chưa ghép của cả ba người</b>, nên cạnh Y–E trở thành cạnh H–E và thử được.</p>
+<div class="fig">
+<svg class="d" viewBox="0 0 460 200" role="img" aria-label="Sau khi gộp: K X Y thành nút H">
+<g stroke="var(--mut)" stroke-width="3"><line x1="30" y1="100" x2="110" y2="100"/><line x1="270" y1="100" x2="400" y2="100"/></g><line x1="110" y1="100" x2="270" y2="100" stroke="var(--ok)" stroke-width="7"/><circle cx="270" cy="100" r="42" fill="var(--paper)" stroke="var(--ink)" stroke-width="2" stroke-dasharray="6 4"/><g class="vx"><circle cx="30" cy="100" r="20"/><circle cx="110" cy="100" r="20"/><circle cx="400" cy="100" r="20"/></g><g text-anchor="middle"><text x="30" y="105">R</text><text x="110" y="105">P</text><text x="270" y="105">H</text><text x="400" y="105">E</text></g>
+</svg>
+<p class="cap">Hình 2. Sau khi gộp: đồ thị chỉ còn R, P, H, E. Thấy ngay đường tăng R–P–H–E (E lẻ).</p>
+</div>
+
+<h3>Bước 4. Nở: mở bông hoa ra</h3>
+<p>Đường R–P–H–E đi vào hoa qua đáy K (từ P) và đi ra qua Y (tới E). Giờ phải mở H ra. Tam giác K–X–Y có 3 người nhưng chỉ ghép được 1 cặp bên trong, nên luôn có <b>một người thừa</b> để nối ra ngoài, và ta chọn được ai thừa:</p>
+<div class="tw"><table>
+<tr><th>Cách ghép trong tam giác</th><th>Người thừa, nối ra ngoài</th><th>Dùng khi nào</th></tr>
+<tr><td>X–Y</td><td>K (nối với P)</td><td>cách ghép tạm ban đầu</td></tr>
+<tr><td>K–X</td><td>Y (nối với E)</td><td><b>cách ta cần</b>, vì đường ra E đi qua Y</td></tr>
+<tr><td>K–Y</td><td>X</td><td>không dùng ở đây</td></tr>
+</table></div>
+<p>Vậy bên trong tam giác phải đổi từ X–Y sang K–X. Kiểm tra bằng cách tìm đường xen kẽ thật từ K tới Y:</p>
+<div class="tw"><table>
+<tr><th>Lối từ K tới Y</th><th>Chuỗi cạnh cả đường</th><th>Kết luận</th></tr>
+<tr><td>K → Y</td><td>P–K (đã), K–Y (chưa), Y–E (chưa)</td><td><b>Sai</b>: hai cạnh chưa ghép liền nhau</td></tr>
+<tr><td>K → X → Y</td><td>P–K (đã), K–X (chưa), X–Y (đã), Y–E (chưa)</td><td><b>Đúng</b>: xen kẽ</td></tr>
+</table></div>
+<div class="fig">
+<svg class="d" viewBox="0 0 460 200" role="img" aria-label="Sau khi nở: đường R P K X Y E, bỏ cạnh K Y">
+<line x1="200" y1="100" x2="290" y2="160" stroke="var(--mut)" stroke-width="3" stroke-dasharray="6 5"/><line x1="30" y1="100" x2="110" y2="100" stroke="var(--blue)" stroke-width="7"/><line x1="110" y1="100" x2="200" y2="100" stroke="var(--blue)" stroke-width="7"/><line x1="200" y1="100" x2="290" y2="40" stroke="var(--blue)" stroke-width="7"/><line x1="290" y1="40" x2="290" y2="160" stroke="var(--blue)" stroke-width="7"/><line x1="290" y1="160" x2="400" y2="160" stroke="var(--blue)" stroke-width="7"/><g class="vx"><circle cx="30" cy="100" r="20"/><circle cx="110" cy="100" r="20"/><circle cx="200" cy="100" r="20"/><circle cx="290" cy="40" r="20"/><circle cx="290" cy="160" r="20"/><circle cx="400" cy="160" r="20"/></g><g text-anchor="middle"><text x="30" y="105">R</text><text x="110" y="105">P</text><text x="200" y="105">K</text><text x="290" y="45">X</text><text x="290" y="165">Y</text><text x="400" y="165">E</text></g>
+</svg>
+<p class="cap">Hình 3. Sau khi nở: đường tăng R–P–K–X–Y–E (nét xanh dương). Cạnh K–Y bị bỏ (nét đứt) vì lối ngắn sai xen kẽ.</p>
+</div>
+
+<h3>Bước 5. Lật</h3>
+<p>Bỏ P–K và X–Y (cạnh đã ghép), thêm R–P, K–X, Y–E (cạnh chưa ghép). Ai cũng đúng một cặp, kết quả 3 cặp thay vì 2.</p>
+<div class="fig">
+<svg class="d" viewBox="0 0 460 200" role="img" aria-label="Sau khi lật: R–P, K–X, Y–E">
+<line x1="110" y1="100" x2="200" y2="100" stroke="var(--mut)" stroke-width="3"/><line x1="200" y1="100" x2="290" y2="160" stroke="var(--mut)" stroke-width="3"/><line x1="290" y1="40" x2="290" y2="160" stroke="var(--mut)" stroke-width="3"/><line x1="30" y1="100" x2="110" y2="100" stroke="var(--ok)" stroke-width="7"/><line x1="200" y1="100" x2="290" y2="40" stroke="var(--ok)" stroke-width="7"/><line x1="290" y1="160" x2="400" y2="160" stroke="var(--ok)" stroke-width="7"/><g class="vx on"><circle cx="30" cy="100" r="20"/><circle cx="110" cy="100" r="20"/><circle cx="200" cy="100" r="20"/><circle cx="290" cy="40" r="20"/><circle cx="290" cy="160" r="20"/><circle cx="400" cy="160" r="20"/></g><g text-anchor="middle"><text x="30" y="105">R</text><text x="110" y="105">P</text><text x="200" y="105">K</text><text x="290" y="45">X</text><text x="290" y="165">Y</text><text x="400" y="165">E</text></g>
+</svg>
+<p class="cap">Hình 4. Sau khi lật: R–P, K–X, Y–E. Cả 6 người đều có cặp.</p>
+</div>
+
+<h3>Nhớ</h3>
+<ul>
+<li><b>Gộp</b> để cả bông hoa được thử mọi cạnh ra ngoài, không bỏ lỡ đường tăng.</li>
+<li><b>Nở</b> thì chọn lối đi vòng trong hoa sao cho vẫn xen kẽ (thường là lối dài hơn).</li>
+<li>Vòng lẻ mới gây rắc rối, vòng chẵn thì không.</li>
+</ul>
 
 <h2>Dễ bị hỏi</h2>
+<details><summary>Blossom khác tham lam ở đâu?</summary><p>Tham lam chọn cạnh nặng nhất trước và không sửa lại. Blossom ghép tạm rồi sửa bằng đường xen kẽ khi lợi &gt; 0. Ở ví dụ 4 SV: tham lam được 3, Blossom được 5.</p></details>
+<details><summary>Làm sao biết đã tối ưu để dừng?</summary><p>Khi không còn đường đổi nào có lợi &gt; 0. Ở ví dụ 4 SV ta liệt kê cả 5 cách ghép, lớn nhất là 5. Thư viện NetworkX chứng minh điều này bằng các giá trị phụ (biến đối ngẫu), ta không tự chạy vòng lặp.</p></details>
+<details><summary>Vì sao vòng lẻ gây rắc rối còn vòng chẵn thì không?</summary><p>Ở vòng lẻ, đi hai lối tới cùng một người mất số bước chênh nhau 1, nên người đó có hai vai (bị ép hoặc tự do) và thuật toán chỉ giữ một vai thì bỏ lỡ đường tăng. Ở vòng chẵn, hai lối mất số bước bằng nhau nên cùng vai.</p></details>
+<details><summary>Co và nở để làm gì?</summary><p>Co: gộp bông hoa thành một nút để mọi cạnh ra ngoài của cả ba người đều được thử. Nở: mở nút ra và chọn lối trong hoa sao cho vẫn xen kẽ, rồi lật đường.</p></details>
 <details><summary>Mỗi người chỉ vào một cặp, vậy người lẻ thì sao?</summary><p>Người không có cặp được ghép một chiều với một mentor hoặc vào hàng chờ.</p></details>
 <details><summary>Cạnh có trọng số 0 thì sao?</summary><p>Không được tạo cạnh: cặp mà một bên không dạy được gì bị loại (BR-08).</p></details>
 </main>
@@ -78,28 +231,6 @@
 var V = { C: 90, A: 290, B: 490, D: 690 };
 var E = [['C', 'A', 2], ['A', 'B', 3], ['B', 'D', 2]];
 var sel = {};
-var GE = E.slice().sort(function (a, b) { return b[2] - a[2]; });   // xét cạnh nặng trước
-var gi = 0, glog = [], gused = {}, gsum = 0;
-function greset() { gi = 0; glog = []; gused = {}; gsum = 0; }
-function gstep() {
-  if (gi >= GE.length) return;
-  if (gi === 0) sel = {};
-  var e = GE[gi], busy = [e[0], e[1]].filter(function (v) { return gused[v]; }), free = !busy.length;
-  if (free) { gused[e[0]] = gused[e[1]] = true; sel[key(e)] = true; gsum += e[2]; }
-  glog.push({ e: e, free: free, busy: busy, sum: gsum });
-  gi++; draw();
-}
-function gTable() {
-  if (!glog.length) return '<p class="cap">Bấm "Tham lam từng bước" để xét từng cạnh theo thứ tự nặng đến nhẹ.</p>';
-  var h = '<table aria-label="Các bước tham lam"><thead><tr><th>Bước</th><th>Cạnh</th><th>Điểm</th><th>Hai đầu</th><th>Quyết định</th><th>Tổng</th></tr></thead><tbody>';
-  glog.forEach(function (r, i) {
-    h += '<tr' + (i === glog.length - 1 ? ' class="hit"' : '') + '><td>' + (i + 1) + '</td><td><b>' + r.e[0] + '–' + r.e[1] + '</b></td><td>' + r.e[2] + '</td><td>' +
-      (r.free ? 'cả hai còn rảnh' : r.busy.join(', ') + ' đã có cặp') + '</td><td class="' + (r.free ? 'c-ok' : 'c-bad') + '">' + (r.free ? '✓ Chọn' : '✗ Bỏ') + '</td><td>' + r.sum + '</td></tr>';
-  });
-  h += '</tbody></table>';
-  if (gi >= GE.length) h += '<p class="cap">Xong. Tham lam được tổng ' + gsum + '; bạn bị lẻ: ' + (Object.keys(V).filter(function (v) { return !gused[v]; }).join(', ') || 'không ai') + '. Tối ưu là 4.</p>';
-  return h;
-}
 function key(e) { return e[0] + e[1]; }
 function check() {
   var use = {}, ok = true, sum = 0;
@@ -117,21 +248,19 @@ function draw() {
   }).join('');
   h += Object.keys(V).map(function (v) { return '<circle class="vx' + (r.use[v] ? ' on' : '') + '" cx="' + V[v] + '" cy="100" r="26"/><text x="' + V[v] + '" y="105" text-anchor="middle">' + v + '</text>'; }).join('');
   $('#g').innerHTML = h;
-  $('#gs').disabled = gi >= GE.length; $('#gl').innerHTML = gTable();
   var names = E.filter(function (e) { return sel[key(e)]; }).map(function (e) { return e[0] + '–' + e[1] + ' (' + e[2] + ')'; });
   $('#msg').innerHTML = '<b>Đang chọn:</b> ' + (names.join(' + ') || '(chưa chọn)') + '<br>' +
     (r.ok ? '<b>Hợp lệ.</b> Tổng = <b>' + r.sum + '</b>' + (r.sum === 4 ? ': đây là tối ưu.' : r.sum === 3 ? '. C và D bị bỏ lẻ, có cách được 4.' : '.')
       : '<b class="bad">Không hợp lệ:</b> có người bị chọn hai lần (cạnh đỏ). Mỗi người chỉ vào một cặp.') +
     '<br>Tham lam lấy A–B (3) trước nên chặn mất C và D: tổng 3. Tối ưu lấy C–A (2) + B–D (2): tổng 4.';
   $$('.eg').forEach(function (g) {
-    var t = function () { greset(); var k = g.dataset.k; if (sel[k]) delete sel[k]; else sel[k] = true; draw(); };
+    var t = function () { var k = g.dataset.k; if (sel[k]) delete sel[k]; else sel[k] = true; draw(); };
     g.onclick = t; g.onkeydown = function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); t(); } };
   });
 }
-$('#gr').onclick = function () { greset(); sel = { AB: true }; draw(); };
-$('#op').onclick = function () { greset(); sel = { CA: true, BD: true }; draw(); };
-$('#cl').onclick = function () { greset(); sel = {}; draw(); };
-$('#gs').onclick = gstep;
+$('#gr').onclick = function () { sel = { AB: true }; draw(); };
+$('#op').onclick = function () { sel = { CA: true, BD: true }; draw(); };
+$('#cl').onclick = function () { sel = {}; draw(); };
 draw();
 </script>
 </body>
