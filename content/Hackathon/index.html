@@ -81,6 +81,7 @@ html.ph .mapfig.zin .h-z{display:inline}
 <li><a href="5.2.6_MaTranThanhThao.html"><span class="n">4</span><span class="t">5.2.6 Ma trận thành thạo</span><span class="d">Cấu trúc dữ liệu trung tâm; ghép cặp cần nó.</span></a></li>
 <li><a href="2.2.6_TinhDiemW_TuMaTran.html"><span class="n">5a</span><span class="t">2.2.6 Tính điểm w của mỗi cặp</span><span class="d">Từng bước từ ma trận ra điểm w; dùng Biên và ma trận ở trên.</span></a></li>
 <li><a href="TT04_ThuatToanBlossom.html"><span class="n">5b</span><span class="t">TT04 Thuật toán Blossom</span><span class="d">Đường tăng, chu trình lẻ, bông hoa; từng bước.</span></a></li>
+<li><a href="TT05_Blossom_CacDoThiMau.html"><span class="n">5b2</span><span class="t">TT05 Blossom qua 9 đồ thị mẫu</span><span class="d">Chạy từng bước trên 9 đồ thị, Next/Back, đối chiếu vét cạn và networkx.</span></a></li>
 <li><a href="2.2.6_GhepCap_TrongSoCucDai.html"><span class="n">5c</span><span class="t">2.2.6 Chọn cặp cho cả lớp</span><span class="d">Tham lam và Blossom, dùng điểm w ở trang 5a.</span></a></li>
 <li><a href="5.1_KienTruc_TongQuan.html"><span class="n">6</span><span class="t">5.1 Kiến trúc tổng thể</span><span class="d">Khối đơn mô-đun, worker, bus sự kiện.</span></a></li>
 <li><a href="2.2.7_ThoiGianThuc_WebSocket.html"><span class="n">7</span><span class="t">2.2.7 Giao tiếp thời gian thực</span><span class="d">WebSocket và Redis Pub/Sub, nối tiếp 5.1.</span></a></li>
@@ -110,6 +111,7 @@ html.ph .mapfig.zin .h-z{display:inline}
 <li><a href="2.2.1_DAG_Topo_BacCau.html"><span class="n">2.2.1</span><span class="t">DAG, sắp xếp topo, bắc cầu</span><span class="d">Kahn, DFS ba màu, rút gọn cạnh thừa.</span></a></li>
 <li><a href="2.2.6_TinhDiemW_TuMaTran.html"><span class="n">2.2.6a</span><span class="t">Tính điểm w của mỗi cặp</span><span class="d">Công thức w, p(n), min; tính từng bước từ ma trận.</span></a></li>
 <li><a href="TT04_ThuatToanBlossom.html"><span class="n">TT04</span><span class="t">Thuật toán Blossom</span><span class="d">Đường tăng, chu trình lẻ, bông hoa.</span></a></li>
+<li><a href="TT05_Blossom_CacDoThiMau.html"><span class="n">TT05</span><span class="t">Blossom qua 9 đồ thị mẫu</span><span class="d">Chín đồ thị chạy từng bước, đối chiếu với code.</span></a></li>
 <li><a href="2.2.6_GhepCap_TrongSoCucDai.html"><span class="n">2.2.6c</span><span class="t">Chọn cặp cho cả lớp</span><span class="d">Blossom O(V³); vì sao tham lam không đủ.</span></a></li>
 <li><a href="2.2.7_ThoiGianThuc_WebSocket.html"><span class="n">2.2.7</span><span class="t">Giao tiếp thời gian thực</span><span class="d">WebSocket và Redis Pub/Sub.</span></a></li>
 <li><a href="3.3_YeuCauChucNang.html"><span class="n">3.3</span><span class="t">Yêu cầu chức năng</span><span class="d">51 yêu cầu, 5 phân hệ, ưu tiên M, S, C.</span></a></li>
@@ -148,6 +150,7 @@ html.ph .mapfig.zin .h-z{display:inline}
     '4': ['5.2.6 Ma trận thành thạo', '5.2.6_MaTranThanhThao.html', 'Ở giữa: MX2 ghi, MX3 đọc theo cột, MX4 đọc theo hàng', 'Bảng sinh viên × nút, mỗi ô một trong 6 trạng thái. MX2 ghi kết quả chấm vào ô; bản đồ nhiệt và ghép cặp đọc ra từ đây.', ''],
     '5a': ['2.2.6 Tính điểm w của mỗi cặp', '2.2.6_TinhDiemW_TuMaTran.html', 'MX4 · ghép cặp', 'Từ ma trận, đổi bảng "ai Đạt, ai ở Biên" thành một điểm w cho mỗi cặp bạn: hai bạn bù cho nhau được bao nhiêu.', 'w là trọng số cạnh cho Blossom ở 5b và 5c.'],
     '5b': ['TT04 Thuật toán Blossom', 'TT04_ThuatToanBlossom.html', 'MX4 · ghép cặp', 'Ghép cặp trọng số cực đại, xử lý được chu trình lẻ (bông hoa) mà cách tham lam bỏ sót.', 'Trong mã: NetworkX max-weight matching (theo bản đọc mã ngày 29/10).'],
+    '5b2': ['TT05 Blossom qua 9 đồ thị mẫu', 'TT05_Blossom_CacDoThiMau.html', 'MX4 · ghép cặp', 'Chạy từng bước Blossom trên 9 đồ thị (tam giác, Petersen, K5…) bằng Next/Back; đối chiếu với vét cạn và networkx.', 'Trong mã: blossom_demo.py; Whybi gọi nx.max_weight_matching.'],
     '5c': ['2.2.6 Chọn cặp cho cả lớp', '2.2.6_GhepCap_TrongSoCucDai.html', 'MX4 · ghép cặp', 'Lấy điểm w làm trọng số, chọn bộ cặp tốt nhất cho cả lớp bằng Blossom O(V³); giải thích vì sao tham lam không đủ.', ''],
     '6': ['5.1 Kiến trúc tổng thể', '5.1_KienTruc_TongQuan.html', 'Nền dùng chung', 'Khối đơn mô-đun + worker nền + bus sự kiện. Việc nặng (đọc giáo trình, bản đồ nhiệt, ghép cặp) chạy ở worker để API trả lời nhanh.', ''],
     '7': ['2.2.7 Giao tiếp thời gian thực', '2.2.7_ThoiGianThuc_WebSocket.html', 'Nền dùng chung, chủ yếu cho MX3', 'WebSocket để máy chủ đẩy tin tới GV, bản đồ nhiệt đổi màu không cần tải lại; Redis Pub/Sub là bus sự kiện nội bộ.', ''],
@@ -162,7 +165,7 @@ html.ph .mapfig.zin .h-z{display:inline}
   var G = [                       // [các mục, x đầu, y đầu, số cột, bước x, bước y]
     [['0', '1', '2a', '2b', '2c', '3'], 10, 54, 3, 62, 42],
     [['4'], 353, 172, 1, 62, 42],
-    [['2', '5a', '5b', '5c'], 570, 226, 3, 62, 42],
+    [['2', '5a', '5b', '5b2', '5c'], 570, 226, 3, 62, 42],
     [['6', '7', '8', '9', '10', '11', '12', '13', '14'], 10, 374, 9, 64, 42]
   ];
   var NS = 'http://www.w3.org/2000/svg', box = document.getElementById('mapPins'), info = document.getElementById('mapInfo'), cur = null;
