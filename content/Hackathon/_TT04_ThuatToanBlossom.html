@@ -6,218 +6,192 @@
 <title>TT04 Thuật toán Blossom</title>
 <link rel="stylesheet" href="assets/hoc.css">
 <script src="assets/hoc.js"></script>
-<script src="assets/phongto.js" defer></script>
 <style>
-pre{overflow-x:auto;margin:10px 0;padding:10px 12px;border:1px solid var(--rule);background:var(--panel);font-size:14px}
-pre code{background:none;border:0;padding:0}
-.ed2{stroke:var(--mut);stroke-width:2.5;fill:none}
-.ed2.mt{stroke:var(--ok);stroke-width:7}
-.ed2.hl{stroke:var(--blue);stroke-width:4;stroke-dasharray:8 5}
-.ed2.bad{stroke:var(--red);stroke-width:5}
-.vc{fill:var(--paper);stroke:var(--ink);stroke-width:1.5}
-.vc.fr{fill:var(--frbg);stroke:var(--blue);stroke-width:2.5}
-.vc.ok{fill:var(--okbg);stroke:var(--ok);stroke-width:2.5}
-.vc.bad{fill:var(--badbg);stroke:var(--red);stroke-width:2.5}
-.bl{fill:none;stroke:var(--red);stroke-width:2.5;stroke-dasharray:3 4}
+h2 .sn{display:inline-block;margin-right:10px;padding:1px 8px;border:1.5px solid var(--blue);color:var(--blue);font:700 13px ui-monospace,Consolas,monospace;vertical-align:3px}
+.pg{display:grid;gap:14px;margin:14px 0}
+.pg.c1{grid-template-columns:1fr}
+.pg.c2{grid-template-columns:repeat(2,1fr)}
+.pg.c3{grid-template-columns:repeat(3,1fr);gap:24px}
+.pn{position:relative;margin:0;border:1.5px solid var(--ink);background:var(--paper)}
+.pn svg{display:block;width:100%;height:auto}
+.pn.wide svg{max-width:640px;margin:0 auto}
+.pn figcaption{display:flex;gap:10px;align-items:center;padding:9px 12px;border-top:1px solid var(--rule);font-weight:650;font-size:15px;line-height:1.3}
+.pn figcaption i{flex:none;width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--paper);display:grid;place-items:center;font:700 13px system-ui;font-style:normal}
+.pn figcaption.ct{flex-direction:column;align-items:flex-start;gap:2px}
+.pn figcaption.ct span{font-weight:400;font-size:14px;color:var(--mut)}
+.pn figcaption.bad{border-top:3px solid var(--red)}
+.pn figcaption.good{border-top:3px solid var(--ok)}
+.pg.c3 .pn:not(:last-child)::after{content:"→";position:absolute;right:-24px;top:calc(50% - 26px);width:22px;text-align:center;font:700 20px system-ui;color:var(--mut)}
+svg text{fill:var(--ink);font:650 14px system-ui,sans-serif}
+svg .sm{font:600 12px system-ui,sans-serif;fill:var(--mut);paint-order:stroke;stroke:var(--paper);stroke-width:3px;stroke-linejoin:round}
+svg .el{font:700 12.5px system-ui,sans-serif;fill:var(--blue);paint-order:stroke;stroke:var(--paper);stroke-width:4px;stroke-linejoin:round}
+svg .bt{font:800 17px system-ui,sans-serif;fill:var(--red);paint-order:stroke;stroke:var(--paper);stroke-width:4px;stroke-linejoin:round}
+svg .bl{font:700 15px system-ui,sans-serif;fill:var(--ink)}
+svg .bl.rd{fill:var(--red)}
+svg .hf{font:700 20px system-ui,sans-serif;fill:var(--red)}
+svg .hf.ok{fill:var(--ok)}
+.br{fill:none;stroke:var(--ink);stroke-width:1.8}
+.eg{stroke:var(--mut);stroke-width:2.5;stroke-linecap:round}
+.em{stroke:var(--ok);stroke-width:7;stroke-linecap:round}
+.er{stroke:var(--red);stroke-width:5;stroke-linecap:round}
+.ep{stroke:var(--blue);stroke-width:4;stroke-dasharray:9 6;fill:none}
+.v circle,.v rect{fill:var(--paper);stroke:var(--ink);stroke-width:2}
+.vf circle{fill:var(--frbg);stroke:var(--blue);stroke-width:3}
+.vo circle{fill:var(--okbg);stroke:var(--ok);stroke-width:3}
+.vb circle,.vb rect{fill:var(--badbg);stroke:var(--red);stroke-width:3}
+.vb rect{stroke-dasharray:5 4}
+.bh{fill:var(--red);fill-opacity:.07;stroke:var(--red);stroke-opacity:.16;stroke-width:34;stroke-linejoin:round}
+.fx{margin:14px 0;border:1.5px solid var(--ink);background:var(--paper)}
+.fr{display:grid;grid-template-columns:104px 1fr;gap:2px 16px;padding:14px 16px;border-top:1px solid var(--rule)}
+.fr:first-child{border-top:0}
+.fr .k{grid-row:1/3;align-self:center;font:700 12px ui-monospace,Consolas,monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--blue)}
+.fr .m{font:500 21px/1.5 "Cambria Math","STIX Two Math","Latin Modern Math",Georgia,serif;overflow-wrap:anywhere}
+.fr .m sub{font-size:.62em}
+.fr .m .sg{font-size:1.45em;line-height:0;vertical-align:-.08em}
+.fr .d{color:var(--mut);font-size:14.5px}
+.rl{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0;padding:0;list-style:none;counter-reset:r}
+.rl li{counter-increment:r;position:relative;padding:34px 12px 12px;border:1.5px solid var(--ink);background:var(--paper);font-size:15px;line-height:1.4}
+.rl li::before{content:counter(r);position:absolute;left:12px;top:8px;width:22px;height:22px;border-radius:50%;background:var(--ink);color:var(--paper);display:grid;place-items:center;font:700 12px system-ui}
+.rl li.hit{border-color:var(--red);background:var(--badbg)}
+.rl li.hit::before{background:var(--red)}
+.lg{display:flex;flex-wrap:wrap;gap:6px 18px;margin:8px 0 0;padding:0;list-style:none;font-size:14px;color:var(--mut)}
+.lg li{display:flex;align-items:center;gap:6px}
+.lg svg{width:34px;height:16px}
+.lg text{display:none}
+.sx{margin:6px 0}
+.sc{margin:18px 0;border:1.5px solid var(--ink);background:var(--paper)}
+.sc>header{display:flex;align-items:center;gap:12px;padding:9px 14px;background:var(--panel);border-bottom:1px solid var(--rule)}
+.sc>header i{flex:none;width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--paper);display:grid;place-items:center;font:700 14px system-ui;font-style:normal}
+.sc>header b{font-size:17px;line-height:1.3}
+.sc .ln{margin-left:auto;font:600 12px ui-monospace,Consolas,monospace;color:var(--mut);white-space:nowrap}
+.sb{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr)}
+.sb figure{margin:0;padding:8px;border-right:1px solid var(--rule)}
+.sb svg{display:block;width:100%;height:auto}
+.sd{padding:12px 14px;min-width:0}
+.sw{padding:4px 14px 12px;border-top:1px solid var(--rule)}
+.cl{margin:0 0 10px;padding-left:18px;font-size:15px;line-height:1.5}
+.cl li{margin:5px 0}
+.stt{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:0;padding-top:10px;border-top:1px dashed var(--rule);font:13px/1.45 ui-monospace,Consolas,monospace}
+.stt:empty{display:none}
+.stt dt{color:var(--mut)}
+.stt dd{margin:0;overflow-wrap:anywhere}
+table.mini{width:100%;font-size:14px;margin:6px 0;border-collapse:collapse}
+table.mini th,table.mini td{padding:5px 7px;border-bottom:1px solid var(--rule);text-align:left;vertical-align:top}
+table.mini .ok{color:var(--ok);font-weight:700;white-space:nowrap}
+table.mini .bad{color:var(--red);font-weight:700}
+.ve circle,.ve rect{fill:var(--frbg);stroke:var(--blue);stroke-width:3}
+.vl circle{fill:var(--hi);fill-opacity:.55;stroke:var(--ink);stroke-width:2.5}
+pre.pc{margin:12px 0;padding:12px 14px;overflow-x:auto;border:1.5px solid var(--ink);background:var(--paper);font:13.5px/1.6 ui-monospace,Consolas,monospace}
+pre.pc .n{color:var(--mut);user-select:none}
+pre.pc i{color:var(--mut);font-style:normal}
+@media (max-width:700px){.sb{grid-template-columns:1fr}.sb figure{border-right:0;border-bottom:1px solid var(--rule)}.sc .ln{display:none}.pg.c2,.pg.c3,.rl{grid-template-columns:1fr}.pg.c3{gap:14px}.pg.c3 .pn::after{display:none}.pn svg{max-width:440px;margin:0 auto}.fr{grid-template-columns:1fr}.fr .k{grid-row:auto}}
+@media print{.pn{break-inside:avoid}}
 </style>
 </head>
 <body>
 <header class="top"><a href="index.html">← Mục lục</a><button class="b" id="tg" type="button">Chế độ tối</button></header>
 <main class="wrap">
-<div class="head"><span class="no">TT04</span><div><h1>Thuật toán Blossom</h1><p class="lede">Giảng từng khái niệm: ghép cặp, đường tăng, chu trình lẻ, bông hoa. Phần 2 của mục 2.2.6, học sau phần tính điểm w.</p></div></div>
+<div class="head"><span class="no">TT04</span><div><h1>Thuật toán Blossom</h1><p class="lede">Thuật toán của Jack Edmonds (1965) để ghép cặp trên đồ thị tổng quát, kể cả khi có chu trình lẻ.</p></div></div>
 
 <div class="nho"><ul>
-<li>Việc của thuật toán: có một cách ghép, <mark>tìm đường tăng</mark> để ghép được nhiều hơn, lặp lại tới khi hết đường.</li>
-<li>Đồ thị hai phía thì tìm đường tăng dễ. Có <mark>chu trình lẻ</mark> thì dễ bị lừa; Blossom gói chu trình lẻ thành một "bông hoa" để vượt qua.</li>
-<li>Trong hệ thống: gọi sẵn <code>nx.max_weight_matching</code>, độ phức tạp O(V³).</li>
+<li>Bài toán: chọn các <mark>cặp không chung đỉnh</mark> sao cho được nhiều cặp nhất (hoặc tổng điểm lớn nhất).</li>
+<li>Đồ thị hai phía thì dễ. Đồ thị tổng quát có <mark>chu trình lẻ</mark>, nên Edmonds gói nó lại thành một <mark>bông hoa</mark>.</li>
+<li>Trong Whybi: đỉnh là SV, cạnh có điểm w; gọi sẵn <code>nx.max_weight_matching</code>.</li>
 </ul></div>
 
-<h2>Bước 1: từ vựng nền</h2>
+<h2><span class="sn">01</span>Giới thiệu</h2>
+<p><b>Ghép cặp cực đại</b> (maximum matching): trong đồ thị không hướng, chọn tập cạnh lớn nhất mà không hai cạnh nào chung đỉnh. Đồ thị hai phía có thể giải bằng <b>đường tăng</b>; đồ thị tổng quát thì <b>chu trình lẻ</b> làm thuật toán đó bị lừa.</p>
+<div class="pg c2"><figure class="pn"><svg viewBox="0 0 300 170" role="img" aria-label="Đồ thị hai phía: hai cột đỉnh, cạnh nối giữa hai cột"><line class="eg" x1="70" y1="35" x2="230" y2="35"/><line class="eg" x1="70" y1="35" x2="230" y2="85"/><line class="eg" x1="70" y1="85" x2="230" y2="85"/><line class="eg" x1="70" y1="85" x2="230" y2="135"/><line class="eg" x1="70" y1="135" x2="230" y2="135"/><line class="eg" x1="70" y1="135" x2="230" y2="35"/><g class="v vf"><circle cx="70" cy="35" r="13"/><text x="70" y="40" text-anchor="middle"> </text></g><g class="v vf"><circle cx="70" cy="85" r="13"/><text x="70" y="90" text-anchor="middle"> </text></g><g class="v vf"><circle cx="70" cy="135" r="13"/><text x="70" y="140" text-anchor="middle"> </text></g><g class="v v0"><circle cx="230" cy="35" r="13"/><text x="230" y="40" text-anchor="middle"> </text></g><g class="v v0"><circle cx="230" cy="85" r="13"/><text x="230" y="90" text-anchor="middle"> </text></g><g class="v v0"><circle cx="230" cy="135" r="13"/><text x="230" y="140" text-anchor="middle"> </text></g></svg><figcaption class="ct"><b>Đồ thị hai phía</b><span>Hai nhóm, cạnh chỉ nối khác nhóm. Không có chu trình lẻ.</span></figcaption></figure><figure class="pn"><svg viewBox="0 0 300 170" role="img" aria-label="Đồ thị tổng quát có một tam giác là chu trình lẻ"><line class="er" x1="62" y1="85" x2="130" y2="38"/><line class="er" x1="62" y1="85" x2="130" y2="132"/><line class="er" x1="130" y1="38" x2="130" y2="132"/><line class="eg" x1="130" y1="38" x2="232" y2="38"/><line class="eg" x1="130" y1="132" x2="232" y2="132"/><g class="v vb"><circle cx="62" cy="85" r="13"/><text x="62" y="90" text-anchor="middle"> </text></g><g class="v vb"><circle cx="130" cy="38" r="13"/><text x="130" y="43" text-anchor="middle"> </text></g><g class="v vb"><circle cx="130" cy="132" r="13"/><text x="130" y="137" text-anchor="middle"> </text></g><g class="v v0"><circle cx="232" cy="38" r="13"/><text x="232" y="43" text-anchor="middle"> </text></g><g class="v v0"><circle cx="232" cy="132" r="13"/><text x="232" y="137" text-anchor="middle"> </text></g></svg><figcaption class="ct"><b>Đồ thị tổng quát</b><span>Có thể có chu trình lẻ (tam giác). Cần Blossom.</span></figcaption></figure></div>
+
+<p>Edmonds gọi chu trình lẻ có các cạnh xen kẽ (chưa chọn, đã chọn, chưa chọn…) là <b>bông hoa</b>, và đường xen kẽ nối từ một đỉnh tự do tới nó là <b>cuống hoa</b>.</p>
+<div class="pg c1"><figure class="pn wide"><svg viewBox="0 0 640 200" role="img" aria-label="Cuống hoa nối từ đỉnh tự do S qua P tới Q, bông hoa là tam giác Q X Y"><polygon class="bh" points="278,112 398,52 398,172"/><line class="eg" x1="62" y1="112" x2="166" y2="112"/><line class="em" x1="166" y1="112" x2="278" y2="112"/><line class="eg" x1="278" y1="112" x2="398" y2="52"/><line class="em" x1="398" y1="52" x2="398" y2="172"/><line class="eg" x1="398" y1="172" x2="278" y2="112"/><g class="v vf"><circle cx="62" cy="112" r="17"/><text x="62" y="117" text-anchor="middle">S</text></g><text class="sm" x="62" y="150" text-anchor="middle">đỉnh tự do</text><g class="v v0"><circle cx="166" cy="112" r="17"/><text x="166" y="117" text-anchor="middle">P</text></g><g class="v vb"><circle cx="278" cy="112" r="17"/><text x="278" y="117" text-anchor="middle">Q</text></g><g class="v vb"><circle cx="398" cy="52" r="17"/><text x="398" y="57" text-anchor="middle">X</text></g><g class="v vb"><circle cx="398" cy="172" r="17"/><text x="398" y="177" text-anchor="middle">Y</text></g><path class="br" d="M62 152 v8 H278 v-8"/><text class="bl" x="170" y="184" text-anchor="middle">cuống hoa (stem)</text><text class="bl rd" x="462" y="108" text-anchor="start">bông hoa (blossom)</text><text class="sm" x="462" y="128" text-anchor="start">chu trình lẻ, xen kẽ</text><text class="sm" x="462" y="146" text-anchor="start">chưa, đã, chưa chọn…</text></svg></figure></div>
+
 <div class="tw"><table>
-<thead><tr><th>Từ</th><th>Nghĩa</th><th>Ví dụ</th></tr></thead>
+<thead><tr><th>Phiên bản</th><th>Độ phức tạp</th></tr></thead>
 <tbody>
-<tr><td>Đỉnh, cạnh</td><td>Đỉnh là một bạn; cạnh nối hai bạn có thể ghép cặp</td><td>Cạnh A–B</td></tr>
-<tr><td>Ghép cặp (matching)</td><td>Tập cạnh <b>không chung đỉnh</b>: mỗi bạn nằm trong tối đa một cạnh</td><td>{A–B, C–D}</td></tr>
-<tr><td>Đỉnh đã ghép / tự do</td><td>Đã ghép: nằm trong một cạnh đã chọn. Tự do: chưa có cặp</td><td>Sau khi chọn A–B: C, D tự do</td></tr>
-<tr><td>Ghép cặp cực đại</td><td>Cách ghép có <b>nhiều cặp nhất</b> (chưa tính điểm)</td><td>{C–A, B–D} (2 cặp) hơn {A–B} (1 cặp)</td></tr>
+<tr><td>Edmonds (1965), nguyên bản</td><td>O(V²E), cài đặt thường dùng O(V³)</td></tr>
+<tr><td>Micali – Vazirani (không trọng số)</td><td>O(E·√V)</td></tr>
+<tr class="c-ok"><td><b>Whybi</b>: <code>nx.max_weight_matching</code></td><td>O(V³); lớp 100 SV dưới 2 giây</td></tr>
 </tbody></table></div>
-<p>Ví dụ với chuỗi 4 bạn C – A – B – D. Ba cách chọn:</p>
+<p class="cap">Ngoài đời: IBM Quantum dùng Blossom để ghép cặp các điểm lỗi khi sửa lỗi lượng tử (mã Toric); IBM Research dùng biến thể cho bài toán người đưa thư.</p>
+
+<h2><span class="sn">02</span>Công thức</h2>
+<p>Mỗi cạnh e có một biến x<sub>e</sub> ∈ {0, 1}: bằng 1 nếu cạnh được chọn. Bài toán ghép cặp thành bài toán quy hoạch tuyến tính nguyên:</p>
+<div class="fx">
+<div class="fr"><span class="k">Mục tiêu</span><span class="m">max <span class="sg">Σ</span><sub>e∈E</sub> x<sub>e</sub></span><span class="d">Chọn được nhiều cạnh nhất. Với trọng số w<sub>e</sub> (Whybi) thì thành max Σ w<sub>e</sub>·x<sub>e</sub>.</span></div>
+<div class="fr"><span class="k">Ràng buộc bậc</span><span class="m"><span class="sg">Σ</span><sub>e∈δ(v)</sub> x<sub>e</sub> ≤ 1 &nbsp;&nbsp;∀ v ∈ V</span><span class="d">Mỗi đỉnh nối tối đa một cạnh được chọn. δ(v) là các cạnh gắn với v.</span></div>
+<div class="fr"><span class="k">Ràng buộc bông hoa</span><span class="m"><span class="sg">Σ</span><sub>e∈E(S)</sub> x<sub>e</sub> ≤ (|S| − 1)/2 &nbsp;&nbsp;∀ S ⊆ V, |S| lẻ, |S| ≥ 3</span><span class="d">Trong tập S có số lẻ đỉnh, số cạnh được chọn nằm hẳn trong S không vượt quá ⌊|S|/2⌋. E(S) là các cạnh có cả hai đầu trong S.</span></div>
+</div>
+<p>Vì sao cần dòng thứ ba? Chỉ với ràng buộc bậc, tam giác cho phép x<sub>e</sub> = ½ trên cả ba cạnh: nghiệm phân số, tổng 1,5 cạnh. Ràng buộc bông hoa chặn điều đó và là lý do thuật toán phải <b>co</b> chu trình lẻ lại thành một đỉnh.</p>
+<div class="pg c2"><figure class="pn"><svg viewBox="0 0 240 190" role="img" aria-label="Tam giác với mỗi cạnh bằng một nửa"><line class="eg" x1="120" y1="30" x2="62" y2="112"/><line class="eg" x1="62" y1="112" x2="178" y2="112"/><line class="eg" x1="120" y1="30" x2="178" y2="112"/><text class="hf" x="80" y="64" text-anchor="middle">½</text><text class="hf" x="160" y="64" text-anchor="middle">½</text><text class="hf" x="120" y="132" text-anchor="middle">½</text><g class="v vb"><circle cx="120" cy="30" r="13"/><text x="120" y="35" text-anchor="middle"> </text></g><g class="v vb"><circle cx="62" cy="112" r="13"/><text x="62" y="117" text-anchor="middle"> </text></g><g class="v vb"><circle cx="178" cy="112" r="13"/><text x="178" y="117" text-anchor="middle"> </text></g><text class="sm" x="120" y="172" text-anchor="middle">mỗi đỉnh: ½ + ½ = 1 ≤ 1, đều thỏa</text></svg><figcaption class="ct bad"><b>Chỉ có ràng buộc bậc</b><span>Tổng = 1,5 cạnh: nghiệm phân số, không ghép được</span></figcaption></figure><figure class="pn"><svg viewBox="0 0 240 190" role="img" aria-label="Tam giác chỉ chọn một cạnh"><line class="eg" x1="120" y1="30" x2="62" y2="112"/><line class="eg" x1="62" y1="112" x2="178" y2="112"/><line class="em" x1="120" y1="30" x2="178" y2="112"/><text class="hf ok" x="160" y="64" text-anchor="middle">1</text><g class="v vb"><circle cx="120" cy="30" r="13"/><text x="120" y="35" text-anchor="middle"> </text></g><g class="v vb"><circle cx="62" cy="112" r="13"/><text x="62" y="117" text-anchor="middle"> </text></g><g class="v vb"><circle cx="178" cy="112" r="13"/><text x="178" y="117" text-anchor="middle"> </text></g><text class="sm" x="120" y="172" text-anchor="middle">|S| = 3 nên tối đa (3 − 1)/2 = 1 cạnh</text></svg><figcaption class="ct good"><b>Thêm ràng buộc bông hoa</b><span>Tổng ≤ 1: ép về một cặp thật</span></figcaption></figure></div>
+
+<h2><span class="sn">03</span>Cách thuật toán đi</h2>
+<p>Từ một đỉnh tự do r, dựng cây tìm kiếm và gán nhãn. Bốn luật:</p>
+<ol class="rl">
+<li>Gốc r là đỉnh tự do: nhãn <b>Chẵn</b>.</li>
+<li>Đi theo cạnh <b>chưa chọn</b>: sang đỉnh nhãn <b>Lẻ</b>.</li>
+<li>Từ đỉnh Lẻ, đi theo cạnh <b>đã chọn</b>: sang đỉnh nhãn <b>Chẵn</b>.</li>
+<li class="hit">Cạnh nối <b>hai đỉnh Chẵn</b> cùng cây: gặp <b>bông hoa</b>. Co nó thành một đỉnh Chẵn rồi tìm tiếp.</li>
+</ol>
+<p>Mã giả (bản rút gọn, tìm từ từng gốc một). Các bước ở hai ví dụ bên dưới ghi rõ chạy tới dòng nào.</p>
+<pre class="pc"><span class="n"> 1</span> <b>Blossom</b>(G):
+<span class="n"> 2</span>   M ← ∅
+<span class="n"> 3</span>   với mỗi đỉnh tự do r:
+<span class="n"> 4</span>     P ← TÌM_ĐƯỜNG_TĂNG(G, M, r)
+<span class="n"> 5</span>     nếu P ≠ ∅:
+<span class="n"> 6</span>       M ← M ⊕ P                       <i>▷ đảo cạnh dọc đường tăng</i>
+<span class="n"> 7</span>   trả M
+<span class="n"> 8</span> <b>TÌM_ĐƯỜNG_TĂNG</b>(G, M, r):
+<span class="n"> 9</span>   nhãn[·] ← chưa;  cha[·] ← ∅
+<span class="n">10</span>   nhãn[r] ← chẵn;  hàng đợi ← [r]
+<span class="n">11</span>   khi hàng đợi chưa rỗng:
+<span class="n">12</span>     v ← lấy ra                        <i>▷ v luôn mang nhãn chẵn</i>
+<span class="n">13</span>     với mỗi cạnh (v, u) ∉ M:
+<span class="n">14</span>       nếu u tự do: trả đường r ⇝ v – u   <i>▷ mở các hoa trên đường</i>
+<span class="n">15</span>       nếu nhãn[u] = chưa:
+<span class="n">16</span>         nhãn[u] ← lẻ;  cha[u] ← v
+<span class="n">17</span>         w ← mate(u);  nhãn[w] ← chẵn;  cha[w] ← u;  đưa w vào hàng đợi
+<span class="n">18</span>       nếu nhãn[u] = chẵn:               <i>▷ hai đỉnh chẵn nối nhau</i>
+<span class="n">19</span>         b ← tổ tiên chung gần nhất của v và u
+<span class="n">20</span>         co hoa B quanh b;  nhãn[B] ← chẵn;  đưa B vào hàng đợi
+<span class="n">21</span>   trả ∅</pre>
 <div class="tw"><table>
-<thead><tr><th>Cách chọn</th><th>Hợp lệ?</th><th>Vì sao</th></tr></thead>
+<thead><tr><th>Ký hiệu</th><th>Nghĩa</th></tr></thead>
 <tbody>
-<tr><td>{A–B}</td><td class="c-ok">✓</td><td>Không chung đỉnh. C, D tự do</td></tr>
-<tr><td>{C–A, B–D}</td><td class="c-ok">✓ cực đại</td><td>Không ai tự do, 2 cặp</td></tr>
-<tr><td>{C–A, A–B}</td><td class="c-bad">✗</td><td>A nằm trong hai cạnh</td></tr>
+<tr><td><code>nhãn[v]</code></td><td>chưa / chẵn / lẻ. Chẵn: tới v bằng một cạnh đã chọn (hoặc v là gốc). Lẻ: tới v bằng cạnh chưa chọn.</td></tr>
+<tr><td><code>cha[v]</code></td><td>đỉnh đứng ngay trước v trên cây tìm kiếm; dùng để lần ngược đường</td></tr>
+<tr><td><code>mate(u)</code></td><td>bạn ghép của u trong M</td></tr>
+<tr><td><code>M ⊕ P</code></td><td>(M \ P) ∪ (P \ M): bỏ cạnh đã chọn trên P, chọn cạnh chưa chọn trên P</td></tr>
+<tr><td>tổ tiên chung gần nhất</td><td>đỉnh chung đầu tiên khi lần ngược cha[] từ hai đỉnh chẵn; đó là <b>cơ sở</b> của hoa</td></tr>
 </tbody></table></div>
 
-<h2>Bước 2: đường luân phiên và đường tăng</h2>
-<p><mark>Đường luân phiên</mark> là đường đi mà các cạnh <b>xen kẽ</b>: chưa chọn, đã chọn, chưa chọn, đã chọn, ... Giống bước chân trái phải, không có hai bước cùng chân liền nhau.</p>
-<p><mark>Đường tăng</mark> (augmenting path) là đường luân phiên thỏa hai điều kiện: <b>bắt đầu</b> ở một đỉnh tự do và <b>kết thúc</b> ở một đỉnh tự do khác. Đường tăng luôn có cạnh chưa chọn ở hai đầu, nên nhiều hơn một cạnh chưa chọn so với cạnh đã chọn. <b>Đảo</b> các cạnh trên đường (chưa chọn thành chọn, đã chọn thành bỏ) thì số cặp tăng thêm 1.</p>
+<h2><span class="sn">04</span>Ví dụ 1: ghép hoàn hảo, không có hoa</h2>
+<p>Chuỗi C – A – B – D. M = {A–B}; C và D tự do. Chạy từ gốc C, mỗi bước một dòng.</p>
+<ul class="lg" aria-label="Chú giải"><li><svg viewBox="0 0 34 14"><line class="em" x1="3" y1="7" x2="31" y2="7"/></svg>đã chọn (∈ M)</li><li><svg viewBox="0 0 34 14"><line class="eg" x1="3" y1="7" x2="31" y2="7"/></svg>chưa chọn (∉ M)</li><li><svg viewBox="0 0 34 14"><line class="ep" x1="3" y1="7" x2="31" y2="7"/></svg>đường đang xét</li><li><svg viewBox="0 0 34 16"><g class="v ve"><circle cx="17" cy="8" r="6"/></g></svg>chẵn</li><li><svg viewBox="0 0 34 16"><g class="v vl"><circle cx="17" cy="8" r="6"/></g></svg>lẻ</li><li><svg viewBox="0 0 34 16"><g class="v v0"><circle cx="17" cy="8" r="6"/></g></svg>chưa nhãn</li><li><svg viewBox="0 0 34 16"><g class="v vo"><circle cx="17" cy="8" r="6"/></g></svg>đã xong</li></ul>
+<div class="sx"><section class="sc"><header><i>0</i><b>Khởi tạo</b><span class="ln">dòng 9–10</span></header><div class="sb"><figure><svg viewBox="0 0 360 150" role="img" aria-label="Chuỗi C A B D, M = {A–B}, gốc C"><line class="eg" x1="46" y1="78" x2="136" y2="78"/><line class="em" x1="136" y1="78" x2="226" y2="78"/><line class="eg" x1="226" y1="78" x2="316" y2="78"/><g class="v ve"><circle cx="46" cy="78" r="19"/><text x="46" y="83" text-anchor="middle">C</text></g><text class="sm" x="46" y="118" text-anchor="middle">gốc · chẵn</text><g class="v v0"><circle cx="136" cy="78" r="19"/><text x="136" y="83" text-anchor="middle">A</text></g><g class="v v0"><circle cx="226" cy="78" r="19"/><text x="226" y="83" text-anchor="middle">B</text></g><g class="v v0"><circle cx="316" cy="78" r="19"/><text x="316" y="83" text-anchor="middle">D</text></g><text class="sm" x="316" y="118" text-anchor="middle">tự do</text></svg></figure><div class="sd"><ul class="cl"><li><code>M = {A–B}</code>, |M| = 1</li><li>đỉnh tự do: C, D ⇒ chọn gốc <b>r = C</b>, nhãn[C] = chẵn, hàng đợi = [C]</li></ul><dl class="stt"><dt>Nhãn</dt><dd>C=chẵn</dd><dt>Cha</dt><dd>–</dd><dt>Hàng đợi</dt><dd>[C]</dd><dt>x (CA, AB, BD)</dt><dd>(0, 1, 0)</dd></dl></div></div></section><section class="sc"><header><i>1</i><b>Quét C: lan ra A rồi B</b><span class="ln">dòng 12–17</span></header><div class="sb"><figure><svg viewBox="0 0 360 150" role="img" aria-label="Quét C, gán A lẻ và B chẵn"><line class="eg" x1="46" y1="78" x2="136" y2="78"/><line class="em" x1="136" y1="78" x2="226" y2="78"/><line class="eg" x1="226" y1="78" x2="316" y2="78"/><line class="ep" x1="46" y1="78" x2="136" y2="78"/><line class="ep" x1="136" y1="78" x2="226" y2="78"/><text class="el" x="91" y="56" text-anchor="middle">chưa</text><text class="el" x="181" y="56" text-anchor="middle">đã</text><g class="v ve"><circle cx="46" cy="78" r="19"/><text x="46" y="83" text-anchor="middle">C</text></g><text class="sm" x="46" y="118" text-anchor="middle">chẵn</text><g class="v vl"><circle cx="136" cy="78" r="19"/><text x="136" y="83" text-anchor="middle">A</text></g><text class="sm" x="136" y="118" text-anchor="middle">lẻ</text><g class="v ve"><circle cx="226" cy="78" r="19"/><text x="226" y="83" text-anchor="middle">B</text></g><text class="sm" x="226" y="118" text-anchor="middle">chẵn</text><g class="v v0"><circle cx="316" cy="78" r="19"/><text x="316" y="83" text-anchor="middle">D</text></g><text class="sm" x="316" y="118" text-anchor="middle">tự do</text></svg></figure><div class="sd"><ul class="cl"><li>lấy C khỏi hàng đợi; cạnh C–A ∉ M, nhãn[A] = chưa ⇒ <b>nhãn[A] = lẻ</b>, cha[A] = C</li><li>mate(A) = B ⇒ <b>nhãn[B] = chẵn</b>, cha[B] = A, hàng đợi ← B</li></ul><dl class="stt"><dt>Nhãn</dt><dd>C=chẵn, A=lẻ, B=chẵn</dd><dt>Cha</dt><dd>A←C, B←A</dd><dt>Hàng đợi</dt><dd>[B]</dd></dl></div></div></section><section class="sc"><header><i>2</i><b>Quét B: gặp đỉnh tự do D</b><span class="ln">dòng 13–14</span></header><div class="sb"><figure><svg viewBox="0 0 360 150" role="img" aria-label="Đường tăng C A B D"><line class="eg" x1="46" y1="78" x2="136" y2="78"/><line class="em" x1="136" y1="78" x2="226" y2="78"/><line class="eg" x1="226" y1="78" x2="316" y2="78"/><line class="ep" x1="46" y1="78" x2="136" y2="78"/><line class="ep" x1="136" y1="78" x2="226" y2="78"/><line class="ep" x1="226" y1="78" x2="316" y2="78"/><text class="el" x="91" y="56" text-anchor="middle">chưa</text><text class="el" x="181" y="56" text-anchor="middle">đã</text><text class="el" x="271" y="56" text-anchor="middle">chưa</text><g class="v ve"><circle cx="46" cy="78" r="19"/><text x="46" y="83" text-anchor="middle">C</text></g><text class="sm" x="46" y="118" text-anchor="middle">chẵn</text><g class="v vl"><circle cx="136" cy="78" r="19"/><text x="136" y="83" text-anchor="middle">A</text></g><text class="sm" x="136" y="118" text-anchor="middle">lẻ</text><g class="v ve"><circle cx="226" cy="78" r="19"/><text x="226" y="83" text-anchor="middle">B</text></g><text class="sm" x="226" y="118" text-anchor="middle">chẵn</text><g class="v v0"><circle cx="316" cy="78" r="19"/><text x="316" y="83" text-anchor="middle">D</text></g><text class="sm" x="316" y="118" text-anchor="middle">tự do</text></svg></figure><div class="sd"><ul class="cl"><li>lấy B; cạnh B–A ∈ M là cạnh cây, bỏ qua</li><li>B–D ∉ M và <b>D tự do</b> ⇒ có đường tăng <b>P = C–A–B–D</b>: ∉, ∈, ∉ (xen kẽ), độ dài 3</li><li>không có cạnh nào nối hai đỉnh chẵn (đồ thị là một đường, không có chu trình) ⇒ <b>không cần co hoa</b></li></ul><dl class="stt"><dt>Đường P</dt><dd>{C–A, A–B, B–D}</dd><dt>P ∩ M</dt><dd>{A–B}</dd></dl></div></div></section><section class="sc"><header><i>3</i><b>Đảo cạnh: M ← M ⊕ P</b><span class="ln">dòng 6</span></header><div class="sb"><figure><svg viewBox="0 0 360 150" role="img" aria-label="Sau khi đảo: C–A và B–D"><line class="em" x1="46" y1="78" x2="136" y2="78"/><line class="eg" x1="136" y1="78" x2="226" y2="78"/><line class="em" x1="226" y1="78" x2="316" y2="78"/><g class="v vo"><circle cx="46" cy="78" r="19"/><text x="46" y="83" text-anchor="middle">C</text></g><g class="v vo"><circle cx="136" cy="78" r="19"/><text x="136" y="83" text-anchor="middle">A</text></g><g class="v vo"><circle cx="226" cy="78" r="19"/><text x="226" y="83" text-anchor="middle">B</text></g><g class="v vo"><circle cx="316" cy="78" r="19"/><text x="316" y="83" text-anchor="middle">D</text></g></svg></figure><div class="sd"><ul class="cl"><li><code>M ⊕ P = (M \ P) ∪ (P \ M)</code></li><li>M \ P = {A–B} (cạnh đã chọn trên P bị bỏ)</li><li>P \ M = {C–A, B–D} (cạnh chưa chọn trên P được chọn)</li><li><b>M′ = {C–A, B–D}</b>, |M′| = 2 = |M| + 1 (đường tăng luôn có ∉M nhiều hơn ∈M đúng một cạnh)</li></ul><dl class="stt"><dt>x mới (CA, AB, BD)</dt><dd>(1, 0, 1)</dd><dt>Đỉnh tự do</dt><dd>không còn</dd></dl></div></div></section><section class="sc"><header><i>4</i><b>Kiểm tra bằng công thức</b><span class="ln">mục 02</span></header><div class="sb"><figure><svg viewBox="0 0 360 150" role="img" aria-label="Kết quả cuối ví dụ 1"><line class="em" x1="46" y1="78" x2="136" y2="78"/><line class="eg" x1="136" y1="78" x2="226" y2="78"/><line class="em" x1="226" y1="78" x2="316" y2="78"/><g class="v vo"><circle cx="46" cy="78" r="19"/><text x="46" y="83" text-anchor="middle">C</text></g><g class="v vo"><circle cx="136" cy="78" r="19"/><text x="136" y="83" text-anchor="middle">A</text></g><g class="v vo"><circle cx="226" cy="78" r="19"/><text x="226" y="83" text-anchor="middle">B</text></g><g class="v vo"><circle cx="316" cy="78" r="19"/><text x="316" y="83" text-anchor="middle">D</text></g></svg></figure><div class="sd"><ul class="cl"><li>Mục tiêu Σ x<sub>e</sub> = 2. Không còn đỉnh tự do ⇒ không còn đường tăng ⇒ <b>M cực đại, và hoàn hảo</b>.</li></ul><dl class="stt"></dl></div></div><div class="sw"><table class="mini"><thead><tr><th>Ràng buộc</th><th>Tính</th><th></th></tr></thead><tbody><tr><td>Bậc từng đỉnh</td><td>C: 1, A: 1, B: 1, D: 1</td><td class="ok">≤ 1 ✓</td></tr><tr><td>Hoa S = {A, B, C}</td><td>x<sub>CA</sub> + x<sub>AB</sub> = 1 + 0 = 1</td><td class="ok">≤ (3−1)/2 = 1 ✓</td></tr><tr><td>Hoa S = {B, C, D}</td><td>x<sub>BD</sub> = 1</td><td class="ok">≤ 1 ✓</td></tr></tbody></table></div></section></div>
 
-<h3>Xem từng bước trên chuỗi C – A – B – D</h3>
-<div class="fig" id="st1"></div>
+<h2><span class="sn">05</span>Ví dụ 2: gặp bông hoa</h2>
+<p>6 bạn S, P, Q, X, Y, T; Q, X, Y là tam giác. M = {P–Q, X–Y}; S và T tự do. Chạy từ gốc S. Bước 3 là chỗ thuật toán Blossom khác với tìm đường tăng thường.</p>
+<ul class="lg" aria-label="Chú giải"><li><svg viewBox="0 0 34 14"><line class="em" x1="3" y1="7" x2="31" y2="7"/></svg>đã chọn (∈ M)</li><li><svg viewBox="0 0 34 14"><line class="eg" x1="3" y1="7" x2="31" y2="7"/></svg>chưa chọn (∉ M)</li><li><svg viewBox="0 0 34 14"><line class="ep" x1="3" y1="7" x2="31" y2="7"/></svg>đường đang xét</li><li><svg viewBox="0 0 34 16"><g class="v ve"><circle cx="17" cy="8" r="6"/></g></svg>chẵn</li><li><svg viewBox="0 0 34 16"><g class="v vl"><circle cx="17" cy="8" r="6"/></g></svg>lẻ</li><li><svg viewBox="0 0 34 16"><g class="v v0"><circle cx="17" cy="8" r="6"/></g></svg>chưa nhãn</li><li><svg viewBox="0 0 34 16"><g class="v vo"><circle cx="17" cy="8" r="6"/></g></svg>đã xong</li></ul>
+<div class="sx"><section class="sc"><header><i>0</i><b>Khởi tạo</b><span class="ln">dòng 9–10</span></header><div class="sb"><figure><svg viewBox="0 0 370 214" role="img" aria-label="Đồ thị 6 đỉnh, M = {P–Q, X–Y}, gốc S"><line class="eg" x1="40" y1="108" x2="112" y2="108"/><line class="em" x1="112" y1="108" x2="190" y2="108"/><line class="eg" x1="190" y1="108" x2="270" y2="52"/><line class="em" x1="270" y1="52" x2="270" y2="164"/><line class="eg" x1="270" y1="164" x2="190" y2="108"/><line class="eg" x1="270" y1="164" x2="338" y2="164"/><g class="v ve"><circle cx="40" cy="108" r="19"/><text x="40" y="113" text-anchor="middle">S</text></g><text class="sm" x="40" y="148" text-anchor="middle">gốc · chẵn</text><g class="v v0"><circle cx="112" cy="108" r="19"/><text x="112" y="113" text-anchor="middle">P</text></g><g class="v v0"><circle cx="190" cy="108" r="19"/><text x="190" y="113" text-anchor="middle">Q</text></g><g class="v v0"><circle cx="270" cy="52" r="19"/><text x="270" y="57" text-anchor="middle">X</text></g><g class="v v0"><circle cx="270" cy="164" r="19"/><text x="270" y="169" text-anchor="middle">Y</text></g><g class="v v0"><circle cx="338" cy="164" r="19"/><text x="338" y="169" text-anchor="middle">T</text></g><text class="sm" x="338" y="204" text-anchor="middle">tự do</text></svg></figure><div class="sd"><ul class="cl"><li><code>M = {P–Q, X–Y}</code>, |M| = 2</li><li>đỉnh tự do: S, T ⇒ chọn gốc <b>r = S</b>, nhãn[S] = chẵn, hàng đợi = [S]</li></ul><dl class="stt"><dt>Nhãn</dt><dd>S=chẵn</dd><dt>Cha</dt><dd>–</dd><dt>Hàng đợi</dt><dd>[S]</dd><dt>x (SP, PQ, QX, XY, YQ, YT)</dt><dd>(0, 1, 0, 1, 0, 0)</dd></dl></div></div></section><section class="sc"><header><i>1</i><b>Quét S: lan ra P và Q</b><span class="ln">dòng 12–17</span></header><div class="sb"><figure><svg viewBox="0 0 370 214" role="img" aria-label="Quét S, gán P lẻ và Q chẵn"><line class="eg" x1="40" y1="108" x2="112" y2="108"/><line class="em" x1="112" y1="108" x2="190" y2="108"/><line class="eg" x1="190" y1="108" x2="270" y2="52"/><line class="em" x1="270" y1="52" x2="270" y2="164"/><line class="eg" x1="270" y1="164" x2="190" y2="108"/><line class="eg" x1="270" y1="164" x2="338" y2="164"/><line class="ep" x1="40" y1="108" x2="112" y2="108"/><line class="ep" x1="112" y1="108" x2="190" y2="108"/><text class="el" x="76" y="90" text-anchor="middle">chưa</text><text class="el" x="151" y="90" text-anchor="middle">đã</text><g class="v ve"><circle cx="40" cy="108" r="19"/><text x="40" y="113" text-anchor="middle">S</text></g><text class="sm" x="40" y="148" text-anchor="middle">chẵn</text><g class="v vl"><circle cx="112" cy="108" r="19"/><text x="112" y="113" text-anchor="middle">P</text></g><text class="sm" x="112" y="148" text-anchor="middle">lẻ</text><g class="v ve"><circle cx="190" cy="108" r="19"/><text x="190" y="113" text-anchor="middle">Q</text></g><text class="sm" x="190" y="148" text-anchor="middle">chẵn</text><g class="v v0"><circle cx="270" cy="52" r="19"/><text x="270" y="57" text-anchor="middle">X</text></g><g class="v v0"><circle cx="270" cy="164" r="19"/><text x="270" y="169" text-anchor="middle">Y</text></g><g class="v v0"><circle cx="338" cy="164" r="19"/><text x="338" y="169" text-anchor="middle">T</text></g><text class="sm" x="338" y="204" text-anchor="middle">tự do</text></svg></figure><div class="sd"><ul class="cl"><li>lấy S khỏi hàng đợi; cạnh S–P ∉ M, nhãn[P] = chưa ⇒ <b>nhãn[P] = lẻ</b>, cha[P] = S</li><li>mate(P) = Q ⇒ <b>nhãn[Q] = chẵn</b>, cha[Q] = P, hàng đợi ← Q</li></ul><dl class="stt"><dt>Nhãn</dt><dd>S=chẵn, P=lẻ, Q=chẵn</dd><dt>Cha</dt><dd>P←S, Q←P</dd><dt>Hàng đợi</dt><dd>[Q]</dd></dl></div></div></section><section class="sc"><header><i>2</i><b>Quét Q, cạnh Q–X: lan vào tam giác</b><span class="ln">dòng 12–17</span></header><div class="sb"><figure><svg viewBox="0 0 370 214" role="img" aria-label="Quét Q, gán X lẻ và Y chẵn"><line class="eg" x1="40" y1="108" x2="112" y2="108"/><line class="em" x1="112" y1="108" x2="190" y2="108"/><line class="eg" x1="190" y1="108" x2="270" y2="52"/><line class="em" x1="270" y1="52" x2="270" y2="164"/><line class="eg" x1="270" y1="164" x2="190" y2="108"/><line class="eg" x1="270" y1="164" x2="338" y2="164"/><line class="ep" x1="40" y1="108" x2="112" y2="108"/><line class="ep" x1="112" y1="108" x2="190" y2="108"/><line class="ep" x1="190" y1="108" x2="270" y2="52"/><line class="ep" x1="270" y1="52" x2="270" y2="164"/><text class="el" x="76" y="90" text-anchor="middle">chưa</text><text class="el" x="151" y="90" text-anchor="middle">đã</text><text class="el" x="216" y="72" text-anchor="middle">chưa</text><text class="el" x="290" y="112" text-anchor="middle">đã</text><g class="v ve"><circle cx="40" cy="108" r="19"/><text x="40" y="113" text-anchor="middle">S</text></g><text class="sm" x="40" y="148" text-anchor="middle">chẵn</text><g class="v vl"><circle cx="112" cy="108" r="19"/><text x="112" y="113" text-anchor="middle">P</text></g><text class="sm" x="112" y="148" text-anchor="middle">lẻ</text><g class="v ve"><circle cx="190" cy="108" r="19"/><text x="190" y="113" text-anchor="middle">Q</text></g><text class="sm" x="190" y="148" text-anchor="middle">chẵn</text><g class="v vl"><circle cx="270" cy="52" r="19"/><text x="270" y="57" text-anchor="middle">X</text></g><text class="sm" x="296" y="57" text-anchor="start">lẻ</text><g class="v ve"><circle cx="270" cy="164" r="19"/><text x="270" y="169" text-anchor="middle">Y</text></g><text class="sm" x="270" y="204" text-anchor="middle">chẵn</text><g class="v v0"><circle cx="338" cy="164" r="19"/><text x="338" y="169" text-anchor="middle">T</text></g><text class="sm" x="338" y="204" text-anchor="middle">tự do</text></svg></figure><div class="sd"><ul class="cl"><li>lấy Q; cạnh Q–P ∈ M là cạnh cây, bỏ qua</li><li>Q–X ∉ M, nhãn[X] = chưa ⇒ <b>nhãn[X] = lẻ</b>, cha[X] = Q</li><li>mate(X) = Y ⇒ <b>nhãn[Y] = chẵn</b>, cha[Y] = X, hàng đợi ← Y</li></ul><dl class="stt"><dt>Nhãn</dt><dd>S=chẵn, P=lẻ, Q=chẵn, X=lẻ, Y=chẵn</dd><dt>Cha</dt><dd>P←S, Q←P, X←Q, Y←X</dd><dt>Hàng đợi</dt><dd>[Y]</dd></dl></div></div></section><section class="sc"><header><i>3</i><b>Quét Q, cạnh Q–Y: phát hiện bông hoa</b><span class="ln">dòng 18–19</span></header><div class="sb"><figure><svg viewBox="0 0 370 214" role="img" aria-label="Cạnh Y–Q nối hai đỉnh chẵn"><polygon class="bh" points="190,108 270,52 270,164"/><line class="eg" x1="40" y1="108" x2="112" y2="108"/><line class="em" x1="112" y1="108" x2="190" y2="108"/><line class="eg" x1="190" y1="108" x2="270" y2="52"/><line class="em" x1="270" y1="52" x2="270" y2="164"/><line class="er" x1="270" y1="164" x2="190" y2="108"/><line class="eg" x1="270" y1="164" x2="338" y2="164"/><g class="v ve"><circle cx="40" cy="108" r="19"/><text x="40" y="113" text-anchor="middle">S</text></g><text class="sm" x="40" y="148" text-anchor="middle">chẵn</text><g class="v vl"><circle cx="112" cy="108" r="19"/><text x="112" y="113" text-anchor="middle">P</text></g><text class="sm" x="112" y="148" text-anchor="middle">lẻ</text><g class="v ve"><circle cx="190" cy="108" r="19"/><text x="190" y="113" text-anchor="middle">Q</text></g><text class="sm" x="190" y="148" text-anchor="middle">chẵn</text><g class="v vl"><circle cx="270" cy="52" r="19"/><text x="270" y="57" text-anchor="middle">X</text></g><text class="sm" x="296" y="57" text-anchor="start">lẻ</text><g class="v ve"><circle cx="270" cy="164" r="19"/><text x="270" y="169" text-anchor="middle">Y</text></g><text class="sm" x="270" y="204" text-anchor="middle">chẵn</text><g class="v v0"><circle cx="338" cy="164" r="19"/><text x="338" y="169" text-anchor="middle">T</text></g><text class="sm" x="338" y="204" text-anchor="middle">tự do</text></svg></figure><div class="sd"><ul class="cl"><li>Q–Y ∉ M, nhãn[Y] = chẵn và Y cùng cây với Q ⇒ <b>hai đỉnh chẵn nối nhau</b>: có chu trình lẻ</li><li>lần ngược cha[]: tổ tiên của Q là Q → P → S; tổ tiên của Y là Y → X → Q</li><li>tổ tiên chung gần nhất: <b>b = Q</b> (cơ sở của hoa)</li><li>hoa <b>B = {Q, X, Y}</b>: đường Y → X → Q cộng cạnh Y–Q, |B| = 3 (lẻ)</li></ul><dl class="stt"><dt>Hoa</dt><dd>B = {Q, X, Y}, cơ sở Q</dd><dt>Cạnh đỏ</dt><dd>Y–Q (chẵn – chẵn)</dd></dl></div></div></section><section class="sc"><header><i>4</i><b>Co hoa: dựng đồ thị G/B</b><span class="ln">dòng 20</span></header><div class="sb"><figure><svg viewBox="0 0 370 214" role="img" aria-label="Đồ thị sau khi gói hoa thành B*"><line class="eg" x1="40" y1="108" x2="130" y2="108"/><line class="em" x1="130" y1="108" x2="240" y2="108"/><line class="eg" x1="240" y1="108" x2="336" y2="108"/><g class="v ve"><circle cx="40" cy="108" r="19"/><text x="40" y="113" text-anchor="middle">S</text></g><text class="sm" x="40" y="148" text-anchor="middle">chẵn</text><g class="v vl"><circle cx="130" cy="108" r="19"/><text x="130" y="113" text-anchor="middle">P</text></g><text class="sm" x="130" y="148" text-anchor="middle">lẻ</text><g class="v ve"><rect x="208" y="84" width="64" height="48" rx="24"/><text x="240" y="113" text-anchor="middle">B*</text></g><g class="v v0"><circle cx="336" cy="108" r="19"/><text x="336" y="113" text-anchor="middle">T</text></g><text class="sm" x="336" y="148" text-anchor="middle">tự do</text></svg></figure><div class="sd"><ul class="cl"><li>gộp Q, X, Y thành một đỉnh <b>B*</b>; bỏ các cạnh bên trong (Q–X, X–Y, Y–Q)</li><li>cạnh ra ngoài được giữ: P–Q thành P–B*, Y–T thành B*–T</li><li><b>M′ = M \ (cạnh trong B) = {P–B*}</b></li><li>nhãn[B*] = nhãn[cơ sở Q] = chẵn, cha[B*] = cha[Q] = P, hàng đợi ← B*</li></ul><dl class="stt"><dt>Đỉnh G/B</dt><dd>{S, P, B*, T}</dd><dt>Cạnh G/B</dt><dd>S–P, P–B*, B*–T</dd><dt>Nhãn</dt><dd>S=chẵn, P=lẻ, B*=chẵn</dd><dt>Hàng đợi</dt><dd>[B*]</dd></dl></div></div></section><section class="sc"><header><i>5</i><b>Quét B*: gặp đỉnh tự do T</b><span class="ln">dòng 13–14</span></header><div class="sb"><figure><svg viewBox="0 0 370 214" role="img" aria-label="Đường tăng S P B* T trên đồ thị đã gói"><line class="eg" x1="40" y1="108" x2="130" y2="108"/><line class="em" x1="130" y1="108" x2="240" y2="108"/><line class="eg" x1="240" y1="108" x2="336" y2="108"/><line class="ep" x1="40" y1="108" x2="130" y2="108"/><line class="ep" x1="130" y1="108" x2="240" y2="108"/><line class="ep" x1="240" y1="108" x2="336" y2="108"/><text class="el" x="85" y="90" text-anchor="middle">chưa</text><text class="el" x="185" y="90" text-anchor="middle">đã</text><text class="el" x="288" y="90" text-anchor="middle">chưa</text><g class="v ve"><circle cx="40" cy="108" r="19"/><text x="40" y="113" text-anchor="middle">S</text></g><text class="sm" x="40" y="148" text-anchor="middle">chẵn</text><g class="v vl"><circle cx="130" cy="108" r="19"/><text x="130" y="113" text-anchor="middle">P</text></g><text class="sm" x="130" y="148" text-anchor="middle">lẻ</text><g class="v ve"><rect x="208" y="84" width="64" height="48" rx="24"/><text x="240" y="113" text-anchor="middle">B*</text></g><g class="v v0"><circle cx="336" cy="108" r="19"/><text x="336" y="113" text-anchor="middle">T</text></g><text class="sm" x="336" y="148" text-anchor="middle">tự do</text></svg></figure><div class="sd"><ul class="cl"><li>lấy B*; cạnh B*–T ∉ M′ và <b>T tự do</b> ⇒ tìm được đường tăng trên G/B</li><li><b>P′ = S → P → B* → T</b>: S–P ∉ M′, P–B* ∈ M′, B*–T ∉ M′ ⇒ xen kẽ</li><li>hai đầu S, T đều tự do, độ dài 3 (lẻ)</li></ul><dl class="stt"><dt>Đường P′</dt><dd>S–P, P–B*, B*–T</dd></dl></div></div></section><section class="sc"><header><i>6</i><b>Mở B*: tìm đường bên trong hoa</b><span class="ln">dòng 14</span></header><div class="sb"><figure><svg viewBox="0 0 370 214" role="img" aria-label="Đường S P Q X Y T xen kẽ"><polygon class="bh" points="190,108 270,52 270,164"/><line class="eg" x1="40" y1="108" x2="112" y2="108"/><line class="em" x1="112" y1="108" x2="190" y2="108"/><line class="eg" x1="190" y1="108" x2="270" y2="52"/><line class="em" x1="270" y1="52" x2="270" y2="164"/><line class="eg" x1="270" y1="164" x2="190" y2="108"/><line class="eg" x1="270" y1="164" x2="338" y2="164"/><line class="ep" x1="40" y1="108" x2="112" y2="108"/><line class="ep" x1="112" y1="108" x2="190" y2="108"/><line class="ep" x1="190" y1="108" x2="270" y2="52"/><line class="ep" x1="270" y1="52" x2="270" y2="164"/><line class="ep" x1="270" y1="164" x2="338" y2="164"/><text class="el" x="76" y="90" text-anchor="middle">chưa</text><text class="el" x="151" y="90" text-anchor="middle">đã</text><text class="el" x="216" y="72" text-anchor="middle">chưa</text><text class="el" x="290" y="112" text-anchor="middle">đã</text><text class="el" x="306" y="150" text-anchor="middle">chưa</text><g class="v ve"><circle cx="40" cy="108" r="19"/><text x="40" y="113" text-anchor="middle">S</text></g><text class="sm" x="40" y="148" text-anchor="middle">chẵn</text><g class="v vl"><circle cx="112" cy="108" r="19"/><text x="112" y="113" text-anchor="middle">P</text></g><text class="sm" x="112" y="148" text-anchor="middle">lẻ</text><g class="v ve"><circle cx="190" cy="108" r="19"/><text x="190" y="113" text-anchor="middle">Q</text></g><text class="sm" x="190" y="148" text-anchor="middle">chẵn</text><g class="v vl"><circle cx="270" cy="52" r="19"/><text x="270" y="57" text-anchor="middle">X</text></g><text class="sm" x="296" y="57" text-anchor="start">lẻ</text><g class="v ve"><circle cx="270" cy="164" r="19"/><text x="270" y="169" text-anchor="middle">Y</text></g><text class="sm" x="270" y="204" text-anchor="middle">chẵn</text><g class="v v0"><circle cx="338" cy="164" r="19"/><text x="338" y="169" text-anchor="middle">T</text></g><text class="sm" x="338" y="204" text-anchor="middle">tự do</text></svg></figure><div class="sd"><ul class="cl"><li>P′ vào hoa tại cơ sở Q (qua cạnh đã ghép P–Q) và ra tại Y (qua Y–T ∉ M)</li><li>cần đường xen kẽ Q ⇝ Y <b>bắt đầu bằng ∉ M</b> và <b>kết thúc bằng ∈ M</b>, để nối tiếp Y–T ∉ M</li><li>đường thật <b>P = S–P, P–Q, Q–X, X–Y, Y–T</b>: ∉, ∈, ∉, ∈, ∉</li></ul><dl class="stt"><dt>Đường P</dt><dd>5 cạnh: 3 ∉ M, 2 ∈ M</dd></dl></div></div><div class="sw"><table class="mini"><thead><tr><th>Lối đi</th><th>Cạnh</th><th>Xen kẽ?</th></tr></thead><tbody><tr><td>Q–Y</td><td>∉ M</td><td class="bad">✗ rồi lại Y–T ∉ M: hai cạnh ∉ M liền nhau</td></tr><tr><td>Q–X–Y</td><td>∉ M, ∈ M</td><td class="ok">✓</td></tr></tbody></table></div></section><section class="sc"><header><i>7</i><b>Đảo cạnh: M ← M ⊕ P</b><span class="ln">dòng 6</span></header><div class="sb"><figure><svg viewBox="0 0 370 214" role="img" aria-label="Sau khi đảo: S–P, Q–X, Y–T"><polygon class="bh" points="190,108 270,52 270,164"/><line class="em" x1="40" y1="108" x2="112" y2="108"/><line class="eg" x1="112" y1="108" x2="190" y2="108"/><line class="em" x1="190" y1="108" x2="270" y2="52"/><line class="eg" x1="270" y1="52" x2="270" y2="164"/><line class="eg" x1="270" y1="164" x2="190" y2="108"/><line class="em" x1="270" y1="164" x2="338" y2="164"/><g class="v vo"><circle cx="40" cy="108" r="19"/><text x="40" y="113" text-anchor="middle">S</text></g><g class="v vo"><circle cx="112" cy="108" r="19"/><text x="112" y="113" text-anchor="middle">P</text></g><g class="v vo"><circle cx="190" cy="108" r="19"/><text x="190" y="113" text-anchor="middle">Q</text></g><g class="v vo"><circle cx="270" cy="52" r="19"/><text x="270" y="57" text-anchor="middle">X</text></g><g class="v vo"><circle cx="270" cy="164" r="19"/><text x="270" y="169" text-anchor="middle">Y</text></g><g class="v vo"><circle cx="338" cy="164" r="19"/><text x="338" y="169" text-anchor="middle">T</text></g></svg></figure><div class="sd"><ul class="cl"><li><code>M ⊕ P = (M \ P) ∪ (P \ M)</code></li><li>M \ P = ∅ (cả P–Q và X–Y đều nằm trên P)</li><li>P \ M = {S–P, Q–X, Y–T}</li><li><b>M′ = {S–P, Q–X, Y–T}</b>, |M′| = 3 = |M| + 1</li></ul><dl class="stt"><dt>x mới (SP, PQ, QX, XY, YQ, YT)</dt><dd>(1, 0, 1, 0, 0, 1)</dd><dt>Đỉnh tự do</dt><dd>không còn</dd></dl></div></div></section><section class="sc"><header><i>8</i><b>Kiểm tra bằng công thức</b><span class="ln">mục 02</span></header><div class="sb"><figure><svg viewBox="0 0 370 214" role="img" aria-label="Kết quả cuối ví dụ 2"><polygon class="bh" points="190,108 270,52 270,164"/><line class="em" x1="40" y1="108" x2="112" y2="108"/><line class="eg" x1="112" y1="108" x2="190" y2="108"/><line class="em" x1="190" y1="108" x2="270" y2="52"/><line class="eg" x1="270" y1="52" x2="270" y2="164"/><line class="eg" x1="270" y1="164" x2="190" y2="108"/><line class="em" x1="270" y1="164" x2="338" y2="164"/><g class="v vo"><circle cx="40" cy="108" r="19"/><text x="40" y="113" text-anchor="middle">S</text></g><g class="v vo"><circle cx="112" cy="108" r="19"/><text x="112" y="113" text-anchor="middle">P</text></g><g class="v vo"><circle cx="190" cy="108" r="19"/><text x="190" y="113" text-anchor="middle">Q</text></g><g class="v vo"><circle cx="270" cy="52" r="19"/><text x="270" y="57" text-anchor="middle">X</text></g><g class="v vo"><circle cx="270" cy="164" r="19"/><text x="270" y="169" text-anchor="middle">Y</text></g><g class="v vo"><circle cx="338" cy="164" r="19"/><text x="338" y="169" text-anchor="middle">T</text></g></svg></figure><div class="sd"><ul class="cl"><li>Mục tiêu Σ x<sub>e</sub> = 3. Không còn đỉnh tự do ⇒ không còn đường tăng ⇒ <b>M cực đại, và hoàn hảo</b>.</li></ul><dl class="stt"></dl></div></div><div class="sw"><table class="mini"><thead><tr><th>Ràng buộc</th><th>Tính</th><th></th></tr></thead><tbody><tr><td>Bậc từng đỉnh</td><td>S: 1, P: 1, Q: 1, X: 1, Y: 1, T: 1</td><td class="ok">≤ 1 ✓</td></tr><tr><td>Hoa S = {Q, X, Y}</td><td>x<sub>QX</sub> + x<sub>XY</sub> + x<sub>YQ</sub> = 1 + 0 + 0 = 1</td><td class="ok">≤ (3−1)/2 = 1 ✓</td></tr><tr><td>Hoa S = {S, P, Q, X, Y}</td><td>x<sub>SP</sub> + x<sub>PQ</sub> + x<sub>QX</sub> + x<sub>XY</sub> + x<sub>YQ</sub> = 1 + 0 + 1 + 0 + 0 = 2</td><td class="ok">≤ (5−1)/2 = 2 ✓</td></tr></tbody></table></div></section></div>
 
-<h3>Những đường nhìn giống đường tăng nhưng sai</h3>
-<p>Dùng cách ghép hiện tại {A–B} trên chuỗi C – A – B – D:</p>
+<h2><span class="sn">06</span>Trong Whybi</h2>
 <div class="tw"><table>
-<thead><tr><th>Đường</th><th>Sai ở đâu</th></tr></thead>
+<thead><tr><th>Phần</th><th>Ở project</th></tr></thead>
 <tbody>
-<tr><td class="c-bad">✗ A – B</td><td>Bắt đầu ở A, mà A đã ghép, không phải đỉnh tự do</td></tr>
-<tr><td class="c-bad">✗ C – A</td><td>Kết thúc ở A, đã ghép. Đường tăng phải kết thúc ở đỉnh tự do</td></tr>
-<tr><td class="c-bad">✗ C – A – B</td><td>Kết thúc ở B, đã ghép</td></tr>
-<tr><td class="c-ok">✓ C – A – B – D</td><td>Bắt đầu ở C (tự do), luân phiên chưa chọn, đã chọn, chưa chọn, kết thúc ở D (tự do)</td></tr>
+<tr><td>Trọng số w<sub>e</sub></td><td>Điểm bù trừ hai chiều của cặp (xem 2.2.6, tính điểm w)</td></tr>
+<tr><td>Gọi thuật toán</td><td><code>nx.max_weight_matching(g, maxcardinality=False)</code> (<code>algorithms/matching.py:88</code>): cần tổng w lớn nhất, không ép nhiều cặp nhất</td></tr>
+<tr><td>Vì sao O(V³)</td><td>Mỗi đỉnh làm gốc tối đa một lần (V lần). Mỗi lần tìm: mỗi đỉnh vào hàng đợi tối đa một lần, và co hoa tối đa V lần với chi phí O(V) mỗi lần, nên O(V²). Tổng O(V³) (cài đặt đơn giản)</td></tr>
+<tr><td>Bản có trọng số</td><td>Giữ thêm biến đối ngẫu cho đỉnh và cho hoa; chỉ đi trên cạnh "chặt" (độ lệch bằng 0). Hết cạnh chặt thì chỉnh biến đối ngẫu rồi tìm tiếp. Các ví dụ trên là bản không trọng số để thấy rõ gói / mở hoa</td></tr>
+<tr><td>Đã kiểm</td><td>600 lớp ngẫu nhiên (2 đến 9 SV): tổng w luôn bằng đáp án vét cạn</td></tr>
 </tbody></table></div>
-
-<h2>Bước 3: vì sao hết đường tăng thì là tốt nhất</h2>
-<p>Đây là một kết quả đã biết (định lý Berge, bạn không cần chứng minh): <b>một cách ghép là cực đại (nhiều cặp nhất) khi và chỉ khi không còn đường tăng nào</b>. Vì vậy thuật toán chỉ cần lặp: còn đường tăng thì đảo, hết thì dừng.</p>
-
-<h2>Bước 4: đồ thị hai phía và chu trình lẻ</h2>
-<p><mark>Đồ thị hai phía</mark> là đồ thị mà các đỉnh chia được thành hai nhóm sao cho mọi cạnh nối <b>giữa hai nhóm</b>. Cách kiểm tra là <b>tô hai màu</b> sao cho hai đầu mỗi cạnh khác màu. <mark>Chu trình</mark> là đường đi vòng quay lại đỉnh xuất phát; chu trình <mark>lẻ</mark> có số đỉnh lẻ (3, 5, ...).</p>
-<div class="tw"><table>
-<thead><tr><th>Đồ thị</th><th>Tô hai màu</th><th>Hai phía?</th></tr></thead>
-<tbody>
-<tr><td>Tam giác A–B–C (3 đỉnh)</td><td>A đỏ, B xanh, C nối cả A (đỏ) lẫn B (xanh) nên không tô được</td><td class="c-bad">✗ Không</td></tr>
-<tr><td>Hình vuông A–B–C–D (4 đỉnh)</td><td>A đỏ, B xanh, C đỏ, D xanh; D nối A (đỏ) khớp</td><td class="c-ok">✓ Có</td></tr>
-<tr><td>Ngũ giác 5 đỉnh</td><td>Đỏ, xanh, đỏ, xanh rồi đỉnh thứ 5 nối cả đỉnh 4 (xanh) lẫn đỉnh 1 (đỏ), không tô được</td><td class="c-bad">✗ Không</td></tr>
-</tbody></table></div>
-<p class="cap">Quy tắc nhớ: có chu trình lẻ thì <b>không</b> phải đồ thị hai phía. Mình đã kiểm tra bằng NetworkX: <code>nx.is_bipartite</code> cho tam giác False, hình vuông True, ngũ giác False.</p>
-<p>Với Whybi, bạn nào cũng có thể ghép với bạn nào, không chia được hai nhóm, nên đồ thị <b>có thể</b> có chu trình lẻ. Đó là lý do không dùng được thuật toán chỉ chạy trên hai phía (Hungarian).</p>
-
-<h2>Bước 5: chu trình lẻ làm tìm đường tăng bị lừa</h2>
-<p>Ở đồ thị hai phía, đi luân phiên thì luôn đổi màu nên <b>không bao giờ quay lại</b> đúng nhóm xuất phát. Trên tam giác thì có thể. Giả sử đã chọn A–B, C tự do, tìm đường tăng từ C:</p>
-<div class="tw"><table>
-<thead><tr><th>Bước</th><th>Đi</th><th>Nhận xét</th></tr></thead>
-<tbody>
-<tr><td>1</td><td>C → A (chưa chọn)</td><td>Bình thường</td></tr>
-<tr><td>2</td><td>A → B (đã chọn)</td><td>Bình thường</td></tr>
-<tr><td>3</td><td class="c-bad">B → C (chưa chọn)</td><td>Quay đúng C, nơi xuất phát. Đường tăng phải kết thúc ở một đỉnh tự do <b>khác</b>, nên đây là đường giả</td></tr>
-</tbody></table></div>
-<p>Thuật toán hai phía không lường trước chuyện này nên dễ đi vòng hoặc bỏ sót đường tăng thật.</p>
-
-<h2>Bước 6: bông hoa (blossom)</h2>
-<p><mark>Bông hoa</mark> là chu trình lẻ tìm thấy trong lúc tìm đường tăng. Cách xử lý của Edmonds, ba bước: <b>(1) gói</b> bông hoa thành một đỉnh duy nhất, <b>(2)</b> tiếp tục tìm đường tăng trên đồ thị đã gói, <b>(3) mở</b> bông hoa ra, chọn đường đi trong bông hoa sao cho vẫn luân phiên.</p>
-<h3>Xem từng bước trên một đồ thị có chu trình lẻ</h3>
-<p>6 bạn S, P, Q, X, Y, T. Q, X, Y tạo thành tam giác. Cách ghép hiện tại: {P–Q, X–Y}; S và T đang tự do.</p>
-<div class="fig" id="st2"></div>
-
-<h3>Vì sao phải mở bông hoa đúng cách</h3>
-<p>Khi mở, đường vào bông hoa ở Q và đường ra ở Y (tới T). Có hai cách đi từ Q tới Y trong tam giác:</p>
-<div class="tw"><table>
-<thead><tr><th>Cách đi</th><th>Chuỗi cạnh cả đường S → T</th><th>Luân phiên?</th></tr></thead>
-<tbody>
-<tr><td class="c-bad">✗ Đi tắt Q → Y</td><td>S–P (chưa), P–Q (đã), Q–Y (chưa), Y–T (chưa)</td><td class="c-bad">Hai cạnh chưa chọn liền nhau, không luân phiên</td></tr>
-<tr><td class="c-ok">✓ Đi vòng Q → X → Y</td><td>S–P (chưa), P–Q (đã), Q–X (chưa), X–Y (đã), Y–T (chưa)</td><td class="c-ok">Chưa, đã, chưa, đã, chưa: đúng luân phiên</td></tr>
-</tbody></table></div>
-<p class="cap">Trong bông hoa 3 đỉnh luôn có đúng một cách đi để vẫn luân phiên; phần mở ra được thuật toán tự tìm.</p>
-
-<h2>Bước 7: thuật toán tổng thể</h2>
-<pre><code>M = tập cạnh đã chọn (ban đầu rỗng)
-lặp:
-    tìm đường tăng từ một đỉnh tự do (gặp chu trình lẻ thì gói, mở sau)
-    nếu không còn đường tăng: dừng
-    đảo các cạnh trên đường để được cách ghép nhiều hơn 1 cặp
-trả về M</code></pre>
-<div class="tw"><table>
-<thead><tr><th>Dòng</th><th>Làm gì</th></tr></thead>
-<tbody>
-<tr><td><code>M = rỗng</code></td><td>Lúc đầu chưa ghép ai, mọi đỉnh tự do</td></tr>
-<tr><td><code>tìm đường tăng</code></td><td>Từ mỗi đỉnh tự do, đi luân phiên; gặp chu trình lẻ thì dùng bông hoa</td></tr>
-<tr><td><code>không còn đường tăng: dừng</code></td><td>Theo định lý ở bước 3, lúc đó đã đạt nhiều cặp nhất</td></tr>
-<tr><td><code>đảo</code></td><td>Cạnh chưa chọn thành chọn, đã chọn thành bỏ; số cặp tăng 1</td></tr>
-</tbody></table></div>
-<p>Vì sao O(V³): với V đỉnh, mỗi lần đảo tăng thêm 1 cặp nên tối đa V/2 lần; mỗi lần tìm đường tăng tốn cỡ V² thao tác. Đây là con số đề cương và thư viện nêu; mình chưa tự kiểm chứng.</p>
-
-<h2>Bước 8: thêm trọng số (ý chính)</h2>
-<p>Hệ thống không chỉ muốn nhiều cặp mà muốn <b>tổng điểm w lớn nhất</b>. Thuật toán thêm một cơ chế: mỗi đỉnh có một con số gọi là "giá"; thuật toán chỉ đi trên cạnh <b>chặt</b> (tổng giá hai đầu bằng đúng điểm của cạnh). Khi hết đường để đi, nó chỉnh giá để mở thêm cạnh chặt. Bạn chỉ cần nhớ: <mark>vẫn là tìm đường tăng</mark>, nhưng chỉ trên các cạnh chặt. Đây là phần toán sâu, mình tóm tắt rất gọn.</p>
-
-<h2>Bước 9: dùng trong NetworkX</h2>
-<pre><code>import networkx as nx
-
-G = nx.Graph()
-G.add_weighted_edges_from([("C", "A", 2), ("A", "B", 3), ("B", "D", 2)])
-
-m = nx.max_weight_matching(G)     # mặc định maxcardinality=False
-print(sorted(tuple(sorted(e)) for e in m))
-# [('A', 'C'), ('B', 'D')]   tổng 4, tối ưu</code></pre>
-<div class="tw"><table>
-<thead><tr><th>Dòng</th><th>Làm gì</th></tr></thead>
-<tbody>
-<tr><td><code>nx.Graph()</code></td><td>Tạo đồ thị vô hướng</td></tr>
-<tr><td><code>add_weighted_edges_from([...])</code></td><td>Thêm cạnh (đỉnh, đỉnh, điểm w)</td></tr>
-<tr><td><code>max_weight_matching(G)</code></td><td>Chạy Blossom có trọng số, trả về tập các cặp</td></tr>
-<tr><td><code>maxcardinality=False</code></td><td>Tối đa <b>tổng điểm</b>, không ép số cặp nhiều nhất. Đề cương dùng giá trị này</td></tr>
-</tbody></table></div>
-<p>Mình đã chạy thử: với đồ thị C–A (2), A–B (3), B–D (2), hàm trả đúng {A–C, B–D} tổng 4. Với tam giác ba cạnh cùng điểm 3, hàm chỉ chọn <b>1</b> cạnh (3 người, một người lẻ). Với đồ thị 6 đỉnh ở bước 6 (không trọng số) và <code>maxcardinality=True</code>, hàm trả 3 cặp {P–S, Q–X, T–Y}, đúng kết quả sau khi đảo ở demo.</p>
 
 <h2>Dễ bị hỏi</h2>
-<details><summary>Blossom và Hungarian khác nhau thế nào?</summary><p>Cùng ý tìm đường tăng. Hungarian chỉ đúng cho đồ thị hai phía. Blossom thêm bước gói chu trình lẻ nên đúng cho đồ thị bất kỳ, và đồ thị ghép sinh viên với sinh viên có thể có chu trình lẻ.</p></details>
-<details><summary>Vì sao không chia lớp thành hai nhóm cho đỡ phức tạp?</summary><p>Chia nhóm sẽ làm mất những cặp tốt giữa hai bạn cùng nhóm, và việc chia cũng cần một tiêu chí chưa có. Dùng Blossom cho đồ thị bất kỳ là đơn giản hơn.</p></details>
-<details><summary>Blossom có đảm bảo ai cũng có cặp không?</summary><p>Không. Nó tối đa tổng điểm, nên có thể bỏ lẻ một bạn nếu như vậy tổng điểm cao hơn, và số bạn trong lớp lẻ thì chắc chắn có người lẻ. Người lẻ được xử lý bằng ghép một chiều với mentor hoặc hàng chờ (trang kế).</p></details>
-<details><summary>Kết quả tối ưu có tốt nếu điểm w sai không?</summary><p>Không. Blossom chỉ tối ưu theo điểm w nó nhận được. Điểm w tính từ Biên và p(n) có giới hạn (xem trang tính điểm w), nên "tối ưu" chỉ đúng với mô hình đó.</p></details>
-<p class="cap">Trang kế (2.2.6 phần 3): có thuật toán rồi, quay lại xem tham lam khác gì và vì sao tham lam chỉ là phương án dự phòng.</p>
+<details><summary>Blossom khác tham lam ở đâu?</summary><p>Tham lam chọn cạnh nặng nhất trước và không sửa lại. Blossom ghép tạm rồi sửa bằng đường tăng, nên đạt tổng lớn nhất cho cả lớp (xem 2.2.6).</p></details>
+<details><summary>Vì sao chỉ chu trình lẻ mới gây rắc rối?</summary><p>Ở chu trình chẵn, hai lối tới cùng một người luôn dài ngắn cùng tính chẵn lẻ, nên vẫn xen kẽ được. Ở chu trình lẻ hai lối lệch nhau một bước, người đó bị gán hai vai.</p></details>
+<details><summary>Ghép hoàn hảo lúc nào cũng có không?</summary><p>Không. Cần số đỉnh chẵn và đồ thị đủ cạnh. Lớp có số SV lẻ hoặc có bạn không bù trừ được ai thì có người chưa có cặp; Whybi xử lý bằng ghép một chiều hoặc hàng chờ.</p></details>
+
+<p class="cap">Phần giới thiệu và công thức tóm tắt từ tài liệu IBM về thuật toán Blossom (đa diện ghép cặp của Edmonds). Hai ví dụ là của đề tài. Trang kế: 2.2.6, chọn cặp cho cả lớp.</p>
 </main>
-<script>
-function key(u, v) { return u < v ? u + v : v + u; }
-function stepper(id, nodes, edges, frames, vb) {
-  var root = $('#' + id), k = 0;
-  root.innerHTML = '<svg class="d" viewBox="0 0 ' + vb[0] + ' ' + vb[1] + '" role="img" aria-label="Đồ thị minh họa từng bước"><g id="' + id + 'g"></g></svg>' +
-    '<p class="cap">Nét xanh lá dày: cạnh đã chọn. Nét đứt xanh dương: đường đang đi. Nét đỏ: cạnh gây vòng. Vòng nét chấm đỏ: bông hoa. Dưới mỗi đỉnh có chữ cho biết trạng thái.</p>' +
-    '<div class="row"><button class="b" id="' + id + 'n" type="button">Bước tiếp</button><button class="b" id="' + id + 'r" type="button">Làm lại</button></div>' +
-    '<div class="tw" id="' + id + 'l"></div>';
-  function draw() {
-    var f = frames[k], m = {}, hl = {}, bd = {}, matched = {};
-    f.m.forEach(function (e) { m[key(e[0], e[1])] = 1; matched[e[0]] = matched[e[1]] = 1; });
-    (f.hl || []).forEach(function (e) { hl[key(e[0], e[1])] = 1; });
-    (f.bad || []).forEach(function (e) { bd[key(e[0], e[1])] = 1; });
-    var h = '';
-    if (f.blob) {
-      var xs = f.blob.map(function (n) { return nodes[n][0]; }), ys = f.blob.map(function (n) { return nodes[n][1]; });
-      var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
-      h += '<ellipse class="bl" cx="' + (x0 + x1) / 2 + '" cy="' + (y0 + y1) / 2 + '" rx="' + ((x1 - x0) / 2 + 42) + '" ry="' + ((y1 - y0) / 2 + 42) + '"/>';
-    }
-    edges.forEach(function (e) {
-      var a = nodes[e[0]], b = nodes[e[1]], kk = key(e[0], e[1]);
-      h += '<line class="ed2' + (m[kk] ? ' mt' : '') + (bd[kk] ? ' bad' : '') + '" x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '"/>';
-      if (hl[kk]) h += '<line class="ed2 hl" x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '"/>';
-    });
-    Object.keys(nodes).forEach(function (n) {
-      var p = nodes[n], c = (f.cls || {})[n] || '', lab = (f.lab || {})[n] || (matched[n] ? 'đã ghép' : 'tự do');
-      h += '<circle class="vc ' + c + '" cx="' + p[0] + '" cy="' + p[1] + '" r="24"/><text x="' + p[0] + '" y="' + (p[1] + 5) + '" text-anchor="middle">' + n + '</text>' +
-        '<text class="sm" x="' + p[0] + '" y="' + (p[1] + 44) + '" text-anchor="middle">' + lab + '</text>';
-    });
-    $('#' + id + 'g').innerHTML = h;
-    $('#' + id + 'l').innerHTML = '<table aria-label="Các bước"><thead><tr><th>Bước</th><th>Việc làm</th></tr></thead><tbody>' +
-      frames.slice(0, k + 1).map(function (x, i) { return '<tr' + (i === k ? ' class="hit"' : '') + '><td>' + i + '</td><td>' + x.t + '</td></tr>'; }).join('') + '</tbody></table>';
-    $('#' + id + 'n').disabled = k >= frames.length - 1;
-  }
-  $('#' + id + 'n').onclick = function () { if (k < frames.length - 1) { k++; draw(); } };
-  $('#' + id + 'r').onclick = function () { k = 0; draw(); };
-  draw();
-}
-
-/* Demo 1: đường tăng trên chuỗi C–A–B–D */
-stepper('st1', { C: [90, 90], A: [270, 90], B: [450, 90], D: [630, 90] }, [['C', 'A'], ['A', 'B'], ['B', 'D']], [
-  { m: [['A', 'B']], cls: { C: 'fr', D: 'fr' }, t: 'Cách ghép hiện tại: chỉ A–B (nét dày). C và D chưa có cặp, gọi là <b>tự do</b>.' },
-  { m: [['A', 'B']], hl: [['C', 'A']], cls: { C: 'fr', D: 'fr' }, lab: { C: 'gốc tìm' }, t: 'Xuất phát từ <b>C</b> (tự do). Đi theo một cạnh <b>chưa chọn</b>: C–A.' },
-  { m: [['A', 'B']], hl: [['C', 'A'], ['A', 'B']], cls: { C: 'fr', D: 'fr' }, t: 'Từ A đi theo cạnh <b>đã chọn</b> A–B, sang B.' },
-  { m: [['A', 'B']], hl: [['C', 'A'], ['A', 'B'], ['B', 'D']], cls: { C: 'fr', D: 'fr' }, lab: { D: 'tự do, đích' }, t: 'Từ B đi theo cạnh <b>chưa chọn</b> B–D, tới <b>D</b> cũng tự do. Có <b>đường tăng C–A–B–D</b>: chưa chọn, đã chọn, chưa chọn (luân phiên).' },
-  { m: [['C', 'A'], ['B', 'D']], cls: { C: 'ok', A: 'ok', B: 'ok', D: 'ok' }, t: '<b>Đảo</b> các cạnh trên đường: bỏ A–B, chọn C–A và B–D. Từ 1 cặp lên <b>2 cặp</b>, không còn đỉnh tự do.' }
-], [720, 190]);
-
-/* Demo 2: bông hoa */
-var N2 = { S: [60, 150], P: [190, 150], Q: [330, 150], X: [470, 70], Y: [470, 230], T: [630, 230] };
-var E2 = [['S', 'P'], ['P', 'Q'], ['Q', 'X'], ['X', 'Y'], ['Y', 'Q'], ['Y', 'T']];
-var M0 = [['P', 'Q'], ['X', 'Y']];
-stepper('st2', N2, E2, [
-  { m: M0, cls: { S: 'fr', T: 'fr' }, t: 'Cách ghép hiện tại {P–Q, X–Y}. <b>S</b> và <b>T</b> tự do. Ta tìm đường tăng nối S tới T.' },
-  { m: M0, hl: [['S', 'P'], ['P', 'Q']], cls: { S: 'fr', T: 'fr' }, lab: { S: 'gốc tìm', P: 'đã thăm', Q: 'đã thăm' }, t: 'Từ S: cạnh chưa chọn S–P tới P, rồi cạnh đã chọn P–Q tới Q.' },
-  { m: M0, hl: [['S', 'P'], ['P', 'Q'], ['Q', 'X'], ['X', 'Y']], cls: { S: 'fr', T: 'fr' }, lab: { S: 'gốc tìm', P: 'đã thăm', Q: 'đã thăm', X: 'đã thăm', Y: 'đã thăm' }, t: 'Từ Q: cạnh chưa chọn Q–X tới X, rồi cạnh đã chọn X–Y tới Y.' },
-  { m: M0, hl: [['S', 'P'], ['P', 'Q'], ['Q', 'X'], ['X', 'Y']], bad: [['Y', 'Q']], cls: { S: 'fr', T: 'fr', Q: 'bad', X: 'bad', Y: 'bad' }, lab: { Q: 'đã thăm', X: 'đã thăm', Y: 'đã thăm' }, t: 'Từ Y thấy cạnh Y–Q, mà <b>Q đã thăm</b>: ta vừa đi vòng Q–X–Y–Q. Đó là <b>chu trình lẻ</b> (3 đỉnh). Nếu đi tiếp như thường sẽ quay vòng hoặc bỏ sót đường.' },
-  { m: M0, blob: ['Q', 'X', 'Y'], cls: { S: 'fr', T: 'fr', Q: 'bad', X: 'bad', Y: 'bad' }, lab: { Q: 'bông hoa', X: 'bông hoa', Y: 'bông hoa' }, t: '<b>Gói</b> Q, X, Y thành một đỉnh duy nhất gọi là B* (bông hoa, vòng chấm đỏ).' },
-  { m: M0, blob: ['Q', 'X', 'Y'], hl: [['S', 'P'], ['P', 'Q'], ['Y', 'T']], cls: { S: 'fr', T: 'fr', Q: 'bad', X: 'bad', Y: 'bad' }, lab: { Q: 'bông hoa', X: 'bông hoa', Y: 'bông hoa', T: 'tự do, đích' }, t: 'Trên đồ thị đã gói, từ B* có cạnh chưa chọn (Y–T) tới <b>T</b> tự do. Tìm được đường tăng <b>S–P=B*–T</b>.' },
-  { m: M0, hl: [['S', 'P'], ['P', 'Q'], ['Q', 'X'], ['X', 'Y'], ['Y', 'T']], cls: { S: 'fr', T: 'fr' }, lab: { T: 'tự do, đích' }, t: '<b>Mở</b> bông hoa, đi vòng trong nó để vẫn luân phiên: Q–X (chưa chọn), X–Y (đã chọn). Đường tăng thật: <b>S–P, P–Q, Q–X, X–Y, Y–T</b> (chưa, đã, chưa, đã, chưa).' },
-  { m: [['S', 'P'], ['Q', 'X'], ['Y', 'T']], cls: { S: 'ok', P: 'ok', Q: 'ok', X: 'ok', Y: 'ok', T: 'ok' }, t: '<b>Đảo</b> các cạnh trên đường: được {S–P, Q–X, Y–T}, <b>3 cặp</b>, không còn đỉnh tự do.' }
-], [680, 290]);
-</script>
 </body>
 </html>

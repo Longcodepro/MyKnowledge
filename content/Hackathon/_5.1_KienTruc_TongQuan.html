@@ -6,6 +6,50 @@
 <title>5.1 Kiến trúc tổng thể</title>
 <link rel="stylesheet" href="assets/hoc.css">
 <script src="assets/hoc.js"></script>
+<style>
+/* Màu và nét riêng cho các sơ đồ của trang này; chỉ dùng biến màu của hoc.css nên tự đổi theo chế độ tối */
+.nd.pr rect{fill:var(--frbg);stroke:var(--blue)}
+.nd.bx rect{fill:var(--paper);stroke:var(--blue)}
+.nd.db rect{fill:var(--okbg);stroke:var(--ok)}
+.nd.ex rect{fill:var(--panel);stroke:var(--ink)}
+.zone{fill:none;stroke:var(--mut);stroke-width:1.5;stroke-dasharray:7 5}
+.zone.pr{fill:var(--frbg);stroke:var(--blue);stroke-dasharray:none}
+.pn{fill:none;stroke:var(--rule);stroke-width:1.5}
+.ed.net{stroke:var(--blue);stroke-width:2.6}
+.ed.call{stroke:var(--mut);stroke-dasharray:6 4}
+.ed.thin{stroke-width:1.6}
+.mkb{fill:var(--blue)}
+.mkm{fill:var(--mut)}
+.bg{fill:var(--blue)}
+.bg.g{fill:var(--mut)}
+.hb{fill:var(--panel)}
+.hl{stroke:var(--mut);stroke-width:2}
+.tb.cpu{fill:var(--blue)}
+.tb.wait{stroke:var(--mut);stroke-width:1}
+.tb.blk{fill:var(--red)}
+.tb.q{fill:var(--badbg);stroke:var(--red);stroke-width:1.2;stroke-dasharray:5 3}
+.xm{fill:var(--badbg);stroke:var(--red);stroke-width:1.5}
+svg.d text.bt{fill:var(--paper);font-size:11px;font-weight:700;text-anchor:middle}
+svg.d text.big{font-size:14px;font-weight:700}
+svg.d text.bd{font-weight:700;font-size:12px}
+svg.d text.rd{fill:var(--red);font-weight:700;font-size:12px}
+svg.d text.rs{fill:var(--red);font-size:11.5px;font-weight:600}
+svg.d text.wl{paint-order:stroke;stroke:var(--paper);stroke-width:4px;stroke-linejoin:round}
+.lg{display:flex;flex-wrap:wrap;gap:6px 18px;margin:8px 0 0;font-size:14px;color:var(--mut);max-width:none}
+.lg span.i{display:inline-block;width:22px;height:12px;margin-right:6px;vertical-align:-1px;border:1px solid var(--mut)}
+.i.cpu{background:var(--blue);border-color:var(--blue)}
+.i.wait{background:repeating-linear-gradient(45deg,var(--panel) 0 3px,var(--mut) 3px 4px)}
+.i.blk{background:var(--red);border-color:var(--red)}
+.i.q{background:var(--badbg);border:1px dashed var(--red)}
+.i.net{height:0;border:0;border-top:3px solid var(--blue);vertical-align:3px}
+.i.call{height:0;border:0;border-top:3px dashed var(--mut);vertical-align:3px}
+pre{margin:10px 0 14px;padding:10px 12px;background:var(--panel);border-left:4px solid var(--blue);overflow-x:auto;font:13.5px/1.55 ui-monospace,Consolas,monospace;max-width:100%}
+pre code{background:none;padding:0}
+h3{scroll-margin-top:60px}
+h2{scroll-margin-top:60px}
+.ks{margin:6px 0 14px;padding-left:20px}
+.ks li{margin:4px 0}
+</style>
 </head>
 <body>
 <header class="top"><a href="index.html">← Mục lục</a><button class="b" id="tg" type="button">Chế độ tối</button></header>
@@ -18,7 +62,45 @@
 <li>Đã loại <mark>vi dịch vụ</mark> (vận hành tốn công cho một MVP) và <mark>serverless</mark> (cần WebSocket và tác vụ chạy lâu).</li>
 </ul></div>
 
-<h2>Hai kiểu đi đường</h2>
+<p>Trang này viết cho người chưa biết gì về web. Đọc từ trên xuống: mục 1 giải thích các từ nền, mục 2–3 cho bức tranh chung, mục 4 đi qua từng thành phần (mỗi thành phần có: nó là gì, nó làm gì ở Whybi, nằm ở đâu trong repo), mục 5–7 ghép lại thành các tình huống thật.</p>
+<ul class="toc">
+<li><a href="#nen">1 Từ nền</a></li>
+<li><a href="#tong">2 Bức tranh chung</a></li>
+<li><a href="#req">3 Đường đi một request</a></li>
+<li><a href="#tp">4 Từng thành phần</a></li>
+<li><a href="#kich">5 Ba tình huống</a></li>
+<li><a href="#tang">6 Công nghệ theo tầng</a></li>
+<li><a href="#mang">7 Cổng và mạng</a></li>
+<li><a href="#hoi">8 Dễ bị hỏi</a></li>
+</ul>
+
+<h2 id="nen">1. Từ nền cần có trước</h2>
+<p>Mọi thành phần phía sau đều dựa trên các khái niệm này. Chưa quen thì đọc kỹ bảng, các mục sau sẽ dùng lại nguyên các từ ấy.</p>
+<div class="tw"><table>
+<thead><tr><th>Thuật ngữ</th><th>Nghĩa</th><th>Ở Whybi</th></tr></thead>
+<tbody>
+<tr><td>Tiến trình</td><td>Một chương trình đang chạy. Mỗi tiến trình có <b>vùng nhớ riêng</b>: hai tiến trình không thấy biến của nhau. Muốn trao đổi dữ liệu phải đi qua mạng, tệp hoặc một nơi lưu chung.</td><td>Nginx, mỗi tiến trình Uvicorn, mỗi worker Celery, PostgreSQL, Redis đều là tiến trình riêng.</td></tr>
+<tr><td>Máy chủ, máy khách</td><td>Máy chủ (server) là tiến trình luôn chờ yêu cầu. Máy khách (client) là bên gửi yêu cầu. Một tiến trình có thể là khách của bên này và là chủ của bên kia.</td><td>Trình duyệt là khách của Nginx. API là chủ của trình duyệt nhưng là khách của PostgreSQL.</td></tr>
+<tr><td>Địa chỉ IP</td><td>Số định danh một máy trong mạng, ví dụ <code>203.0.113.10</code>. Có thể đổi theo thời gian.</td><td>Máy chủ demo có một IP công khai.</td></tr>
+<tr><td>Tên miền, DNS</td><td>Tên miền là tên dễ nhớ (<code>whybi.example.com</code>). DNS là hệ thống tra cứu <b>tên → IP</b>. Nhờ tách tên khỏi IP, IP đổi thì client vẫn dùng tên cũ.</td><td>Biến <code>DOMAIN</code> khi bật HTTPS. Trong Docker, <code>api</code>, <code>postgres</code>, <code>redis</code> là tên dịch vụ; DNS nội bộ của Docker tra ra IP hiện tại của container.</td></tr>
+<tr><td>Cổng (port)</td><td>Số từ 0 đến 65535 để phân biệt các tiến trình trên cùng một IP. Mỗi cổng chỉ một tiến trình lắng nghe. Địa chỉ đầy đủ của một dịch vụ là <code>IP:cổng</code>.</td><td>Nginx 80 (443 khi có HTTPS), API 8000, PostgreSQL 5432, Redis 6379.</td></tr>
+<tr><td>TCP</td><td>Kênh truyền byte giữa hai <code>IP:cổng</code>: hai chiều, đúng thứ tự, mất gói thì tự gửi lại. HTTP, PostgreSQL, Redis đều chạy trên TCP.</td><td>Mọi mũi tên nét liền trong các sơ đồ dưới đây.</td></tr>
+<tr><td>HTTP</td><td>Giao thức dạng văn bản: client gửi một <b>request</b> (method, đường dẫn, header, body), server trả một <b>response</b> (mã trạng thái, header, body). Server <b>không nhớ</b> request trước đó (stateless).</td><td>Trình duyệt ↔ Nginx ↔ API. Vì stateless nên mỗi request đều mang token đăng nhập.</td></tr>
+<tr><td>JSON</td><td>Định dạng văn bản biểu diễn dữ liệu có cấu trúc, ví dụ <code>{"fromKey": "N5", "toKey": "N1"}</code>. Mọi ngôn ngữ đều đọc được.</td><td>Thân request và response của API; tên trường viết camelCase.</td></tr>
+<tr><td>API</td><td>Tập các địa chỉ và quy ước dữ liệu mà một phần mềm mở ra để phần mềm khác gọi.</td><td>Mọi địa chỉ bắt đầu bằng <code>/api/v1</code>.</td></tr>
+<tr><td>WebSocket</td><td>Kết nối giữ mở lâu, hai chiều, cho phép server <b>chủ động đẩy</b> dữ liệu xuống client (HTTP thường chỉ trả lời khi được hỏi).</td><td>Đường <code>/api/v1/ws</code>: đẩy sự kiện xuống trình duyệt.</td></tr>
+<tr><td>Cơ sở dữ liệu</td><td>Phần mềm lưu dữ liệu lâu dài, cho truy vấn và đảm bảo tính đúng đắn (ràng buộc, giao dịch).</td><td>PostgreSQL.</td></tr>
+<tr><td>Bất đồng bộ (async)</td><td>Cách một tiến trình xử lý nhiều việc xen kẽ: khi một việc phải chờ (mạng, CSDL), nó chuyển sang việc khác thay vì đứng yên.</td><td>Uvicorn/FastAPI; xem hình 2.</td></tr>
+<tr><td>Container, Docker</td><td>Container là một tiến trình được đóng gói cùng môi trường chạy của nó, cô lập khỏi các tiến trình khác. Docker tạo và quản lý container; Docker Compose chạy nhiều container cùng lúc theo một tệp cấu hình.</td><td>Mỗi dịch vụ trong <code>docker-compose.yml</code> là một container.</td></tr>
+</tbody></table></div>
+
+<div class="nho"><ul>
+<li><b>Điều 1:</b> tiến trình không chung bộ nhớ. Vì vậy dữ liệu cần dùng chung giữa các tiến trình phải nằm <mark>ngoài tiến trình</mark> (PostgreSQL, Redis), không nằm trong biến Python.</li>
+<li><b>Điều 2:</b> HTTP không nhớ request trước. Vì vậy <mark>mỗi request tự mang bằng chứng đăng nhập</mark> (token JWT).</li>
+</ul></div>
+
+<h2 id="tong">2. Bức tranh chung</h2>
+<p>Whybi gồm các dịch vụ dưới đây, chạy bằng Docker Compose. Hình bên dưới có hai chế độ: bấm <b>Việc nhẹ</b> hoặc <b>Việc nặng</b> để xem đường đi dữ liệu khác nhau thế nào.</p>
 <div class="fig">
 <div class="row"><button class="b" id="m-light" aria-pressed="true" type="button">Việc nhẹ</button><button class="b" id="m-heavy" aria-pressed="false" type="button">Việc nặng</button></div>
 <svg class="d" viewBox="0 0 760 300" role="img" aria-label="Sơ đồ kiến trúc: trình duyệt, Nginx, API, PostgreSQL, Redis, Worker, MinIO">
@@ -48,7 +130,358 @@
 <div class="msg" id="msg" aria-live="polite"></div>
 </div>
 
-<h2>Công nghệ theo tầng</h2>
+<h3>Các dịch vụ khi chạy <code>docker compose up</code></h3>
+<div class="tw"><table>
+<thead><tr><th>Dịch vụ</th><th>Là gì</th><th>Cổng trong mạng Docker</th><th>Việc chính</th></tr></thead>
+<tbody>
+<tr><td><code>nginx</code></td><td>Máy chủ web và reverse proxy; chứa luôn giao diện đã build</td><td>80</td><td>Cổng vào cho người dùng; trả giao diện; chuyển <code>/api/</code> sang API</td></tr>
+<tr><td><code>api</code></td><td>Uvicorn chạy ứng dụng FastAPI, 4 tiến trình</td><td>8000</td><td>Nhận request, kiểm quyền, gọi nghiệp vụ, trả JSON</td></tr>
+<tr><td><code>worker</code></td><td>Celery worker, 4 tiến trình con</td><td>không nghe cổng nào</td><td>Lấy việc nặng từ hàng đợi và làm</td></tr>
+<tr><td><code>beat</code></td><td>Celery beat</td><td>không nghe cổng nào</td><td>Đến giờ thì đẩy việc định kỳ vào hàng đợi</td></tr>
+<tr><td><code>events</code></td><td>Tiến trình <code>mastery_listener</code></td><td>không nghe cổng nào</td><td>Nghe sự kiện từ Redis và xử lý</td></tr>
+<tr><td><code>postgres</code></td><td>PostgreSQL 16 + pgvector</td><td>5432</td><td>Lưu dữ liệu lâu dài, gồm cả vector</td></tr>
+<tr><td><code>redis</code></td><td>Redis 7</td><td>6379</td><td>Hàng đợi việc, kênh sự kiện, vài dữ liệu tạm</td></tr>
+<tr><td><code>minio</code></td><td>Kho tệp theo giao thức S3</td><td>9000 (giao diện quản trị 9001)</td><td>Lưu giáo trình và ghi âm</td></tr>
+<tr><td><code>stt</code> (tùy chọn)</td><td>faster-whisper: chuyển giọng nói thành chữ</td><td>8000</td><td>Chỉ chạy khi bật <code>--profile stt</code></td></tr>
+</tbody></table></div>
+<p class="cap"><code>api</code>, <code>worker</code>, <code>beat</code>, <code>events</code> dùng <b>chung một image</b> (chung mã nguồn backend); chúng chỉ khác lệnh khởi động. Đó là lý do cả bốn đều gọi được cùng các hàm trong <code>backend/app/</code>.</p>
+
+<h2 id="req">3. Đường đi của một request</h2>
+<p>Ví dụ: giảng viên kéo nối hai nút trong cây kỹ năng. Giao diện gửi <code>POST /api/v1/tree-versions/{id}/edges</code> để thêm một cạnh.</p>
+<div class="fig">
+<svg class="d" viewBox="0 0 760 470" role="img" aria-label="Hình 1: request đi từ trình duyệt tới Nginx, Uvicorn, FastAPI, hàm router add_edge và SkillTreeService">
+<defs>
+<marker id="f1n" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="mkb" d="M0 0L10 5L0 10z"/></marker>
+<marker id="f1c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="mkm" d="M0 0L10 5L0 10z"/></marker>
+</defs>
+<rect class="zone" x="8" y="150" width="130" height="120" rx="6"/>
+<text class="sm" x="22" y="170">Máy người dùng</text>
+<g class="nd ex"><rect x="22" y="192" width="102" height="66" rx="4"/><text x="73" y="222" text-anchor="middle">Trình duyệt</text><text class="sm" x="73" y="240" text-anchor="middle">1 tiến trình</text></g>
+
+<rect class="zone" x="200" y="10" width="552" height="450" rx="6"/>
+<text class="sm" x="214" y="30">Máy chủ · Docker Compose</text>
+<g class="nd pr"><rect x="238" y="190" width="108" height="70" rx="4"/><text x="292" y="218" text-anchor="middle">Nginx</text><text class="sm" x="292" y="236" text-anchor="middle">nghe cổng 80</text><text class="sm" x="292" y="251" text-anchor="middle">tiến trình riêng</text></g>
+
+<rect class="zone pr" x="430" y="44" width="310" height="396" rx="6"/>
+<text class="big" x="585" y="68" text-anchor="middle">Uvicorn</text>
+<text class="sm" x="585" y="86" text-anchor="middle">4 tiến trình, mỗi cái một vòng lặp sự kiện</text>
+<text class="sm" x="585" y="102" text-anchor="middle">nghe cổng 8000</text>
+<g class="nd bx"><rect x="452" y="150" width="266" height="56" rx="4"/><text x="585" y="174" text-anchor="middle">FastAPI app (ASGI)</text><text class="sm" x="585" y="192" text-anchor="middle">định tuyến · middleware · dependency</text></g>
+<g class="nd bx"><rect x="452" y="250" width="266" height="56" rx="4"/><text x="585" y="274" text-anchor="middle">Hàm router add_edge()</text><text class="sm" x="585" y="292" text-anchor="middle">api/trees.py · kiểm quyền, kiểm dạng body</text></g>
+<g class="nd bx"><rect x="452" y="350" width="266" height="56" rx="4"/><text x="585" y="374" text-anchor="middle">SkillTreeService</text><text class="sm" x="585" y="392" text-anchor="middle">services/skill_tree.py · nghiệp vụ</text></g>
+<text class="sm" x="585" y="428" text-anchor="middle">service gọi dag.py và ghi PostgreSQL</text>
+
+<line class="ed net" x1="124" y1="225" x2="236" y2="225" marker-end="url(#f1n)"/>
+<text class="sm" x="128" y="212">HTTP/TCP</text><text class="sm" x="128" y="246">tới host:80</text>
+<circle class="bg" cx="169" cy="225" r="10"/><text class="bt" x="169" y="229">1</text>
+
+<line class="ed net" x1="346" y1="225" x2="428" y2="225" marker-end="url(#f1n)"/>
+<text class="sm" x="387" y="212" text-anchor="middle">HTTP/TCP</text><text class="sm" x="387" y="246" text-anchor="middle">tới api:8000</text>
+<circle class="bg" cx="387" cy="225" r="10"/><text class="bt" x="387" y="229">2</text>
+
+<line class="ed call" x1="585" y1="112" x2="585" y2="148" marker-end="url(#f1c)"/>
+<circle class="bg g" cx="563" cy="130" r="10"/><text class="bt" x="563" y="134">3</text>
+<text class="sm" x="598" y="134">gọi hàm Python</text>
+
+<line class="ed call" x1="585" y1="206" x2="585" y2="248" marker-end="url(#f1c)"/>
+<circle class="bg g" cx="563" cy="227" r="10"/><text class="bt" x="563" y="231">4</text>
+<text class="sm" x="598" y="231">gọi hàm Python</text>
+
+<line class="ed call" x1="585" y1="306" x2="585" y2="348" marker-end="url(#f1c)"/>
+<circle class="bg g" cx="563" cy="327" r="10"/><text class="bt" x="563" y="331">5</text>
+<text class="sm" x="598" y="331">gọi hàm Python</text>
+</svg>
+<p class="cap"><b>Hình 1.</b> Nét liền: đi qua mạng giữa hai tiến trình khác nhau. Nét đứt: gọi hàm ngay trong một tiến trình, không có mạng, không có cổng.</p>
+<p class="lg"><span><span class="i net"></span>qua mạng (TCP)</span><span><span class="i call"></span>gọi hàm Python trong cùng tiến trình</span></p>
+</div>
+
+<div class="tw"><table>
+<thead><tr><th>Bước</th><th>Chuyện gì xảy ra</th></tr></thead>
+<tbody>
+<tr><td>①</td><td>Trình duyệt tra DNS để biết IP, mở kết nối TCP tới <code>IP:80</code> (hoặc 443 nếu có HTTPS) và gửi văn bản HTTP (xem khung dưới).</td></tr>
+<tr><td>②</td><td>Nginx khớp đường dẫn <code>/api/</code> với một quy tắc, mở một kết nối <b>mới</b> tới <code>api:8000</code> và chuyển request đi, kèm header <code>X-Forwarded-For</code> (IP thật của người dùng) và <code>X-Forwarded-Proto</code> (http hay https).</td></tr>
+<tr><td>③</td><td>Uvicorn đọc byte HTTP, tách thành dạng dữ liệu Python, rồi gọi ứng dụng theo chuẩn ASGI: <code>await app(scope, receive, send)</code>. Đến đây là lời gọi hàm trong cùng một tiến trình.</td></tr>
+<tr><td>④</td><td>FastAPI khớp địa chỉ với hàm <code>add_edge</code>, kiểm token và vai trò (chỉ giảng viên), kiểm thân request đúng dạng <code>Edge</code> (Pydantic), rồi gọi hàm.</td></tr>
+<tr><td>⑤</td><td><code>add_edge</code> chỉ gọi <code>SkillTreeService</code>. Service kiểm chu trình bằng <code>dag.py</code> rồi ghi PostgreSQL. Kết quả đi ngược đường cũ: JSON với mã <code>201</code> nếu thêm được, hoặc <code>409</code> kèm <code>CYCLE_DETECTED</code> nếu tạo chu trình.</td></tr>
+</tbody></table></div>
+<pre><code>POST /api/v1/tree-versions/3f2a.../edges HTTP/1.1
+Host: whybi.example.com
+Authorization: Bearer eyJhbGciOi...
+Content-Type: application/json
+
+{"fromKey": "N5", "toKey": "N1"}</code></pre>
+
+<h2 id="tp">4. Từng thành phần</h2>
+
+<h3>4.1 Trình duyệt và frontend (React)</h3>
+<ul class="ks">
+<li><b>Là gì:</b> ứng dụng React chạy <b>bên trong trình duyệt</b>. Đây là kiểu SPA (single-page application): chỉ có một trang HTML, mã JavaScript tự vẽ các màn hình và đổi màn hình bằng React Router mà không tải lại trang.</li>
+<li><b>Công cụ:</b> TypeScript (JavaScript có kiểu), Vite (công cụ gom mã thành các tệp JS/CSS tĩnh), Tailwind (CSS), React Flow (vẽ đồ thị kéo thả cho cây kỹ năng).</li>
+<li><b>Chạy thế nào:</b> frontend <b>không phải một tiến trình riêng ở máy chủ</b>. Khi build, Docker chạy <code>npm run build</code> ra thư mục <code>dist/</code> rồi chép vào image Nginx (<code>/usr/share/nginx/html</code>). Nginx trả các tệp đó như tệp tĩnh.</li>
+<li><b>Nói chuyện với backend:</b> gọi <code>/api/v1/...</code> bằng HTTP + JSON, và mở WebSocket <code>/api/v1/ws</code> để nhận sự kiện đẩy xuống.</li>
+<li><b>Trong repo:</b> <code>frontend/src/pages/&lt;vai&gt;/&lt;MÃ&gt;.tsx</code>, với vai là <code>admin</code>, <code>auth</code>, <code>lecturer</code>, <code>student</code>; router tự nạp màn mới. Chủ: Thắng.</li>
+</ul>
+
+<h3>4.2 Nginx</h3>
+<ul class="ks">
+<li><b>Là gì:</b> một tiến trình nhận kết nối từ ngoài và <b>chuyển tiếp</b> (reverse proxy) hoặc trả tệp tĩnh. Nó chỉ đọc dòng đầu và header của request để biết đường dẫn, <b>không hiểu nghiệp vụ</b>.</li>
+<li><b>Vì sao đứng ở cửa:</b> người dùng chỉ cần biết một địa chỉ; HTTPS, nén, cache và giới hạn dung lượng làm ở một chỗ; API (Python) không phải tốn sức trả tệp tĩnh hay giữ hàng nghìn kết nối chậm.</li>
+<li><b>Trong repo:</b> <code>nginx/nginx.conf</code> (cổng 80, dùng khi phát triển) và <code>nginx/nginx.tls.conf</code> (thêm cổng 443 và chuyển 80 sang 443, dùng trên máy chủ demo). Hai tệp là bản sao nên đổi quy tắc ở tệp này phải đổi cả tệp kia. Chủ: Long.</li>
+</ul>
+<div class="tw"><table>
+<thead><tr><th>Địa chỉ khách gõ</th><th>Nginx làm gì</th></tr></thead>
+<tbody>
+<tr><td><code>/api/v1/ws...</code></td><td>Chuyển cho API và <b>nâng cấp kết nối lên WebSocket</b> (header <code>Upgrade</code>, <code>Connection</code>); cho phép giữ mở tới 3600 giây.</td></tr>
+<tr><td><code>/api/...</code></td><td>Chuyển cho <code>api:8000</code>, kèm IP thật của người dùng; chờ tối đa 120 giây.</td></tr>
+<tr><td><code>/health</code></td><td>Chuyển cho API để kiểm tra "còn sống không" (Docker dùng để biết dịch vụ đã sẵn sàng).</td></tr>
+<tr><td><code>/assets/...</code></td><td>Tự trả tệp JS/CSS của giao diện, dặn trình duyệt <b>nhớ 1 năm</b> (<code>immutable</code>).</td></tr>
+<tr><td>mọi địa chỉ khác</td><td>Trả <code>index.html</code> để React Router tự quyết màn hình nào hiện ra.</td></tr>
+</tbody></table></div>
+<p>Hai dòng cấu hình đáng biết: <code>client_max_body_size 25m</code> chặn request quá 25 MB (giáo trình tối đa 20 MB cộng ghi âm); <code>resolver 127.0.0.11 valid=10s</code> bắt Nginx tra lại tên <code>api</code> mỗi 10 giây, vì khi container <code>api</code> khởi động lại thì IP của nó đổi.</p>
+
+<h3>4.3 Uvicorn và ASGI</h3>
+<ul class="ks">
+<li><b>Vấn đề cần giải quyết:</b> một tiến trình Python chỉ nhận được byte thô từ TCP. Cần một chương trình đọc byte đó thành request HTTP, gọi mã ứng dụng, rồi ghi response ngược lại. Chương trình đó là <b>máy chủ ứng dụng</b>; trong Whybi là <b>Uvicorn</b>.</li>
+<li><b>ASGI</b> là quy ước cách Uvicorn gọi ứng dụng. Ứng dụng là một hàm bất đồng bộ <code>async def app(scope, receive, send)</code>: <code>scope</code> mô tả kết nối (loại http hay websocket, đường dẫn, header), <code>receive()</code> lấy dữ liệu đến, <code>send()</code> gửi dữ liệu đi. Quy ước cũ (WSGI) gọi một lần cho mỗi request và không hỗ trợ WebSocket; ASGI hỗ trợ cả hai nên dự án chọn nó. Biến <code>app</code> trong <code>backend/app/main.py</code> là ứng dụng ASGI này.</li>
+<li><b>Lệnh chạy thật</b> (trong <code>docker-compose.yml</code>): <code>alembic upgrade head &amp;&amp; uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4 --proxy-headers</code>. Nghĩa là: cập nhật cấu trúc CSDL trước; chạy ứng dụng <code>app</code> trong module <code>app/main.py</code>; <code>--workers 4</code> tạo 4 tiến trình; <code>--proxy-headers</code> tin các header <code>X-Forwarded-*</code> do Nginx gửi để lấy được IP thật.</li>
+</ul>
+
+<h4>Vòng lặp sự kiện: một tiến trình, nhiều request</h4>
+<p>Một request thường mất phần lớn thời gian để <b>chờ</b> (chờ CSDL trả lời) trong khi CPU rảnh. Mỗi tiến trình Uvicorn chạy một <b>vòng lặp sự kiện</b>: khi request A phải chờ, vòng lặp chuyển sang xử lý B, rồi C. Vòng lặp chỉ chuyển việc khi mã chủ động nhường (từ khóa <code>await</code>).</p>
+<div class="fig">
+<svg class="d" viewBox="0 0 760 462" role="img" aria-label="Hình 2: hai biểu đồ thời gian, hàm không chặn và hàm async gọi code chặn">
+<defs>
+<pattern id="ht" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect class="hb" width="7" height="7"/><line class="hl" x1="0" y1="0" x2="0" y2="7"/></pattern>
+<marker id="f2a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="mkm" d="M0 0L10 5L0 10z"/></marker>
+</defs>
+<rect class="pn" x="4" y="4" width="752" height="208" rx="6"/>
+<text class="big" x="16" y="26">Hàm không chặn</text>
+<text class="sm" x="16" y="42">Request chờ CSDL thì vòng lặp chuyển sang request khác</text>
+<text x="14" y="74">Request A</text><text x="14" y="110">Request B</text><text x="14" y="146">Request C</text>
+<rect class="tb cpu" x="110" y="56" width="46" height="26" rx="3"/><text class="bt" x="133" y="73">parse</text>
+<rect class="tb wait" fill="url(#ht)" x="156" y="56" width="244" height="26" rx="3"/><text class="wl" x="278" y="73" text-anchor="middle">chờ CSDL (CPU rảnh)</text>
+<rect class="tb cpu" x="400" y="56" width="46" height="26" rx="3"/><text class="bt" x="423" y="73">trả</text>
+<rect class="tb cpu" x="156" y="92" width="46" height="26" rx="3"/><text class="bt" x="179" y="109">parse</text>
+<rect class="tb wait" fill="url(#ht)" x="202" y="92" width="244" height="26" rx="3"/><text class="wl" x="324" y="109" text-anchor="middle">chờ CSDL (CPU rảnh)</text>
+<rect class="tb cpu" x="446" y="92" width="46" height="26" rx="3"/><text class="bt" x="469" y="109">trả</text>
+<rect class="tb cpu" x="202" y="128" width="46" height="26" rx="3"/><text class="bt" x="225" y="145">parse</text>
+<rect class="tb wait" fill="url(#ht)" x="248" y="128" width="244" height="26" rx="3"/><text class="wl" x="370" y="145" text-anchor="middle">chờ CSDL (CPU rảnh)</text>
+<rect class="tb cpu" x="492" y="128" width="46" height="26" rx="3"/><text class="bt" x="515" y="145">trả</text>
+<line class="ed" x1="110" y1="172" x2="740" y2="172" marker-end="url(#f2a)"/>
+<text class="sm" x="740" y="188" text-anchor="end">thời gian →</text>
+<text class="sm" x="16" y="200">Lúc A chờ CSDL, vòng lặp làm B rồi C: một luồng phục vụ cả ba.</text>
+
+<rect class="pn" x="4" y="224" width="752" height="232" rx="6"/>
+<text class="big" x="16" y="246">async def gọi code chặn</text>
+<text class="sm" x="16" y="262">Truy vấn SQLAlchemy đồng bộ mất 2 giây: vòng lặp bị kẹt</text>
+<text x="14" y="294">Request A</text><text x="14" y="330">Request B</text><text x="14" y="366">Request C</text>
+<rect class="tb cpu" x="110" y="276" width="46" height="26" rx="3"/><text class="bt" x="133" y="293">parse</text>
+<rect class="tb blk" x="156" y="276" width="404" height="26" rx="3"/><text class="bt" x="358" y="293">chặn 2 giây: vòng lặp không chuyển việc được</text>
+<rect class="tb cpu" x="560" y="276" width="46" height="26" rx="3"/><text class="bt" x="583" y="293">trả</text>
+<rect class="tb q" x="156" y="312" width="450" height="26" rx="3"/><text class="rs" x="381" y="329" text-anchor="middle">đã đến nhưng phải đợi</text>
+<rect class="tb cpu" x="606" y="312" width="46" height="26" rx="3"/><text class="bt" x="629" y="329">parse</text>
+<rect class="tb q" x="202" y="348" width="450" height="26" rx="3"/><text class="rs" x="427" y="365" text-anchor="middle">đã đến nhưng phải đợi</text>
+<rect class="tb cpu" x="652" y="348" width="46" height="26" rx="3"/><text class="bt" x="675" y="365">parse</text>
+<line class="ed" x1="110" y1="392" x2="740" y2="392" marker-end="url(#f2a)"/>
+<text class="sm" x="740" y="408" text-anchor="end">thời gian →</text>
+<text class="sm" x="16" y="426">Hàm def thường (như add_edge) được FastAPI chạy trong thread pool nên không gây ra tình huống này.</text>
+<text class="sm" x="16" y="444">B và C chỉ bị trễ trong tiến trình này; ba tiến trình Uvicorn còn lại vẫn xử lý bình thường.</text>
+</svg>
+<p class="cap"><b>Hình 2.</b> Trên: các request xen kẽ nhau. Dưới: một lời gọi chặn trong hàm <code>async def</code> làm mọi request cùng tiến trình đứng chờ.</p>
+<p class="lg"><span><span class="i cpu"></span>CPU làm việc</span><span><span class="i wait"></span>chờ CSDL (CPU rảnh)</span><span><span class="i blk"></span>chặn vòng lặp</span><span><span class="i q"></span>request đã đến, đang xếp hàng</span></p>
+</div>
+<p><b>Hệ quả khi viết code:</b> hàm khai báo <code>def</code> được FastAPI tự chạy trong một luồng riêng nên dùng <code>Session</code> đồng bộ của SQLAlchemy là an toàn (code cây kỹ năng làm vậy). Hàm khai báo <code>async def</code> chạy thẳng trên vòng lặp nên bên trong <b>không được</b> gọi code chặn.</p>
+
+<h4>Vì sao 4 tiến trình</h4>
+<p>Python chỉ chạy một luồng mã Python tại một thời điểm trong mỗi tiến trình (GIL). Muốn dùng nhiều nhân CPU phải dùng nhiều tiến trình. <code>--workers 4</code> tạo 4 tiến trình Uvicorn cùng nghe cổng 8000; hệ điều hành chia các kết nối đến cho chúng. Theo mục 1, 4 tiến trình này <b>không chia sẻ biến</b>, nên một người dùng có thể gặp tiến trình khác nhau ở các request liên tiếp.</p>
+<div class="fig">
+<svg class="d" viewBox="0 0 760 400" role="img" aria-label="Hình 3: bốn tiến trình Uvicorn có bộ nhớ riêng, trạng thái dùng chung nằm ở PostgreSQL và Redis">
+<defs>
+<marker id="f3n" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="mkb" d="M0 0L10 5L0 10z"/></marker>
+</defs>
+<text class="rd" x="390" y="26" text-anchor="middle">× = không chia sẻ biến giữa các tiến trình</text>
+<g class="nd pr"><rect x="10" y="175" width="90" height="56" rx="4"/><text x="55" y="206" text-anchor="middle">Nginx</text></g>
+<line class="ed net" x1="100" y1="203" x2="128" y2="203" marker-end="url(#f3n)"/>
+<g class="nd ex"><rect x="130" y="188" width="84" height="30" rx="15"/><text x="172" y="207" text-anchor="middle">cổng 8000</text></g>
+<text class="sm" x="172" y="238" text-anchor="middle">một cổng,</text>
+<text class="sm" x="172" y="252" text-anchor="middle">nhiều tiến trình</text>
+<path class="ed net thin" d="M214 203 L246 203 M246 75 L246 345"/>
+<line class="ed net" x1="246" y1="75" x2="278" y2="75" marker-end="url(#f3n)"/>
+<line class="ed net" x1="246" y1="165" x2="278" y2="165" marker-end="url(#f3n)"/>
+<line class="ed net" x1="246" y1="255" x2="278" y2="255" marker-end="url(#f3n)"/>
+<line class="ed net" x1="246" y1="345" x2="278" y2="345" marker-end="url(#f3n)"/>
+
+<g class="nd pr"><rect x="280" y="40" width="220" height="70" rx="4"/><text x="390" y="64" text-anchor="middle">Uvicorn #1</text><text class="sm" x="390" y="82" text-anchor="middle">vòng lặp sự kiện riêng</text><text class="sm" x="390" y="98" text-anchor="middle">bộ nhớ riêng</text></g>
+<g class="nd pr"><rect x="280" y="130" width="220" height="70" rx="4"/><text x="390" y="154" text-anchor="middle">Uvicorn #2</text><text class="sm" x="390" y="172" text-anchor="middle">vòng lặp sự kiện riêng</text><text class="sm" x="390" y="188" text-anchor="middle">bộ nhớ riêng</text></g>
+<g class="nd pr"><rect x="280" y="220" width="220" height="70" rx="4"/><text x="390" y="244" text-anchor="middle">Uvicorn #3</text><text class="sm" x="390" y="262" text-anchor="middle">vòng lặp sự kiện riêng</text><text class="sm" x="390" y="278" text-anchor="middle">bộ nhớ riêng</text></g>
+<g class="nd pr"><rect x="280" y="310" width="220" height="70" rx="4"/><text x="390" y="334" text-anchor="middle">Uvicorn #4</text><text class="sm" x="390" y="352" text-anchor="middle">vòng lặp sự kiện riêng</text><text class="sm" x="390" y="368" text-anchor="middle">bộ nhớ riêng</text></g>
+<circle class="xm" cx="390" cy="120" r="9"/><text class="rd" x="390" y="124" text-anchor="middle">×</text>
+<circle class="xm" cx="390" cy="210" r="9"/><text class="rd" x="390" y="214" text-anchor="middle">×</text>
+<circle class="xm" cx="390" cy="300" r="9"/><text class="rd" x="390" y="304" text-anchor="middle">×</text>
+
+<path class="ed net thin" d="M500 75 L540 75 M500 165 L540 165 M500 255 L540 255 M500 345 L540 345 M540 75 L540 345"/>
+<line class="ed net" x1="540" y1="125" x2="588" y2="125" marker-end="url(#f3n)"/>
+<line class="ed net" x1="540" y1="285" x2="588" y2="285" marker-end="url(#f3n)"/>
+<text class="bd" x="670" y="48" text-anchor="middle">Trạng thái dùng chung</text>
+<text class="bd" x="670" y="64" text-anchor="middle">phải để ở đây</text>
+<g class="nd db"><rect x="590" y="90" width="160" height="70" rx="4"/><text x="670" y="114" text-anchor="middle">PostgreSQL</text><text class="sm" x="670" y="132" text-anchor="middle">dữ liệu bền</text><text class="sm" x="670" y="148" text-anchor="middle">cây · ma trận · cặp ghép</text></g>
+<g class="nd db"><rect x="590" y="250" width="160" height="70" rx="4"/><text x="670" y="274" text-anchor="middle">Redis</text><text class="sm" x="670" y="292" text-anchor="middle">trạng thái tạm</text><text class="sm" x="670" y="308" text-anchor="middle">hàng đợi · sự kiện</text></g>
+</svg>
+<p class="cap"><b>Hình 3.</b> Bốn tiến trình không thấy biến của nhau. Cái gì cần nhất quán giữa chúng (cây, ma trận, danh sách token đã thu hồi) phải nằm ở PostgreSQL hoặc Redis.</p>
+</div>
+
+<h3>4.4 FastAPI</h3>
+<ul class="ks">
+<li><b>Là gì:</b> thư viện Python để viết API. Bạn khai báo "địa chỉ này, method này thì chạy hàm này"; FastAPI lo đọc request, kiểm tra dữ liệu, gọi hàm và biến kết quả thành JSON.</li>
+<li><b>Trong dự án:</b> <code>backend/app/main.py</code> tạo ứng dụng và <b>tự nạp</b> mọi module trong <code>app/api/</code> có biến <code>router</code>, gắn vào tiền tố <code>/api/v1</code>. Thêm tệp API mới là xong, không phải đăng ký tay.</li>
+<li><b>Pydantic</b> là thư viện kiểm dữ liệu: mỗi lớp (ví dụ <code>Edge</code>) mô tả các trường và kiểu. Thiếu trường hoặc sai kiểu thì FastAPI trả lỗi 422 trước khi hàm của bạn chạy. Lớp nền <code>ApiModel</code> tự đổi <code>from_key</code> (Python) ↔ <code>fromKey</code> (JSON).</li>
+<li><b>Dependency injection:</b> tham số có <code>Depends(...)</code> hoặc kiểu <code>Annotated[..., Depends(...)]</code> do FastAPI tự tạo và truyền vào (phiên CSDL, service, người dùng hiện tại).</li>
+<li><b>Xác thực:</b> người dùng đăng nhập nhận token JWT (hạn 30 phút) và gửi lại ở header <code>Authorization</code> mỗi request. Token chứa sẵn danh tính và vai trò nên mọi tiến trình đều tự kiểm được mà không cần hỏi CSDL (<code>api/deps.py</code>).</li>
+<li><b>Lỗi thống nhất:</b> dùng <code>AppError(status, code, message, details)</code>, mọi lỗi trả dạng <code>{"error": {"code", "message", "details"}}</code>. Giao diện chỉ so sánh <code>code</code>.</li>
+</ul>
+<pre><code>@router.post("/tree-versions/{version_id}/edges", response_model=Edge, status_code=201)
+def add_edge(version_id: UUID, body: Edge, trees: Trees, user: CurrentUser = Lecturer) -> Edge:
+    return trees.add_edge(version_id, body, user)</code></pre>
+<div class="tw"><table>
+<thead><tr><th>Phần</th><th>Ý nghĩa</th></tr></thead>
+<tbody>
+<tr><td><code>@router.post("/tree-versions/{version_id}/edges")</code></td><td>Địa chỉ và method HTTP. POST nghĩa là "tạo mới".</td></tr>
+<tr><td><code>version_id: UUID</code></td><td>Lấy phần <code>{version_id}</code> trong địa chỉ và kiểm đúng dạng UUID.</td></tr>
+<tr><td><code>body: Edge</code></td><td>Thân request (JSON) phải khớp lớp <code>Edge</code>.</td></tr>
+<tr><td><code>trees: Trees</code></td><td>FastAPI tạo sẵn một <code>SkillTreeService</code> và truyền vào.</td></tr>
+<tr><td><code>user: CurrentUser = Lecturer</code></td><td>Chỉ giảng viên gọi được; sinh viên gọi sẽ bị từ chối.</td></tr>
+<tr><td><code>status_code=201</code></td><td>Tạo xong thì trả mã 201 (Created).</td></tr>
+<tr><td>thân hàm một dòng</td><td>Router <b>không chứa nghiệp vụ</b>, chỉ giao cho service.</td></tr>
+</tbody></table></div>
+
+<h3>4.5 Các tầng bên trong backend</h3>
+<p>Code backend chia thành các thư mục, mỗi thư mục một vai trò. Quy tắc là mỗi tầng chỉ gọi tầng nằm dưới nó, không nhảy cách tầng.</p>
+<div class="tw"><table>
+<thead><tr><th>Thư mục (<code>backend/app/</code>)</th><th>Vai trò</th><th>Quy tắc</th></tr></thead>
+<tbody>
+<tr><td><code>api/</code></td><td>Router: nhận request, kiểm quyền, kiểm dạng, trả schema</td><td>Không viết SQL, không viết nghiệp vụ</td></tr>
+<tr><td><code>services/</code></td><td>Nghiệp vụ, mỗi mô-đun một service (cây kỹ năng, ma trận thành thạo, ghép cặp, bản đồ nhiệt...)</td><td>Ma trận thành thạo chỉ được ghi qua <code>MasteryService</code></td></tr>
+<tr><td><code>algorithms/</code></td><td>Thuật toán thuần: <code>dag.py</code> (chu trình, topo, rút gọn bắc cầu, Biên), <code>matching.py</code> (điểm w, Blossom)</td><td>Không đọc ghi CSDL hay mạng, nên kiểm thử đơn vị dễ</td></tr>
+<tr><td><code>models/</code></td><td>Lớp ORM ánh xạ với bảng CSDL; <code>models/schemas/</code> là hợp đồng dữ liệu dùng chung</td><td>Đổi bảng thì Long tạo migration</td></tr>
+<tr><td><code>ai/</code></td><td>Gateway LLM, các tác tử, prompt</td><td>Mọi lời gọi LLM đi qua <code>gateway.py</code></td></tr>
+<tr><td><code>realtime/</code></td><td>WebSocket và bus sự kiện Redis</td><td>Chủ đề: <code>session.completed</code>, <code>mastery.changed</code></td></tr>
+<tr><td><code>workers/</code></td><td>Các task Celery và tiến trình nghe sự kiện</td><td>Chia hàng đợi theo loại việc</td></tr>
+<tr><td><code>core/</code></td><td>Cấu hình, lỗi, bảo mật, ghi log</td><td>Cấu hình đọc qua <code>get_settings()</code></td></tr>
+</tbody></table></div>
+<p>Đường đi một lời gọi: <code>api/</code> → <code>services/</code> → <code>algorithms/</code> và <code>models/</code>. Hai thuật toán của đội (MX1: <code>dag.py</code>, MX4: <code>matching.py</code>) nằm ở tầng thấp nhất, là hàm thuần; service gọi chúng rồi mới ghi CSDL.</p>
+
+<h3>4.6 PostgreSQL, pgvector, SQLAlchemy, Alembic</h3>
+<ul class="ks">
+<li><b>PostgreSQL là gì:</b> cơ sở dữ liệu quan hệ. Dữ liệu nằm trong <b>bảng</b> (hàng và cột); các bảng liên kết nhau bằng <b>khóa ngoại</b>. Nó đảm bảo tính đúng đắn bằng <b>ràng buộc</b> (ví dụ duy nhất, không rỗng, kiểm điều kiện) và <b>giao dịch</b> (một nhóm thao tác ghi hoặc cùng thành công, hoặc cùng bị hủy).</li>
+<li><b>Ở Whybi:</b> lưu người dùng, lớp, các phiên bản cây kỹ năng (nút, cạnh), ma trận thành thạo, cặp ghép, kết quả phiên. Cây kỹ năng luôn phải là DAG; ngoài kiểm trong <code>dag.py</code>, bảng cạnh còn có ràng buộc ở cấp CSDL (duy nhất cho mỗi cặp nút, không cho cạnh nối nút với chính nó).</li>
+<li><b>pgvector:</b> phần mở rộng cho phép lưu <b>vector</b> (dãy số biểu diễn nghĩa của một đoạn văn) ngay trong PostgreSQL và tìm các vector gần nhau. Dùng để tìm đoạn giáo trình liên quan khi dựng cây hay khi AI cần ngữ cảnh. Một CSDL chứa cả dữ liệu quan hệ lẫn vector nên không phải vận hành thêm CSDL riêng.</li>
+<li><b>SQLAlchemy:</b> thư viện Python biến hàng trong bảng thành đối tượng Python và ngược lại (ORM), để viết <code>session.add(edge)</code> thay vì viết SQL thủ công.</li>
+<li><b>Alembic:</b> công cụ <b>migration</b>: mỗi thay đổi cấu trúc bảng là một tệp có số phiên bản. Lệnh <code>alembic upgrade head</code> chạy mỗi lần container <code>api</code> khởi động để CSDL luôn đúng phiên bản. Chỉ Long tạo migration.</li>
+<li><b>Kết nối:</b> chuỗi <code>postgresql+psycopg://&lt;người dùng&gt;:&lt;mật khẩu&gt;@postgres:5432/&lt;tên CSDL&gt;</code>. Chú ý <code>postgres</code> là <b>tên dịch vụ</b> trong mạng Docker, không phải IP.</li>
+</ul>
+
+<h3>4.7 Redis</h3>
+<ul class="ks">
+<li><b>Là gì:</b> kho dữ liệu dạng khóa–giá trị nằm trong RAM, rất nhanh. Nó dành cho dữ liệu tạm và truyền tin giữa các tiến trình, không thay PostgreSQL.</li>
+<li><b>Việc 1, hàng đợi cho Celery:</b> API ghi một "phiếu việc" vào Redis, worker lấy ra làm. Redis cũng giữ trạng thái và kết quả của task.</li>
+<li><b>Việc 2, kênh sự kiện (Pub/Sub):</b> một tiến trình <code>publish</code> tin lên một kênh, mọi tiến trình đang <code>subscribe</code> kênh đó nhận được ngay. <b>Pub/Sub không lưu tin:</b> bên nghe chưa chạy hoặc đang đứt kết nối thì mất tin. Vì vậy dự án có các tác vụ định kỳ "đối soát" để bù (mục 4.8).</li>
+<li><b>Việc 3, thu hồi token:</b> khi khóa tài khoản hoặc đặt lại mật khẩu, token cũ phải bị vô hiệu ngay; danh sách thu hồi để ở Redis để cả 4 tiến trình Uvicorn cùng thấy.</li>
+<li><b>Việc 4, ngân sách token của gateway AI:</b> bộ đếm lượng token đã dùng, cũng cần dùng chung giữa các tiến trình.</li>
+</ul>
+
+<h3>4.8 Celery: worker, hàng đợi, beat và tiến trình nghe sự kiện</h3>
+<p><b>Vấn đề:</b> đọc một giáo trình 20 MB hay ghép cặp cả lớp mất hàng chục giây. Nếu API tự làm trong lúc xử lý request thì tiến trình đó bị chiếm, các request khác phải chờ (hình 2). Giải pháp là tách ra một nhóm tiến trình làm việc nặng ở nền.</p>
+<ul class="ks">
+<li><b>Celery</b> là thư viện Python cho việc này. <b>Task</b> là một hàm được đánh dấu chạy nền. <b>Broker</b> là nơi chứa hàng đợi task (ở đây là Redis). <b>Worker</b> là tiến trình lấy task từ hàng đợi và chạy.</li>
+<li><b>Dịch vụ <code>worker</code></b> chạy <code>celery -A app.workers.celery_app worker -Q documents,aggregation,matching,ai --concurrency 4</code>: nghe 4 hàng đợi, mỗi lần xử lý song song 4 task.</li>
+<li><b>Hai tuỳ chọn đáng biết</b> trong <code>celery_app.py</code>: <code>task_acks_late=True</code> (worker chỉ báo "đã xong" sau khi làm xong, nên worker chết giữa chừng thì task được giao lại; hệ quả là task có thể chạy lặp và phải chịu được điều đó); <code>worker_prefetch_multiplier=1</code> (mỗi lần chỉ lấy trước một task, tránh một worker ôm nhiều việc dài).</li>
+</ul>
+<div class="tw"><table>
+<thead><tr><th>Hàng đợi</th><th>Việc trong hàng đợi</th></tr></thead>
+<tbody>
+<tr><td><code>documents</code></td><td>Xử lý giáo trình: đọc tệp, nhận dạng chữ (OCR), cắt đoạn, nhúng vector</td></tr>
+<tr><td><code>aggregation</code></td><td>Tổng hợp bản đồ nhiệt, thông báo, dọn ghi âm quá hạn</td></tr>
+<tr><td><code>matching</code></td><td>Ghép cặp (MX4): vòng ghép định kỳ, hết hạn gợi ý, ghép theo sự kiện</td></tr>
+<tr><td><code>ai</code> (mặc định)</td><td>Các task còn lại, gồm đối soát kết quả phiên</td></tr>
+</tbody></table></div>
+
+<h4>Beat: đặt lịch</h4>
+<p><b>Celery beat</b> là một tiến trình riêng chỉ làm một việc: <b>đến giờ thì đẩy task vào hàng đợi</b>. Nó không tự chạy task; worker mới chạy. Múi giờ cài là <code>Asia/Ho_Chi_Minh</code>.</p>
+<div class="tw"><table>
+<thead><tr><th>Lịch</th><th>Tần suất</th><th>Để làm gì</th></tr></thead>
+<tbody>
+<tr><td><code>matching-daily</code></td><td>06:00 mỗi ngày</td><td>Vòng ghép cặp định kỳ (FR-PM-02)</td></tr>
+<tr><td><code>expire-matches</code></td><td>mỗi 5 phút</td><td>Gợi ý quá 48 giờ hoặc xác nhận quá 7 ngày thì hết hạn (BR-09)</td></tr>
+<tr><td><code>live-rebalance</code></td><td>mỗi 60 giây</td><td>Ghép theo sự kiện trong hạn kiểm tra bài cũ; bù khi mất sự kiện hoặc có người dạy mới</td></tr>
+<tr><td><code>heatmap-reconcile</code></td><td>mỗi 10 phút</td><td>Đối soát bản đồ nhiệt từ CSDL, bù sự kiện <code>mastery.changed</code> bị mất</td></tr>
+<tr><td><code>purge-audio</code></td><td>03:00 mỗi ngày</td><td>Xóa ghi âm quá hạn, mặc định 30 ngày (NFR-09)</td></tr>
+<tr><td><code>reconcile-sessions</code></td><td>mỗi 2 phút</td><td>Phát lại <code>session.completed</code> bị mất (ô ma trận kẹt ở trạng thái đang chấm)</td></tr>
+</tbody></table></div>
+
+<h4>Events: tiến trình nghe sự kiện</h4>
+<p>Dịch vụ <code>events</code> chạy <code>python -m app.workers.mastery_listener</code>. Đây <b>không phải Celery</b>; nó là một tiến trình nghe kênh Redis Pub/Sub:</p>
+<ol>
+<li>Nghe <code>session.completed</code> (Judge chấm xong một buổi dạy) rồi gọi <code>MasteryService.apply_result</code> để ghi vào ma trận thành thạo, sau đó phát <code>mastery.changed</code>.</li>
+<li>Cũng nghe <code>mastery.changed</code>: đẩy việc tính lại bản đồ nhiệt vào hàng đợi <code>aggregation</code>, và kích hoạt ghép cặp theo sự kiện.</li>
+</ol>
+<p>Chỉ chạy <b>một</b> bản của dịch vụ này: Pub/Sub phát cho mọi bên nghe, nên nhân bản chỉ làm xử lý trùng.</p>
+
+<h3>4.9 Kho tệp tương thích S3 (MinIO)</h3>
+<ul class="ks">
+<li><b>Là gì:</b> nơi lưu <b>tệp lớn</b> theo mô hình "bucket + khóa" (S3), truy cập qua HTTP. Dữ liệu tệp không nên nhét vào PostgreSQL vì lớn và chỉ cần ghi/đọc nguyên khối.</li>
+<li><b>Ở Whybi:</b> lưu giáo trình tải lên (tối đa 20 MB) và ghi âm buổi giảng; ghi âm bị dọn sau 30 ngày. Tên bucket cài mặc định là <code>whybi</code>.</li>
+<li><b>Lưu ý triển khai:</b> đề cương ghi MinIO, nhưng image <code>minio/minio</code> không còn phát hành trên Docker Hub nên compose dùng RustFS, một kho cũng tương thích S3. Dịch vụ vẫn tên <code>minio</code> và địa chỉ vẫn là <code>http://minio:9000</code>, nên mã backend không đổi.</li>
+</ul>
+
+<h3>4.10 Gateway LLM và nhận dạng giọng nói</h3>
+<ul class="ks">
+<li><b>LLM</b> (mô hình ngôn ngữ lớn) là dịch vụ AI nhận văn bản và trả văn bản. Whybi dùng nó để dựng cây từ giáo trình, đóng vai học trò (Tutee) và chấm bài (Judge).</li>
+<li><b>Gateway</b> (<code>backend/app/ai/gateway.py</code>) là cửa duy nhất để gọi LLM: <code>call_json(schema, messages)</code> trả về đối tượng đúng schema. Luồng một lời gọi: tra cache → nhà cung cấp chính (lỗi tạm thì thử lại có chờ tăng dần; JSON hỏng thì gửi lại kèm lỗi) → hết lượt thì chuyển nhà cung cấp dự phòng → hết nữa thì trả lỗi <code>503 LLM_UNAVAILABLE</code>. Mỗi lời gọi được ghi log (nhà cung cấp, độ trễ, số token).</li>
+<li><b>Adapter:</b> mỗi nhà cung cấp là một lớp trong <code>ai/providers/</code> (<code>gemini.py</code>, <code>openai_compat.py</code>, <code>fake.py</code>...). Đổi nhà cung cấp chỉ sửa lớp này, nghiệp vụ không đổi (NFR-14).</li>
+<li><b>Chế độ giả:</b> <code>LLM_MODE=fake</code> trả dữ liệu mẫu hợp lệ theo schema, dùng cho phát triển, kiểm thử và thử tải để không gọi LLM thật. Chủ: Đăng.</li>
+<li><b>STT</b> (speech to text): dịch vụ <code>stt</code> chạy faster-whisper tự host để đổi giọng nói thành chữ; chỉ bật khi cần.</li>
+</ul>
+
+<h3>4.11 Docker và Docker Compose</h3>
+<ul class="ks">
+<li><b>Image</b> là bản đóng gói (mã + thư viện + môi trường) dùng để tạo container. <b>Container</b> là một tiến trình chạy từ image, được cô lập. <b>Volume</b> là thư mục lưu dữ liệu bền ngoài container (<code>pgdata</code>, <code>miniodata</code>), nên xóa container không mất dữ liệu.</li>
+<li><b>Docker Compose</b> đọc <code>docker-compose.yml</code> và dựng toàn bộ dịch vụ cùng một mạng riêng. Các dịch vụ trong mạng này gọi nhau theo <b>tên dịch vụ</b>.</li>
+<li><b>Thứ tự khởi động:</b> mỗi dịch vụ có <code>healthcheck</code> (lệnh kiểm tra "sẵn sàng chưa"); <code>depends_on ... service_healthy</code> làm API, worker, beat, events chờ PostgreSQL, Redis, MinIO sẵn sàng; Nginx chờ API sẵn sàng.</li>
+<li><b>Lệnh hay dùng:</b> <code>docker compose up -d --build</code> (dựng và chạy), <code>docker compose --profile stt up -d</code> (thêm dịch vụ giọng nói), <code>docker compose logs -f api</code> (xem log).</li>
+<li><b>CI/CD:</b> GitHub Actions chạy kiểm tra và dựng image khi có thay đổi; không nằm trong sơ đồ vì chỉ chạy lúc phát triển.</li>
+</ul>
+
+<h2 id="kich">5. Ba tình huống ghép các thành phần lại</h2>
+
+<h3>5.1 Việc nhẹ: sinh viên xem bản đồ học tập</h3>
+<ol>
+<li>Trình duyệt gửi <code>GET /api/v1/classes/{id}/my-map</code> kèm token.</li>
+<li>Nginx chuyển sang API; Uvicorn gọi FastAPI; hàm router kiểm quyền rồi gọi service.</li>
+<li>Service đọc ma trận thành thạo của sinh viên và cây kỹ năng từ PostgreSQL, tính trạng thái từng nút.</li>
+<li>JSON đi ngược lại. Toàn bộ xong trong một lượt, không dùng Redis hay worker.</li>
+</ol>
+
+<h3>5.2 Việc nặng: dựng cây kỹ năng từ giáo trình</h3>
+<ol>
+<li>Giảng viên tải giáo trình. Tệp nằm ở kho S3; thông tin tệp ghi vào PostgreSQL.</li>
+<li>API ghi một task vào hàng đợi <code>documents</code> trong Redis và <b>trả lời ngay</b> với mã tác vụ, nên giao diện không bị treo.</li>
+<li>Worker lấy task, đọc tệp, cắt đoạn, nhúng vector (lưu ở pgvector), gọi LLM qua gateway để đề xuất nút và cạnh, rồi ghi bản nháp cây.</li>
+<li>Khi xong, hệ thống phát sự kiện; API nhận và đẩy xuống trình duyệt qua WebSocket để màn hình tự cập nhật.</li>
+</ol>
+
+<h3>5.3 Chuỗi sự kiện sau một buổi sinh viên giảng lại</h3>
+<div class="tw"><table>
+<thead><tr><th>#</th><th>Ai làm</th><th>Việc</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Judge (AI)</td><td>Chấm xong buổi giảng, phát <code>session.completed</code> lên Redis.</td></tr>
+<tr><td>2</td><td><code>events</code></td><td>Nghe được, gọi <code>MasteryService.apply_result</code> để ghi kết quả vào ma trận thành thạo (PostgreSQL), rồi phát <code>mastery.changed</code>.</td></tr>
+<tr><td>3</td><td><code>events</code></td><td>Nghe <code>mastery.changed</code>: đẩy việc tính lại bản đồ nhiệt vào hàng đợi <code>aggregation</code>; kích hoạt ghép cặp theo sự kiện.</td></tr>
+<tr><td>4</td><td><code>worker</code></td><td>Lấy task, tính bản đồ nhiệt hoặc chạy ghép cặp.</td></tr>
+<tr><td>5</td><td><code>beat</code></td><td>Nếu tin ở bước 1 hoặc 2 bị mất (Pub/Sub không lưu tin), các lịch <code>reconcile-sessions</code> và <code>heatmap-reconcile</code> phát lại hoặc tính lại từ CSDL.</td></tr>
+</tbody></table></div>
+<p>Các thành phần chỉ nói chuyện qua sự kiện, không truy vấn thẳng bảng của nhau. Đó là điều kiện của kiểu "khối đơn mô-đun hóa".</p>
+
+<h2 id="tang">6. Công nghệ theo tầng</h2>
 <div class="tw"><table>
 <thead><tr><th>Tầng</th><th>Công nghệ</th><th>Lý do chọn</th></tr></thead>
 <tbody>
@@ -63,10 +496,32 @@
 <tr><td>Triển khai</td><td>Docker Compose, Nginx, GitHub Actions</td><td>Chạy nhanh trên một VM</td></tr>
 </tbody></table></div>
 
-<h2>Dễ bị hỏi</h2>
+<h2 id="mang">7. Cổng và mạng trong Docker</h2>
+<p>Mỗi container có mạng riêng. Hai chuyện cần tách: <b>cổng bên trong container</b> (nơi tiến trình thật sự lắng nghe) và <b>cổng mở ra máy chủ</b> (khai bằng <code>ports</code>).</p>
+<ul class="ks">
+<li>Quy ước <code>ports: "HOST:CONTAINER"</code>. Số <b>bên trái</b> là cổng trên máy chủ chạy Docker; số <b>bên phải</b> là cổng bên trong container. Ví dụ dịch vụ <code>stt</code> khai <code>"9100:8000"</code>: bên trong nó nghe 8000, từ máy chủ gọi <code>localhost:9100</code>.</li>
+<li>Dịch vụ không khai <code>ports</code> (như <code>worker</code>, <code>beat</code>, <code>events</code>) thì chỉ container khác trong cùng mạng gọi được.</li>
+<li>Các dịch vụ gọi nhau bằng <code>tên:cổng-trong-container</code>, không đi qua cổng 80 của Nginx. Nginx chỉ đứng giữa <b>người dùng bên ngoài</b> và API.</li>
+</ul>
+<div class="tw"><table>
+<thead><tr><th>Bên gọi</th><th>Địa chỉ đích</th><th>Dùng để</th></tr></thead>
+<tbody>
+<tr><td>Nginx</td><td><code>api:8000</code></td><td>Chuyển request <code>/api/</code></td></tr>
+<tr><td>API, worker, events</td><td><code>postgres:5432</code></td><td>Đọc ghi CSDL</td></tr>
+<tr><td>API, worker, beat, events</td><td><code>redis:6379</code></td><td>Hàng đợi, sự kiện, dữ liệu tạm</td></tr>
+<tr><td>API, worker</td><td><code>minio:9000</code></td><td>Đọc ghi tệp</td></tr>
+</tbody></table></div>
+
+<h2 id="hoi">8. Dễ bị hỏi</h2>
 <details><summary>Vì sao khối đơn mà không vi dịch vụ?</summary><p>Đội nhỏ, thời gian Hackathon ngắn: triển khai một lần, dễ gỡ lỗi. Ranh giới mô-đun vẫn tách rõ để sau này tách thành dịch vụ riêng khi mở rộng.</p></details>
-<details><summary>Vì sao việc nặng phải ra worker?</summary><p>Nếu API tự làm thì mỗi lần đọc giáo trình hay ghép cặp sẽ chặn các yêu cầu khác. Worker làm nền, xong thì phát sự kiện để API báo lại.</p></details>
+<details><summary>Vì sao việc nặng phải ra worker?</summary><p>Nếu API tự làm thì mỗi lần đọc giáo trình hay ghép cặp sẽ chiếm tiến trình và chặn các yêu cầu khác. Worker làm nền, xong thì phát sự kiện để API báo lại.</p></details>
 <details><summary>Đổi nhà cung cấp LLM thì sửa gì?</summary><p>Chỉ sửa lớp Adapter, không sửa nghiệp vụ (NFR-14).</p></details>
+<details><summary>Nginx, Uvicorn và FastAPI khác nhau thế nào?</summary><p>Nginx là tiến trình ở cửa, chuyển tiếp theo đường dẫn và trả tệp tĩnh, không hiểu nghiệp vụ. Uvicorn là máy chủ ứng dụng: đọc HTTP và gọi mã Python theo chuẩn ASGI. FastAPI là thư viện bên trong ứng dụng: định tuyến, kiểm dữ liệu, kiểm quyền, gọi hàm của mình.</p></details>
+<details><summary>Vì sao mỗi request phải mang token dù vừa đăng nhập?</summary><p>HTTP không nhớ request trước, và 4 tiến trình Uvicorn không chia sẻ bộ nhớ nên không thể "nhớ" người dùng trong biến. Token JWT chứa sẵn danh tính và vai trò nên tiến trình nào nhận cũng tự kiểm được.</p></details>
+<details><summary>Thêm cạnh gây chu trình thì API trả mã gì, vì sao?</summary><p>409 <code>CYCLE_DETECTED</code>. Request đúng dạng nên không phải 400 hay 422; nó bị từ chối vì mâu thuẫn với trạng thái hiện tại của cây (BR-01). Đây là quy tắc nghiệp vụ được dự liệu nên cũng không phải 500.</p></details>
+<details><summary>Hàm async def gọi truy vấn CSDL đồng bộ thì sao?</summary><p>Truy vấn chặn cả vòng lặp sự kiện của tiến trình đó: mọi request khác trong tiến trình phải đợi (hình 2). Hàm <code>def</code> thường thì FastAPI chạy trong thread pool nên không bị.</p></details>
+<details><summary>Redis Pub/Sub mất tin thì hệ thống ra sao?</summary><p>Pub/Sub không lưu tin. Vì vậy kết quả luôn được ghi vào CSDL trước khi phát sự kiện, và các lịch <code>reconcile-sessions</code>, <code>heatmap-reconcile</code>, <code>live-rebalance</code> đối soát lại từ CSDL.</p></details>
+<details><summary>Vì sao dùng pgvector mà không dùng CSDL vector riêng?</summary><p>Một CSDL chứa cả dữ liệu quan hệ và vector: ít thành phần phải vận hành, và có thể truy vấn kèm điều kiện quan hệ trong cùng một giao dịch. Quy mô một lớp học không cần CSDL vector chuyên dụng.</p></details>
 </main>
 <script>
 var MSG = {
