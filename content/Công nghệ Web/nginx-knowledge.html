@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nginx cơ bản</title>
+<script>
+// Luôn sáng mặc định; chỉ tối khi người đọc tự bấm đổi
+(function(){var t=null;try{t=localStorage.getItem('theme')}catch(e){}
+document.documentElement.dataset.theme=t==='dark'?'dark':'light';})();
+</script>
+<style>
+:root{
+  --bg:#f6f8fc; --card:#ffffff; --fg:#0f172a; --muted:#566277; --line:#e2e8f2; --hov:#f3f6fc;
+  --accent:#2563eb; --accent2:#7c3aed; --accent-soft:#eaf0ff; --hl:#fff0a8; --hl-fg:#5c4600;
+  --grad:linear-gradient(120deg,#2563eb,#7c3aed);
+  --mono:ui-monospace,"Cascadia Code",Consolas,Menlo,monospace;
+  --grid:rgba(15,23,42,.05);
+  --sh:0 1px 2px rgba(15,23,42,.05),0 8px 24px -12px rgba(15,23,42,.12);
+  --sh-hi:0 2px 4px rgba(15,23,42,.06),0 18px 40px -14px rgba(37,99,235,.28);
+  --ts:92%; --tl:94%; --tcl:42%;
+  --glow1:rgba(37,99,235,.16); --glow2:rgba(124,58,237,.13);
+  --ok:#16a34a; --bad:#dc2626; --warn:#b45309; --warn-soft:#fff4d6;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#0a0e16; --card:#121826; --fg:#e8edf6; --muted:#9aa6ba; --line:#212a3b; --hov:#18202f;
+  --accent:#7ab2ff; --accent2:#a78bfa; --accent-soft:#15233d; --hl:#4a3d00; --hl-fg:#ffe58a;
+  --grad:linear-gradient(120deg,#7ab2ff,#a78bfa);
+  --grid:rgba(232,237,246,.045);
+  --sh:0 1px 2px rgba(0,0,0,.3),0 8px 24px -12px rgba(0,0,0,.5);
+  --sh-hi:0 2px 4px rgba(0,0,0,.4),0 18px 40px -14px rgba(122,178,255,.25);
+  --ts:45%; --tl:20%; --tcl:74%;
+  --glow1:rgba(122,178,255,.13); --glow2:rgba(167,139,250,.11);
+  --ok:#4ade80; --bad:#f87171; --warn:#fbbf24; --warn-soft:#3a2f00;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;scrollbar-width:none}
+*::-webkit-scrollbar{display:none}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);min-height:100vh;font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.skip{position:absolute;left:12px;top:-56px;z-index:30;background:var(--accent);color:#fff;padding:9px 16px;border-radius:10px;text-decoration:none;font-weight:600}
+.skip:focus{top:12px}
+.bg{position:absolute;inset:0 0 auto;height:560px;z-index:-1;pointer-events:none;
+  background:radial-gradient(640px 320px at 12% -4%,var(--glow1),transparent 70%),radial-gradient(560px 300px at 88% 6%,var(--glow2),transparent 70%),
+  linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:auto,auto,32px 32px,32px 32px;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent)}
+.wrap{max-width:920px;margin:0 auto;padding:0 24px 64px}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:20px 0}
+.brand{display:flex;align-items:center;gap:11px;font-weight:700;letter-spacing:-.01em}
+.logo{width:34px;height:34px;border-radius:10px;background:var(--grad);display:grid;place-items:center;color:#fff;box-shadow:0 6px 16px -6px var(--accent)}
+:root[data-theme="dark"] .logo{color:#0b1220}
+.btn{font:inherit;font-size:13px;font-weight:500;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 14px;min-height:38px;cursor:pointer;box-shadow:var(--sh)}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn[disabled]{opacity:.45;cursor:default}
+.hero{padding:24px 0 8px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:5px 13px 5px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card);font:600 12.5px system-ui,sans-serif;color:var(--muted);box-shadow:var(--sh)}
+.pill i{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,.18)}
+h1{font-size:clamp(2.1rem,6vw,3.3rem);line-height:1.06;letter-spacing:-.04em;font-weight:800;margin:18px 0 14px}
+.grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{max-width:660px;color:var(--muted);font-size:1.08rem;margin:0 0 22px}
+.lead b{color:var(--fg);font-weight:600}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 30px;padding:0;list-style:none}
+.toc a{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:500;color:var(--fg);text-decoration:none;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 8px;min-height:36px;transition:all .15s}
+.toc a b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font:700 12px var(--mono)}
+.toc a:hover{border-color:var(--accent);transform:translateY(-1px)}
+.toc a[aria-current="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.toc a[aria-current="true"] b{background:var(--bg);color:var(--fg)}
+/* thanh điều hướng nhanh: dính ở mép trên khi mục lục đã cuộn khỏi màn hình */
+.bar{position:fixed;top:10px;left:50%;z-index:25;width:min(100% - 24px,880px);transform:translate(-50%,-90px);opacity:0;visibility:hidden;transition:transform .25s,opacity .25s,visibility 0s .25s;
+  display:flex;align-items:center;gap:6px;padding:6px 8px;background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh-hi)}
+.bar.show{transform:translate(-50%,0);opacity:1;visibility:visible;transition:transform .25s,opacity .25s}
+.bar a{display:grid;place-items:center;flex:none;min-width:30px;height:30px;border-radius:9px;border:1px solid transparent;color:var(--fg);text-decoration:none;font:700 12.5px var(--mono)}
+.bar a:hover{border-color:var(--accent);color:var(--accent)}
+.bar a[aria-current="true"]{background:var(--fg);color:var(--bg)}
+.bar .up{border-color:var(--line);background:var(--card);font:600 16px system-ui;margin-right:2px}
+.bar .nums{display:flex;gap:3px;flex-wrap:nowrap}
+.bar .now{flex:1;min-width:0;margin-left:6px;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+@media(max-width:640px){.bar .now{display:none}.bar{gap:3px;padding:5px 6px}.bar a{min-width:26px;height:28px}.bar .nums{gap:1px}}
+.howto{margin:18px 0 30px;border:1px dashed var(--line);border-radius:14px;padding:12px 16px;color:var(--muted);font-size:14px;background:var(--card)}
+.howto b{color:var(--fg)}
+.card{position:relative;overflow:hidden;background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--sh);padding:24px 24px 22px;margin-bottom:24px;scroll-margin-top:68px}
+.card::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,hsl(var(--h,215) 75% 55%),hsl(calc(var(--h,215) + 45) 75% 62%))}
+.card header{display:flex;gap:14px;align-items:center;margin-bottom:6px}
+.num{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font:800 17px var(--mono);background:hsl(var(--h,215) var(--ts) var(--tl));color:hsl(var(--h,215) 65% var(--tcl))}
+.card h2{font-size:1.28rem;letter-spacing:-.02em;margin:0;line-height:1.25}
+.card h3{font-size:1rem;margin:20px 0 6px}
+.card p{margin:8px 0}
+.lab{display:inline-block;font:700 11px/1 system-ui;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:4px 8px;margin:18px 0 4px}
+.lab.v{background:var(--warn-soft);color:var(--warn)}
+.lab.g{background:var(--accent-soft);color:var(--accent)}
+.lab.t{background:hsl(160 var(--ts) var(--tl));color:hsl(160 65% var(--tcl))}
+.lab.q{background:var(--hov);color:var(--muted);border:1px solid var(--line)}
+.muted{color:var(--muted)}
+code,.mono{font-family:var(--mono);font-size:.9em}
+:not(pre)>code{background:var(--accent-soft);color:var(--accent);padding:1px 6px;border-radius:6px;white-space:nowrap}
+.ana{margin:12px 0;border-left:3px solid hsl(var(--h,215) 60% 60%);padding:6px 14px;background:var(--hov);border-radius:0 12px 12px 0;color:var(--muted)}
+.ana b{color:var(--fg)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:14px;margin:12px 0}
+.box{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--hov)}
+.box b{display:block;margin-bottom:2px}
+.box.on{border-color:var(--accent);background:var(--accent-soft)}
+.status{margin-top:12px;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:12px 16px;background:var(--card)}
+.status b{display:block}
+.why{margin-top:8px;color:var(--muted);font-size:14px}
+.why::before{content:"Vì sao? ";font-weight:700;color:var(--fg)}
+.warn{margin:12px 0;border:1px solid var(--warn);border-radius:12px;padding:10px 14px;background:var(--warn-soft);color:var(--warn)}
+.tbl{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
+.tbl th,.tbl td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.tblw{overflow-x:auto}
+.procs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:14px;margin:12px 0}
+.pbox{border:2px solid hsl(var(--c) 60% 60%);border-radius:16px;padding:10px 14px;background:hsl(var(--c) var(--ts) var(--tl))}
+.pbox b{display:block}
+.pbox .mem{margin-top:6px;border:1px dashed hsl(var(--c) 50% 55%);border-radius:10px;padding:6px 10px;font:12.5px var(--mono);color:var(--fg);background:var(--card)}
+.chain{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin:12px 0}
+.chain .nd{flex:1 1 140px;border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--hov);text-align:center}
+.chain .nd small{display:block;color:var(--muted)}
+.chain .ar{align-self:center;color:var(--muted);font:12px var(--mono);text-align:center;flex:0 0 auto}
+svg.diag{width:100%;height:auto;max-height:300px;display:block}
+.diag .nd rect{fill:var(--card);stroke:var(--line);stroke-width:2}
+.diag .nd text{fill:var(--fg);font:600 14px system-ui,sans-serif;text-anchor:middle}
+.diag .nd .sm{font:12px var(--mono);fill:var(--muted);font-weight:400}
+.diag .nd.on rect{stroke:hsl(var(--h) 70% 50%);fill:hsl(var(--h) var(--ts) var(--tl))}
+.diag .nd.dim{opacity:.38}
+.diag .ln{fill:none;stroke:var(--line);stroke-width:2.5}
+.diag .ln.on{stroke:var(--accent);stroke-dasharray:8 6;animation:flow .8s linear infinite}
+.diag .ln.on.rev{animation-direction:reverse}
+@keyframes flow{to{stroke-dashoffset:-14}}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.chip{display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:13.5px;font-weight:500;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 12px;min-height:36px;cursor:pointer;transition:all .15s}
+.chip i{width:8px;height:8px;border-radius:50%;background:hsl(var(--h,190) 70% 52%)}
+.chip:hover{border-color:var(--accent);transform:translateY(-1px)}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.mw{display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 0 4px}
+.mnode{border:2px solid var(--accent);border-radius:14px;padding:10px 20px;background:var(--accent-soft);font-weight:700;text-align:center}
+.sock{font:12px var(--mono);color:var(--muted);border-left:2px dashed var(--line);padding:2px 0 2px 10px}
+.workers{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.w{border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg);padding:8px 14px;font:13px var(--mono);cursor:pointer;min-width:96px;text-align:center}
+.w:hover{border-color:var(--bad)}
+.w.dead{border-color:var(--bad);color:var(--bad);background:transparent;text-decoration:line-through}
+.w.new{border-color:var(--ok);color:var(--ok)}
+.inst{min-width:120px;text-align:center}
+.inst .bar{height:8px;border-radius:99px;background:var(--line);margin-top:6px;overflow:hidden}
+.inst .bar i{display:block;height:100%;background:var(--grad);width:0;transition:width .25s}
+input[type=range]{width:200px;accent-color:var(--accent)}
+.win{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card);margin:8px 0}
+.win .bar{display:flex;gap:6px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line);background:var(--hov);font:12px var(--mono);color:var(--muted)}
+.win .bar i{width:10px;height:10px;border-radius:50%;background:#ff5f57}.win .bar i:nth-child(2){background:#febc2e}.win .bar i:nth-child(3){background:#28c840}
+.win .bar span{margin-left:8px}
+.codeline{display:block;width:100%;text-align:left;font:13.5px/1.7 var(--mono);color:var(--fg);background:none;border:0;padding:0 14px;cursor:pointer;white-space:pre;border-left:3px solid transparent;overflow-x:auto}
+.codeline:hover{background:var(--hov)}
+.codeline[aria-pressed="true"]{background:var(--accent-soft);border-left-color:var(--accent)}
+.codeline .n{display:inline-block;width:2.2em;color:var(--muted);user-select:none}
+.log{border:1px solid var(--line);border-radius:12px;background:var(--hov);padding:10px 14px;font:13px/1.7 var(--mono);min-height:56px}
+.log .ok{color:var(--ok)}.log .no{color:var(--bad)}
+details{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-top:8px;background:var(--card)}
+summary{cursor:pointer;font-weight:600}
+details p{margin:8px 0 2px;color:var(--muted)}
+.stepper{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.stepper .cnt{font:13px var(--mono);color:var(--muted);margin-left:auto}
+.role{display:inline-block;font:600 12px system-ui;border-radius:999px;padding:2px 10px;background:var(--accent-soft);color:var(--accent);margin-right:6px}
+.foot{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+.foot a{color:var(--accent)}
+kbd{font:12px var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:0 7px;background:var(--card)}
+@media(max-width:640px){.wrap{padding:0 16px 48px}.hero{padding-top:12px}.card{padding:18px 16px}.card header{gap:10px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important;animation:none!important}}
+@media(forced-colors:active){.card,.toc a[aria-current="true"]{border:1px solid}}
+</style>
+</head>
+<body>
+<a class="skip" href="#s1">Bỏ qua tới nội dung</a>
+<div class="bg" aria-hidden="true"></div>
+<nav class="bar" id="bar" aria-label="Điều hướng nhanh"><a class="up" href="#top" aria-label="Lên đầu trang" title="Lên đầu trang">↑</a><span class="nums" id="barNums"></span><span class="now" id="barNow" aria-hidden="true"></span></nav>
+<div class="wrap">
+  <header class="topbar" id="top">
+    <div class="brand"><span class="logo" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></svg></span>Công nghệ Web</div>
+    <button class="btn" id="themeBtn" type="button" aria-label="Đổi giao diện sáng hoặc tối">Sáng / Tối</button>
+  </header>
+
+  <div class="hero">
+    <span class="pill"><i></i>Công nghệ Web · Nginx · từ cốt lõi đến toàn cảnh</span>
+    <h1>Nginx: từ <span class="grad">một tiến trình</span> đến cổng vào của cả ứng dụng web</h1>
+    <p class="lead">Từ <b>tiến trình, cổng và HTTP</b> đến một cửa duy nhất đứng trước ứng dụng: vì sao cần Nginx, nó chuyển request thế nào và bên trong nó chạy ra sao.</p>
+  </div>
+
+  <ol class="toc" id="toc" aria-label="Lộ trình các phần"></ol>
+
+  <main>
+  <section class="card" id="s1" style="--h:215" data-title="Tiến trình">
+    <header><span class="num">1</span><h2>Tiến trình: mỗi chương trình đang chạy là một ngôi nhà riêng</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Một ứng dụng web không phải một chương trình mà là <b>nhiều chương trình chạy cùng lúc</b>. Chúng phải sống cạnh nhau trên cùng một máy mà không làm hỏng dữ liệu của nhau.</p>
+    <span class="lab g">Giải pháp</span>
+    <p><b>Tiến trình (process)</b> là một chương trình đang chạy. Hệ điều hành cho mỗi tiến trình <b>một vùng nhớ riêng</b>, tiến trình này không thấy được biến của tiến trình kia.</p>
+    <div class="ana"><b>Đời thường:</b> nhà hàng có thu ngân, bếp và kho. Mỗi người chỉ biết việc của mình trong đầu. Muốn biết chuyện của nhau, họ phải nói chuyện hoặc ghi vào sổ chung.</div>
+    <div class="procs" role="img" aria-label="Ba tiến trình, mỗi tiến trình có bộ nhớ riêng">
+      <div class="pbox" style="--c:215"><b>Next.js</b><span class="muted">giao diện</span><div class="mem">cart = [ cà phê sữa ]</div></div>
+      <div class="pbox" style="--c:280"><b>NestJS</b><span class="muted">backend</span><div class="mem">total = 55000</div></div>
+      <div class="pbox" style="--c:160"><b>PostgreSQL</b><span class="muted">cơ sở dữ liệu</span><div class="mem">bảng orders</div></div>
+    </div>
+    <p>Đây là ba tiến trình của BrewLite. Biến <code>total</code> của NestJS nằm trong hộp của nó. PostgreSQL không đọc được, và NestJS cũng không ghi thẳng vào hộp của PostgreSQL.</p>
+    <div class="warn"><b>Hệ quả quan trọng:</b> muốn trao đổi dữ liệu, các tiến trình phải đi qua <b>mạng</b>, <b>tệp</b>, hoặc một <b>nơi lưu chung</b> bên ngoài (như PostgreSQL, Redis).</div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s1"></div>
+  </section>
+
+  <section class="card" id="s2" style="--h:160" data-title="Socket và cổng">
+    <header><span class="num">2</span><h2>Socket, cổng và bind: ổ cắm, số quầy và việc giữ chỗ</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Các tiến trình đã bị cách ly (phần 1) nên phải nói chuyện qua mạng. Nhưng trên một máy có cả chục tiến trình, một thông điệp tới thì <b>giao cho tiến trình nào</b>?</p>
+    <span class="lab g">Giải pháp</span>
+    <p>Địa chỉ gồm hai phần: <b>IP</b> cho biết máy nào, <b>cổng (port)</b> cho biết tiến trình nào trên máy đó.</p>
+    <ul>
+      <li><b>Cổng</b> là một con số từ 0 đến 65535. Nó <b>có sẵn</b>, không cần tạo. Địa chỉ đầy đủ viết là <code>IP:cổng</code>.</li>
+      <li><b>Socket</b> là cái "ổ cắm" mà tiến trình xin hệ điều hành tạo ra để gửi nhận dữ liệu qua mạng. Tiến trình tự nó không chạm vào mạng được.</li>
+      <li><b>Bind (gắn)</b> là nối socket đó vào một <code>IP:cổng</code>, giống đăng ký "quầy số 4001 là của tôi". Cổng đã có chủ thì tiến trình khác bind sẽ lỗi <code>EADDRINUSE</code> (address already in use).</li>
+      <li><b>Listen (lắng nghe)</b> là bắt đầu chờ khách tới.</li>
+    </ul>
+    <h3>Trình tự của bên chờ và bên gọi</h3>
+    <div class="tblw"><table class="tbl"><thead><tr><th>Bên chờ (ví dụ NestJS)</th><th>Bên gọi (ví dụ trình duyệt)</th></tr></thead><tbody>
+      <tr><td>1. tạo socket</td><td>1. tạo socket</td></tr>
+      <tr><td>2. <b>bind</b> vào <code>0.0.0.0:4001</code></td><td>(không cần bind: hệ điều hành tự gán một <b>cổng tạm</b>)</td></tr>
+      <tr><td>3. <b>listen</b>: chờ khách</td><td>2. <b>connect</b> tới <code>IP:4001</code></td></tr>
+      <tr><td>4. <b>accept</b>: nhận khách</td><td>3. gửi và nhận dữ liệu</td></tr>
+    </tbody></table></div>
+    <p class="muted">Hai địa chỉ đặc biệt: <code>127.0.0.1</code> (localhost) chỉ gọi được từ chính máy đó; <code>0.0.0.0</code> nghĩa là nghe trên mọi địa chỉ của máy. Trên Linux, cổng nhỏ hơn 1024 (như 80) cần quyền cao mới bind được.</p>
+    <span class="lab t">Minh họa: hai bản cùng đòi một cổng</span>
+    <div class="row" id="portBtns"></div>
+    <div class="log" id="portLog" role="status" aria-live="polite"></div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s2"></div>
+  </section>
+
+  <section class="card" id="s3" style="--h:28" data-title="Máy chủ và máy khách">
+    <header><span class="num">3</span><h2>Máy chủ và máy khách: ai chờ, ai gọi</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Hai tiến trình đã có đường nói chuyện (socket và cổng). Nhưng trong mỗi cuộc nói chuyện, <b>ai là người chờ và ai là người chủ động gọi</b>?</p>
+    <span class="lab g">Giải pháp</span>
+    <p><b>Máy chủ (server)</b> là tiến trình đã bind và đang chờ. <b>Máy khách (client)</b> là tiến trình chủ động kết nối tới để nhờ việc. Cách phân biệt nhanh: <b>ai bind và chờ thì là server, ai kết nối tới thì là client.</b></p>
+    <p>Hai vai này là vai <b>theo từng cuộc nói chuyện</b>, không phải kiểu máy. Một tiến trình giữ được cả hai vai cùng lúc:</p>
+    <div class="chain" role="img" aria-label="Trình duyệt gọi NestJS, NestJS gọi PostgreSQL">
+      <div class="nd"><b>Trình duyệt</b><small>client</small></div>
+      <div class="ar">gọi →</div>
+      <div class="nd box on"><b>NestJS</b><small>server của trình duyệt</small><small>client của PostgreSQL</small></div>
+      <div class="ar">gọi →</div>
+      <div class="nd"><b>PostgreSQL</b><small>server (cổng 5432)</small></div>
+    </div>
+    <p>Nginx ở phần 5 cũng giữ <b>cả hai vai</b> như NestJS ở đây.</p>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s3"></div>
+  </section>
+
+  <section class="card" id="s4" style="--h:280" data-title="HTTP">
+    <header><span class="num">4</span><h2>TCP và HTTP: ngôn ngữ chung của web</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Có đường dây rồi, nhưng hai bên cần <b>cùng một ngôn ngữ</b> để hiểu "tôi muốn gì" và "đây là kết quả".</p>
+    <span class="lab g">Giải pháp</span>
+    <ul>
+      <li><b>TCP</b> là đường dây đáng tin: byte tới đúng thứ tự, mất gói thì tự gửi lại. Mọi thứ phía dưới chạy trên TCP.</li>
+      <li><b>HTTP</b> là quy ước bằng văn bản đặt lên TCP. Client gửi <b>request</b>, server trả <b>response</b>.</li>
+      <li>HTTP <b>không nhớ</b> request trước (stateless). Vì vậy sau khi đăng nhập, mỗi request phải tự mang token, thường ở header <code>Authorization</code>.</li>
+    </ul>
+    <span class="lab t">Minh họa: một request đặt đơn</span>
+    <div class="win" role="group" aria-label="Một request HTTP"><div class="bar"><i></i><i></i><i></i><span>request (ví dụ)</span></div><div id="httpCode" style="padding:8px 0"></div></div>
+    <div class="status" id="httpStatus" role="status"></div>
+    <h3>Mã trạng thái của response</h3>
+    <div class="tblw"><table class="tbl"><thead><tr><th>Mã</th><th>Nghĩa</th><th>Ví dụ</th></tr></thead><tbody>
+      <tr><td><code>200</code> / <code>201</code></td><td>Thành công / đã tạo</td><td>Lấy danh sách món / tạo đơn xong</td></tr>
+      <tr><td><code>400</code> / <code>422</code></td><td>Request sai dạng</td><td>Thiếu trường bắt buộc</td></tr>
+      <tr><td><code>401</code></td><td>Chưa đăng nhập</td><td>Thiếu hoặc sai token</td></tr>
+      <tr><td><code>404</code></td><td>Không tìm thấy</td><td>Sai đường dẫn</td></tr>
+      <tr><td><code>409</code></td><td>Mâu thuẫn với trạng thái hiện tại</td><td>Đơn đã thanh toán rồi</td></tr>
+      <tr><td><code>500</code></td><td>Server lỗi</td><td>Backend gặp lỗi không lường trước</td></tr>
+    </tbody></table></div>
+    <div class="warn"><b>Điều Nginx sẽ cần:</b> chỉ <b>dòng đầu</b> (method và đường dẫn) cùng vài header. Nó không cần đọc phần body.</div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s4"></div>
+  </section>
+
+  <section class="card" id="s5" style="--h:190" data-title="Nginx là gì">
+    <header><span class="num">5</span><h2>Nginx ra đời: một cửa duy nhất cho nhiều tiến trình</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Ứng dụng của bạn có frontend ở cổng <code>4002</code> và backend ở cổng <code>4001</code>. Nếu để vậy thì:</p>
+    <ul>
+      <li>Người dùng phải nhớ và gõ từng cổng.</li>
+      <li>Phải mở các cổng này ra internet, cả cổng không nên lộ ra ngoài.</li>
+      <li>Mỗi tiến trình tự lo HTTPS, nén dữ liệu, trả ảnh tĩnh, ghi log. Làm lặp đi lặp lại.</li>
+    </ul>
+    <span class="lab g">Giải pháp</span>
+    <p><b>Nginx</b> là một tiến trình bind cổng <code>80</code> (và <code>443</code> cho HTTPS), nhận mọi request rồi <b>tự mở kết nối</b> tới tiến trình phía sau. Cách làm này gọi là <b>reverse proxy (proxy ngược)</b>.</p>
+    <p>Nối với phần 3: với trình duyệt, Nginx là <b>server</b>. Với backend, Nginx là <b>client</b>.</p>
+    <div class="two">
+      <div class="box"><b>Không hiểu nghiệp vụ</b><span class="muted">Nginx không biết "đơn hàng" là gì. Nó chỉ đọc đường dẫn rồi chuyển.</span></div>
+      <div class="box"><b>Trả file tĩnh</b><span class="muted">Ảnh, CSS, JS không cần logic nên Nginx trả thẳng, backend khỏi tốn sức.</span></div>
+      <div class="box"><b>Gom việc chung</b><span class="muted">HTTPS, nén, giới hạn dung lượng, ghi log làm một chỗ.</span></div>
+      <div class="box"><b>Chỉ mở một cổng</b><span class="muted">Cổng 4001 và 5432 có thể đóng với bên ngoài. Người lạ không gọi thẳng vào backend được.</span></div>
+    </div>
+    <h3>"Ngược" so với cái gì? Proxy thường và VPN</h3>
+    <div class="tblw"><table class="tbl"><thead><tr><th></th><th>Proxy thường / VPN</th><th>Reverse proxy (Nginx)</th></tr></thead><tbody>
+      <tr><td>Đứng ở phía</td><td>người dùng</td><td>máy chủ</td></tr>
+      <tr><td>Đi gọi thay ai</td><td>thay người dùng</td><td>thay máy chủ đón khách</td></tr>
+      <tr><td>Ai bị ẩn</td><td>người dùng (trang web chỉ thấy IP của proxy/VPN)</td><td>các tiến trình phía sau (khách chỉ thấy Nginx)</td></tr>
+      <tr><td>Ví dụ</td><td>proxy của trường; VPN tạo đường hầm mã hóa cho cả máy</td><td>Nginx đứng trước NestJS</td></tr>
+    </tbody></table></div>
+    <span class="lab t">Minh họa: qua VPN</span>
+    <p class="muted">Người dùng đi qua VPN tới trang có Nginx thì mỗi bên thấy một IP khác nhau. (IP trong ví dụ là địa chỉ dành riêng cho tài liệu.)</p>
+    <div class="row" id="vpnBtns"></div>
+    <div class="status" id="vpnOut" role="status"></div>
+    <div class="warn">BrewLite hiện <b>chưa dùng Nginx</b> (frontend và backend chạy trực tiếp ở cổng 4002 và 4001). Các ví dụ trong trang này dùng cổng của BrewLite để minh họa.</div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s5"></div>
+  </section>
+
+  <section class="card" id="s6" style="--h:340" data-title="Chuyển request">
+    <header><span class="num">6</span><h2>Nginx quyết định chuyển request đi đâu</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Một cửa, nhưng phía sau có nhiều đích: frontend, backend, thư mục file tĩnh. Nginx chọn đích bằng cách nào?</p>
+    <span class="lab g">Giải pháp</span>
+    <p>Nginx nhìn <b>đường dẫn (path)</b> của request, không nhìn GET hay POST. Mỗi <b>location</b> là một quy tắc "đường dẫn bắt đầu bằng ... thì làm ...". Có nhiều quy tắc cùng khớp thì chọn <b>tiền tố dài nhất</b> (với các quy tắc dạng tiền tố như ví dụ này), không phải quy tắc viết trước.</p>
+    <span class="lab t">Minh họa 1: request đi đâu</span>
+    <div class="row" id="paths" role="group" aria-label="Chọn request"></div>
+    <svg class="diag" viewBox="0 0 640 250" role="img" aria-labelledby="dgT">
+      <title id="dgT">Sơ đồ: trình duyệt gửi request tới Nginx, Nginx chuyển tới frontend, backend hoặc tự trả file</title>
+      <path class="ln" id="l-br" d="M138 125H250"/>
+      <path class="ln" id="l-fe" d="M390 125C440 125 440 42 490 42"/>
+      <path class="ln" id="l-be" d="M390 125H490"/>
+      <path class="ln" id="l-st" d="M390 125C440 125 440 208 490 208"/>
+      <g class="nd" id="n-br" style="--h:215"><rect x="8" y="95" width="130" height="60" rx="12"/><text x="73" y="122">Trình duyệt</text><text class="sm" x="73" y="142">người dùng</text></g>
+      <g class="nd" id="n-ng" style="--h:190"><rect x="250" y="85" width="140" height="80" rx="12"/><text x="320" y="122">Nginx</text><text class="sm" x="320" y="143">cổng 80</text></g>
+      <g class="nd" id="n-fe" style="--h:215"><rect x="490" y="14" width="142" height="56" rx="12"/><text x="561" y="38">Frontend</text><text class="sm" x="561" y="57">Next.js :4002</text></g>
+      <g class="nd" id="n-be" style="--h:280"><rect x="490" y="97" width="142" height="56" rx="12"/><text x="561" y="121">Backend</text><text class="sm" x="561" y="140">NestJS :4001</text></g>
+      <g class="nd" id="n-st" style="--h:160"><rect x="490" y="180" width="142" height="56" rx="12"/><text x="561" y="204">Tệp tĩnh</text><text class="sm" x="561" y="223">/var/www/assets</text></g>
+    </svg>
+    <div class="status" id="status" role="status"></div>
+    <span class="lab t">Minh họa 2: cấu hình tạo ra hành vi trên</span>
+    <div class="win" role="group" aria-label="File nginx.conf mẫu"><div class="bar"><i></i><i></i><i></i><span>nginx.conf (ví dụ minh họa)</span></div><div id="conf" style="padding:8px 0"></div></div>
+    <div class="status" id="confStatus" role="status"></div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s6"></div>
+  </section>
+
+  <section class="card" id="s7" style="--h:95" data-title="Master và worker">
+    <header><span class="num">7</span><h2>Bên trong Nginx: master, worker và việc "ngủ khi rảnh"</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <ul>
+      <li>Một tiến trình phải phục vụ hàng nghìn khách mà vẫn nhanh, và máy có nhiều nhân CPU.</li>
+      <li>Muốn đổi cấu hình mà không làm rớt khách đang kết nối.</li>
+      <li>Một phần bị lỗi thì không được kéo sập cả hệ thống.</li>
+    </ul>
+    <span class="lab g">Giải pháp</span>
+    <p>Nginx là <b>một nhóm tiến trình cùng một chương trình, khác vai trò</b>:</p>
+    <div class="two">
+      <div class="box"><b>Master (điều phối)</b><span class="muted">Chỉ có 1. Đọc cấu hình, bind cổng 80 (cần quyền cao nên master chạy quyền cao), tạo và giám sát worker. Không xử lý request của khách.</span></div>
+      <div class="box"><b>Worker (làm việc)</b><span class="muted">Nhiều cái, thường mỗi luồng CPU một cái (<code>worker_processes auto</code>). Thừa hưởng socket từ master, nhận và xử lý request.</span></div>
+    </div>
+    <p>Sửa lại điều ở phần 2: <b>một cổng chỉ bind được bởi một socket</b>, nhưng socket đó có thể được nhiều tiến trình dùng chung nếu chúng thừa hưởng từ tiến trình cha. Tiến trình lạ bên ngoài vẫn bị <code>EADDRINUSE</code>.</p>
+    <h3>Tiến trình rảnh thì làm gì?</h3>
+    <p>Không phải vòng lặp "kiểm tra liên tục" (kiểu đó ngốn CPU). Nó gọi một hàm hệ thống chờ sự kiện (như <code>epoll_wait</code>). Hệ điều hành thấy vậy thì chuyển tiến trình sang <b>ngủ</b> và không cấp CPU nữa. Khi có dữ liệu tới socket, hệ điều hành <b>đánh thức</b> nó. Vì thế 12 worker đang rảnh gần như không tốn CPU, chỉ tốn RAM.</p>
+    <h3>Khi nhiều việc hơn số luồng CPU</h3>
+    <p>Bộ lập lịch (scheduler) của hệ điều hành chia thời gian CPU thành các lát rất ngắn và cho từng tiến trình chạy luân phiên. Mỗi lần đổi (context switch) có chi phí: cache L1/L2 của nhân đang đầy dữ liệu của tiến trình cũ nên tiến trình mới phải nạp lại từ RAM. Hệ điều hành cố giữ một tiến trình ở lại cùng một nhân để giảm chi phí này. Vì vậy số tiến trình <b>đang tính toán cùng lúc</b> nên không vượt quá số luồng CPU.</p>
+    <span class="lab t">Minh họa: master và worker</span>
+    <label for="nw" class="muted">Số worker: <b id="nwv"></b> <span>(ví dụ máy có 12 luồng CPU)</span></label><br>
+    <input type="range" id="nw" min="1" max="12" step="1">
+    <div class="mw" id="mw"></div>
+    <div class="status" id="mwStatus" role="status"></div>
+    <p class="muted">Đổi cấu hình không rớt khách: lệnh <code>nginx -s reload</code> báo master đọc cấu hình mới. Master tạo worker mới, để worker cũ làm nốt việc dở rồi tắt.</p>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s7"></div>
+  </section>
+
+  <section class="card" id="s8" style="--h:50" data-title="Nhiều bản backend">
+    <header><span class="num">8</span><h2>Nhiều bản backend và việc chia tải</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Một tiến trình Node.js chạy mã JavaScript trên <b>một nhân CPU</b>. Máy có 12 luồng mà chỉ chạy một bản backend thì phí. Và nếu bản duy nhất đó chết thì cả ứng dụng ngừng.</p>
+    <span class="lab g">Giải pháp</span>
+    <p>Chạy <b>nhiều bản (instance)</b> của backend. Chữ "bản" ở đây là <b>bản đang chạy</b>, không phải phiên bản (version): cùng một mã nguồn, mỗi lần chạy là một tiến trình riêng. Mỗi bản phải dùng <b>cổng khác nhau</b> (như thử ở phần 2), rồi Nginx đứng trước <b>chia request</b> cho các bản. Việc chia này gọi là <b>load balancing (cân bằng tải)</b>.</p>
+    <div class="win" role="group" aria-label="Cấu hình chia tải"><div class="bar"><i></i><i></i><i></i><span>nginx.conf (đoạn chia tải, ví dụ)</span></div><pre style="margin:0;padding:10px 16px;font:13.5px/1.7 var(--mono);overflow-x:auto">upstream backend_pool {
+    server 127.0.0.1:4001;
+    server 127.0.0.1:4003;
+    server 127.0.0.1:4004;
+    server 127.0.0.1:4005;
+}
+location /api/ { proxy_pass http://backend_pool/; }</pre></div>
+    <p class="muted">Mặc định Nginx chia lần lượt theo vòng (round-robin) và tạm bỏ qua bản vừa báo lỗi.</p>
+    <span class="lab t">Minh họa: chia tải (mô phỏng đơn giản)</span>
+    <label for="ni" class="muted">Số bản backend: <b id="niv"></b></label><br>
+    <input type="range" id="ni" min="1" max="4" step="1">
+    <div class="row" id="lbBtns"></div>
+    <div class="workers" id="lbBoxes" style="margin:10px 0"></div>
+    <div class="status" id="lbStatus" role="status"></div>
+    <div class="warn"><b>Cái giá phải trả:</b> các bản là tiến trình riêng nên <b>không thấy biến của nhau</b> (phần 1). Dữ liệu dùng chung phải để ở PostgreSQL hoặc Redis, và thông tin đăng nhập phải nằm trong token chứ không nằm trong biến của một bản.</div>
+    <h3>Bao nhiêu bản là đủ?</h3>
+    <ul>
+      <li>Bản đang <b>chờ</b> gần như không tốn CPU, chỉ tốn RAM. CPU chỉ cần khi nó đang tính toán.</li>
+      <li>Cơ sở dữ liệu chạy chung máy cũng tranh CPU. Quy tắc ước lượng: lấy số luồng CPU, <b>trừ phần dành cho database, Nginx và hệ điều hành</b> (thường 2 đến 4 luồng).</li>
+      <li><b>Giới hạn kết nối database:</b> mỗi bản giữ sẵn một nhóm kết nối tới PostgreSQL (connection pool). Ví dụ mỗi bản giữ 10, chạy 11 bản là 110 kết nối, mà PostgreSQL mặc định chỉ cho khoảng 100 (<code>max_connections</code>). Thêm bản chưa chắc nhanh hơn, vì nút cổ chai chuyển sang database.</li>
+      <li>Với đồ án một lớp thử, 1 đến 2 bản là thừa sức. Phần này để bạn hiểu vì sao kiến trúc có Nginx, không phải để chạy cả chục bản.</li>
+    </ul>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s8"></div>
+  </section>
+
+  <section class="card" id="s9" style="--h:250" data-title="Toàn cảnh">
+    <header><span class="num">9</span><h2>Ghép lại: toàn cảnh đường đi của một request</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Bạn đã có các mảnh: tiến trình, cổng, server và client, HTTP, Nginx. Giờ ghép chúng thành <b>một câu chuyện liền mạch</b>.</p>
+    <span class="lab t">Minh họa: khách đặt đơn</span>
+    <p class="muted">Ví dụ: <code>POST /api/orders</code>. BrewLite chưa có Nginx, đây chỉ là minh họa.</p>
+    <div class="stepper"><button class="btn" id="stBack" type="button">← Lùi</button><button class="btn" id="stNext" type="button">Tiếp →</button><button class="btn" id="stReset" type="button">Về đầu</button><span class="cnt" id="stCnt"></span></div>
+    <svg class="diag" viewBox="0 0 720 150" role="img" aria-labelledby="sgT">
+      <title id="sgT">Sơ đồ bốn thành phần: trình duyệt, Nginx, backend, PostgreSQL</title>
+      <path class="ln" id="f-l1" d="M136 75H208"/><path class="ln" id="f-l2" d="M336 75H400"/><path class="ln" id="f-l3" d="M528 75H592"/>
+      <g class="nd" id="f-n1" style="--h:215"><rect x="8" y="40" width="128" height="70" rx="12"/><text x="72" y="72">Trình duyệt</text><text class="sm" x="72" y="92">client</text></g>
+      <g class="nd" id="f-n2" style="--h:190"><rect x="208" y="40" width="128" height="70" rx="12"/><text x="272" y="72">Nginx</text><text class="sm" x="272" y="92">:80</text></g>
+      <g class="nd" id="f-n3" style="--h:280"><rect x="400" y="40" width="128" height="70" rx="12"/><text x="464" y="72">Backend</text><text class="sm" x="464" y="92">:4001</text></g>
+      <g class="nd" id="f-n4" style="--h:160"><rect x="592" y="40" width="120" height="70" rx="12"/><text x="652" y="72">PostgreSQL</text><text class="sm" x="652" y="92">:5432</text></g>
+    </svg>
+    <div class="status" id="stBox" role="status"></div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s9"></div>
+  </section>
+
+  <section class="card" id="s10" style="--h:10" data-title="Lỗi hay gặp">
+    <header><span class="num">10</span><h2>Lỗi hay gặp và cách kiểm tra</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Khi có Nginx, lỗi có thể nằm ở nhiều chỗ. Biết mỗi mã lỗi nói gì thì biết nhìn vào đâu trước.</p>
+    <div class="tblw"><table class="tbl"><thead><tr><th>Thấy gì</th><th>Nghĩa</th><th>Thường do</th></tr></thead><tbody>
+      <tr><td><code>EADDRINUSE</code> khi chạy backend</td><td>Cổng đã có tiến trình bind</td><td>Chạy trùng một bản; bản cũ chưa tắt</td></tr>
+      <tr><td><code>502 Bad Gateway</code></td><td>Nginx nhận request nhưng <b>gọi backend không được</b> hoặc nhận phản hồi hỏng</td><td>Backend chưa chạy hoặc đã chết; sai cổng hoặc tên trong <code>proxy_pass</code></td></tr>
+      <tr><td><code>504 Gateway Timeout</code></td><td>Nginx gọi được backend nhưng <b>chờ quá lâu</b></td><td>Backend xử lý chậm hoặc bị kẹt</td></tr>
+      <tr><td><code>404</code> do Nginx</td><td>Không có quy tắc hoặc không có file phù hợp</td><td>Sai <code>location</code> hoặc sai <code>root</code></td></tr>
+      <tr><td><code>413 Payload Too Large</code></td><td>Body quá lớn so với giới hạn</td><td>Giới hạn <code>client_max_body_size</code> (mặc định khá nhỏ) khi tải file lên</td></tr>
+      <tr><td>Backend thấy toàn IP của Nginx</td><td>Nginx là bên gọi nên IP nguồn là của nó</td><td>Thiếu <code>proxy_set_header X-Forwarded-For</code></td></tr>
+      <tr><td>502 sau khi backend khởi động lại trong Docker</td><td>IP của container đổi mà Nginx vẫn nhớ IP cũ</td><td>Mặc định Nginx tra tên dịch vụ lúc nạp cấu hình; cần cấu hình <code>resolver</code> hoặc nạp lại cấu hình</td></tr>
+    </tbody></table></div>
+    <h3>Các lệnh kiểm tra (đều chỉ đọc, không phá gì)</h3>
+    <ul>
+      <li><code>curl -i http://localhost/api/products</code>: gửi một request và in cả dòng trạng thái lẫn header. <code>-i</code> nghĩa là kèm header của response.</li>
+      <li><code>ss -ltnp | grep :4001</code>: xem tiến trình nào đang nghe cổng 4001. <code>-l</code> chỉ cổng đang listen, <code>-t</code> TCP, <code>-n</code> hiện số cổng, <code>-p</code> hiện tên tiến trình.</li>
+      <li><code>nginx -t</code>: kiểm tra file cấu hình có đúng cú pháp không, chưa áp dụng gì.</li>
+      <li><code>docker compose logs -f nginx</code>: xem log của Nginx trong Docker Compose. <code>-f</code> là theo dõi liên tục.</li>
+    </ul>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s10"></div>
+  </section>
+
+  <section class="card" id="s11" style="--h:300" data-title="Tóm tắt">
+    <header><span class="num">11</span><h2>Tóm tắt và bảng tra thuật ngữ</h2></header>
+    <h3>Cả bài trong một chuỗi</h3>
+    <ol>
+      <li>Ứng dụng web là <b>nhiều tiến trình</b>, mỗi cái có vùng nhớ riêng.</li>
+      <li>Chúng nói chuyện qua <b>socket</b>. Địa chỉ là <b>IP:cổng</b>. Muốn nhận khách phải <b>bind</b> rồi <b>listen</b>.</li>
+      <li>Bên chờ là <b>server</b>, bên gọi là <b>client</b>. Một tiến trình giữ được cả hai vai.</li>
+      <li>Ngôn ngữ chung là <b>HTTP</b> trên TCP. HTTP không nhớ, nên request mang token.</li>
+      <li><b>Nginx</b> đứng cửa ở cổng 80/443, nhìn đường dẫn rồi chuyển đúng đích (reverse proxy), hoặc tự trả file tĩnh.</li>
+      <li>Nginx là nhóm <b>master + worker</b>. Tiến trình rảnh thì ngủ, không tốn CPU.</li>
+      <li>Chạy <b>nhiều bản</b> backend ở nhiều cổng, Nginx chia tải. Dữ liệu chung phải để ngoài tiến trình.</li>
+    </ol>
+    <h3>Bảng tra Anh – Việt</h3>
+    <div class="tblw"><table class="tbl"><thead><tr><th>Thuật ngữ</th><th>Nghĩa</th></tr></thead><tbody>
+      <tr><td>process</td><td>tiến trình, chương trình đang chạy</td></tr>
+      <tr><td>port</td><td>cổng, số phân biệt tiến trình trên một IP</td></tr>
+      <tr><td>socket</td><td>ổ cắm mạng mà tiến trình tạo ra</td></tr>
+      <tr><td>bind / listen / accept / connect</td><td>gắn vào cổng / chờ khách / nhận khách / chủ động gọi tới</td></tr>
+      <tr><td>server / client</td><td>bên chờ / bên gọi</td></tr>
+      <tr><td>stateless</td><td>không nhớ request trước</td></tr>
+      <tr><td>header / body</td><td>phần thông tin đi kèm / phần nội dung của request hay response</td></tr>
+      <tr><td>reverse proxy</td><td>proxy ngược, đứng ở phía máy chủ đón khách</td></tr>
+      <tr><td>location / proxy_pass</td><td>quy tắc theo đường dẫn / chuyển request cho tiến trình khác (Nginx)</td></tr>
+      <tr><td>master / worker</td><td>tiến trình điều phối / tiến trình làm việc</td></tr>
+      <tr><td>instance</td><td>một bản đang chạy của cùng một chương trình</td></tr>
+      <tr><td>load balancing / round-robin</td><td>chia tải / chia lần lượt theo vòng</td></tr>
+      <tr><td>context switch</td><td>lần hệ điều hành đổi CPU sang tiến trình khác</td></tr>
+      <tr><td>connection pool</td><td>nhóm kết nối giữ sẵn tới database</td></tr>
+    </tbody></table></div>
+    <span class="lab q">Tự kiểm tra cuối bài</span>
+    <div data-quiz="s11"></div>
+  </section>
+  </main>
+
+</div>
+
+<script>
+// Toàn bộ nội dung có thể sửa nằm trong DATA
+const DATA = {
+  routes: [
+    {p:'/menu', m:'GET', to:'fe', rule:'location /', t:'Chuyển cho frontend', d:'Không khớp /api/ hay /assets/ nên rơi vào quy tắc chung "/". Frontend trả trang HTML.', why:'Nginx chọn quy tắc có tiền tố khớp dài nhất, không phải quy tắc viết trước. "/" là tiền tố ngắn nhất nên chỉ nhận phần còn lại.'},
+    {p:'/api/products', m:'GET', to:'be', rule:'location /api/', t:'Chuyển cho backend, bỏ tiền tố /api', d:'Backend nhận GET /products (không còn /api) và trả JSON danh sách sản phẩm.', why:'Dấu "/" ở cuối proxy_pass (http://backend:4001/) khiến Nginx cắt phần /api/ khỏi đường dẫn.'},
+    {p:'/api/orders', m:'POST', to:'be', rule:'location /api/', t:'Chuyển cho backend', d:'Method POST và body JSON được chuyển nguyên vẹn. Nginx không đọc nội dung đơn hàng.', why:'Nginx quyết định theo đường dẫn, không theo GET hay POST.'},
+    {p:'/assets/logo.svg', m:'GET', to:'st', rule:'location /assets/', t:'Nginx tự trả file', d:'Đọc /var/www/assets/logo.svg trên đĩa và trả luôn, kèm dặn trình duyệt nhớ 1 năm.', why:'File tĩnh không cần logic. Không phải mở kết nối nào tới frontend hay backend.'}
+  ],
+  conf: [
+    ['server {','Một khối server là một "cửa" Nginx mở ra.'],
+    ['  listen 80;','Master tạo socket, bind vào cổng 80 rồi listen. Cổng này độc quyền: tiến trình lạ bind sẽ báo EADDRINUSE.'],
+    ['  location /api/ {','Quy tắc 1: đường dẫn bắt đầu bằng /api/.'],
+    ['    proxy_pass http://backend:4001/;','Chuyển cho "backend" cổng 4001. "backend" là tên dịch vụ trong Docker Compose, Docker tự tra ra IP. Dấu / cuối bỏ tiền tố /api.'],
+    ['    proxy_set_header X-Forwarded-For $remote_addr;','Gắn IP thật của khách vào header. Nếu không, backend chỉ thấy IP của Nginx.'],
+    ['  }',''],
+    ['  location /assets/ {','Quy tắc 2: đường dẫn bắt đầu bằng /assets/.'],
+    ['    root /var/www;','Tự trả file ở /var/www/assets/..., không hỏi backend.'],
+    ['    expires 1y;','Dặn trình duyệt nhớ file 1 năm để khỏi tải lại.'],
+    ['  }',''],
+    ['  location / {','Quy tắc chung: mọi đường dẫn còn lại. Nginx ưu tiên tiền tố khớp dài nhất nên quy tắc này chỉ nhận phần dư.'],
+    ['    proxy_pass http://frontend:4002;','Chuyển cho frontend. Không có / cuối nên đường dẫn giữ nguyên.'],
+    ['  }',''],
+    ['}','']
+  ],
+  http: [
+    ['POST /orders HTTP/1.1','Dòng đầu: method POST (tạo mới), đường dẫn /orders, phiên bản HTTP. Đây là phần Nginx cần đọc để quyết định.'],
+    ['Host: brewlite.example.com','Tên miền khách muốn tới. Một IP có thể phục vụ nhiều tên miền nên cần dòng này.'],
+    ['Authorization: Bearer eyJhbGci...','Token đăng nhập (JWT). HTTP không nhớ request trước nên request nào cũng phải mang theo.'],
+    ['Idempotency-Key: abc-123','Mã chống gửi trùng: gửi lại cùng mã thì server không tạo đơn thứ hai.'],
+    ['Content-Type: application/json','Cho biết body là JSON.'],
+    ['','Dòng trống: kết thúc phần header, sau đó là body.'],
+    ['{"items":[{"productId":1,"quantity":2}]}','Body: dữ liệu đơn hàng dạng JSON. Nginx không cần đọc phần này.']
+  ],
+  vpn: [
+    {k:'Không dùng VPN', ng:'203.0.113.7 (IP của khách)', be:'172.18.0.2 (IP của Nginx), kèm header X-Forwarded-For: 203.0.113.7', why:'Backend không nói chuyện trực tiếp với khách mà với Nginx, nên IP nguồn là của Nginx. Header X-Forwarded-For là cách để backend biết khách thật.'},
+    {k:'Qua VPN / proxy', ng:'198.51.100.20 (IP của máy chủ VPN)', be:'172.18.0.2 (IP của Nginx), kèm header X-Forwarded-For: 198.51.100.20', why:'Nginx không có gì phải đổi. Với nó, VPN chỉ là một client như mọi client khác, và IP nguồn là IP của VPN. Trang chặn theo IP có thể chặn nhầm cả nhóm dùng chung IP VPN đó.'}
+  ],
+  steps: [
+    {n:[1], l:[], rev:false, role:'client', t:'Trình duyệt chuẩn bị gọi', d:'Nếu dùng tên miền, trình duyệt tra DNS ra IP của máy chủ. Rồi nó tạo một socket (cổng tạm do hệ điều hành gán) và kết nối TCP tới IP:80.'},
+    {n:[1,2], l:[1], rev:false, role:'client → server', t:'Gửi request HTTP', d:'Trình duyệt gửi POST /api/orders cùng header Authorization và body JSON. Nginx (server) đang listen ở cổng 80 và accept kết nối này.'},
+    {n:[2], l:[], rev:false, role:'server', t:'Worker Nginx đọc dòng đầu', d:'Một worker nhận request, đọc method và đường dẫn, khớp quy tắc location /api/. Nó không đọc nội dung đơn hàng.'},
+    {n:[2,3], l:[2], rev:false, role:'client → server', t:'Nginx chuyển cho backend', d:'Lúc này Nginx là client: nó mở kết nối tới backend:4001, bỏ tiền tố /api (backend nhận POST /orders) và gắn header X-Forwarded-For.'},
+    {n:[3], l:[], rev:false, role:'server', t:'Backend xử lý nghiệp vụ', d:'Backend kiểm tra token, kiểm tra dữ liệu và tự tính tổng tiền (server tính, không tin số của client). Đây là phần Nginx không biết gì.'},
+    {n:[3,4], l:[3], rev:false, role:'client → server', t:'Backend ghi vào database', d:'Backend là client của PostgreSQL: nó kết nối tới cổng 5432 (qua connection pool) và ghi đơn hàng.'},
+    {n:[3,4], l:[3], rev:true, role:'server → client', t:'PostgreSQL trả kết quả', d:'Database xác nhận đã ghi. Backend tạo response 201 Created kèm JSON của đơn hàng.'},
+    {n:[2,3], l:[2], rev:true, role:'server → client', t:'Response đi ngược về Nginx', d:'Backend gửi response về cho Nginx. Nginx giữ vai client của backend nên là bên nhận.'},
+    {n:[1,2], l:[1], rev:true, role:'server → client', t:'Nginx trả lời trình duyệt', d:'Nginx chuyển response cho trình duyệt. Kết nối có thể được giữ để dùng lại cho request kế tiếp.'}
+  ],
+  quiz: {
+    s1:[['NestJS tính xong tổng tiền và muốn lưu vào PostgreSQL. Nó ghi thẳng vào vùng nhớ của PostgreSQL được không?','Không. Hai tiến trình có vùng nhớ riêng. NestJS phải gửi yêu cầu qua mạng (kết nối tới cổng 5432 của PostgreSQL) để PostgreSQL tự ghi.']],
+    s2:[['Cổng, socket và bind khác nhau thế nào?','Cổng là con số có sẵn để phân biệt tiến trình. Socket là cái ổ cắm mà tiến trình tạo ra. Bind là việc gắn socket đó vào một IP:cổng để người khác biết gọi vào đâu.'],['Vì sao bản B báo EADDRINUSE?','Cổng 4001 đã được socket của bản A bind. Một cổng chỉ bind được bởi một socket.']],
+    s3:[['Nếu Next.js gọi sang NestJS, ở lần gọi đó Next.js là server hay client?','Client, vì chính nó chủ động kết nối tới. NestJS lúc đó là server.'],['Server và client là kiểu máy hay là vai?','Là vai theo từng cuộc nói chuyện. Một tiến trình giữ được cả hai vai cùng lúc.']],
+    s4:[['Vì sao request nào cũng phải mang token dù vừa đăng nhập?','HTTP không nhớ request trước. Token chứa sẵn danh tính nên server nào nhận cũng tự kiểm tra được.'],['Nginx cần đọc phần nào của request để quyết định chuyển đi đâu?','Dòng đầu (method và đường dẫn) cùng vài header. Không cần đọc body.']],
+    s5:[['Nginx là server hay client khi chuyển request cho backend?','Cả hai, tùy nhìn từ đâu. Với trình duyệt nó là server. Với backend nó là client, vì chính nó mở kết nối tới backend.'],['Reverse proxy khác proxy thường ở điểm nào?','Proxy thường đứng ở phía người dùng, đi gọi thay người dùng. Reverse proxy đứng ở phía máy chủ, đón khách thay các tiến trình phía sau.']],
+    s6:[['Nginx cổng 80: GET /menu và GET /api/products đi tới đâu?','/menu không khớp /api/ nên đi tới frontend (quy tắc "/"). /api/products khớp /api/ (tiền tố dài hơn) nên đi tới backend, bỏ tiền tố /api.'],['Nginx quyết định theo GET/POST hay theo đường dẫn?','Theo đường dẫn.']],
+    s7:[['Vì sao Nginx tách master và worker?','Master giữ socket, đọc cấu hình, giám sát. Worker làm việc. Nhờ vậy đổi cấu hình không rớt khách (reload), và một worker chết thì master tạo cái mới mà hệ thống vẫn chạy.'],['12 worker đang rảnh có ngốn CPU không?','Gần như không. Tiến trình rảnh gọi hàm chờ sự kiện nên hệ điều hành cho nó ngủ và không cấp CPU.']],
+    s8:[['Chạy npm run start ở 10 terminal cùng cổng thì sao?','Terminal đầu bind được cổng, 9 cái còn lại báo EADDRINUSE. Muốn chạy nhiều bản thì mỗi bản dùng một cổng khác, rồi Nginx chia tải.'],['Vì sao dữ liệu dùng chung không để trong biến của backend khi chạy nhiều bản?','Mỗi bản là một tiến trình riêng, không thấy biến của nhau. Dữ liệu dùng chung phải để ở PostgreSQL hoặc Redis.']],
+    s9:[['Trong toàn cảnh, ai giữ cả hai vai server và client?','Nginx (server của trình duyệt, client của backend) và backend (server của Nginx, client của PostgreSQL).']],
+    s10:[['Thấy 502 Bad Gateway thì nên kiểm tra gì trước?','Backend có đang chạy và đang nghe đúng cổng không (ví dụ ss -ltnp | grep :4001), rồi xem proxy_pass có đúng tên và cổng không.'],['502 và 504 khác nhau thế nào?','502: Nginx gọi backend không được hoặc nhận phản hồi hỏng. 504: gọi được nhưng backend trả lời quá chậm.']],
+    s11:[['Kể lại theo thứ tự: từ tiến trình đến Nginx, mỗi khái niệm sinh ra để giải quyết vấn đề gì?','Tiến trình: chạy nhiều chương trình độc lập. Socket và cổng: nói chuyện giữa các tiến trình. Server và client: phân vai chờ và gọi. HTTP: ngôn ngữ chung. Nginx: một cửa duy nhất cho nhiều tiến trình. Master/worker: phục vụ nhiều khách mà an toàn. Nhiều bản backend: tận dụng CPU và chịu lỗi.']]
+  }
+};
+
+const $ = s => document.querySelector(s);
+const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
+
+// Đổi giao diện sáng/tối, nhớ lựa chọn
+$('#themeBtn').addEventListener('click', () => {
+  const d = document.documentElement, n = d.dataset.theme === 'dark' ? 'light' : 'dark';
+  d.dataset.theme = n; try { localStorage.setItem('theme', n); } catch (e) {}
+});
+
+// Mục lục và đánh dấu phần đang đọc
+const secs = [...document.querySelectorAll('main > section')];
+secs.forEach((s, i) => $('#toc').append(el('li', {}, el('a', {href:'#' + s.id}, el('b', {}, String(i + 1)), s.dataset.title))));
+// Thanh điều hướng nhanh: ô số + tên phần đang đọc, chỉ hiện khi mục lục đã cuộn khỏi màn hình
+secs.forEach((s, i) => $('#barNums').append(el('a', {href:'#' + s.id, title:(i + 1) + '. ' + s.dataset.title, ariaLabel:'Phần ' + (i + 1) + ': ' + s.dataset.title}, String(i + 1))));
+function setCurrent(id){
+  document.querySelectorAll('#toc a, #barNums a').forEach(a => a.hash === '#' + id ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current'));
+  const s = secs.find(x => x.id === id); if (s) $('#barNow').textContent = secs.indexOf(s) + 1 + '. ' + s.dataset.title;
+}
+if ('IntersectionObserver' in window) {
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) setCurrent(e.target.id); }), {rootMargin: '-20% 0px -70% 0px'});
+  secs.forEach(s => io.observe(s));
+  // hiện thanh khi mục lục đã trôi lên khỏi mép trên
+  new IntersectionObserver(es => es.forEach(e => $('#bar').classList.toggle('show', !e.isIntersecting && e.boundingClientRect.top < 0))).observe($('#toc'));
+}
+
+// Kiểm tra nhanh
+document.querySelectorAll('[data-quiz]').forEach(box => (DATA.quiz[box.dataset.quiz] || []).forEach(([q, a]) => box.append(el('details', {}, el('summary', {}, q), el('p', {}, a)))));
+
+// Dòng code bấm được (dùng cho request HTTP và nginx.conf)
+function annot(rootSel, statusSel, lines, start){
+  const root = $(rootSel);
+  lines.forEach(([line], i) => {
+    const b = el('button', {className:'codeline', type:'button', onclick:() => pick(i)}, el('span', {className:'n'}, String(i + 1)), line || ' ');
+    b.setAttribute('aria-label', 'Dòng ' + (i + 1) + ': ' + (line.trim() || 'trống')); root.append(b);
+  });
+  function pick(i){
+    [...root.children].forEach((b, k) => b.setAttribute('aria-pressed', String(k === i)));
+    const [line, note] = lines[i];
+    $(statusSel).replaceChildren(el('b', {}, 'Dòng ' + (i + 1) + (line.trim() ? ': ' + line.trim() : '')), el('span', {}, note || 'Đóng khối ở trên.'));
+  }
+  pick(start);
+}
+annot('#httpCode', '#httpStatus', DATA.http, 0);
+annot('#conf', '#confStatus', DATA.conf, 1);
+
+// Phần 2: cổng và EADDRINUSE
+const ports = {};
+const logLine = (cls, msg) => { const l = $('#portLog'); l.append(el('div', {className:cls}, msg)); while (l.children.length > 8) l.firstChild.remove(); };
+function startInst(name, port){
+  if (ports[port] && ports[port] !== name) { logLine('no', name + ': bind(0.0.0.0:' + port + ') ✗ EADDRINUSE, cổng đang do ' + ports[port] + ' giữ'); return; }
+  Object.keys(ports).forEach(p => { if (ports[p] === name) delete ports[p]; });
+  ports[port] = name; logLine('ok', name + ': socket() → bind(0.0.0.0:' + port + ') → listen() ✓'); renderPorts();
+}
+function stopAll(){ Object.keys(ports).forEach(p => delete ports[p]); $('#portLog').replaceChildren(el('div', {className:'ok'}, 'Đã tắt hết các bản. Cổng trống.')); renderPorts(); }
+function renderPorts(){ $('#portNow').textContent = Object.keys(ports).length ? Object.entries(ports).map(([p, n]) => p + ' ← ' + n).join('   ') : 'chưa có cổng nào được bind'; }
+$('#portBtns').append(
+  el('button', {className:'btn', type:'button', onclick:() => startInst('bản A', 4001)}, 'Chạy bản A (cổng 4001)'),
+  el('button', {className:'btn', type:'button', onclick:() => startInst('bản B', 4001)}, 'Chạy bản B (cổng 4001)'),
+  el('button', {className:'btn', type:'button', onclick:() => startInst('bản B', 4003)}, 'Chạy bản B (cổng 4003)'),
+  el('button', {className:'btn', type:'button', onclick:stopAll}, 'Tắt hết'),
+  el('span', {className:'mono muted', id:'portNow', style:'align-self:center'}));
+stopAll();
+
+// Phần 5: VPN
+DATA.vpn.forEach((v, i) => $('#vpnBtns').append(el('button', {className:'chip', type:'button', onclick:() => pickVpn(i)}, el('i'), v.k)));
+function pickVpn(i){
+  const v = DATA.vpn[i];
+  [...$('#vpnBtns').children].forEach((b, k) => b.setAttribute('aria-pressed', String(k === i)));
+  $('#vpnOut').replaceChildren(el('div', {}, el('b', {}, 'Nginx thấy IP nguồn: '), v.ng), el('div', {}, el('b', {}, 'Backend thấy: '), v.be), el('div', {className:'why'}, v.why));
+}
+pickVpn(0);
+
+// Phần 6: đường đi request
+function pickRoute(i){
+  const r = DATA.routes[i];
+  [...$('#paths').children].forEach((b, k) => b.setAttribute('aria-pressed', String(k === i)));
+  ['br','ng'].forEach(n => $('#n-' + n).classList.add('on')); $('#l-br').classList.add('on');
+  ['fe','be','st'].forEach(n => { const on = n === r.to; $('#n-' + n).classList.toggle('on', on); $('#n-' + n).classList.toggle('dim', !on); $('#l-' + n).classList.toggle('on', on); });
+  $('#status').replaceChildren(el('b', {}, r.m + ' ' + r.p + '  →  ' + r.t), el('span', {}, 'Khớp quy tắc '), el('code', {}, r.rule), el('span', {}, '. ' + r.d), el('div', {className:'why'}, r.why));
+}
+DATA.routes.forEach((r, i) => $('#paths').append(el('button', {className:'chip', type:'button', onclick:() => pickRoute(i)}, el('i'), r.m + ' ' + r.p)));
+pickRoute(0);
+
+// Phần 7: master / worker
+const mw = {n: 4, state: Array(12).fill('ok')};
+function renderMW(msg){
+  $('#nwv').textContent = mw.n;
+  const box = $('#mw');
+  box.replaceChildren(el('div', {className:'mnode'}, 'Master', el('div', {className:'mono muted', style:'font-weight:400'}, 'đọc cấu hình · bind cổng 80')), el('div', {className:'sock'}, 'một socket, các worker cùng thừa hưởng'));
+  const ws = el('div', {className:'workers'});
+  mw.state.slice(0, mw.n).forEach((s, i) => ws.append(el('button', {className:'w ' + s, type:'button', ariaLabel:'Worker ' + (i + 1) + ', trạng thái ' + s, onclick:() => killW(i)}, 'worker ' + (i + 1))));
+  box.append(ws);
+  $('#mwStatus').replaceChildren(el('b', {}, msg || 'Bình thường'), el('span', {className:'muted'}, 'Các worker cùng chờ trên một socket, request tới thì một worker nhận.'), el('div', {className:'why'}, 'Master không xử lý request nên một worker lỗi không kéo sập cả hệ thống.'));
+}
+function killW(i){
+  if (mw.state[i] !== 'ok') return;
+  mw.state[i] = 'dead'; renderMW('Worker ' + (i + 1) + ' đã chết. Các worker còn lại vẫn phục vụ.');
+  setTimeout(() => { mw.state[i] = 'new'; renderMW('Master phát hiện và tạo worker mới thay worker ' + (i + 1) + '.'); setTimeout(() => { mw.state[i] = 'ok'; renderMW(); }, 1500); }, 1400);
+}
+$('#nw').value = mw.n; $('#nw').addEventListener('input', e => { mw.n = +e.target.value; renderMW(); });
+renderMW();
+
+// Phần 8: chia tải
+const LB_PORTS = [4001, 4003, 4004, 4005];
+const lb = {n: 3, alive: [true, true, true, true], cnt: [0, 0, 0, 0], next: 0, fail: 0};
+function lbSend(k){
+  for (let j = 0; j < k; j++) {
+    let tried = 0, hit = -1;
+    while (tried < lb.n) { const i = (lb.next + tried) % lb.n; if (lb.alive[i]) { hit = i; break; } tried++; }
+    if (hit < 0) { lb.fail++; continue; }
+    lb.cnt[hit]++; lb.next = (hit + 1) % lb.n;
+  }
+  renderLB();
+}
+function renderLB(){
+  $('#niv').textContent = lb.n;
+  const total = lb.cnt.slice(0, lb.n).reduce((a, b) => a + b, 0), max = Math.max(1, ...lb.cnt.slice(0, lb.n));
+  $('#lbBoxes').replaceChildren(...Array.from({length: lb.n}, (_, i) => {
+    const bar = el('i'); bar.style.width = (lb.cnt[i] / max * 100) + '%';
+    return el('button', {className:'w inst ' + (lb.alive[i] ? '' : 'dead'), type:'button', onclick:() => { lb.alive[i] = !lb.alive[i]; renderLB(); }, ariaLabel:'Bản ' + (i + 1) + (lb.alive[i] ? ' đang chạy, bấm để làm chết' : ' đã chết, bấm để bật lại')},
+      'bản ' + (i + 1), el('div', {className:'muted'}, ':' + LB_PORTS[i] + ' · ' + lb.cnt[i] + ' req'), el('div', {className:'bar'}, bar));
+  }));
+  const alive = lb.alive.slice(0, lb.n).filter(Boolean).length;
+  $('#lbStatus').replaceChildren(el('b', {}, alive ? alive + '/' + lb.n + ' bản đang chạy · đã chia ' + total + ' request' : 'Không còn bản nào chạy'),
+    el('span', {className:'muted'}, lb.fail ? 'Có ' + lb.fail + ' request lỗi 502 Bad Gateway vì không còn bản nào nhận.' : 'Bản chết bị bỏ qua, các bản còn lại nhận việc.'));
+}
+$('#lbBtns').append(
+  el('button', {className:'btn', type:'button', onclick:() => lbSend(1)}, 'Gửi 1 request'),
+  el('button', {className:'btn', type:'button', onclick:() => lbSend(12)}, 'Gửi 12 request'),
+  el('button', {className:'btn', type:'button', onclick:() => { lb.alive.fill(true); lb.cnt.fill(0); lb.next = 0; lb.fail = 0; renderLB(); }}, 'Đặt lại'));
+$('#ni').value = lb.n; $('#ni').addEventListener('input', e => { lb.n = +e.target.value; lb.cnt.fill(0); lb.next = 0; lb.fail = 0; renderLB(); });
+renderLB();
+
+// Phần 9: toàn cảnh từng bước
+let st = 0;
+function renderStep(){
+  const s = DATA.steps[st];
+  [1,2,3,4].forEach(n => { const on = s.n.includes(n); $('#f-n' + n).classList.toggle('on', on); $('#f-n' + n).classList.toggle('dim', !on); });
+  [1,2,3].forEach(n => { const on = s.l.includes(n); $('#f-l' + n).classList.toggle('on', on); $('#f-l' + n).classList.toggle('rev', on && s.rev); });
+  $('#stBox').replaceChildren(el('b', {}, el('span', {className:'role'}, s.role), s.t), el('span', {}, s.d));
+  $('#stCnt').textContent = 'Bước ' + (st + 1) + '/' + DATA.steps.length;
+  $('#stBack').disabled = st === 0; $('#stNext').disabled = st === DATA.steps.length - 1;
+}
+$('#stNext').addEventListener('click', () => { if (st < DATA.steps.length - 1) { st++; renderStep(); } });
+$('#stBack').addEventListener('click', () => { if (st > 0) { st--; renderStep(); } });
+$('#stReset').addEventListener('click', () => { st = 0; renderStep(); });
+let stSeen = false;
+if ('IntersectionObserver' in window) new IntersectionObserver(es => es.forEach(e => stSeen = e.isIntersecting), {threshold: .25}).observe($('#s9'));
+document.addEventListener('keydown', e => {
+  if (!stSeen || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) return;
+  if (e.key === 'ArrowRight') $('#stNext').click(); else if (e.key === 'ArrowLeft') $('#stBack').click();
+});
+renderStep();
+</script>
+</body>
+</html>
