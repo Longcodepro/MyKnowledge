@@ -771,10 +771,24 @@ $('build').onclick = async () => {
 $('push').onclick = async () => {
   const m = $('msg').value.trim();
   if (!m) { toast('Nhập lời nhắn commit trước đã'); return $('msg').focus(); }
+  if (isServer) {
+    // Cho xem đúng những file sắp commit rồi mới đẩy (tránh đẩy nhầm file rác)
+    try {
+      const g = await (await fetch(API_BASE + '/api/git-status')).json();
+      const list = g.files || [];
+      if (list.length) {
+        const shown = list.slice(0, 15).map((f) => `${f.status.padEnd(2)} ${f.path}`).join('\n');
+        const more = list.length > 15 ? `\n… và ${list.length - 15} file nữa` : '';
+        if (!confirm(`Sẽ commit ${list.length} file:\n\n${shown}${more}\n\nĐẩy lên GitHub?`)) return;
+      }
+    } catch (e) {
+      toast('Không đọc được trạng thái Git: ' + e.message);
+      return;
+    }
+  }
   busy = true; status();
   const t = $('term'); t.innerHTML = '';
-  appendTerm('p', '$ git add .');
-  appendTerm('p', `$ git commit -m "${m}"`);
+  let pushed = false;
   if (isServer) {
     try {
       const res = await fetch(API_BASE + '/api/push', {
@@ -789,6 +803,7 @@ $('push').onclick = async () => {
         }
       }
       if (d.ok) {
+        pushed = true;
         savedSnapshot = getSnapshot();
         phase = 'clean';
         items.forEach((i) => (i.isNew = false));
@@ -798,6 +813,7 @@ $('push').onclick = async () => {
       appendTerm('danger', 'Lỗi push: ' + e.message);
     }
   } else {
+    appendTerm('p', `$ git commit -m "${m}"`);
     appendTerm('mu', `[main] ${m}`);
     appendTerm('p', '$ git push');
     appendTerm('mu', 'Vercel đang triển khai…');
@@ -808,7 +824,25 @@ $('push').onclick = async () => {
     render();
   }
   busy = false; status();
+  if (pushed) watchDeploy();
 };
+
+// Hỏi server (qua gh) xem Vercel đã deploy commit vừa đẩy chưa; tối đa ~2 phút
+async function watchDeploy() {
+  appendTerm('mu', 'Đang chờ Vercel báo kết quả…');
+  for (let i = 0; i < 24; i++) {
+    await new Promise((r) => setTimeout(r, 5000));
+    let d;
+    try { d = await (await fetch(API_BASE + '/api/deploy-status')).json(); } catch (e) { return; }
+    if (!d.ok) { appendTerm('mu', 'Không kiểm tra được Vercel: ' + d.reason); return; }
+    if (d.state === 'success') { appendTerm('ok', '✓ Vercel đã deploy xong, trang chủ có bản mới'); return; }
+    if (d.state === 'failure' || d.state === 'error') {
+      appendTerm('danger', 'Vercel deploy lỗi. Xem log: ' + (d.url || 'vercel.com → Deployments'));
+      return;
+    }
+  }
+  appendTerm('mu', 'Vercel chưa báo xong sau 2 phút, kiểm tra tại vercel.com → Deployments.');
+}
 
 /* ---------- Xoá thư mục ---------- */
 async function deleteFolder(fol) {
