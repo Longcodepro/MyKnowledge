@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OS 2: Tiến trình và luồng</title>
+<script>
+// Luôn sáng mặc định; chỉ tối khi người đọc tự bấm đổi
+(function(){var t=null;try{t=localStorage.getItem('theme')}catch(e){}
+document.documentElement.dataset.theme=t==='dark'?'dark':'light';})();
+</script>
+<style>
+:root{
+  --bg:#f6f8fc; --card:#ffffff; --fg:#0f172a; --muted:#566277; --line:#e2e8f2; --hov:#f3f6fc;
+  --accent:#2563eb; --accent2:#7c3aed; --accent-soft:#eaf0ff; --hl:#fff0a8; --hl-fg:#5c4600;
+  --grad:linear-gradient(120deg,#2563eb,#7c3aed);
+  --mono:ui-monospace,"Cascadia Code",Consolas,Menlo,monospace;
+  --grid:rgba(15,23,42,.05);
+  --sh:0 1px 2px rgba(15,23,42,.05),0 8px 24px -12px rgba(15,23,42,.12);
+  --sh-hi:0 2px 4px rgba(15,23,42,.06),0 18px 40px -14px rgba(37,99,235,.28);
+  --ts:92%; --tl:94%; --tcl:42%;
+  --glow1:rgba(37,99,235,.16); --glow2:rgba(124,58,237,.13);
+  --ok:#16a34a; --bad:#dc2626; --warn:#b45309; --warn-soft:#fff4d6;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#0a0e16; --card:#121826; --fg:#e8edf6; --muted:#9aa6ba; --line:#212a3b; --hov:#18202f;
+  --accent:#7ab2ff; --accent2:#a78bfa; --accent-soft:#15233d; --hl:#4a3d00; --hl-fg:#ffe58a;
+  --grad:linear-gradient(120deg,#7ab2ff,#a78bfa);
+  --grid:rgba(232,237,246,.045);
+  --sh:0 1px 2px rgba(0,0,0,.3),0 8px 24px -12px rgba(0,0,0,.5);
+  --sh-hi:0 2px 4px rgba(0,0,0,.4),0 18px 40px -14px rgba(122,178,255,.25);
+  --ts:45%; --tl:20%; --tcl:74%;
+  --glow1:rgba(122,178,255,.13); --glow2:rgba(167,139,250,.11);
+  --ok:#4ade80; --bad:#f87171; --warn:#fbbf24; --warn-soft:#3a2f00;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;scrollbar-width:none}
+*::-webkit-scrollbar{display:none}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);min-height:100vh;font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.skip{position:absolute;left:12px;top:-56px;z-index:30;background:var(--accent);color:#fff;padding:9px 16px;border-radius:10px;text-decoration:none;font-weight:600}
+.skip:focus{top:12px}
+.bg{position:absolute;inset:0 0 auto;height:560px;z-index:-1;pointer-events:none;
+  background:radial-gradient(640px 320px at 12% -4%,var(--glow1),transparent 70%),radial-gradient(560px 300px at 88% 6%,var(--glow2),transparent 70%),
+  linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:auto,auto,32px 32px,32px 32px;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent)}
+.wrap{max-width:920px;margin:0 auto;padding:0 24px 64px}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:20px 0}
+.brand{display:flex;align-items:center;gap:11px;font-weight:700;letter-spacing:-.01em}
+.logo{width:34px;height:34px;border-radius:10px;background:var(--grad);display:grid;place-items:center;color:#fff;box-shadow:0 6px 16px -6px var(--accent)}
+:root[data-theme="dark"] .logo{color:#0b1220}
+.btn{font:inherit;font-size:13px;font-weight:500;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 14px;min-height:38px;cursor:pointer;box-shadow:var(--sh)}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn[disabled]{opacity:.45;cursor:default}
+.hero{padding:24px 0 8px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:5px 13px 5px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card);font:600 12.5px system-ui,sans-serif;color:var(--muted);box-shadow:var(--sh)}
+.pill i{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,.18)}
+h1{font-size:clamp(2.1rem,6vw,3.3rem);line-height:1.06;letter-spacing:-.04em;font-weight:800;margin:18px 0 14px}
+.grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{max-width:660px;color:var(--muted);font-size:1.08rem;margin:0 0 22px}
+.lead b{color:var(--fg);font-weight:600}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 30px;padding:0;list-style:none}
+.toc a{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:500;color:var(--fg);text-decoration:none;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 8px;min-height:36px;transition:all .15s}
+.toc a b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font:700 12px var(--mono)}
+.toc a:hover{border-color:var(--accent);transform:translateY(-1px)}
+.toc a[aria-current="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.toc a[aria-current="true"] b{background:var(--bg);color:var(--fg)}
+/* thanh điều hướng nhanh: dính ở mép trên khi mục lục đã cuộn khỏi màn hình */
+.bar{position:fixed;top:10px;left:50%;z-index:25;width:min(100% - 24px,880px);transform:translate(-50%,-90px);opacity:0;visibility:hidden;transition:transform .25s,opacity .25s,visibility 0s .25s;
+  display:flex;align-items:center;gap:6px;padding:6px 8px;background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh-hi)}
+.bar.show{transform:translate(-50%,0);opacity:1;visibility:visible;transition:transform .25s,opacity .25s}
+.bar a{display:grid;place-items:center;flex:none;min-width:30px;height:30px;border-radius:9px;border:1px solid transparent;color:var(--fg);text-decoration:none;font:700 12.5px var(--mono)}
+.bar a:hover{border-color:var(--accent);color:var(--accent)}
+.bar a[aria-current="true"]{background:var(--fg);color:var(--bg)}
+.bar .up{border-color:var(--line);background:var(--card);font:600 16px system-ui;margin-right:2px}
+.bar .nums{display:flex;gap:3px;flex-wrap:nowrap}
+.bar .now{flex:1;min-width:0;margin-left:6px;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+@media(max-width:640px){.bar .now{display:none}.bar{gap:3px;padding:5px 6px}.bar a{min-width:26px;height:28px}.bar .nums{gap:1px}}
+.howto{margin:18px 0 30px;border:1px dashed var(--line);border-radius:14px;padding:12px 16px;color:var(--muted);font-size:14px;background:var(--card)}
+.howto b{color:var(--fg)}
+.card{position:relative;overflow:hidden;background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--sh);padding:24px 24px 22px;margin-bottom:24px;scroll-margin-top:68px}
+.card::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,hsl(var(--h,215) 75% 55%),hsl(calc(var(--h,215) + 45) 75% 62%))}
+.card header{display:flex;gap:14px;align-items:center;margin-bottom:6px}
+.num{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font:800 17px var(--mono);background:hsl(var(--h,215) var(--ts) var(--tl));color:hsl(var(--h,215) 65% var(--tcl))}
+.card h2{font-size:1.28rem;letter-spacing:-.02em;margin:0;line-height:1.25}
+.card h3{font-size:1rem;margin:20px 0 6px}
+.card p{margin:8px 0}
+.lab{display:inline-block;font:700 11px/1 system-ui;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:4px 8px;margin:18px 0 4px}
+.lab.v{background:var(--warn-soft);color:var(--warn)}
+.lab.g{background:var(--accent-soft);color:var(--accent)}
+.lab.t{background:hsl(160 var(--ts) var(--tl));color:hsl(160 65% var(--tcl))}
+.lab.q{background:var(--hov);color:var(--muted);border:1px solid var(--line)}
+.muted{color:var(--muted)}
+code,.mono{font-family:var(--mono);font-size:.9em}
+:not(pre)>code{background:var(--accent-soft);color:var(--accent);padding:1px 6px;border-radius:6px;white-space:nowrap}
+.ana{margin:12px 0;border-left:3px solid hsl(var(--h,215) 60% 60%);padding:6px 14px;background:var(--hov);border-radius:0 12px 12px 0;color:var(--muted)}
+.ana b{color:var(--fg)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:14px;margin:12px 0}
+.box{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--hov)}
+.box b{display:block;margin-bottom:2px}
+.box.on{border-color:var(--accent);background:var(--accent-soft)}
+.status{margin-top:12px;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:12px 16px;background:var(--card)}
+.status b{display:block}
+.why{margin-top:8px;color:var(--muted);font-size:14px}
+.why::before{content:"Vì sao? ";font-weight:700;color:var(--fg)}
+.warn{margin:12px 0;border:1px solid var(--warn);border-radius:12px;padding:10px 14px;background:var(--warn-soft);color:var(--warn)}
+.tbl{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
+.tbl th,.tbl td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.tblw{overflow-x:auto}
+.procs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:14px;margin:12px 0}
+.pbox{border:2px solid hsl(var(--c) 60% 60%);border-radius:16px;padding:10px 14px;background:hsl(var(--c) var(--ts) var(--tl))}
+.pbox b{display:block}
+.pbox .mem{margin-top:6px;border:1px dashed hsl(var(--c) 50% 55%);border-radius:10px;padding:6px 10px;font:12.5px var(--mono);color:var(--fg);background:var(--card)}
+.chain{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin:12px 0}
+.chain .nd{flex:1 1 140px;border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--hov);text-align:center}
+.chain .nd small{display:block;color:var(--muted)}
+.chain .ar{align-self:center;color:var(--muted);font:12px var(--mono);text-align:center;flex:0 0 auto}
+svg.diag{width:100%;height:auto;max-height:300px;display:block}
+.diag .nd rect{fill:var(--card);stroke:var(--line);stroke-width:2}
+.diag .nd text{fill:var(--fg);font:600 14px system-ui,sans-serif;text-anchor:middle}
+.diag .nd .sm{font:12px var(--mono);fill:var(--muted);font-weight:400}
+.diag .nd.on rect{stroke:hsl(var(--h) 70% 50%);fill:hsl(var(--h) var(--ts) var(--tl))}
+.diag .nd.dim{opacity:.38}
+.diag .ln{fill:none;stroke:var(--line);stroke-width:2.5}
+.diag .ln.on{stroke:var(--accent);stroke-dasharray:8 6;animation:flow .8s linear infinite}
+.diag .ln.on.rev{animation-direction:reverse}
+@keyframes flow{to{stroke-dashoffset:-14}}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.chip{display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:13.5px;font-weight:500;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 12px;min-height:36px;cursor:pointer;transition:all .15s}
+.chip i{width:8px;height:8px;border-radius:50%;background:hsl(var(--h,190) 70% 52%)}
+.chip:hover{border-color:var(--accent);transform:translateY(-1px)}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.mw{display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 0 4px}
+.mnode{border:2px solid var(--accent);border-radius:14px;padding:10px 20px;background:var(--accent-soft);font-weight:700;text-align:center}
+.sock{font:12px var(--mono);color:var(--muted);border-left:2px dashed var(--line);padding:2px 0 2px 10px}
+.workers{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.w{border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg);padding:8px 14px;font:13px var(--mono);cursor:pointer;min-width:96px;text-align:center}
+.w:hover{border-color:var(--bad)}
+.w.dead{border-color:var(--bad);color:var(--bad);background:transparent;text-decoration:line-through}
+.w.new{border-color:var(--ok);color:var(--ok)}
+.inst{min-width:120px;text-align:center}
+.inst .bar{height:8px;border-radius:99px;background:var(--line);margin-top:6px;overflow:hidden}
+.inst .bar i{display:block;height:100%;background:var(--grad);width:0;transition:width .25s}
+input[type=range]{width:200px;accent-color:var(--accent)}
+.win{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card);margin:8px 0}
+.win .bar{display:flex;gap:6px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line);background:var(--hov);font:12px var(--mono);color:var(--muted)}
+.win .bar i{width:10px;height:10px;border-radius:50%;background:#ff5f57}.win .bar i:nth-child(2){background:#febc2e}.win .bar i:nth-child(3){background:#28c840}
+.win .bar span{margin-left:8px}
+.codeline{display:block;width:100%;text-align:left;font:13.5px/1.7 var(--mono);color:var(--fg);background:none;border:0;padding:0 14px;cursor:pointer;white-space:pre;border-left:3px solid transparent;overflow-x:auto}
+.codeline:hover{background:var(--hov)}
+.codeline[aria-pressed="true"]{background:var(--accent-soft);border-left-color:var(--accent)}
+.codeline .n{display:inline-block;width:2.2em;color:var(--muted);user-select:none}
+.log{border:1px solid var(--line);border-radius:12px;background:var(--hov);padding:10px 14px;font:13px/1.7 var(--mono);min-height:56px}
+.log .ok{color:var(--ok)}.log .no{color:var(--bad)}
+details{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-top:8px;background:var(--card)}
+summary{cursor:pointer;font-weight:600}
+details p{margin:8px 0 2px;color:var(--muted)}
+.stepper{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.stepper .cnt{font:13px var(--mono);color:var(--muted);margin-left:auto}
+.role{display:inline-block;font:600 12px system-ui;border-radius:999px;padding:2px 10px;background:var(--accent-soft);color:var(--accent);margin-right:6px}
+.foot{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+.foot a{color:var(--accent)}
+kbd{font:12px var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:0 7px;background:var(--card)}
+@media(max-width:640px){.wrap{padding:0 16px 48px}.hero{padding-top:12px}.card{padding:18px 16px}.card header{gap:10px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important;animation:none!important}}
+@media(forced-colors:active){.card,.toc a[aria-current="true"]{border:1px solid}}
+</style>
+<style>
+/* bổ sung riêng cho trang hệ điều hành */
+.banner{background:#fff4d6;color:#6b4e00;text-align:center;padding:6px 12px;font-size:13.5px}
+:root[data-theme="dark"] .banner{background:#3a2f00;color:#ffe58a}
+.memwrap{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start;margin:10px 0}
+@media(max-width:720px){.memwrap{grid-template-columns:1fr}}
+.memcol{display:flex;flex-direction:column;border:2px solid var(--line);border-radius:14px;overflow:hidden;font:13px var(--mono)}
+.memcol .hi,.memcol .lo{padding:4px 12px;background:var(--hov);color:var(--muted);font-size:12px}
+.memcol .reg{padding:10px 12px;border-top:1px solid var(--line);background:var(--card);transition:background .15s}
+.memcol .reg small{display:block;color:var(--muted);font-family:system-ui;font-size:12px}
+.memcol .reg.free{background:repeating-linear-gradient(135deg,transparent 0 8px,var(--hov) 8px 16px);color:var(--muted);text-align:center}
+.memcol .reg.on{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.memcol .reg.on small{color:var(--accent)}
+.sdiag{width:100%;height:auto;max-height:330px;display:block}
+.sdiag .st ellipse{fill:var(--card);stroke:var(--line);stroke-width:2;transition:all .2s}
+.sdiag .st text{fill:var(--fg);font:600 14px system-ui,sans-serif;text-anchor:middle}
+.sdiag .st.on ellipse{stroke:hsl(var(--h) 70% 50%);fill:hsl(var(--h) var(--ts) var(--tl));stroke-width:3}
+.sdiag .tr{fill:none;stroke:var(--line);stroke-width:2.2}
+.sdiag .tr.on{stroke:var(--accent);stroke-width:3;stroke-dasharray:8 6;animation:flow .8s linear infinite}
+.sdiag .lb{fill:var(--muted);font:12px var(--mono);text-anchor:middle}
+.sdiag .lb.on{fill:var(--accent);font-weight:700}
+.sdiag marker path{fill:var(--muted)}
+.cs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px;margin:12px 0}
+.cs .cell{border:2px solid var(--line);border-radius:14px;padding:10px 14px;background:var(--card);transition:all .2s}
+.cs .cell.on{border-color:var(--accent);background:var(--accent-soft)}
+.cs .cell b{display:block;margin-bottom:4px}
+.cs .cell dl{margin:0;font:13px/1.7 var(--mono)}
+.cs .cell dt{display:inline;color:var(--muted)}
+.cs .cell dd{display:inline;margin:0 0 0 6px}
+.box span b{display:inline;margin:0}
+:not(pre)>code{white-space:normal;overflow-wrap:anywhere}
+.pending{opacity:.9}
+.pending p{margin:6px 0 0}
+.lanes{display:grid;grid-template-columns:1fr 130px 1fr;gap:12px;margin:12px 0;align-items:start}
+@media(max-width:720px){.lanes{grid-template-columns:1fr}}
+.lane{border:2px solid var(--line);border-radius:14px;padding:10px 12px;min-height:84px;background:var(--card)}
+.lane h4{margin:0 0 8px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.lane.cpu{border-color:var(--accent);background:var(--accent-soft)}
+.pc{display:inline-flex;align-items:center;justify-content:center;min-width:44px;height:34px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);font:700 13px var(--mono);margin:0 6px 6px 0;padding:0 10px}
+.pc.run{border-color:var(--accent);color:var(--accent)}
+.tree ul{list-style:none;margin:0;padding-left:22px;border-left:2px dashed var(--line)}
+.tree>ul{padding-left:0;border-left:0}
+.tree li{margin:6px 0}
+.tn{display:inline-flex;gap:8px;align-items:center;border:1.5px solid var(--line);border-radius:10px;padding:4px 12px;background:var(--card);color:var(--fg);font:13px var(--mono);cursor:pointer}
+.tn:hover{border-color:var(--accent)}
+.tn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:700}
+.tn small{color:var(--muted)}
+.tn.orph{border-color:var(--warn);color:var(--warn);cursor:default}
+.cells{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 6px}
+.cellb{width:56px;height:44px;border:2px solid var(--line);border-radius:10px;display:grid;place-items:center;font:700 13px var(--mono);background:var(--card);position:relative}
+.cellb.full{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.cellb i{position:absolute;top:-10px;font:700 10px var(--mono);font-style:normal;padding:0 5px;border-radius:5px;background:var(--fg);color:var(--bg)}
+.cellb i.in{left:2px}
+.cellb i.out{right:2px;background:var(--accent2);color:#fff}
+.tcell{width:40px;height:40px;border-radius:9px;display:grid;place-items:center;font:700 12px var(--mono);color:#fff;background:hsl(var(--c) 60% 42%)}
+.th{display:inline-block;border:2px solid var(--line);border-radius:10px;padding:6px 12px;margin:0 6px 6px 0;font:700 13px var(--mono);background:var(--card);color:var(--fg);cursor:pointer}
+.th.ok{border-color:var(--ok);color:var(--ok)}
+.th.blocked{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.th.stuck{border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
+.kt{display:inline-block;border:2px dashed var(--line);border-radius:10px;padding:6px 12px;margin:0 6px 6px 0;font:700 13px var(--mono);color:var(--muted)}
+.kt.blocked{border-color:var(--bad);color:var(--bad)}
+</style>
+</head>
+<body>
+<a class="skip" href="#s1">Bỏ qua tới nội dung</a>
+<div class="bg" aria-hidden="true"></div>
+<nav class="bar" id="bar" aria-label="Điều hướng nhanh"><a class="up" href="#top" aria-label="Lên đầu trang" title="Lên đầu trang">↑</a><span class="nums" id="barNums"></span><span class="now" id="barNow" aria-hidden="true"></span></nav>
+<div class="wrap">
+  <header class="topbar" id="top">
+    <div class="brand"><span class="logo" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9zM9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg></span>Hệ điều hành</div>
+    <button class="btn" id="themeBtn" type="button" aria-label="Đổi giao diện sáng hoặc tối">Sáng / Tối</button>
+  </header>
+
+  <div class="hero">
+    <span class="pill"><i></i>Hệ điều hành · Chương 2 · Tiến trình và luồng</span>
+    <h1>Tiến trình và luồng: <span class="grad">một chương trình đang chạy</span> thực sự là gì</h1>
+    <p class="lead">Từ chương trình nằm trên đĩa đến tiến trình có bộ nhớ riêng, trạng thái và khối điều khiển; rồi điều phối, tạo và kết thúc tiến trình, hợp tác giữa các tiến trình và luồng.</p>
+  </div>
+
+  <ol class="toc" id="toc" aria-label="Lộ trình các phần"></ol>
+
+  <main>
+  <section class="card" id="s1" style="--h:215" data-title="Chương trình và tiến trình">
+    <header><span class="num">1</span><h2>Chương trình và tiến trình: nội dung trên đĩa và thứ đang chạy</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Máy tính chạy nhiều việc cùng lúc, nhưng thứ nằm trên đĩa chỉ là các file. Cần một khái niệm cho <b>"việc đang được thực hiện"</b> để hệ điều hành theo dõi, cấp tài nguyên và điều khiển được từng việc.</p>
+    <span class="lab g">Giải pháp</span>
+    <div class="two">
+      <div class="box"><b>Chương trình (program)</b><span class="muted">Thực thể <b>thụ động</b>: danh sách lệnh giải một vấn đề, cất trên đĩa dưới dạng file. Gồm mã chương trình, dữ liệu (biến, dữ liệu nhập xuất) và các thư viện.</span></div>
+      <div class="box on"><b>Tiến trình (process)</b><span class="muted">Thực thể <b>chủ động</b>: chương trình đã được nạp vào RAM và CPU bắt đầu thi hành ở điểm nhập. Có bộ đếm lệnh (program counter) và một tập tài nguyên.</span></div>
+    </div>
+    <div class="ana"><b>Đời thường:</b> chương trình là công thức nấu ăn nằm trong sách. Tiến trình là nồi đang nấu theo công thức đó. Một công thức có thể nấu nhiều nồi cùng lúc.</div>
+    <p>Hai ý cần nhớ:</p>
+    <ul>
+      <li>Tài nguyên tối thiểu để một chương trình chạy: <b>bộ nhớ</b> cho chương trình và dữ liệu, và <b>các thanh ghi</b> phục vụ quá trình thực hiện.</li>
+      <li>Một chương trình có thể chỉ là một phần của một tiến trình, hoặc gọi đến nhiều tiến trình.</li>
+    </ul>
+    <h3>Từ chương trình đến tiến trình</h3>
+    <ol>
+      <li>Hệ điều hành tạo một tiến trình và phân phối vùng nhớ cho nó.</li>
+      <li>Bộ nạp (loader) thực hiện các đoạn lệnh trong chương trình.</li>
+      <li>Chương trình bắt đầu ở hàm <code>_start()</code>, hàm này gọi tới hàm <code>main</code> của chương trình.</li>
+      <li>Từ lúc này tiến trình chạy độc lập, không còn liên quan đến file chương trình nữa.</li>
+      <li>Khi <code>main()</code> kết thúc, hệ điều hành gọi <code>exit()</code> để hủy tiến trình và thu hồi tài nguyên.</li>
+    </ol>
+    <h3>Tiến trình nằm trong bộ nhớ thế nào</h3>
+    <span class="lab t">Minh họa: các vùng nhớ của một tiến trình</span>
+    <div class="memwrap">
+      <div class="win" role="group" aria-label="Đoạn mã C mẫu"><div class="bar"><i></i><i></i><i></i><span>main.c</span></div><div id="memCode" style="padding:8px 0"></div></div>
+      <div class="memcol" id="memCol" role="group" aria-label="Các vùng nhớ của tiến trình"></div>
+    </div>
+    <div class="status" id="memStatus" role="status"></div>
+    <div class="warn"><b>Nối với web:</b> Nginx, NestJS và PostgreSQL khi chạy đều là tiến trình như thế này, mỗi cái có vùng nhớ riêng và không thấy biến của nhau.</div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s1"></div>
+  </section>
+
+  <section class="card" id="s2" style="--h:160" data-title="Trạng thái tiến trình">
+    <header><span class="num">2</span><h2>Trạng thái tiến trình: vì sao nó không chạy liền một mạch</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Mỗi processor mỗi lúc chỉ xử lý <b>một</b> tiến trình. Các tiến trình khác phải đợi đến lượt, hoặc đang chờ một sự kiện như đọc đĩa. Hệ điều hành cần biết mỗi tiến trình đang ở trong tình huống nào để quyết định ai được chạy.</p>
+    <span class="lab g">Giải pháp</span>
+    <p>Mỗi tiến trình luôn ở một trong <b>5 trạng thái</b>:</p>
+    <div class="tblw"><table class="tbl"><thead><tr><th>Trạng thái</th><th>Nghĩa</th></tr></thead><tbody>
+      <tr><td><code>New</code></td><td>Khởi tạo, vừa được tạo ra</td></tr>
+      <tr><td><code>Ready</code></td><td>Sẵn sàng, chờ processor gọi thực hiện</td></tr>
+      <tr><td><code>Running</code></td><td>Đang thực hiện trên CPU</td></tr>
+      <tr><td><code>Waiting</code></td><td>Chờ một sự kiện nào đó (ví dụ vào/ra hoàn tất)</td></tr>
+      <tr><td><code>Terminated</code></td><td>Đã kết thúc</td></tr>
+    </tbody></table></div>
+    <span class="lab t">Minh họa: các lần chuyển trạng thái</span>
+    <svg class="sdiag" viewBox="0 0 720 310" role="img" aria-labelledby="stT">
+      <title id="stT">Sơ đồ 5 trạng thái: new, ready, running, waiting, terminated và các mũi tên chuyển trạng thái</title>
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z"/></marker></defs>
+      <path class="tr" id="t-admitted" d="M112 78C150 105 190 120 218 138" marker-end="url(#ah)"/>
+      <path class="tr" id="t-dispatch" d="M318 172C365 205 430 205 472 172" marker-end="url(#ah)"/>
+      <path class="tr" id="t-interrupt" d="M478 138C430 100 365 100 312 138" marker-end="url(#ah)"/>
+      <path class="tr" id="t-exit" d="M575 138C600 110 620 95 640 82" marker-end="url(#ah)"/>
+      <path class="tr" id="t-wait" d="M525 200C515 245 470 265 440 270" marker-end="url(#ah)"/>
+      <path class="tr" id="t-done" d="M335 270C290 262 262 235 255 200" marker-end="url(#ah)"/>
+      <text class="lb" id="l-admitted" x="112" y="128">admitted</text>
+      <text class="lb" id="l-dispatch" x="395" y="222">scheduler dispatch</text>
+      <text class="lb" id="l-interrupt" x="395" y="92">interrupt</text>
+      <text class="lb" id="l-exit" x="640" y="115">exit</text>
+      <text class="lb" id="l-wait" x="560" y="250">I/O or event wait</text>
+      <text class="lb" id="l-done" x="215" y="262">I/O or event completion</text>
+      <g class="st" id="s-new" style="--h:215"><ellipse cx="70" cy="55" rx="62" ry="30"/><text x="70" y="60">new</text></g>
+      <g class="st" id="s-ready" style="--h:160"><ellipse cx="260" cy="160" rx="62" ry="30"/><text x="260" y="165">ready</text></g>
+      <g class="st" id="s-running" style="--h:280"><ellipse cx="525" cy="160" rx="68" ry="30"/><text x="525" y="165">running</text></g>
+      <g class="st" id="s-waiting" style="--h:50"><ellipse cx="385" cy="270" rx="62" ry="30"/><text x="385" y="275">waiting</text></g>
+      <g class="st" id="s-terminated" style="--h:10"><ellipse cx="660" cy="55" rx="55" ry="30"/><text x="660" y="60">terminated</text></g>
+    </svg>
+    <div class="row" id="stBtns" role="group" aria-label="Sự kiện có thể xảy ra"></div>
+    <div class="status" id="stStatus" role="status"></div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s2"></div>
+  </section>
+
+  <section class="card" id="s3" style="--h:28" data-title="PCB và chuyển ngữ cảnh">
+    <header><span class="num">3</span><h2>PCB và chuyển ngữ cảnh: dừng một tiến trình rồi chạy tiếp đúng chỗ</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>CPU phải luân phiên giữa các tiến trình. Khi đổi sang tiến trình khác, tiến trình cũ không được "quên" nó đang làm tới đâu: lần sau nó phải chạy tiếp đúng chỗ đã dừng.</p>
+    <span class="lab g">Giải pháp</span>
+    <p>Mỗi tiến trình được biểu diễn trong hệ thống bởi một <b>khối điều khiển tiến trình (Process Control Block, PCB)</b>. PCB cho phép xác định duy nhất một tiến trình và chứa:</p>
+    <ol>
+      <li>Trạng thái tiến trình</li>
+      <li>Bộ đếm lệnh</li>
+      <li>Các thanh ghi của CPU</li>
+      <li>Thông tin dùng để điều phối tiến trình</li>
+      <li>Thông tin quản lý bộ nhớ</li>
+      <li>Thông tin tài nguyên có thể sử dụng</li>
+      <li>Thông tin thống kê</li>
+    </ol>
+    <p><b>Chuyển ngữ cảnh (context switch)</b> là việc chuyển CPU từ tiến trình này sang tiến trình khác: lưu trạng thái của tiến trình cũ vào PCB của nó và khôi phục trạng thái của tiến trình mới từ PCB. Nó xảy ra khi có tín hiệu ngắt (interrupt) hoặc khi tiến trình đưa ra lời gọi hệ thống (system call).</p>
+    <span class="lab t">Minh họa: một lần chuyển ngữ cảnh</span>
+    <div class="stepper"><button class="btn" id="csBack" type="button">← Lùi</button><button class="btn" id="csNext" type="button">Tiếp →</button><button class="btn" id="csReset" type="button">Về đầu</button><span class="cnt" id="csCnt"></span></div>
+    <div class="cs" id="csBox"></div>
+    <div class="status" id="csStatus" role="status"></div>
+    <div class="warn"><b>Chi phí:</b> trong lúc lưu và nạp, CPU không làm việc cho tiến trình nào, nên thời gian luân chuyển là thời gian tính toán bị lãng phí. Ngoài slide: sau mỗi lần đổi, cache của nhân CPU còn dữ liệu của tiến trình cũ nên tiến trình mới thường chạy chậm hơn lúc đầu.</div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s3"></div>
+  </section>
+
+    <section class="card" id="s4" style="--h:340" data-title="Điều phối tiến trình">
+    <header><span class="num">4</span><h2>Điều phối tiến trình: hàng đợi và bộ điều phối</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Trên một processor, mỗi lần chỉ thực hiện một tiến trình, các tiến trình khác buộc phải đợi đến lượt. Để các tiến trình chạy nhanh và dùng CPU hiệu quả, cần một cách <b>luân chuyển CPU giữa các tiến trình</b>, và muốn vậy phải có <b>hàng đợi</b> cho các tiến trình.</p>
+    <span class="lab g">Giải pháp</span>
+    <p>Hệ thống có nhiều hàng đợi:</p>
+    <div class="tblw"><table class="tbl"><thead><tr><th>Hàng đợi</th><th>Chứa</th></tr></thead><tbody>
+      <tr><td><code>Job-queue</code></td><td>Tập các tiến trình trong hệ thống</td></tr>
+      <tr><td><code>Ready-queue</code></td><td>Tập các tiến trình trong bộ nhớ, sẵn sàng thực thi</td></tr>
+      <tr><td><code>Device-queue</code></td><td>Tập các tiến trình đang đợi thiết bị vào/ra. Mỗi thiết bị có một hàng đợi riêng</td></tr>
+    </tbody></table></div>
+    <p>Các tiến trình di chuyển liên tục giữa các hàng đợi khác nhau.</p>
+    <span class="lab t">Minh họa: tiến trình di chuyển giữa các hàng đợi</span>
+    <div class="lanes">
+      <div class="lane"><h4>Hàng đợi sẵn sàng</h4><div id="qReady"></div></div>
+      <div class="lane cpu"><h4>CPU</h4><div id="qCpu"></div></div>
+      <div class="lane"><h4>Hàng đợi thiết bị</h4><div id="qDev"></div></div>
+    </div>
+    <div class="row" id="qBtns" role="group" aria-label="Sự kiện của hàng đợi"></div>
+    <div class="status" id="qStatus" role="status"></div>
+    <h3>Hai bộ điều phối (scheduler)</h3>
+    <p>Để chọn tiến trình từ các hàng đợi một cách hợp lý, cần hai bộ điều phối:</p>
+    <div class="two">
+      <div class="box"><b>Điều phối công việc (job scheduler)</b><span class="muted">Chọn tiến trình đang lưu ở vùng đệm (buffer) trên đĩa để đưa vào bộ nhớ thực hiện. Chạy không thường xuyên (chu kỳ giây, phút). Điều khiển <b>mức độ đa chương trình</b>. Khi mức này đã ổn định, nó chỉ được gọi khi có một tiến trình rời khỏi hệ thống.</span></div>
+      <div class="box"><b>Điều phối CPU (CPU scheduler)</b><span class="muted">Chọn một tiến trình từ hàng đợi sẵn sàng và cấp CPU cho nó. Chạy rất thường xuyên và phải nhanh, vì tiến trình chỉ chạy vài mili-giây rồi lại vào/ra. Việc luân chuyển CPU lưu trạng thái tiến trình cũ và khôi phục cho tiến trình mới, nên làm lãng phí thời gian tính toán của CPU.</span></div>
+    </div>
+    <h3>Vấn đề khi chọn công việc</h3>
+    <p>Có hai nhóm tiến trình: <b>thiên về vào/ra</b> (ít dùng CPU) và <b>thiên về tính toán</b> (dùng nhiều CPU). Cần trộn lẫn cả hai loại:</p>
+    <ul>
+      <li>Ưu tiên hoàn toàn vào/ra: hàng đợi sẵn sàng rỗng, <b>lãng phí CPU</b>.</li>
+      <li>Ưu tiên hoàn toàn tính toán: hàng đợi thiết bị rỗng, <b>lãng phí thiết bị</b>.</li>
+    </ul>
+    <h3>Tráo đổi tiến trình (swapping)</h3>
+    <p>Đưa tiến trình ra khỏi bộ nhớ (làm giảm mức độ đa chương trình), sau đó đưa nó quay trở lại, có thể ở vị trí khác, để tiếp tục thực hiện. Mục đích là giải phóng vùng nhớ, tạo vùng nhớ tự do rộng hơn.</p>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s4"></div>
+  </section>
+
+  <section class="card" id="s5" style="--h:95" data-title="Tạo và kết thúc">
+    <header><span class="num">5</span><h2>Tạo và kết thúc tiến trình: cha, con và cây tiến trình</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Tiến trình không tự nhiên xuất hiện. Cần biết <b>ai tạo ra ai</b>, con lấy tài nguyên ở đâu, và chuyện gì xảy ra khi cha hoặc con kết thúc.</p>
+    <span class="lab g">Giải pháp</span>
+    <ul>
+      <li>Một tiến trình có thể tạo nhiều tiến trình mới. Tiến trình tạo gọi là <b>tiến trình cha</b>, tiến trình được tạo gọi là <b>tiến trình con</b>. Con cũng có thể tạo tiến trình khác, nên hình thành <b>cây tiến trình</b>.</li>
+      <li>Tài nguyên của con: lấy từ hệ điều hành, hoặc lấy từ tiến trình cha (một phần, hoặc cũng có thể là tất cả).</li>
+      <li>Trong lúc thực hiện: cha chạy đồng thời với con, hoặc cha đợi con kết thúc.</li>
+    </ul>
+    <span class="lab t">Minh họa: cây tiến trình</span>
+    <div class="tree" id="ptree"></div>
+    <div class="row" id="ptBtns" role="group" aria-label="Thao tác trên cây tiến trình"></div>
+    <div class="status" id="ptStatus" role="status"></div>
+    <h3>Hai tình huống đặc biệt</h3>
+    <div class="two">
+      <div class="box"><b>Tiến trình mồ côi (orphan)</b><span class="muted">Cha kết thúc trước con, nên con trở thành mồ côi.</span></div>
+      <div class="box"><b>Tiến trình zombie</b><span class="muted">Con bị ép kết thúc mà không báo lên tiến trình cha, lúc đó xuất hiện tiến trình zombie.</span></div>
+    </div>
+    <span class="lab t">Minh họa: chương trình C tạo tiến trình</span>
+    <div class="win" role="group" aria-label="Chương trình C dùng fork"><div class="bar"><i></i><i></i><i></i><span>fork.c</span></div><div id="forkCode" style="padding:8px 0"></div></div>
+    <div class="status" id="forkStatus" role="status"></div>
+    <h3>Kết thúc tiến trình</h3>
+    <ul>
+      <li>Tiến trình hoàn thành câu lệnh cuối cùng và yêu cầu hệ điều hành xóa nó, trả dữ liệu về tiến trình cha và trả lại tài nguyên cho hệ thống.</li>
+      <li>Tiến trình cha có thể kết thúc tiến trình con. Muốn vậy cha phải biết định danh của con, nên con bắt buộc gửi định danh ngay khi vừa khởi tạo.</li>
+      <li>Cha kết thúc con khi: con dùng quá tài nguyên, con không còn nhiệm vụ cần thiết, hoặc chính cha bị kết thúc.</li>
+    </ul>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s5"></div>
+  </section>
+
+  <section class="card" id="s6" style="--h:50" data-title="Hợp tác và IPC">
+    <header><span class="num">6</span><h2>Hợp tác giữa các tiến trình và truyền thông liên tiến trình</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Mỗi tiến trình có vùng nhớ riêng (phần 1), nhưng nhiều bài toán cần các tiến trình <b>làm việc cùng nhau</b>: chia sẻ thông tin, chạy song song, chia nhỏ chương trình. Chúng phải trao đổi dữ liệu và phối hợp nhịp nhàng bằng cách nào?</p>
+    <span class="lab g">Giải pháp</span>
+    <div class="two">
+      <div class="box"><b>Tiến trình độc lập</b><span class="muted">Không ảnh hưởng và không bị ảnh hưởng bởi các tiến trình khác trong hệ thống.</span></div>
+      <div class="box on"><b>Tiến trình hợp tác</b><span class="muted">Ảnh hưởng và chịu ảnh hưởng bởi các tiến trình khác trong hệ thống.</span></div>
+    </div>
+    <p>Lợi ích của hợp tác tiến trình: chia sẻ thông tin, tăng tốc độ tính toán, module hóa, tiện dụng. Khi hợp tác, cần có cơ chế <b>truyền thông</b> giữa các tiến trình và <b>đồng bộ hóa</b> hoạt động của chúng.</p>
+    <h3>Ví dụ kinh điển: Producer – Consumer</h3>
+    <p>Hệ thống gồm hai tiến trình: <b>producer</b> sản xuất sản phẩm và <b>consumer</b> tiêu thụ chúng. Ví dụ: chương trình in (producer) sinh ra các ký tự, bộ điều khiển máy in (consumer) tiêu thụ chúng.</p>
+    <p>Hai bên chạy đồng thời và dùng chung một <b>vùng đệm (buffer)</b>. Consumer không được tiêu thụ sản phẩm mà producer chưa sản xuất. Vùng đệm có hai dạng:</p>
+    <ul>
+      <li><b>Dung lượng vô hạn:</b> buffer rỗng thì consumer phải đợi; producer không bao giờ phải đợi.</li>
+      <li><b>Dung lượng hữu hạn:</b> buffer rỗng thì consumer đợi; buffer đầy thì producer đợi.</li>
+    </ul>
+    <span class="lab t">Minh họa: vùng đệm hữu hạn dạng vòng</span>
+    <div class="cells" id="bufCells" aria-label="Các ô của vùng đệm"></div>
+    <div class="row" id="bufBtns" role="group" aria-label="Producer và consumer"></div>
+    <div class="status" id="bufStatus" role="status"></div>
+    <div class="win" role="group" aria-label="Mã consumer"><div class="bar"><i></i><i></i><i></i><span>consumer (từ slide)</span></div><pre style="margin:0;padding:10px 16px;font:13.5px/1.7 var(--mono);overflow-x:auto">item next_consumed;
+while (true) {
+    while (in == out)
+        ;   /* do nothing */
+    next_consumed = buffer[out];
+    out = (out + 1) % BUFFER_SIZE;
+    /* consume the item in next_consumed */
+}</pre></div>
+    <p class="muted">Ngoài slide: phía producer tương ứng là <code>while (((in + 1) % BUFFER_SIZE) == out) ; buffer[in] = next_produced; in = (in + 1) % BUFFER_SIZE;</code>. Cách này đúng nhưng chỉ dùng được <b>BUFFER_SIZE − 1</b> phần tử, vì buffer đầy và buffer rỗng đều cho <code>in</code> và <code>out</code> gần nhau.</p>
+    <h3>Hai cách truyền thông liên tiến trình (IPC)</h3>
+    <div class="tblw"><table class="tbl"><thead><tr><th></th><th>Bộ nhớ chia sẻ (shared memory)</th><th>Truyền thông điệp (message passing)</th></tr></thead><tbody>
+      <tr><td>Cách làm</td><td>Các tiến trình chia sẻ một vùng nhớ chính</td><td>Trao đổi thông điệp, không dùng biến chia sẻ</td></tr>
+      <tr><td>Ai viết mã</td><td>Người lập trình ứng dụng viết tường minh</td><td>Hệ thống truyền thông điệp đảm bảo</td></tr>
+      <tr><td>Hay dùng khi</td><td>Các tiến trình trên cùng một máy (ví dụ Producer-Consumer)</td><td>Hệ phân tán, tiến trình ở các máy khác nhau (ví dụ chat)</td></tr>
+    </tbody></table></div>
+    <h3>Hệ thống truyền thông điệp</h3>
+    <p>Cần hai thao tác cơ bản: <code>send(msg)</code> và <code>receive(msg)</code>. Thông điệp có thể có kích thước cố định (dễ cài đặt ở mức hệ thống, lập trình khó hơn) hoặc thay đổi (cài đặt mức hệ thống phức tạp, lập trình đơn giản). Hai tiến trình P và Q muốn trao đổi thì phải thiết lập một liên kết truyền thông giữa chúng, rồi gửi nhận thông điệp qua liên kết đó.</p>
+    <div class="two">
+      <div class="box"><b>Truyền trực tiếp</b><span class="muted">Gọi tên tiến trình gửi/nhận tường minh: <code>send(P, message)</code>, <code>receive(Q, message)</code>. Liên kết tự động thiết lập, chỉ gắn với một cặp tiến trình, mỗi cặp chỉ có một liên kết, thường hai chiều.</span></div>
+      <div class="box"><b>Truyền gián tiếp</b><span class="muted">Gửi và nhận qua <b>hòm thư (mailbox)</b> hoặc cổng có định danh duy nhất: <code>send(A, msg)</code>, <code>receive(A, msg)</code>. Liên kết chỉ có khi hai tiến trình dùng chung hòm thư; một liên kết có thể gắn với nhiều tiến trình; một cặp có thể dùng nhiều liên kết.</span></div>
+    </div>
+    <h3>Chờ hay không chờ</h3>
+    <div class="tblw"><table class="tbl"><thead><tr><th>Thao tác</th><th>Blocking (đồng bộ)</th><th>Non-blocking (không đồng bộ)</th></tr></thead><tbody>
+      <tr><td><code>send</code></td><td>Gửi rồi đợi đến khi thông điệp được bên nhận hoặc hòm thư nhận</td><td>Gửi rồi tiếp tục làm việc</td></tr>
+      <tr><td><code>receive</code></td><td>Phải đợi đến khi có thông điệp</td><td>Trả về ngay: hoặc một thông điệp hợp lệ, hoặc giá trị null</td></tr>
+    </tbody></table></div>
+    <p>Các thông điệp được lưu tạm trong hàng đợi. Hàng đợi có thể có <b>khả năng chứa 0</b> (người gửi phải đợi đến khi thông điệp được nhận), <b>có giới hạn n</b> (đầy thì người gửi phải đợi) hoặc <b>không giới hạn</b> (người gửi không bao giờ đợi).</p>
+    <h3>Truyền thông client – server</h3>
+    <p><b>Socket</b> (xem bài Nginx) là một đầu mút cho truyền thông, gồm cặp địa chỉ IP và cổng, ví dụ <code>146.86.5.20:1625</code>. Hai cơ chế khác là <b>RPC</b> (Remote Procedure Call, gọi thủ tục từ xa) và <b>RMI</b> (Remote Method Invocation, cơ chế truyền thông của Java).</p>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s6"></div>
+  </section>
+
+  <section class="card" id="s7" style="--h:250" data-title="Luồng">
+    <header><span class="num">7</span><h2>Luồng (thread): chia nhỏ một tiến trình</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Một tiến trình chỉ có một luồng điều khiển thì:</p>
+    <ul>
+      <li>Trên máy nhiều vi xử lý, một phép tính lớn như <code>for (k = 0; k &lt; n; k++) a[k] = b[k] * c[k];</code> vẫn chỉ chạy trên một bộ xử lý.</li>
+      <li>Khi tiến trình phải chờ (ví dụ chương trình chat nhận thông điệp kiểu blocking receive), <b>cả tiến trình đứng</b> dù còn việc khác làm được, như gửi thông điệp. Cách giải quyết là thực hiện song song receive và send.</li>
+    </ul>
+    <span class="lab g">Giải pháp</span>
+    <p><b>Luồng (thread)</b> là đơn vị sử dụng CPU cơ bản. Mỗi luồng có riêng: định danh luồng (ID), bộ đếm chương trình (program counter), tập các thanh ghi và không gian stack. Các luồng trong cùng một tiến trình <b>chia sẻ</b>: đoạn mã lệnh, đoạn dữ liệu (đối tượng toàn cục) và các tài nguyên hệ điều hành khác (như file đang mở).</p>
+    <ul>
+      <li>Các luồng có thể thực hiện cùng đoạn mã với ngữ cảnh khác nhau (thanh ghi, bộ đếm chương trình, stack).</li>
+      <li>Luồng còn gọi là <b>tiến trình nhẹ (LWP, Lightweight Process)</b>. Một tiến trình có ít nhất một luồng.</li>
+      <li>Chương trình là dãy lệnh và các biến. Tiến trình là chương trình đang thực hiện (có stack, thiết bị, bộ xử lý). Luồng là chương trình đang thực hiện <b>trong ngữ cảnh của một tiến trình</b>.</li>
+      <li>Hệ điều hành truyền thống (MS-DOS, UNIX): tiến trình có một luồng điều khiển (heavyweight process). Hệ điều hành hiện nay (Windows, Linux): tiến trình có thể gồm nhiều luồng.</li>
+    </ul>
+    <h3>Tiến trình và luồng khác nhau thế nào</h3>
+    <div class="tblw"><table class="tbl"><thead><tr><th>Tiến trình</th><th>Luồng</th></tr></thead><tbody>
+      <tr><td>Có đoạn mã, dữ liệu, heap và các đoạn khác</td><td>Không có đoạn dữ liệu hay heap riêng</td></tr>
+      <tr><td>Phải có ít nhất một luồng</td><td>Không đứng riêng mà nằm trong một tiến trình</td></tr>
+      <tr><td colspan="2">Các luồng trong một tiến trình chia sẻ mã, dữ liệu, heap, vào/ra, nhưng có <b>stack và tập thanh ghi riêng</b>. Luồng đầu tiên là luồng chính và sở hữu không gian stack của tiến trình.</td></tr>
+      <tr><td>Tạo và luân chuyển tốn kém</td><td>Tạo và luân chuyển không tốn kém</td></tr>
+      <tr><td>Bảo vệ tốt do có không gian địa chỉ riêng</td><td>Dùng chung không gian địa chỉ nên cần phải bảo vệ</td></tr>
+      <tr><td>Kết thúc: tài nguyên được thu hồi và các luồng phải kết thúc theo</td><td>Kết thúc: stack của nó được thu hồi</td></tr>
+    </tbody></table></div>
+    <h3>Lợi ích của lập trình đa luồng</h3>
+    <div class="two">
+      <div class="box"><b>Tăng tính đáp ứng</b><span class="muted">Chương trình vẫn chạy khi một phần đang chờ hoặc đang tính toán nặng. Ví dụ trình duyệt web: một luồng tương tác với người dùng, một luồng tải dữ liệu.</span></div>
+      <div class="box"><b>Chia sẻ tài nguyên</b><span class="muted">Các luồng dùng chung bộ nhớ và tài nguyên của tiến trình chứa nó, trao đổi qua bộ nhớ chung. Tốt cho thuật toán song song dùng chung cấu trúc dữ liệu.</span></div>
+      <div class="box"><b>Tính kinh tế</b><span class="muted">Tạo, hủy và luân chuyển luồng ít tốn kém. Trên bộ đơn vi xử lý, tính song song chỉ là bề ngoài do luân chuyển CPU nhanh (thực tế mỗi lúc một luồng chạy).</span></div>
+      <div class="box"><b>Dùng nhiều vi xử lý</b><span class="muted">Các luồng chạy song song thực sự trên các bộ xử lý khác nhau.</span></div>
+    </div>
+    <span class="lab t">Minh họa: chia vòng lặp cho các luồng</span>
+    <label for="nth" class="muted">Số luồng: <b id="nthv"></b> (mảng có n = 16 phần tử)</label><br>
+    <input type="range" id="nth" min="1" max="4" step="1">
+    <div class="cells" id="vecCells" aria-label="16 phần tử của mảng, tô màu theo luồng phụ trách"></div>
+    <div class="status" id="vecStatus" role="status"></div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s7"></div>
+  </section>
+
+  <section class="card" id="s8" style="--h:300" data-title="Mô hình đa luồng">
+    <header><span class="num">8</span><h2>Cài đặt luồng, mô hình đa luồng và vấn đề đa luồng</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Luồng do ai quản lý: ứng dụng hay hệ điều hành? Và khi nhiều luồng dùng chung dữ liệu thì có gì cần cẩn thận?</p>
+    <span class="lab g">Giải pháp: hai nơi cài đặt luồng</span>
+    <div class="two">
+      <div class="box"><b>Luồng mức người dùng</b><span class="muted">Chương trình ứng dụng quản lý luồng bằng một thư viện luồng. Nhân hệ thống không biết luồng tồn tại, chỉ điều phối cả tiến trình như một đơn vị. <b>Ưu:</b> tạo và quản lý nhanh. <b>Nhược:</b> một luồng rơi vào trạng thái chờ thì tất cả luồng cùng tiến trình bị chờ theo.</span></div>
+      <div class="box"><b>Luồng mức hệ thống</b><span class="muted">Nhân giữ thông tin và quản lý, điều phối từng luồng. <b>Ưu:</b> một luồng chờ vào/ra không ảnh hưởng luồng khác; trên máy nhiều vi xử lý, nhân điều phối các luồng cho các bộ xử lý khác nhau. <b>Nhược:</b> tạo và quản lý chậm. Dùng trong Windows NT/2000/XP, Linux, OS/2.</span></div>
+    </div>
+    <h3>Ba mô hình đa luồng</h3>
+    <div class="tblw"><table class="tbl"><thead><tr><th>Mô hình</th><th>Ánh xạ</th><th>Đặc điểm</th></tr></thead><tbody>
+      <tr><td><b>Nhiều – một</b></td><td>Nhiều luồng người dùng tới một luồng hệ thống</td><td>Hiệu quả, tạo luồng tùy ý. Một luồng bị khóa thì cả tiến trình bị khóa. Không chạy song song trên máy nhiều vi xử lý. Dùng khi hệ điều hành không hỗ trợ luồng hệ thống.</td></tr>
+      <tr><td><b>Một – một</b></td><td>Mỗi luồng người dùng tới một luồng hệ thống</td><td>Luồng khác vẫn chạy khi một luồng chờ; chạy song song trên nhiều vi xử lý. Tạo luồng người dùng đòi hỏi tạo luồng hệ thống, chi phí cao nên giới hạn số luồng. Dùng trong Windows NT/2000/XP.</td></tr>
+      <tr><td><b>Nhiều – nhiều</b></td><td>Nhiều luồng người dùng tới một số nhỏ luồng hệ thống</td><td>Có ưu điểm của cả hai mô hình trên: tạo nhiều luồng theo yêu cầu, các luồng nhân chạy song song trên nhiều vi xử lý, một luồng bị khóa thì nhân cho luồng khác chạy. Ví dụ: UNIX.</td></tr>
+    </tbody></table></div>
+    <span class="lab t">Minh họa: một luồng bị chặn ảnh hưởng thế nào</span>
+    <div class="row" id="mdBtns" role="group" aria-label="Chọn mô hình"></div>
+    <div id="mdBox"></div>
+    <div class="status" id="mdStatus" role="status"></div>
+    <h3>Vấn đề đa luồng: biến dùng chung</h3>
+    <p>Hai luồng dùng chung biến <code>y</code>. Luồng T1 chạy <code>x ← y + 1</code>. Luồng T2 chạy <code>y ← 2</code> rồi <code>y ← y * 2</code>. Giá trị ban đầu <code>y = 1</code>. Vậy <code>x</code> bằng bao nhiêu? <b>Kết quả của các luồng chạy song song phụ thuộc trật tự truy nhập biến dùng chung giữa chúng.</b></p>
+    <span class="lab t">Minh họa: ba thứ tự chạy có thể xảy ra</span>
+    <div class="row" id="ilBtns" role="group" aria-label="Chọn thứ tự chạy"></div>
+    <div class="status" id="ilStatus" role="status"></div>
+    <div class="warn"><b>Nối với phần sau:</b> cách để kết quả luôn đúng dù luồng chạy xen kẽ kiểu nào là <b>đồng bộ hóa</b> (xem trang Đồng bộ hóa).</div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s8"></div>
+  </section>
+  </main>
+</div>
+
+<script>
+const DATA = {
+  code: [
+    ['#include <stdio.h>', '', 'Các dòng #include được xử lý lúc dịch, không tạo ra vùng nhớ riêng khi chạy.'],
+    ['#include <stdlib.h>', '', 'Các dòng #include được xử lý lúc dịch, không tạo ra vùng nhớ riêng khi chạy.'],
+    ['int x;', 'udata', 'Biến toàn cục chưa gán giá trị đầu nằm ở vùng uninitialized data.'],
+    ['int y = 15;', 'idata', 'Biến toàn cục có giá trị đầu nằm ở vùng initialized data.'],
+    ['int main(int argc, char *argv[])', 'args', 'Đối số dòng lệnh (argc, argv) được đặt ở vùng đầu của bộ nhớ cao. Bản thân mã của hàm main nằm ở vùng text.'],
+    ['{', '', ''],
+    ['    int *values;', 'stack', 'Biến cục bộ nằm trên stack. Stack mở rộng từ địa chỉ cao xuống thấp khi gọi hàm.'],
+    ['    int i;', 'stack', 'Biến cục bộ nằm trên stack, mất đi khi hàm kết thúc.'],
+    ['    values = (int *)malloc(sizeof(int) * 5);', 'heap', 'Vùng nhớ cấp phát động (malloc) nằm ở heap. Heap mở rộng từ địa chỉ thấp lên cao. Biến con trỏ values vẫn nằm trên stack.'],
+    ['    for (i = 0; i < 5; i++)', 'text', 'Các câu lệnh của chương trình là mã máy, nằm ở vùng text.'],
+    ['        values[i] = i;', 'text', 'Các câu lệnh của chương trình là mã máy, nằm ở vùng text. Dữ liệu ghi vào mảng nằm ở heap.'],
+    ['    return 0;', 'text', 'Các câu lệnh của chương trình là mã máy, nằm ở vùng text.'],
+    ['}', '', '']
+  ],
+  regions: [
+    ['args', 'argc, argv', 'đối số dòng lệnh'],
+    ['stack', 'stack ↓', 'biến cục bộ, lời gọi hàm'],
+    ['free', 'vùng trống', 'stack và heap tiến lại gần nhau'],
+    ['heap', 'heap ↑', 'vùng cấp phát động'],
+    ['udata', 'uninitialized data', 'biến toàn cục chưa gán'],
+    ['idata', 'initialized data', 'biến toàn cục có giá trị đầu'],
+    ['text', 'text', 'mã lệnh của chương trình']
+  ],
+  trans: {
+    new:[{to:'ready', id:'admitted', note:'Hệ điều hành nhận tiến trình vào hệ thống.'}],
+    ready:[{to:'running', id:'dispatch', note:'Bộ điều phối chọn tiến trình này và cấp CPU.'}],
+    running:[
+      {to:'ready', id:'interrupt', note:'Có ngắt (ví dụ hết thời gian được dùng CPU), tiến trình về hàng đợi sẵn sàng.'},
+      {to:'waiting', id:'wait', note:'Tiến trình yêu cầu vào/ra hoặc chờ sự kiện nên nhường CPU.'},
+      {to:'terminated', id:'exit', note:'Tiến trình chạy xong, hệ điều hành thu hồi tài nguyên.'}
+    ],
+    waiting:[{to:'ready', id:'done', note:'Vào/ra hoặc sự kiện đã xong. Tiến trình về Ready, chưa chạy ngay: phải chờ bộ điều phối.'}],
+    terminated:[]
+  },
+  evName: {admitted:'admitted', dispatch:'scheduler dispatch', interrupt:'interrupt', exit:'exit', wait:'I/O or event wait', done:'I/O or event completion'},
+  cs: [
+    {t:'P0 đang chạy', d:'CPU giữ bộ đếm lệnh và thanh ghi của P0. P1 đang ở hàng đợi sẵn sàng.',
+      cpu:{who:'P0', pc:120, r1:7}, p0:{st:'running', pc:'—', r1:'—'}, p1:{st:'ready', pc:840, r1:3}, on:'cpu'},
+    {t:'Có ngắt hoặc lời gọi hệ thống', d:'P0 bị ngắt hoặc tự gọi hệ thống. CPU chuyển sang chạy mã của hệ điều hành.',
+      cpu:{who:'hệ điều hành', pc:120, r1:7}, p0:{st:'running', pc:'—', r1:'—'}, p1:{st:'ready', pc:840, r1:3}, on:'cpu'},
+    {t:'Lưu trạng thái của P0 vào PCB0', d:'Bộ đếm lệnh và thanh ghi của P0 được ghi vào PCB0. Trạng thái P0 đổi (về ready hoặc waiting).',
+      cpu:{who:'hệ điều hành', pc:120, r1:7}, p0:{st:'ready', pc:120, r1:7}, p1:{st:'ready', pc:840, r1:3}, on:'p0'},
+    {t:'Chọn tiến trình tiếp theo', d:'Bộ điều phối chọn P1 từ hàng đợi sẵn sàng.',
+      cpu:{who:'hệ điều hành', pc:120, r1:7}, p0:{st:'ready', pc:120, r1:7}, p1:{st:'ready', pc:840, r1:3}, on:'p1'},
+    {t:'Khôi phục trạng thái của P1 từ PCB1', d:'Hệ điều hành nạp bộ đếm lệnh và thanh ghi của P1 vào CPU.',
+      cpu:{who:'hệ điều hành', pc:840, r1:3}, p0:{st:'ready', pc:120, r1:7}, p1:{st:'running', pc:840, r1:3}, on:'p1'},
+    {t:'P1 chạy tiếp đúng chỗ đã dừng', d:'CPU trao cho P1. Các bước từ 2 đến 5 là thời gian CPU không làm việc cho tiến trình nào.',
+      cpu:{who:'P1', pc:840, r1:3}, p0:{st:'ready', pc:120, r1:7}, p1:{st:'running', pc:840, r1:3}, on:'cpu'}
+  ],
+  quiz: {
+    s1:[['Chương trình trên đĩa và tiến trình khác nhau ở điểm nào?','Chương trình là thực thể thụ động (mã, dữ liệu, thư viện nằm trên đĩa). Tiến trình là thực thể chủ động: đã được nạp vào RAM, có bộ đếm lệnh và tập tài nguyên, và CPU đang thi hành nó.'],['Biến cục bộ int i và vùng cấp phát bằng malloc nằm ở đâu trong bộ nhớ?','int i nằm trên stack. Vùng malloc nằm ở heap (con trỏ trỏ tới nó vẫn nằm trên stack).']],
+    s2:[['Tiến trình đang Running gọi đọc file chậm. Nó chuyển sang trạng thái nào, và khi đọc xong thì đi đâu?','Running chuyển sang Waiting (I/O or event wait). Khi xong, nó về Ready (I/O or event completion), chứ không về thẳng Running; phải chờ bộ điều phối cấp CPU.'],['Vì sao một tiến trình Ready chưa chạy được ngay?','Mỗi processor mỗi lúc chỉ xử lý một tiến trình, nên các tiến trình khác phải ở hàng đợi chờ đến lượt.']],
+    s3:[['PCB dùng để làm gì?','Biểu diễn một tiến trình trong hệ thống và xác định duy nhất nó. PCB lưu trạng thái, bộ đếm lệnh, các thanh ghi... để dừng rồi chạy tiếp đúng chỗ.'],['Vì sao chuyển ngữ cảnh bị coi là lãng phí?','Trong lúc lưu PCB cũ và nạp PCB mới, CPU không làm việc cho tiến trình nào.']]
+  }
+};
+
+const $ = s => document.querySelector(s);
+const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
+
+$('#themeBtn').addEventListener('click', () => {
+  const d = document.documentElement, n = d.dataset.theme === 'dark' ? 'light' : 'dark';
+  d.dataset.theme = n; try { localStorage.setItem('theme', n); } catch (e) {}
+});
+
+// Mục lục, thanh điều hướng nhanh và kiểm tra nhanh
+const secs = [...document.querySelectorAll('main > section')];
+secs.forEach((s, i) => {
+  $('#toc').append(el('li', {}, el('a', {href:'#' + s.id}, el('b', {}, String(i + 1)), s.dataset.title)));
+  $('#barNums').append(el('a', {href:'#' + s.id, title:(i + 1) + '. ' + s.dataset.title, ariaLabel:'Phần ' + (i + 1) + ': ' + s.dataset.title}, String(i + 1)));
+});
+function setCurrent(id){
+  document.querySelectorAll('#toc a, #barNums a').forEach(a => a.hash === '#' + id ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current'));
+  const s = secs.find(x => x.id === id); if (s) $('#barNow').textContent = (secs.indexOf(s) + 1) + '. ' + s.dataset.title;
+}
+if ('IntersectionObserver' in window) {
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) setCurrent(e.target.id); }), {rootMargin: '-20% 0px -70% 0px'});
+  secs.forEach(s => io.observe(s));
+  new IntersectionObserver(es => es.forEach(e => $('#bar').classList.toggle('show', !e.isIntersecting && e.boundingClientRect.top < 0))).observe($('#toc'));
+}
+document.querySelectorAll('[data-quiz]').forEach(box => (DATA.quiz[box.dataset.quiz] || []).forEach(([q, a]) => box.append(el('details', {}, el('summary', {}, q), el('p', {}, a)))));
+
+// Phần 1: bố cục bộ nhớ, bấm dòng mã để thấy nó nằm ở vùng nào
+const REG = {};
+$('#memCol').append(el('div', {className:'hi'}, 'địa chỉ cao'));
+DATA.regions.forEach(([id, name, hint]) => { const r = el('div', {className:'reg' + (id === 'free' ? ' free' : '')}, name, el('small', {}, hint)); REG[id] = r; $('#memCol').append(r); });
+$('#memCol').append(el('div', {className:'lo'}, 'địa chỉ thấp (0)'));
+DATA.code.forEach(([line, reg, note], i) => {
+  const b = el('button', {className:'codeline', type:'button', onclick:() => pickCode(i)}, el('span', {className:'n'}, String(i + 1)), line);
+  b.setAttribute('aria-label', 'Dòng ' + (i + 1) + ': ' + line.trim()); $('#memCode').append(b);
+});
+function pickCode(i){
+  [...$('#memCode').children].forEach((b, k) => b.setAttribute('aria-pressed', String(k === i)));
+  const [line, reg, note] = DATA.code[i];
+  Object.entries(REG).forEach(([id, r]) => r.classList.toggle('on', id === reg));
+  $('#memStatus').replaceChildren(el('b', {}, line.trim()), el('span', {}, note || 'Dấu mở/đóng khối, không tạo vùng nhớ riêng.'));
+}
+pickCode(8);
+
+// Phần 2: sơ đồ trạng thái
+const stState = {cur: 'new', path: ['new']};
+function renderState(note){
+  Object.keys(DATA.trans).forEach(s => $('#s-' + s).classList.toggle('on', s === stState.cur));
+  const opts = DATA.trans[stState.cur];
+  Object.values(DATA.trans).flat().forEach(t => { const on = opts.some(o => o.id === t.id); $('#t-' + t.id).classList.toggle('on', on); $('#l-' + t.id).classList.toggle('on', on); });
+  $('#stBtns').replaceChildren(...opts.map(o => el('button', {className:'chip', type:'button', onclick:() => goState(o)}, el('i'), DATA.evName[o.id] + ' → ' + o.to)),
+    el('button', {className:'btn', type:'button', onclick:() => { stState.cur = 'new'; stState.path = ['new']; renderState(); }}, 'Làm lại'));
+  $('#stStatus').replaceChildren(el('b', {}, 'Đang ở: ' + stState.cur + (opts.length ? '' : ' (kết thúc)')),
+    el('span', {}, note || (opts.length ? 'Các mũi tên đang sáng là những lần chuyển có thể xảy ra tiếp theo.' : 'Tiến trình đã kết thúc, không còn chuyển trạng thái nào.')),
+    el('div', {className:'why'}, 'Đường đã đi: ' + stState.path.join(' → ')));
+}
+function goState(o){ stState.cur = o.to; stState.path.push(o.to); renderState(DATA.evName[o.id] + ': ' + o.note); }
+renderState();
+
+// Phần 3: chuyển ngữ cảnh từng bước
+let cs = 0;
+const cell = (title, o, on) => el('div', {className:'cell' + (on ? ' on' : '')}, el('b', {}, title), el('dl', {}, ...Object.entries(o).flatMap(([k, v]) => [el('dt', {}, k + ':'), el('dd', {}, String(v)), el('br')])));
+function renderCs(){
+  const s = DATA.cs[cs];
+  $('#csBox').replaceChildren(
+    cell('PCB của P0', {'trạng thái': s.p0.st, 'bộ đếm lệnh': s.p0.pc, 'thanh ghi R1': s.p0.r1}, s.on === 'p0'),
+    cell('CPU (đang chạy: ' + s.cpu.who + ')', {'bộ đếm lệnh': s.cpu.pc, 'thanh ghi R1': s.cpu.r1}, s.on === 'cpu'),
+    cell('PCB của P1', {'trạng thái': s.p1.st, 'bộ đếm lệnh': s.p1.pc, 'thanh ghi R1': s.p1.r1}, s.on === 'p1'));
+  $('#csStatus').replaceChildren(el('b', {}, s.t), el('span', {}, s.d));
+  $('#csCnt').textContent = 'Bước ' + (cs + 1) + '/' + DATA.cs.length;
+  $('#csBack').disabled = cs === 0; $('#csNext').disabled = cs === DATA.cs.length - 1;
+}
+$('#csNext').addEventListener('click', () => { if (cs < DATA.cs.length - 1) { cs++; renderCs(); } });
+$('#csBack').addEventListener('click', () => { if (cs > 0) { cs--; renderCs(); } });
+$('#csReset').addEventListener('click', () => { cs = 0; renderCs(); });
+renderCs();
+// ===== Bổ sung cho phần 4 đến 8 =====
+Object.assign(DATA.quiz, {
+  s4: [['Ready-queue và Device-queue khác nhau thế nào?', 'Ready-queue chứa các tiến trình trong bộ nhớ đang sẵn sàng thực thi, chờ được cấp CPU. Device-queue chứa các tiến trình đang đợi một thiết bị vào/ra; mỗi thiết bị có một hàng đợi riêng.'],
+       ['Vì sao cần trộn tiến trình thiên về vào/ra với thiên về tính toán?', 'Toàn tiến trình vào/ra thì hàng đợi sẵn sàng rỗng, lãng phí CPU. Toàn tiến trình tính toán thì hàng đợi thiết bị rỗng, lãng phí thiết bị.'],
+       ['Điều phối công việc và điều phối CPU khác nhau về tần suất thế nào?', 'Điều phối công việc chạy không thường xuyên (giây, phút) và điều khiển mức độ đa chương trình. Điều phối CPU chạy rất thường xuyên (vài mili-giây) nên phải nhanh.']],
+  s5: [['Khi nào một tiến trình con trở thành mồ côi (orphan)?', 'Khi tiến trình cha kết thúc trước tiến trình con.'],
+       ['Trong chương trình fork mẫu, tiến trình nào gọi execlp và tiến trình nào gọi wait?', 'Tiến trình con (nhánh pid == 0) gọi execlp để chạy /bin/ls. Tiến trình cha (nhánh còn lại) gọi wait để đợi con kết thúc.']],
+  s6: [['Vì sao vùng đệm hữu hạn chỉ dùng được BUFFER_SIZE − 1 phần tử trong cách làm của slide?', 'Buffer rỗng (in == out) và buffer đầy đều dẫn tới in và out gần nhau. Để phân biệt phải luôn chừa một ô trống, nên buffer đầy khi (in + 1) % BUFFER_SIZE == out.'],
+       ['Bộ nhớ chia sẻ và truyền thông điệp khác nhau chủ yếu ở đâu?', 'Bộ nhớ chia sẻ: các tiến trình dùng chung một vùng nhớ chính, người lập trình viết mã tường minh. Truyền thông điệp: trao đổi bằng send/receive qua hệ thống, không dùng biến chia sẻ, thường dùng cho hệ phân tán.'],
+       ['receive kiểu blocking khác non-blocking thế nào?', 'Blocking: phải đợi đến khi có thông điệp. Non-blocking: trả về ngay, hoặc một thông điệp hợp lệ, hoặc giá trị null.']],
+  s7: [['Luồng và tiến trình khác nhau ở những gì dùng chung và những gì riêng?', 'Các luồng cùng tiến trình dùng chung mã, dữ liệu, heap và file đang mở. Mỗi luồng có riêng ID, bộ đếm chương trình, thanh ghi và stack.'],
+       ['Vì sao tạo và luân chuyển luồng ít tốn kém hơn tiến trình?', 'Theo slide: luồng dùng chung không gian địa chỉ của tiến trình nên tạo và luân chuyển không tốn kém. Đổi lại, không gian địa chỉ chung cần được bảo vệ.']],
+  s8: [['Mô hình nhiều–một: một luồng người dùng gọi vào/ra và bị chờ thì sao?', 'Toàn bộ tiến trình bị khóa, vì mọi luồng người dùng cùng ánh xạ tới một luồng hệ thống.'],
+       ['Mô hình nào có ưu điểm của cả hai mô hình còn lại?', 'Nhiều–nhiều: tạo nhiều luồng theo yêu cầu, chạy song song trên nhiều vi xử lý, và một luồng bị khóa thì nhân cho luồng khác chạy.'],
+       ['Với y = 1 ban đầu, x ← y + 1 của T1 có thể cho những giá trị nào khi T2 chạy y ← 2 rồi y ← y * 2?', 'x có thể bằng 2, 3 hoặc 5, tùy T1 đọc y trước, giữa hay sau các lệnh của T2. Kết quả phụ thuộc trật tự truy nhập biến dùng chung.']]
+});
+['s4', 's5', 's6', 's7', 's8'].forEach(id => { const box = document.querySelector('[data-quiz="' + id + '"]'); DATA.quiz[id].forEach(([q, a]) => box.append(el('details', {}, el('summary', {}, q), el('p', {}, a)))); });
+
+const btn = (label, fn, off) => { const b = el('button', {className: 'btn', type: 'button', onclick: fn}, label); if (off) b.disabled = true; return b; };
+const setP = (b, v) => b.setAttribute('aria-pressed', String(v));
+
+// Phần 4: hàng đợi
+const Q = {ready: ['P1', 'P2', 'P3'], cpu: null, dev: [], n: 3};
+const pcs = (host, arr, cls) => host.replaceChildren(...(arr.length ? arr.map(n => el('span', {className: 'pc ' + (cls || '')}, n)) : [el('span', {className: 'muted'}, '(trống)')]));
+function renderQ(msg){
+  pcs($('#qReady'), Q.ready); pcs($('#qCpu'), Q.cpu ? [Q.cpu] : [], 'run'); pcs($('#qDev'), Q.dev);
+  const idle = !Q.cpu && !Q.ready.length;
+  $('#qBtns').replaceChildren(
+    btn('Tiến trình mới vào', () => { Q.ready.push('P' + (++Q.n)); renderQ('Tiến trình mới vào hàng đợi sẵn sàng.'); }, Q.n >= 9),
+    btn('Cấp CPU (dispatch)', () => { Q.cpu = Q.ready.shift(); renderQ('Bộ điều phối CPU lấy tiến trình đầu hàng đợi sẵn sàng và cấp CPU cho nó.'); }, !!Q.cpu || !Q.ready.length),
+    btn('Hết thời gian dùng CPU', () => { Q.ready.push(Q.cpu); Q.cpu = null; renderQ('Hết thời gian sử dụng processor: tiến trình về cuối hàng đợi sẵn sàng.'); }, !Q.cpu),
+    btn('Yêu cầu vào/ra', () => { Q.dev.push(Q.cpu); Q.cpu = null; renderQ('Tiến trình yêu cầu vào/ra nên rời CPU và vào hàng đợi của thiết bị.'); }, !Q.cpu),
+    btn('Vào/ra xong', () => { Q.ready.push(Q.dev.shift()); renderQ('Thiết bị vào/ra thực hiện xong: tiến trình về hàng đợi sẵn sàng.'); }, !Q.dev.length),
+    btn('Kết thúc', () => { const p = Q.cpu; Q.cpu = null; renderQ(p + ' đã kết thúc và rời hệ thống.'); }, !Q.cpu),
+    btn('Làm lại', () => { Q.ready = ['P1', 'P2', 'P3']; Q.cpu = null; Q.dev = []; Q.n = 3; renderQ(); }));
+  $('#qStatus').replaceChildren(el('b', {}, msg || 'Trạng thái ban đầu'),
+    el('span', {className: 'muted'}, idle ? 'Hàng đợi sẵn sàng rỗng và CPU không có việc: CPU bị lãng phí.' : 'Đang sẵn sàng: ' + Q.ready.length + ' · đang chờ thiết bị: ' + Q.dev.length));
+}
+renderQ();
+
+// Phần 5: cây tiến trình
+const PT0 = () => ({pid: 1, name: 'systemd', kids: [
+  {pid: 8415, name: 'logind', kids: [{pid: 8416, name: 'bash', kids: [{pid: 9298, name: 'ps', kids: []}, {pid: 9204, name: 'vim', kids: []}]}]},
+  {pid: 2808, name: 'python', kids: []},
+  {pid: 3028, name: 'sshd', kids: [{pid: 3610, name: 'sshd', kids: [{pid: 4005, name: 'tcsh', kids: []}]}]}]});
+let PT = PT0(), ptSel = 1, ptNext = 10001, orphans = [];
+function findNode(n, pid, parent){ if (n.pid === pid) return {n, parent}; for (const k of n.kids) { const r = findNode(k, pid, n); if (r) return r; } return null; }
+function renderTree(msg){
+  const mk = n => {
+    const b = el('button', {className: 'tn', type: 'button', onclick: () => { ptSel = n.pid; renderTree(); }}, n.name, el('small', {}, 'pid ' + n.pid));
+    setP(b, n.pid === ptSel);
+    const li = el('li', {}, b); if (n.kids.length) li.append(el('ul', {}, ...n.kids.map(mk))); return li;
+  };
+  const host = $('#ptree'); host.replaceChildren(el('ul', {}, mk(PT)));
+  if (orphans.length) host.append(el('p', {className: 'muted'}, 'Tiến trình mồ côi (orphan):'), el('div', {}, ...orphans.map(o => el('span', {className: 'tn orph'}, o.name, el('small', {}, 'pid ' + o.pid)))));
+  const sel = findNode(PT, ptSel);
+  $('#ptBtns').replaceChildren(
+    btn('fork(): tạo tiến trình con', () => { const c = {pid: ptNext++, name: 'tiến trình mới', kids: []}; sel.n.kids.push(c); ptSel = c.pid; renderTree('Tiến trình ' + sel.n.name + ' (pid ' + sel.n.pid + ') tạo tiến trình con pid ' + c.pid + '. Hai bên là cha và con.'); }),
+    btn('Kết thúc tiến trình đã chọn', () => {
+      const {n, parent} = sel; parent.kids = parent.kids.filter(k => k !== n);
+      const had = n.kids.length; orphans.push(...n.kids); ptSel = parent.pid;
+      renderTree(n.name + ' (pid ' + n.pid + ') kết thúc.' + (had ? ' ' + had + ' tiến trình con của nó trở thành mồ côi (orphan).' : ''));
+    }, !sel || sel.n.pid === 1),
+    btn('Làm lại', () => { PT = PT0(); ptSel = 1; ptNext = 10001; orphans = []; renderTree(); }));
+  $('#ptStatus').replaceChildren(el('b', {}, msg || 'Đang chọn: ' + sel.n.name + ' (pid ' + sel.n.pid + ')'),
+    el('span', {className: 'muted'}, sel.n.pid === 1 ? 'Tiến trình gốc không kết thúc trong ví dụ này.' : 'Cha: ' + (sel.parent ? sel.parent.name + ' (pid ' + sel.parent.pid + ')' : '—') + ' · số con: ' + sel.n.kids.length));
+}
+renderTree();
+
+// Dòng mã bấm được (dùng chung)
+function annotCode(rootSel, statusSel, lines, start){
+  const root = $(rootSel);
+  lines.forEach(([line], i) => { const b = el('button', {className: 'codeline', type: 'button', onclick: () => pick(i)}, el('span', {className: 'n'}, String(i + 1)), line || ' '); b.setAttribute('aria-label', 'Dòng ' + (i + 1) + ': ' + (line.trim() || 'trống')); root.append(b); });
+  function pick(i){ [...root.children].forEach((b, k) => setP(b, k === i)); const [line, note] = lines[i]; $(statusSel).replaceChildren(el('b', {}, line.trim() || 'Dòng trống'), el('span', {}, note || 'Không có gì thêm ở dòng này.')); }
+  pick(start);
+}
+annotCode('#forkCode', '#forkStatus', [
+  ['#include <sys/types.h>', 'Cung cấp kiểu pid_t để lưu định danh tiến trình.'],
+  ['#include <sys/wait.h>', 'Khai báo wait(). Slide bỏ sót dòng này nên đã được thêm vào.'],
+  ['#include <stdio.h>', 'Cung cấp printf và fprintf.'],
+  ['#include <unistd.h>', 'Khai báo fork() và execlp().'],
+  ['int main() {', ''],
+  ['    pid_t pid;', 'Biến chứa kết quả của fork().'],
+  ['    pid = fork();', 'Tạo tiến trình con. Từ đây có hai tiến trình cùng chạy tiếp các dòng bên dưới, và fork() trả về giá trị khác nhau ở hai bên.'],
+  ['    if (pid < 0) {', 'pid âm: fork() thất bại, không tạo được tiến trình con.'],
+  ['        fprintf(stderr, "Fork Failed");', 'In thông báo lỗi.'],
+  ['        return 1;', ''],
+  ['    } else if (pid == 0) {', 'pid bằng 0: đây là tiến trình con.'],
+  ['        execlp("/bin/ls", "ls", NULL);', 'Tiến trình con thay chương trình của nó bằng /bin/ls. Từ đây nó chạy lệnh ls.'],
+  ['    } else {', 'Các trường hợp còn lại: đây là tiến trình cha.'],
+  ['        wait(NULL);', 'Tiến trình cha đợi tiến trình con kết thúc.'],
+  ['        printf("Child Complete");', 'Con đã xong, cha in thông báo.'],
+  ['        return 0;', ''],
+  ['    }', ''],
+  ['}', '']
+], 6);
+
+// Phần 6: vùng đệm vòng
+const BN = 6, B = {buf: Array(BN).fill(null), in: 0, out: 0, n: 0};
+function renderBuf(msg){
+  $('#bufCells').replaceChildren(...B.buf.map((v, i) => { const c = el('div', {className: 'cellb' + (v !== null ? ' full' : '')}, v === null ? '' : String(v)); if (i === B.in) c.append(el('i', {className: 'in'}, 'in')); if (i === B.out) c.append(el('i', {className: 'out'}, 'out')); return c; }));
+  const used = (B.in - B.out + BN) % BN;
+  $('#bufBtns').replaceChildren(
+    btn('Producer: sản xuất', () => { if ((B.in + 1) % BN === B.out) return renderBuf('Buffer đầy: (in + 1) % N == out, producer phải đợi.'); B.buf[B.in] = ++B.n; B.in = (B.in + 1) % BN; renderBuf('Producer đặt sản phẩm ' + B.n + ' vào ô in rồi tăng in.'); }),
+    btn('Consumer: tiêu thụ', () => { if (B.in === B.out) return renderBuf('Buffer rỗng: in == out, consumer phải đợi.'); const v = B.buf[B.out]; B.buf[B.out] = null; B.out = (B.out + 1) % BN; renderBuf('Consumer lấy sản phẩm ' + v + ' ở ô out rồi tăng out.'); }),
+    btn('Làm lại', () => { B.buf.fill(null); B.in = 0; B.out = 0; B.n = 0; renderBuf(); }));
+  $('#bufStatus').replaceChildren(el('b', {}, msg || 'Buffer rỗng'), el('span', {className: 'muted'}, 'Đang chứa ' + used + ' sản phẩm. Với N = ' + BN + ' ô, tối đa dùng được N − 1 = ' + (BN - 1) + ' sản phẩm.'));
+}
+renderBuf();
+
+// Phần 7: chia vòng lặp cho các luồng
+const HUE = [215, 160, 28, 280];
+function renderVec(){
+  const t = +$('#nth').value, n = 16; $('#nthv').textContent = t;
+  const start = i => Math.floor(i * n / t), owner = k => { let o = 0; for (let i = 0; i < t; i++) if (k >= start(i)) o = i; return o; };
+  $('#vecCells').replaceChildren(...Array.from({length: n}, (_, k) => el('div', {className: 'tcell', style: '--c:' + HUE[owner(k)]}, 'k' + k)));
+  $('#vecStatus').replaceChildren(el('b', {}, t === 1 ? 'Một luồng chạy cả vòng lặp' : t + ' luồng chạy song song'),
+    ...Array.from({length: t}, (_, i) => el('div', {}, 'Luồng ' + (i + 1) + ': fn(' + start(i) + ', ' + (i + 1 === t ? n : start(i + 1)) + '), tính a[k] = b[k] * c[k] với k từ ' + start(i) + ' đến ' + ((i + 1 === t ? n : start(i + 1)) - 1))),
+    el('span', {className: 'muted'}, 'Trên máy nhiều vi xử lý các luồng chạy song song thực sự; trên một vi xử lý chúng luân phiên nhau.'));
+}
+$('#nth').value = 2; $('#nth').addEventListener('input', renderVec); renderVec();
+
+// Phần 8: mô hình đa luồng
+const MD = [
+  {name: 'Nhiều – một', K: 1, map: u => 0, par: 'Không chạy song song được trên nhiều vi xử lý.'},
+  {name: 'Một – một', K: 4, map: u => u, par: 'Tối đa 4 luồng chạy song song, mỗi luồng người dùng có một luồng hệ thống.'},
+  {name: 'Nhiều – nhiều', K: 2, map: u => u % 2, par: 'Tối đa 2 luồng hệ thống chạy song song; nhân điều phối các luồng người dùng lên chúng.'}
+];
+let mdSel = 0; const mdBlock = new Set();
+function renderMd(){
+  const m = MD[mdSel];
+  $('#mdBtns').replaceChildren(...MD.map((x, i) => { const b = el('button', {className: 'chip', type: 'button', onclick: () => { mdSel = i; mdBlock.clear(); renderMd(); }}, el('i'), x.name); setP(b, i === mdSel); return b; }));
+  const kb = new Set([...mdBlock].map(u => m.map(u)));
+  const runnable = u => !mdBlock.has(u) && (mdSel === 2 ? kb.size < m.K : !kb.has(m.map(u)));
+  const ut = Array.from({length: 4}, (_, u) => { const cls = mdBlock.has(u) ? 'blocked' : runnable(u) ? 'ok' : 'stuck'; const b = el('button', {className: 'th ' + cls, type: 'button', onclick: () => { mdBlock.has(u) ? mdBlock.delete(u) : mdBlock.add(u); renderMd(); }}, 'U' + (u + 1)); b.setAttribute('aria-label', 'Luồng người dùng ' + (u + 1) + (mdBlock.has(u) ? ', đang chờ vào/ra' : runnable(u) ? ', chạy được' : ', bị kéo theo')); return b; });
+  const kt = Array.from({length: m.K}, (_, k) => el('span', {className: 'kt' + (kb.has(k) ? ' blocked' : '')}, 'K' + (k + 1)));
+  $('#mdBox').replaceChildren(el('div', {}, el('b', {}, 'Luồng người dùng: '), ...ut), el('div', {}, el('b', {}, 'Luồng hệ thống: '), ...kt));
+  const nOk = [0, 1, 2, 3].filter(runnable).length;
+  $('#mdStatus').replaceChildren(el('b', {}, m.name + ': ' + nOk + '/4 luồng người dùng chạy được' + (mdBlock.size ? ' (' + mdBlock.size + ' luồng đang chờ vào/ra)' : '')),
+    el('span', {}, m.par), el('div', {className: 'why'}, mdSel === 0 ? 'Mọi luồng người dùng chung một luồng hệ thống, nên một luồng chờ là cả tiến trình chờ.' : mdSel === 1 ? 'Mỗi luồng người dùng có luồng hệ thống riêng, nên luồng chờ không chặn luồng khác.' : 'Luồng bị khóa chiếm một luồng hệ thống, nhân cho các luồng khác chạy trên luồng hệ thống còn lại. Chỉ khi cả hai luồng hệ thống đều bị khóa thì mới chặn hết.'));
+}
+renderMd();
+
+// Phần 8: ba thứ tự chạy với biến dùng chung
+const OPS = {T1: ['T1', 'x ← y + 1', s => { s.x = s.y + 1; }], A: ['T2', 'y ← 2', s => { s.y = 2; }], B: ['T2', 'y ← y * 2', s => { s.y = s.y * 2; }]};
+const IL = [
+  {k: 'T1 chạy trước', order: ['T1', 'A', 'B'], why: 'T1 đọc y khi y còn bằng 1.'},
+  {k: 'T1 chạy giữa', order: ['A', 'T1', 'B'], why: 'T1 đọc y sau khi T2 đặt y = 2 nhưng trước khi nhân đôi.'},
+  {k: 'T1 chạy sau', order: ['A', 'B', 'T1'], why: 'T1 đọc y sau khi T2 làm xong cả hai lệnh.'}
+];
+IL.forEach((o, i) => { const b = el('button', {className: 'chip', type: 'button', onclick: () => pickIl(i)}, el('i'), o.k); $('#ilBtns').append(b); });
+function pickIl(i){
+  [...$('#ilBtns').children].forEach((b, k) => setP(b, k === i));
+  const o = IL[i], s = {y: 1, x: '?'};
+  const rows = o.order.map((key, step) => { const [who, text, fn] = OPS[key]; fn(s); return el('tr', {}, el('td', {}, String(step + 1)), el('td', {}, who), el('td', {}, el('code', {}, text)), el('td', {}, String(s.y)), el('td', {}, String(s.x))); });
+  $('#ilStatus').replaceChildren(el('b', {}, o.k + ': x = ' + s.x),
+    el('div', {className: 'tblw'}, el('table', {className: 'tbl'}, el('thead', {}, el('tr', {}, ...['Bước', 'Luồng', 'Lệnh', 'y sau lệnh', 'x'].map(h => el('th', {}, h)))), el('tbody', {}, ...rows))),
+    el('span', {}, o.why), el('div', {className: 'why'}, 'Cả ba thứ tự đều có thể xảy ra, cho x lần lượt bằng 2, 3 và 5.'));
+}
+pickIl(0);
+</script>
+</body>
+</html>

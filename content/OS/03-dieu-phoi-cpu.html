@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OS 3: Điều phối CPU</title>
+<script>
+// Luôn sáng mặc định; chỉ tối khi người đọc tự bấm đổi
+(function(){var t=null;try{t=localStorage.getItem('theme')}catch(e){}
+document.documentElement.dataset.theme=t==='dark'?'dark':'light';})();
+</script>
+<style>
+:root{
+  --bg:#f6f8fc; --card:#ffffff; --fg:#0f172a; --muted:#566277; --line:#e2e8f2; --hov:#f3f6fc;
+  --accent:#2563eb; --accent2:#7c3aed; --accent-soft:#eaf0ff; --hl:#fff0a8; --hl-fg:#5c4600;
+  --grad:linear-gradient(120deg,#2563eb,#7c3aed);
+  --mono:ui-monospace,"Cascadia Code",Consolas,Menlo,monospace;
+  --grid:rgba(15,23,42,.05);
+  --sh:0 1px 2px rgba(15,23,42,.05),0 8px 24px -12px rgba(15,23,42,.12);
+  --sh-hi:0 2px 4px rgba(15,23,42,.06),0 18px 40px -14px rgba(37,99,235,.28);
+  --ts:92%; --tl:94%; --tcl:42%;
+  --glow1:rgba(37,99,235,.16); --glow2:rgba(124,58,237,.13);
+  --ok:#16a34a; --bad:#dc2626; --warn:#b45309; --warn-soft:#fff4d6;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#0a0e16; --card:#121826; --fg:#e8edf6; --muted:#9aa6ba; --line:#212a3b; --hov:#18202f;
+  --accent:#7ab2ff; --accent2:#a78bfa; --accent-soft:#15233d; --hl:#4a3d00; --hl-fg:#ffe58a;
+  --grad:linear-gradient(120deg,#7ab2ff,#a78bfa);
+  --grid:rgba(232,237,246,.045);
+  --sh:0 1px 2px rgba(0,0,0,.3),0 8px 24px -12px rgba(0,0,0,.5);
+  --sh-hi:0 2px 4px rgba(0,0,0,.4),0 18px 40px -14px rgba(122,178,255,.25);
+  --ts:45%; --tl:20%; --tcl:74%;
+  --glow1:rgba(122,178,255,.13); --glow2:rgba(167,139,250,.11);
+  --ok:#4ade80; --bad:#f87171; --warn:#fbbf24; --warn-soft:#3a2f00;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;scrollbar-width:none}
+*::-webkit-scrollbar{display:none}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);min-height:100vh;font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.skip{position:absolute;left:12px;top:-56px;z-index:30;background:var(--accent);color:#fff;padding:9px 16px;border-radius:10px;text-decoration:none;font-weight:600}
+.skip:focus{top:12px}
+.bg{position:absolute;inset:0 0 auto;height:560px;z-index:-1;pointer-events:none;
+  background:radial-gradient(640px 320px at 12% -4%,var(--glow1),transparent 70%),radial-gradient(560px 300px at 88% 6%,var(--glow2),transparent 70%),
+  linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:auto,auto,32px 32px,32px 32px;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent)}
+.wrap{max-width:920px;margin:0 auto;padding:0 24px 64px}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:20px 0}
+.brand{display:flex;align-items:center;gap:11px;font-weight:700;letter-spacing:-.01em}
+.logo{width:34px;height:34px;border-radius:10px;background:var(--grad);display:grid;place-items:center;color:#fff;box-shadow:0 6px 16px -6px var(--accent)}
+:root[data-theme="dark"] .logo{color:#0b1220}
+.btn{font:inherit;font-size:13px;font-weight:500;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 14px;min-height:38px;cursor:pointer;box-shadow:var(--sh)}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn[disabled]{opacity:.45;cursor:default}
+.hero{padding:24px 0 8px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:5px 13px 5px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card);font:600 12.5px system-ui,sans-serif;color:var(--muted);box-shadow:var(--sh)}
+.pill i{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,.18)}
+h1{font-size:clamp(2.1rem,6vw,3.3rem);line-height:1.06;letter-spacing:-.04em;font-weight:800;margin:18px 0 14px}
+.grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{max-width:660px;color:var(--muted);font-size:1.08rem;margin:0 0 22px}
+.lead b{color:var(--fg);font-weight:600}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 30px;padding:0;list-style:none}
+.toc a{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:500;color:var(--fg);text-decoration:none;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 8px;min-height:36px;transition:all .15s}
+.toc a b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font:700 12px var(--mono)}
+.toc a:hover{border-color:var(--accent);transform:translateY(-1px)}
+.toc a[aria-current="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.toc a[aria-current="true"] b{background:var(--bg);color:var(--fg)}
+/* thanh điều hướng nhanh: dính ở mép trên khi mục lục đã cuộn khỏi màn hình */
+.bar{position:fixed;top:10px;left:50%;z-index:25;width:min(100% - 24px,880px);transform:translate(-50%,-90px);opacity:0;visibility:hidden;transition:transform .25s,opacity .25s,visibility 0s .25s;
+  display:flex;align-items:center;gap:6px;padding:6px 8px;background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh-hi)}
+.bar.show{transform:translate(-50%,0);opacity:1;visibility:visible;transition:transform .25s,opacity .25s}
+.bar a{display:grid;place-items:center;flex:none;min-width:30px;height:30px;border-radius:9px;border:1px solid transparent;color:var(--fg);text-decoration:none;font:700 12.5px var(--mono)}
+.bar a:hover{border-color:var(--accent);color:var(--accent)}
+.bar a[aria-current="true"]{background:var(--fg);color:var(--bg)}
+.bar .up{border-color:var(--line);background:var(--card);font:600 16px system-ui;margin-right:2px}
+.bar .nums{display:flex;gap:3px;flex-wrap:nowrap}
+.bar .now{flex:1;min-width:0;margin-left:6px;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+@media(max-width:640px){.bar .now{display:none}.bar{gap:3px;padding:5px 6px}.bar a{min-width:26px;height:28px}.bar .nums{gap:1px}}
+.howto{margin:18px 0 30px;border:1px dashed var(--line);border-radius:14px;padding:12px 16px;color:var(--muted);font-size:14px;background:var(--card)}
+.howto b{color:var(--fg)}
+.card{position:relative;overflow:hidden;background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--sh);padding:24px 24px 22px;margin-bottom:24px;scroll-margin-top:68px}
+.card::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,hsl(var(--h,215) 75% 55%),hsl(calc(var(--h,215) + 45) 75% 62%))}
+.card header{display:flex;gap:14px;align-items:center;margin-bottom:6px}
+.num{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font:800 17px var(--mono);background:hsl(var(--h,215) var(--ts) var(--tl));color:hsl(var(--h,215) 65% var(--tcl))}
+.card h2{font-size:1.28rem;letter-spacing:-.02em;margin:0;line-height:1.25}
+.card h3{font-size:1rem;margin:20px 0 6px}
+.card p{margin:8px 0}
+.lab{display:inline-block;font:700 11px/1 system-ui;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:4px 8px;margin:18px 0 4px}
+.lab.v{background:var(--warn-soft);color:var(--warn)}
+.lab.g{background:var(--accent-soft);color:var(--accent)}
+.lab.t{background:hsl(160 var(--ts) var(--tl));color:hsl(160 65% var(--tcl))}
+.lab.q{background:var(--hov);color:var(--muted);border:1px solid var(--line)}
+.muted{color:var(--muted)}
+code,.mono{font-family:var(--mono);font-size:.9em}
+:not(pre)>code{background:var(--accent-soft);color:var(--accent);padding:1px 6px;border-radius:6px;white-space:nowrap}
+.ana{margin:12px 0;border-left:3px solid hsl(var(--h,215) 60% 60%);padding:6px 14px;background:var(--hov);border-radius:0 12px 12px 0;color:var(--muted)}
+.ana b{color:var(--fg)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:14px;margin:12px 0}
+.box{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--hov)}
+.box b{display:block;margin-bottom:2px}
+.box.on{border-color:var(--accent);background:var(--accent-soft)}
+.status{margin-top:12px;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:12px 16px;background:var(--card)}
+.status b{display:block}
+.why{margin-top:8px;color:var(--muted);font-size:14px}
+.why::before{content:"Vì sao? ";font-weight:700;color:var(--fg)}
+.warn{margin:12px 0;border:1px solid var(--warn);border-radius:12px;padding:10px 14px;background:var(--warn-soft);color:var(--warn)}
+.tbl{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
+.tbl th,.tbl td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.tblw{overflow-x:auto}
+.procs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:14px;margin:12px 0}
+.pbox{border:2px solid hsl(var(--c) 60% 60%);border-radius:16px;padding:10px 14px;background:hsl(var(--c) var(--ts) var(--tl))}
+.pbox b{display:block}
+.pbox .mem{margin-top:6px;border:1px dashed hsl(var(--c) 50% 55%);border-radius:10px;padding:6px 10px;font:12.5px var(--mono);color:var(--fg);background:var(--card)}
+.chain{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin:12px 0}
+.chain .nd{flex:1 1 140px;border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--hov);text-align:center}
+.chain .nd small{display:block;color:var(--muted)}
+.chain .ar{align-self:center;color:var(--muted);font:12px var(--mono);text-align:center;flex:0 0 auto}
+svg.diag{width:100%;height:auto;max-height:300px;display:block}
+.diag .nd rect{fill:var(--card);stroke:var(--line);stroke-width:2}
+.diag .nd text{fill:var(--fg);font:600 14px system-ui,sans-serif;text-anchor:middle}
+.diag .nd .sm{font:12px var(--mono);fill:var(--muted);font-weight:400}
+.diag .nd.on rect{stroke:hsl(var(--h) 70% 50%);fill:hsl(var(--h) var(--ts) var(--tl))}
+.diag .nd.dim{opacity:.38}
+.diag .ln{fill:none;stroke:var(--line);stroke-width:2.5}
+.diag .ln.on{stroke:var(--accent);stroke-dasharray:8 6;animation:flow .8s linear infinite}
+.diag .ln.on.rev{animation-direction:reverse}
+@keyframes flow{to{stroke-dashoffset:-14}}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.chip{display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:13.5px;font-weight:500;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 12px;min-height:36px;cursor:pointer;transition:all .15s}
+.chip i{width:8px;height:8px;border-radius:50%;background:hsl(var(--h,190) 70% 52%)}
+.chip:hover{border-color:var(--accent);transform:translateY(-1px)}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.mw{display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 0 4px}
+.mnode{border:2px solid var(--accent);border-radius:14px;padding:10px 20px;background:var(--accent-soft);font-weight:700;text-align:center}
+.sock{font:12px var(--mono);color:var(--muted);border-left:2px dashed var(--line);padding:2px 0 2px 10px}
+.workers{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.w{border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg);padding:8px 14px;font:13px var(--mono);cursor:pointer;min-width:96px;text-align:center}
+.w:hover{border-color:var(--bad)}
+.w.dead{border-color:var(--bad);color:var(--bad);background:transparent;text-decoration:line-through}
+.w.new{border-color:var(--ok);color:var(--ok)}
+.inst{min-width:120px;text-align:center}
+.inst .bar{height:8px;border-radius:99px;background:var(--line);margin-top:6px;overflow:hidden}
+.inst .bar i{display:block;height:100%;background:var(--grad);width:0;transition:width .25s}
+input[type=range]{width:200px;accent-color:var(--accent)}
+.win{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card);margin:8px 0}
+.win .bar{display:flex;gap:6px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line);background:var(--hov);font:12px var(--mono);color:var(--muted)}
+.win .bar i{width:10px;height:10px;border-radius:50%;background:#ff5f57}.win .bar i:nth-child(2){background:#febc2e}.win .bar i:nth-child(3){background:#28c840}
+.win .bar span{margin-left:8px}
+.codeline{display:block;width:100%;text-align:left;font:13.5px/1.7 var(--mono);color:var(--fg);background:none;border:0;padding:0 14px;cursor:pointer;white-space:pre;border-left:3px solid transparent;overflow-x:auto}
+.codeline:hover{background:var(--hov)}
+.codeline[aria-pressed="true"]{background:var(--accent-soft);border-left-color:var(--accent)}
+.codeline .n{display:inline-block;width:2.2em;color:var(--muted);user-select:none}
+.log{border:1px solid var(--line);border-radius:12px;background:var(--hov);padding:10px 14px;font:13px/1.7 var(--mono);min-height:56px}
+.log .ok{color:var(--ok)}.log .no{color:var(--bad)}
+details{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-top:8px;background:var(--card)}
+summary{cursor:pointer;font-weight:600}
+details p{margin:8px 0 2px;color:var(--muted)}
+.stepper{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.stepper .cnt{font:13px var(--mono);color:var(--muted);margin-left:auto}
+.role{display:inline-block;font:600 12px system-ui;border-radius:999px;padding:2px 10px;background:var(--accent-soft);color:var(--accent);margin-right:6px}
+.foot{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+.foot a{color:var(--accent)}
+kbd{font:12px var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:0 7px;background:var(--card)}
+@media(max-width:640px){.wrap{padding:0 16px 48px}.hero{padding-top:12px}.card{padding:18px 16px}.card header{gap:10px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important;animation:none!important}}
+@media(forced-colors:active){.card,.toc a[aria-current="true"]{border:1px solid}}
+</style>
+<style>
+/* bổ sung riêng cho trang hệ điều hành */
+.banner{background:#fff4d6;color:#6b4e00;text-align:center;padding:6px 12px;font-size:13.5px}
+:root[data-theme="dark"] .banner{background:#3a2f00;color:#ffe58a}
+.memwrap{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start;margin:10px 0}
+@media(max-width:720px){.memwrap{grid-template-columns:1fr}}
+.memcol{display:flex;flex-direction:column;border:2px solid var(--line);border-radius:14px;overflow:hidden;font:13px var(--mono)}
+.memcol .hi,.memcol .lo{padding:4px 12px;background:var(--hov);color:var(--muted);font-size:12px}
+.memcol .reg{padding:10px 12px;border-top:1px solid var(--line);background:var(--card);transition:background .15s}
+.memcol .reg small{display:block;color:var(--muted);font-family:system-ui;font-size:12px}
+.memcol .reg.free{background:repeating-linear-gradient(135deg,transparent 0 8px,var(--hov) 8px 16px);color:var(--muted);text-align:center}
+.memcol .reg.on{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.memcol .reg.on small{color:var(--accent)}
+.sdiag{width:100%;height:auto;max-height:330px;display:block}
+.sdiag .st ellipse{fill:var(--card);stroke:var(--line);stroke-width:2;transition:all .2s}
+.sdiag .st text{fill:var(--fg);font:600 14px system-ui,sans-serif;text-anchor:middle}
+.sdiag .st.on ellipse{stroke:hsl(var(--h) 70% 50%);fill:hsl(var(--h) var(--ts) var(--tl));stroke-width:3}
+.sdiag .tr{fill:none;stroke:var(--line);stroke-width:2.2}
+.sdiag .tr.on{stroke:var(--accent);stroke-width:3;stroke-dasharray:8 6;animation:flow .8s linear infinite}
+.sdiag .lb{fill:var(--muted);font:12px var(--mono);text-anchor:middle}
+.sdiag .lb.on{fill:var(--accent);font-weight:700}
+.sdiag marker path{fill:var(--muted)}
+.cs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px;margin:12px 0}
+.cs .cell{border:2px solid var(--line);border-radius:14px;padding:10px 14px;background:var(--card);transition:all .2s}
+.cs .cell.on{border-color:var(--accent);background:var(--accent-soft)}
+.cs .cell b{display:block;margin-bottom:4px}
+.cs .cell dl{margin:0;font:13px/1.7 var(--mono)}
+.cs .cell dt{display:inline;color:var(--muted)}
+.cs .cell dd{display:inline;margin:0 0 0 6px}
+.box span b{display:inline;margin:0}
+:not(pre)>code{white-space:normal;overflow-wrap:anywhere}
+.pending{opacity:.9}
+.pending p{margin:6px 0 0}
+.lanes{display:grid;grid-template-columns:1fr 130px 1fr;gap:12px;margin:12px 0;align-items:start}
+@media(max-width:720px){.lanes{grid-template-columns:1fr}}
+.lane{border:2px solid var(--line);border-radius:14px;padding:10px 12px;min-height:84px;background:var(--card)}
+.lane h4{margin:0 0 8px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.lane.cpu{border-color:var(--accent);background:var(--accent-soft)}
+.pc{display:inline-flex;align-items:center;justify-content:center;min-width:44px;height:34px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);font:700 13px var(--mono);margin:0 6px 6px 0;padding:0 10px}
+.pc.run{border-color:var(--accent);color:var(--accent)}
+.tree ul{list-style:none;margin:0;padding-left:22px;border-left:2px dashed var(--line)}
+.tree>ul{padding-left:0;border-left:0}
+.tree li{margin:6px 0}
+.tn{display:inline-flex;gap:8px;align-items:center;border:1.5px solid var(--line);border-radius:10px;padding:4px 12px;background:var(--card);color:var(--fg);font:13px var(--mono);cursor:pointer}
+.tn:hover{border-color:var(--accent)}
+.tn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:700}
+.tn small{color:var(--muted)}
+.tn.orph{border-color:var(--warn);color:var(--warn);cursor:default}
+.cells{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 6px}
+.cellb{width:56px;height:44px;border:2px solid var(--line);border-radius:10px;display:grid;place-items:center;font:700 13px var(--mono);background:var(--card);position:relative}
+.cellb.full{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.cellb i{position:absolute;top:-10px;font:700 10px var(--mono);font-style:normal;padding:0 5px;border-radius:5px;background:var(--fg);color:var(--bg)}
+.cellb i.in{left:2px}
+.cellb i.out{right:2px;background:var(--accent2);color:#fff}
+.tcell{width:40px;height:40px;border-radius:9px;display:grid;place-items:center;font:700 12px var(--mono);color:#fff;background:hsl(var(--c) 60% 42%)}
+.th{display:inline-block;border:2px solid var(--line);border-radius:10px;padding:6px 12px;margin:0 6px 6px 0;font:700 13px var(--mono);background:var(--card);color:var(--fg);cursor:pointer}
+.th.ok{border-color:var(--ok);color:var(--ok)}
+.th.blocked{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.th.stuck{border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
+.kt{display:inline-block;border:2px dashed var(--line);border-radius:10px;padding:6px 12px;margin:0 6px 6px 0;font:700 13px var(--mono);color:var(--muted)}
+.kt.blocked{border-color:var(--bad);color:var(--bad)}
+</style>
+</head>
+<body>
+<a class="skip" href="#s1">Bỏ qua tới nội dung</a>
+<div class="bg" aria-hidden="true"></div>
+<nav class="bar" id="bar" aria-label="Điều hướng nhanh"><a class="up" href="#top" aria-label="Lên đầu trang" title="Lên đầu trang">↑</a><span class="nums" id="barNums"></span><span class="now" id="barNow" aria-hidden="true"></span></nav>
+<div class="wrap">
+  <header class="topbar" id="top">
+    <div class="brand"><span class="logo" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9zM9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg></span>Hệ điều hành</div>
+    <button class="btn" id="themeBtn" type="button" aria-label="Đổi giao diện sáng hoặc tối">Sáng / Tối</button>
+  </header>
+
+  <div class="hero">
+    <span class="pill"><i></i>Hệ điều hành · Chương 2 · Điều phối CPU</span>
+    <h1>Điều phối CPU: <span class="grad">ai được chạy tiếp theo</span></h1>
+    <p class="lead">Vì sao cần điều phối, ba cấp điều phối, các tiêu chuẩn đánh giá, và các thuật toán FCFS, SJF, SRTF, Round Robin, hàng đợi đa mức, cùng cách chạy thử từng thuật toán để tự tính thời gian chờ.</p>
+  </div>
+
+  <ol class="toc" id="toc" aria-label="Lộ trình các phần"></ol>
+
+  <main>
+<style>
+.gantt{display:flex;border:2px solid var(--line);border-radius:12px;overflow:hidden;margin:12px 0 2px}
+.gseg{display:grid;place-items:center;min-width:26px;color:#fff;font:700 12px var(--mono);height:44px;background:hsl(var(--c) 60% 42%);border-right:1px solid rgba(255,255,255,.45)}
+.gticks{display:flex;font:11px var(--mono);color:var(--muted);margin-bottom:10px}
+.gticks span{min-width:26px;padding-left:2px}
+</style>
+  <section class="card" id="s1" style="--h:215" data-title="Vì sao cần điều phối">
+    <header><span class="num">1</span><h2>Vì sao cần điều phối: một CPU, nhiều tiến trình</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Hệ thống có một processor thì mỗi lúc chỉ một tiến trình chạy. Trong hệ <b>đơn chương</b>, tiến trình chạy đến khi phải chờ vào/ra, và trong lúc chờ CPU không được dùng: lãng phí.</p>
+    <span class="lab g">Giải pháp</span>
+    <p>Hệ <b>đa chương</b> giữ nhiều tiến trình ở trạng thái sẵn sàng trong bộ nhớ. Khi một tiến trình phải chờ, hệ điều hành lấy lại processor và giao cho tiến trình khác. Điều phối processor là nền tảng của thiết kế hệ điều hành đa nhiệm.</p>
+    <p>Mỗi tiến trình xen kẽ <b>đợt dùng CPU (CPU burst)</b> và <b>đợt chờ vào/ra (I/O burst)</b>. Tiến trình dùng CPU nhiều hơn I/O gọi là <b>CPU-bound</b>; tiến trình dùng phần lớn thời gian để đợi I/O gọi là <b>I/O-bound</b>.</p>
+    <h3>Bộ điều phối chọn khi nào</h3>
+    <p>Bộ điều phối CPU chọn một tiến trình sẵn sàng trong bộ nhớ và cấp CPU cho nó. Quyết định xảy ra trong 4 tình huống:</p>
+    <span class="lab t">Minh họa: bốn tình huống điều phối</span>
+    <div class="row" id="sitBtns" role="group" aria-label="Chọn tình huống"></div>
+    <div class="status" id="sitStatus" role="status"></div>
+    <div class="two">
+      <div class="box"><b>Không trưng dụng (non-preemptive)</b><span class="muted">Tiến trình đã nhận CPU thì độc quyền cho tới khi kết thúc hoặc tự chuyển sang chờ. Không cần phần cứng đặc biệt như đồng hồ ngắt. Dùng ở DOS, Windows 3.1, Macintosh.</span></div>
+      <div class="box"><b>Trưng dụng (preemptive)</b><span class="muted">Tiến trình chỉ được chạy một khoảng thời gian định trước; hết giờ có ngắt thời gian, bộ điều vận (dispatcher) quyết định chạy tiếp hay chọn tiến trình khác. Chống độc chiếm CPU hay "đói CPU". Dùng ở WinNT, UNIX. Rủi ro: tiến trình 1 đang cập nhật dữ liệu dùng chung thì bị ngắt, tiến trình 2 đọc phải dữ liệu dở dang.</span></div>
+    </div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s1"></div>
+  </section>
+
+  <section class="card" id="s2" style="--h:160" data-title="Ba cấp điều phối">
+    <header><span class="num">2</span><h2>Ba cấp điều phối: dài hạn, trung hạn, ngắn hạn</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Quản lý tiến trình diễn ra ở nhiều quy mô thời gian khác nhau: nạp chương trình mới, đưa tiến trình ra vào bộ nhớ, và cấp CPU từng mili-giây.</p>
+    <span class="lab g">Giải pháp</span>
+    <div class="two">
+      <div class="box"><b>Dài hạn (long-term, job scheduler)</b><span class="muted">Chọn tiến trình mới (new) nào được nạp vào hệ thống (bộ nhớ). Thường chỉ có ở hệ xử lý theo lô. Điều khiển <b>độ đa lập trình</b> (số tiến trình đồng thời trong bộ nhớ): càng nhiều tiến trình thì khả năng tất cả cùng bị block càng giảm, dùng CPU hiệu quả hơn; nhưng quá đông thì thời gian CPU mỗi tiến trình nhỏ lại. Có xu hướng nạp hỗn hợp CPU-bound và I/O-bound.</span></div>
+      <div class="box"><b>Trung hạn (medium-term, swapper)</b><span class="muted">Quyết định đưa tiến trình vào lại (swap in) hoặc tạm đẩy ra (swap out) khỏi bộ nhớ chính. Swap có thể tốn vài giây nên chu kỳ có thể là vài phút. Nhờ bộ nhớ ảo, điều phối dài hạn có thể nhận nhiều tiến trình hơn sức chứa của bộ nhớ, nhưng nạp quá nhiều sẽ làm tăng truy xuất đĩa. Do phần mềm quản lý bộ nhớ đảm trách.</span></div>
+      <div class="box on"><b>Ngắn hạn (short-term, CPU scheduler)</b><span class="muted">Chọn tiến trình trong bộ nhớ được chạy tiếp trên CPU; đây là trọng tâm của "điều phối CPU". Được kích hoạt bởi: ngắt đồng hồ (clock interrupt), ngắt ngoại vi (I/O interrupt), lời gọi hệ thống (system call), tín hiệu (signal).</span></div>
+    </div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s2"></div>
+  </section>
+
+  <section class="card" id="s3" style="--h:28" data-title="Tiêu chuẩn điều phối">
+    <header><span class="num">3</span><h2>Tiêu chuẩn điều phối: đo một thuật toán tốt hay dở</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Có nhiều thuật toán điều phối. Cần những thước đo định lượng để so sánh chúng.</p>
+    <span class="lab g">Giải pháp: năm tiêu chuẩn</span>
+    <div class="tblw"><table class="tbl"><thead><tr><th>Tiêu chuẩn</th><th>Mục tiêu</th><th>Nghĩa</th></tr></thead><tbody>
+      <tr><td><b>Sử dụng CPU</b> (CPU utilization)</td><td>lớn nhất</td><td>Làm CPU hoạt động nhiều nhất có thể; thường từ 40% (tải nhẹ) đến 90% (tải nặng).</td></tr>
+      <tr><td><b>Thông lượng</b> (throughput)</td><td>lớn nhất</td><td>Số tiến trình hoàn thành trong một đơn vị thời gian: tiến trình dài có thể 1 tiến trình/giờ, tiến trình ngắn có thể 10 tiến trình/giây.</td></tr>
+      <tr><td><b>Thời gian hoàn thành</b> (turnaround time)</td><td>nhỏ nhất</td><td>Từ lúc gửi (submission) đến lúc kết thúc: gồm chờ nạp vào bộ nhớ, chờ trong hàng đợi sẵn sàng, chờ trong hàng đợi thiết bị và chạy trên CPU.</td></tr>
+      <tr><td><b>Thời gian chờ</b> (waiting time)</td><td>nhỏ nhất</td><td>Tổng thời gian chờ trong hàng đợi sẵn sàng. Thuật toán điều phối chỉ tác động lên thời gian chờ này, không đổi thời gian chạy CPU hay vào/ra.</td></tr>
+      <tr><td><b>Thời gian đáp ứng</b> (response time)</td><td>nhỏ nhất</td><td>Từ lúc gửi yêu cầu đến lúc có phản hồi đầu tiên (tiến trình có thể trả kết quả từng phần trong khi vẫn tính tiếp).</td></tr>
+    </tbody></table></div>
+    <p>Theo người sử dụng (user-oriented): thời gian hoàn thành quan trọng với hệ xử lý bó, thời gian đáp ứng quan trọng với hệ tương tác. Theo hệ thống (system-oriented): sử dụng CPU, công bằng (fairness), thông lượng.</p>
+    <h3>Hai thành phần của một chiến lược điều phối</h3>
+    <ul>
+      <li><b>Hàm lựa chọn (selection function):</b> xác định tiến trình nào trong hàng đợi sẵn sàng được chạy tiếp, thường theo <code>w</code> (tổng thời gian đợi trong hệ thống), <code>e</code> (thời gian đã được phục vụ), <code>s</code> (tổng thời gian thực thi, gồm cả <code>e</code>).</li>
+      <li><b>Chế độ quyết định (decision mode):</b> định nghĩa thời điểm hàm lựa chọn được thực thi: non-preemptive hoặc preemptive.</li>
+    </ul>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s3"></div>
+  </section>
+
+  <section class="card" id="s4" style="--h:280" data-title="FCFS, SJF, SRTF">
+    <header><span class="num">4</span><h2>FCFS, SJF và SRTF: từ công bằng theo thứ tự đến ngắn trước</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Cách đơn giản nhất là ai đến trước chạy trước. Nhưng tiến trình ngắn phải đợi sau tiến trình dài. Có cách nào để thời gian chờ trung bình nhỏ nhất?</p>
+    <span class="lab g">Giải pháp</span>
+    <div class="two">
+      <div class="box"><b>FCFS (First Come, First Served)</b><span class="muted">Tiến trình dùng CPU theo trình tự xuất hiện, giữ CPU tới khi kết thúc hoặc chờ vào/ra (non-preemptive, thường cài bằng hàng đợi FIFO). Đơn giản, nhưng tiến trình ngắn phải chờ như tiến trình dài, nên "không công bằng" với tiến trình có CPU burst ngắn và ưu ái tiến trình CPU-bound. Thường dùng trong hệ xử lý bó.</span></div>
+      <div class="box"><b>SJF (Shortest Job First)</b><span class="muted">Mỗi tiến trình lưu độ dài đợt dùng CPU kế tiếp; tiến trình có đợt ngắn nhất được CPU. Là thuật toán <b>tối ưu</b>: thời gian chờ trung bình nhỏ nhất. Nhược điểm: không biết chính xác độ dài đợt CPU nên phải dự đoán; tiến trình dài có thể bị trì hoãn vô hạn nếu tiến trình ngắn liên tục đến.</span></div>
+      <div class="box"><b>SRTF (Shortest Remaining Time First)</b><span class="muted">Phiên bản preemptive của SJF: tiến trình mới đến có burst nhỏ hơn thời gian CPU còn lại của tiến trình đang chạy thì trưng dụng tiến trình đó. Tránh tiến trình dài độc chiếm CPU, thời gian quay vòng tốt hơn SJF, nhưng phải theo dõi thời gian còn lại và có thể gây đói CPU (starvation).</span></div>
+    </div>
+    <h3>Dự đoán độ dài đợt CPU tiếp theo</h3>
+    <p>Dùng <b>trung bình hàm mũ (exponential averaging)</b>, giả thiết những đợt gần đây phản ánh hành vi tương lai tốt hơn: <code>τ(n+1) = α · t(n) + (1 − α) · τ(n)</code> với <code>0 ≤ α ≤ 1</code>, trong đó <code>t(n)</code> là độ dài đo được, <code>τ(n)</code> là giá trị đã dự đoán. Với α = 1/2, giá trị đo và giá trị dự đoán quan trọng như nhau.</p>
+    <span class="lab t">Minh họa: dự đoán theo các đợt CPU đo được</span>
+    <div class="row" id="alphaBtns" role="group" aria-label="Chọn hệ số alpha"></div>
+    <div class="status" id="alphaStatus" role="status"></div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s4"></div>
+  </section>
+
+  <section class="card" id="s5" style="--h:340" data-title="Ưu tiên, Round Robin, đa mức">
+    <header><span class="num">5</span><h2>Độ ưu tiên, Round Robin và hàng đợi đa mức</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>SJF/SRTF chỉ xét độ dài. Hệ chia sẻ thời gian cần phục vụ công bằng và đáp ứng nhanh, và các tiến trình có thể có tầm quan trọng khác nhau.</p>
+    <span class="lab g">Giải pháp</span>
+    <div class="two">
+      <div class="box"><b>Điều phối theo độ ưu tiên (priority)</b><span class="muted">Mỗi tiến trình có một số hiệu ưu tiên (số nguyên); CPU giao cho tiến trình ưu tiên cao nhất (SJF là trường hợp độ ưu tiên gắn với thời gian thực hiện). Có hai dạng: không trưng dụng và có trưng dụng. Độ ưu tiên có thể dựa vào yêu cầu bộ nhớ, số file mở, tỉ lệ thời gian I/O trên thời gian CPU. Vấn đề: tiến trình ưu tiên thấp có thể không bao giờ chạy. Giải pháp: <b>aging</b> (tăng độ ưu tiên theo thời gian).</span></div>
+      <div class="box"><b>Round Robin (RR)</b><span class="muted">Mỗi tiến trình được một lượng tử thời gian q; hết giờ thì bị trưng dụng và vào cuối hàng đợi sẵn sàng. Với n tiến trình, mỗi tiến trình chờ tối đa (n − 1)·q. q lớn thì thành FCFS; q nhỏ thì luân chuyển CPU nhiều. Thông thường q = 10 đến 100 ms. Thời gian quay vòng thường cao hơn SJF nhưng thời gian đáp ứng tốt hơn. Ngầm coi mọi tiến trình quan trọng ngang nhau.</span></div>
+    </div>
+    <h3>Chọn lượng tử: tốn kém của chuyển tiến trình</h3>
+    <p>Khi chuyển tiến trình, hệ điều hành dùng CPU (chứ không phải tiến trình người dùng) để lưu và nạp trạng thái: đó là phí tổn. Slide lấy ví dụ thời gian chuyển tiến trình là 5 ms.</p>
+    <span class="lab t">Minh họa: phí tổn theo lượng tử q</span>
+    <div class="row" id="qBtns" role="group" aria-label="Chọn lượng tử"></div>
+    <div class="status" id="qStatus" role="status"></div>
+    <p>Slide lưu ý: q ngắn thì đáp ứng nhanh nhưng phí tổn cao; q dài thì thông lượng tốt hơn nhưng đáp ứng chậm, và quá lớn thì RR trở thành FCFS. Ví dụ UNIX 4.3 BSD dùng q = 1 giây.</p>
+    <h3>Hàng đợi đa mức</h3>
+    <ul>
+      <li><b>Multilevel queue:</b> chia hàng đợi sẵn sàng thành nhiều hàng riêng cho các nhóm tiến trình, ví dụ foreground (tương tác, dùng RR) và background (dạng bó, dùng FCFS). Giữa các hàng đợi: ưu tiên cố định (phục vụ hết foreground rồi mới background, có thể gây starvation) hoặc chia thời gian (ví dụ 80% foreground, 20% background).</li>
+      <li><b>Multilevel feedback queue:</b> bộ điều phối di chuyển tiến trình giữa các hàng đợi theo hành vi quan sát được: dùng CPU quá lâu thì xuống hàng ưu tiên thấp hơn; chờ quá lâu ở hàng thấp thì được đưa lên hàng cao hơn (aging, tránh starvation). Ví dụ 3 hàng: Q0 dùng RR với q = 8 ms, Q1 dùng RR với q = 16 ms, Q2 dùng FCFS. Việc mới vào Q0; không trả CPU trong 8 ms thì xuống cuối Q1; không trả trong 16 ms thì xuống Q2. Hàng cao trưng dụng hàng thấp.</li>
+      <li>Hệ này được xác định bởi: số hàng đợi, thuật toán của mỗi hàng, khi nào thăng cấp, khi nào giáng cấp.</li>
+    </ul>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s5"></div>
+  </section>
+
+  <section class="card" id="s6" style="--h:95" data-title="Chạy thử thuật toán">
+    <header><span class="num">6</span><h2>Chạy thử các thuật toán trên cùng bộ tiến trình</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Đọc mô tả thì dễ hiểu sai. Cách chắc nhất là chạy cùng một bộ tiến trình qua từng thuật toán và so sánh giản đồ Gantt và thời gian chờ.</p>
+    <span class="lab t">Minh họa: giản đồ Gantt</span>
+    <div class="row" id="simSet" role="group" aria-label="Chọn bộ tiến trình"></div>
+    <div class="row" id="simAlgo" role="group" aria-label="Chọn thuật toán"></div>
+    <label for="simQ" class="muted">Lượng tử q (chỉ dùng cho Round Robin): <b id="simQv"></b> ms</label><br>
+    <input type="range" id="simQ" min="1" max="30" step="1">
+    <div class="gantt" id="gantt" role="img" aria-label="Giản đồ Gantt"></div>
+    <div class="gticks" id="gticks" aria-hidden="true"></div>
+    <div class="tblw" id="simTable"></div>
+    <div class="status" id="simStatus" role="status"></div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s6"></div>
+  </section>
+
+  <section class="card" id="s7" style="--h:250" data-title="Đa xử lý và đánh giá">
+    <header><span class="num">7</span><h2>Điều phối đa xử lý và cách đánh giá thuật toán</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Có nhiều CPU thì chia tải được, nhưng phức tạp hơn điều phối trên một processor. Chia tải thế nào, và làm sao biết một thuật toán điều phối là tốt?</p>
+    <span class="lab g">Giải pháp: đa xử lý</span>
+    <ul>
+      <li><b>Đa xử lý không đối xứng (asymmetric):</b> một processor chủ (master) điều phối cho tất cả các processor còn lại. Chỉ một processor truy nhập cấu trúc điều phối nên khỏi tranh chấp dữ liệu dùng chung, nhưng có thể tắc nghẽn tại processor đó.</li>
+      <li><b>Đa xử lý đối xứng (SMP):</b> hoặc mỗi processor có hàng đợi sẵn sàng và bộ điều phối riêng; hoặc có một hàng đợi sẵn sàng chung (một processor làm scheduler cho các processor khác, hoặc mỗi processor tự chọn tiến trình từ hàng đợi chung).</li>
+      <li><b>Processor affinity (độ gắn bó vi xử lý):</b> tiến trình đang chạy trên một processor có một số dữ liệu nằm trong cache của processor đó. Chuyển sang processor khác thì cache mới phải nạp lại và cache cũ phải vô hiệu hóa: tốn kém.</li>
+      <li><b>Cân bằng tải (load balancing):</b> một processor quá tải trong khi processor khác rảnh. <b>Push migration:</b> một tác vụ định kỳ kiểm tra tải rồi đẩy việc sang processor rảnh. <b>Pull migration:</b> processor rảnh lấy việc từ processor bận. Linux cài cả hai. Cần cân bằng giữa load balancing và processor affinity.</li>
+    </ul>
+    <h3>Bốn phương pháp đánh giá thuật toán</h3>
+    <div class="tblw"><table class="tbl"><thead><tr><th>Phương pháp</th><th>Cách làm</th><th>Hạn chế</th></tr></thead><tbody>
+      <tr><td><b>Deterministic modeling</b></td><td>Định trước một tập tải (workload) và khảo sát các thuật toán trên cùng tập đó</td><td>Không tổng quát</td></tr>
+      <tr><td><b>Queuing model</b></td><td>Dùng lý thuyết hàng đợi để phân tích thuật toán</td><td>Dùng nhiều giả thiết nên không sát thực tế</td></tr>
+      <tr><td><b>Mô phỏng (simulation)</b></td><td>Xây bộ mô phỏng và chạy thử với tập tải giả (thường sinh tự động) hoặc tải ghi nhận từ thực tế</td><td>Phải xây dựng bộ mô phỏng</td></tr>
+      <tr><td><b>Hiện thực</b></td><td>Viết mã thuật toán và thử trong hệ thống thật</td><td>Tốn công nhất</td></tr>
+    </tbody></table></div>
+    <p>Phần minh họa ở mục 6 chính là deterministic modeling: một tập tải cố định chạy qua nhiều thuật toán.</p>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s7"></div>
+  </section>
+  </main>
+</div>
+<script>
+const DATA = {quiz: {}};
+// ===== Phần dùng chung cho mọi trang hệ điều hành =====
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
+const btn = (label, fn, off) => { const b = el('button', {className: 'btn', type: 'button', onclick: fn}, label); if (off) b.disabled = true; return b; };
+const setP = (b, v) => b.setAttribute('aria-pressed', String(v));
+
+// Đổi giao diện sáng/tối, nhớ lựa chọn
+$('#themeBtn').addEventListener('click', () => {
+  const d = document.documentElement, n = d.dataset.theme === 'dark' ? 'light' : 'dark';
+  d.dataset.theme = n; try { localStorage.setItem('theme', n); } catch (e) {}
+});
+
+// Mục lục và thanh điều hướng nhanh
+const secs = $$('main > section');
+secs.forEach((s, i) => {
+  $('#toc').append(el('li', {}, el('a', {href: '#' + s.id}, el('b', {}, String(i + 1)), s.dataset.title)));
+  $('#barNums').append(el('a', {href: '#' + s.id, title: (i + 1) + '. ' + s.dataset.title, ariaLabel: 'Phần ' + (i + 1) + ': ' + s.dataset.title}, String(i + 1)));
+});
+function setCurrent(id){
+  $$('#toc a, #barNums a').forEach(a => a.hash === '#' + id ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current'));
+  const s = secs.find(x => x.id === id); if (s) $('#barNow').textContent = (secs.indexOf(s) + 1) + '. ' + s.dataset.title;
+}
+if ('IntersectionObserver' in window) {
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) setCurrent(e.target.id); }), {rootMargin: '-20% 0px -70% 0px'});
+  secs.forEach(s => io.observe(s));
+  new IntersectionObserver(es => es.forEach(e => $('#bar').classList.toggle('show', !e.isIntersecting && e.boundingClientRect.top < 0))).observe($('#toc'));
+}
+
+// Kiểm tra nhanh: DATA.quiz = { s1: [[câu hỏi, đáp án], ...], ... }
+function renderQuizzes(){
+  $$('[data-quiz]').forEach(box => (DATA.quiz[box.dataset.quiz] || []).forEach(([q, a]) => box.append(el('details', {}, el('summary', {}, q), el('p', {}, a)))));
+}
+
+// Dòng mã bấm được: lines = [[dòng, giải thích], ...]
+function annotCode(rootSel, statusSel, lines, start){
+  const root = $(rootSel);
+  lines.forEach(([line], i) => { const b = el('button', {className: 'codeline', type: 'button', onclick: () => pick(i)}, el('span', {className: 'n'}, String(i + 1)), line || ' '); b.setAttribute('aria-label', 'Dòng ' + (i + 1) + ': ' + (line.trim() || 'trống')); root.append(b); });
+  function pick(i){ [...root.children].forEach((b, k) => setP(b, k === i)); const [line, note] = lines[i]; $(statusSel).replaceChildren(el('b', {}, line.trim() || 'Dòng trống'), el('span', {}, note || 'Không có gì thêm ở dòng này.')); }
+  pick(start || 0);
+}
+
+// Hàng chip chọn một mục: items = [{k: nhãn, ...}], onPick(item, index) được gọi khi chọn
+function chooser(hostSel, items, onPick, start){
+  const host = $(hostSel);
+  items.forEach((it, i) => host.append(el('button', {className: 'chip', type: 'button', onclick: () => pick(i)}, el('i'), it.k)));
+  function pick(i){ [...host.children].forEach((b, k) => setP(b, k === i)); onPick(items[i], i); }
+  pick(start || 0);
+}
+// Ô trạng thái: tiêu đề đậm + các đoạn (chuỗi hoặc phần tử)
+const note = (sel, title, ...parts) => $(sel).replaceChildren(el('b', {}, title), ...parts.map(p => typeof p === 'string' ? el('span', {}, p) : p));
+// Chồng các lớp (kiến trúc): layers = [{n: tên lớp, items: [...], c: 'k'|'u'|'h'}]
+const stack = (sel, layers) => $(sel).replaceChildren(...layers.map(l => el('div', {className: 'lyr ' + (l.c || '')}, el('b', {}, l.n), ...(l.items || []).map(t => el('span', {className: 'it'}, t)))));
+
+// Bộ chạy từng bước: steps = [{t, d}], gọi draw(step, index) mỗi lần đổi
+function stepper(prefix, steps, draw){
+  let i = 0;
+  const render = () => {
+    draw(steps[i], i);
+    $('#' + prefix + 'Status').replaceChildren(el('b', {}, steps[i].t), el('span', {}, steps[i].d));
+    $('#' + prefix + 'Cnt').textContent = 'Bước ' + (i + 1) + '/' + steps.length;
+    $('#' + prefix + 'Back').disabled = i === 0; $('#' + prefix + 'Next').disabled = i === steps.length - 1;
+  };
+  $('#' + prefix + 'Next').addEventListener('click', () => { if (i < steps.length - 1) { i++; render(); } });
+  $('#' + prefix + 'Back').addEventListener('click', () => { if (i > 0) { i--; render(); } });
+  $('#' + prefix + 'Reset').addEventListener('click', () => { i = 0; render(); });
+  render();
+}
+
+Object.assign(DATA.quiz, {
+  s1: [['Vì sao hệ đa chương dùng CPU hiệu quả hơn hệ đơn chương?', 'Trong hệ đơn chương CPU bỏ không khi tiến trình chờ vào/ra. Hệ đa chương giữ nhiều tiến trình sẵn sàng và giao CPU cho tiến trình khác lúc một tiến trình phải chờ.'],
+       ['Điều phối không trưng dụng và trưng dụng khác nhau thế nào?', 'Không trưng dụng: tiến trình giữ CPU cho tới khi kết thúc hoặc tự chuyển sang chờ. Trưng dụng: tiến trình chỉ được chạy một khoảng thời gian, hết giờ bị ngắt và CPU có thể giao cho tiến trình khác.']],
+  s2: [['Bộ điều phối nào kiểm soát độ đa lập trình?', 'Bộ điều phối dài hạn (job scheduler).'],
+       ['Bộ điều phối ngắn hạn được kích hoạt bởi những sự kiện nào?', 'Ngắt đồng hồ, ngắt ngoại vi (I/O), lời gọi hệ thống và tín hiệu (signal).']],
+  s3: [['Trong năm tiêu chuẩn, những tiêu chuẩn nào cần lớn nhất và những tiêu chuẩn nào cần nhỏ nhất?', 'Lớn nhất: sử dụng CPU, thông lượng. Nhỏ nhất: thời gian hoàn thành, thời gian chờ, thời gian đáp ứng.'],
+       ['Thuật toán điều phối ảnh hưởng đến thành phần nào của thời gian hoàn thành?', 'Chỉ thời gian chờ trong hàng đợi sẵn sàng. Nó không đổi thời gian chạy CPU hay thời gian vào/ra.']],
+  s4: [['Vì sao SJF là tối ưu nhưng khó dùng thật?', 'Nó cho thời gian chờ trung bình nhỏ nhất, nhưng không biết trước chính xác độ dài đợi CPU kế tiếp nên phải dự đoán, và tiến trình dài có thể bị trì hoãn vô hạn.'],
+       ['Với α = 0 thì dự đoán thay đổi thế nào, và với α = 1?', 'α = 0: dự đoán luôn bằng giá trị ban đầu (τ0), bỏ qua giá trị đo. α = 1: dự đoán tiếp theo đúng bằng độ dài đợt CPU vừa đo.']],
+  s5: [['Aging giải quyết vấn đề gì?', 'Vấn đề tiến trình ưu tiên thấp bị trì hoãn vô hạn: aging tăng độ ưu tiên của tiến trình theo thời gian chờ.'],
+       ['Lượng tử q quá lớn và quá nhỏ gây ra điều gì ở Round Robin?', 'q quá lớn: RR trở thành FCFS. q quá nhỏ: luân chuyển CPU quá nhiều nên phí tổn cao.'],
+       ['Trong ví dụ multilevel feedback queue, một việc dùng hết 8 ms ở Q0 thì đi đâu?', 'Xuống cuối hàng Q1 (RR, q = 16 ms). Nếu ở Q1 lại không trả CPU trong 16 ms thì xuống Q2 (FCFS).']],
+  s6: [['Ở bộ tiến trình P1 = 24, P2 = 3, P3 = 3, vì sao đổi thứ tự đến từ (P1, P2, P3) sang (P2, P3, P1) làm thời gian chờ trung bình giảm từ 17 xuống 3 với FCFS?', 'Tiến trình dài P1 đến trước thì P2 và P3 phải chờ 24 đơn vị. Cho tiến trình ngắn chạy trước thì chờ rất ít. Đây là nhược điểm của FCFS.'],
+       ['Ở bộ có thời điểm đến (P1 = 7, P2 = 4, P3 = 1, P4 = 4), vì sao SRTF cho thời gian chờ trung bình nhỏ hơn SJF?', 'SRTF cho phép trưng dụng: tiến trình mới có burst ngắn hơn thời gian còn lại được chạy ngay. Kết quả trung bình 3 so với 4 của SJF.']],
+  s7: [['Push migration và pull migration khác nhau thế nào?', 'Push: một tác vụ định kỳ kiểm tra tải và đẩy việc sang processor rảnh. Pull: processor rảnh tự lấy việc từ processor bận.'],
+       ['Vì sao cần cân bằng giữa load balancing và processor affinity?', 'Chuyển tiến trình sang processor khác giúp chia tải nhưng làm mất dữ liệu trong cache của processor cũ và phải nạp lại ở processor mới, nên tốn kém.']]
+});
+renderQuizzes();
+
+// Phần 1: bốn tình huống điều phối
+chooser('#sitBtns', [
+  {k: 'running → waiting', d: 'Tiến trình đang thực hiện yêu cầu vào/ra nên chuyển sang chờ.', m: 'không trưng dụng (non-preemptive)'},
+  {k: 'running → ready', d: 'Hết thời gian được dùng CPU: có ngắt thời gian, tiến trình về trạng thái sẵn sàng.', m: 'trưng dụng (preemptive)'},
+  {k: 'waiting → ready', d: 'Tiến trình hoàn thành vào/ra nên chuyển từ chờ sang sẵn sàng.', m: 'trưng dụng (preemptive)'},
+  {k: 'terminated', d: 'Tiến trình kết thúc.', m: 'không trưng dụng (non-preemptive)'}
+], it => note('#sitStatus', it.k + ': điều phối ' + it.m, it.d));
+
+// Phần 4: dự đoán độ dài đợt CPU
+const T_MEAS = [6, 4, 6, 4, 13, 13, 13];
+chooser('#alphaBtns', [0, 0.25, 0.5, 0.75, 1].map(a => ({k: 'α = ' + a, a})), it => {
+  const tau = [10]; T_MEAS.forEach((t, i) => tau.push(it.a * t + (1 - it.a) * tau[i]));
+  const f = x => (Math.round(x * 100) / 100).toString();
+  const row = (label, arr) => el('tr', {}, el('td', {}, el('b', {}, label)), ...arr.map(x => el('td', {}, x)));
+  note('#alphaStatus', it.k + (it.a === 0.5 ? ' (khớp bảng trong slide: 10, 8, 6, 6, 5, 9, 11, 12)' : ''),
+    el('div', {className: 'tblw'}, el('table', {className: 'tbl'}, el('tbody', {},
+      row('CPU burst t', ['—', ...T_MEAS.map(String)]), row('Dự đoán τ', tau.slice(0, 8).map(f))))),
+    el('span', {className: 'muted'}, 'Dự đoán ban đầu τ0 = 10. Mỗi cột: τ(n+1) tính từ t(n) và τ(n) của cột trước.'));
+});
+
+// Phần 5: phí tổn theo lượng tử (thời gian chuyển tiến trình 5 ms)
+chooser('#qBtns', [10, 20, 100, 500].map(q => ({k: 'q = ' + q + ' ms', q})), it => {
+  const ov = 5 / (it.q + 5) * 100;
+  note('#qStatus', it.k + ': phí tổn ≈ ' + (Math.round(ov * 10) / 10) + '%', '5 / (' + it.q + ' + 5) = ' + (Math.round(ov * 100) / 100) + '%.',
+    el('div', {className: 'why'}, it.q === 20 ? 'Đúng như slide: q = 20 ms và chuyển 5 ms thì phí tổn 20%.' : it.q === 500 ? 'Slide: q = 500 ms thì phí tổn chỉ còn khoảng 1%, nhưng người dùng tương tác sẽ thấy đáp ứng rất chậm.' : 'q càng nhỏ thì phí tổn càng cao nhưng đáp ứng càng nhanh.'));
+});
+
+// Phần 6: chạy thử thuật toán
+const SETS = [
+  {k: 'P1=24, P2=3, P3=3 (đến theo thứ tự P1, P2, P3)', ps: [{n: 'P1', a: 0, b: 24}, {n: 'P2', a: 0, b: 3}, {n: 'P3', a: 0, b: 3}]},
+  {k: 'P1=24, P2=3, P3=3 (đến theo thứ tự P2, P3, P1)', ps: [{n: 'P2', a: 0, b: 3}, {n: 'P3', a: 0, b: 3}, {n: 'P1', a: 0, b: 24}]},
+  {k: 'Có thời điểm đến: P1(0, 7) P2(2, 4) P3(4, 1) P4(5, 4)', ps: [{n: 'P1', a: 0, b: 7}, {n: 'P2', a: 2, b: 4}, {n: 'P3', a: 4, b: 1}, {n: 'P4', a: 5, b: 4}]},
+  {k: 'P1=53, P2=17, P3=68, P4=24', ps: [{n: 'P1', a: 0, b: 53}, {n: 'P2', a: 0, b: 17}, {n: 'P3', a: 0, b: 68}, {n: 'P4', a: 0, b: 24}]}
+];
+const ALGOS = [{k: 'FCFS', id: 'fcfs'}, {k: 'SJF (không trưng dụng)', id: 'sjf'}, {k: 'SRTF', id: 'srtf'}, {k: 'Round Robin', id: 'rr'}];
+const SLIDE = {'0|fcfs': 'Khớp slide: chờ P1 = 0, P2 = 24, P3 = 27, trung bình 17.', '1|fcfs': 'Khớp slide: chờ P1 = 6, P2 = 0, P3 = 3, trung bình 3. Tốt hơn rất nhiều so với thứ tự trước.', '2|sjf': 'Khớp slide: trung bình (0 + 6 + 3 + 7) / 4 = 4.', '2|srtf': 'Khớp slide: trung bình (9 + 1 + 0 + 2) / 4 = 3, tốt hơn SJF.', '3|rr': 'Với q = 20, khớp slide: các mốc 20, 37, 57, 77, 97, 117, 121, 134, 154, 162. Slide vẽ tách P3 ở mốc 154; bảng này gộp hai lượt liền nhau của P3 thành một khối 134 đến 162.'};
+function sim(ps, algo, q){
+  const n = ps.length, rem = ps.map(p => p.b), fin = Array(n).fill(0), segs = [];
+  const put = (i, s, e) => { const l = segs[segs.length - 1]; if (l && l.i === i && l.e === s) l.e = e; else segs.push({i, s, e}); };
+  let t = 0, done = 0;
+  const nextArr = () => Math.min(...ps.map((p, i) => rem[i] > 0 ? p.a : Infinity));
+  const ready = () => ps.map((p, i) => i).filter(i => ps[i].a <= t && rem[i] > 0);
+  if (algo === 'rr') {
+    const queue = [], seen = new Set();
+    const arrive = () => ps.forEach((p, i) => { if (p.a <= t && !seen.has(i)) { seen.add(i); queue.push(i); } });
+    while (done < n) {
+      arrive();
+      if (!queue.length) { t = Math.min(...ps.filter((p, i) => !seen.has(i)).map(p => p.a)); continue; }
+      const i = queue.shift(), run = Math.min(q, rem[i]);
+      put(i, t, t + run); t += run; rem[i] -= run; arrive();
+      if (rem[i] > 0) queue.push(i); else { fin[i] = t; done++; }
+    }
+  } else if (algo === 'srtf') {
+    while (done < n) {
+      const r = ready(); if (!r.length) { t = nextArr(); continue; }
+      r.sort((x, y) => rem[x] - rem[y] || ps[x].a - ps[y].a || x - y);
+      const i = r[0]; put(i, t, t + 1); t++; rem[i]--; if (rem[i] === 0) { fin[i] = t; done++; }
+    }
+  } else {
+    while (done < n) {
+      const r = ready(); if (!r.length) { t = nextArr(); continue; }
+      r.sort((x, y) => algo === 'sjf' ? ps[x].b - ps[y].b || ps[x].a - ps[y].a || x - y : ps[x].a - ps[y].a || x - y);
+      const i = r[0]; put(i, t, t + ps[i].b); t += ps[i].b; rem[i] = 0; fin[i] = t; done++;
+    }
+  }
+  return {segs, fin};
+}
+let simSet = 0, simAlgo = 0;
+function renderSim(){
+  const q = +$('#simQ').value; $('#simQv').textContent = q;
+  const set = SETS[simSet], algo = ALGOS[simAlgo].id, {segs, fin} = sim(set.ps, algo, q);
+  const HUES = [215, 160, 28, 280, 340];
+  $('#gantt').replaceChildren(...segs.map(s => el('div', {className: 'gseg', style: '--c:' + HUES[set.ps.map(p => p.n).indexOf(set.ps[s.i].n) % 5] + ';flex:' + (s.e - s.s)}, set.ps[s.i].n)));
+  $('#gticks').replaceChildren(...segs.map(s => el('span', {style: 'flex:' + (s.e - s.s)}, String(s.s))), el('span', {style: 'flex:0 0 auto'}, String(segs[segs.length - 1].e)));
+  const wait = set.ps.map((p, i) => fin[i] - p.a - p.b), turn = set.ps.map((p, i) => fin[i] - p.a);
+  const avg = a => Math.round(a.reduce((x, y) => x + y, 0) / a.length * 100) / 100;
+  $('#simTable').replaceChildren(el('table', {className: 'tbl'}, el('thead', {}, el('tr', {}, ...['Tiến trình', 'Đến', 'Burst', 'Hoàn thành', 'Chờ', 'Quay vòng'].map(h => el('th', {}, h)))),
+    el('tbody', {}, ...set.ps.map((p, i) => el('tr', {}, el('td', {}, el('b', {}, p.n)), el('td', {}, String(p.a)), el('td', {}, String(p.b)), el('td', {}, String(fin[i])), el('td', {}, String(wait[i])), el('td', {}, String(turn[i])))))));
+  const key = simSet + '|' + algo, ok = SLIDE[key] && (algo !== 'rr' || q === 20);
+  note('#simStatus', ALGOS[simAlgo].k + ': thời gian chờ trung bình = ' + avg(wait) + ', quay vòng trung bình = ' + avg(turn),
+    el('span', {className: 'muted'}, 'Chờ = hoàn thành − đến − burst. Quay vòng = hoàn thành − đến.'), ok ? el('div', {className: 'why'}, SLIDE[key]) : '');
+}
+chooser('#simSet', SETS, (it, i) => { simSet = i; renderSim(); });
+chooser('#simAlgo', ALGOS, (it, i) => { simAlgo = i; renderSim(); });
+$('#simQ').value = 20; $('#simQ').addEventListener('input', renderSim); renderSim();
+
+</script>
+</body>
+</html>

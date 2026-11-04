@@ -10,5 +10,13 @@
   "Hackathon/whybi-overview.html": "WhyBi: tổng quan workflow",
   "LabIT/labit.html": "LabIT: workflow",
   "TestBackend/Postman Lab.html": "Postman Lab",
-  "Công nghệ Web/nginx-knowledge.html": "Nginx cơ bản"
+  "Công nghệ Web/nginx-knowledge.html": "Nginx cơ bản",
+  "OS/01-tong-quan-he-dieu-hanh.html": "OS 1: Tổng quan hệ điều hành",
+  "OS/02-tien-trinh-va-luong.html": "OS 2: Tiến trình và luồng",
+  "OS/03-dieu-phoi-cpu.html": "OS 3: Điều phối CPU",
+  "OS/04-dong-bo-hoa.html": "OS 4: Đồng bộ hóa tiến trình",
+  "OS/05-deadlock.html": "OS 5: Deadlock",
+  "OS/06-quan-ly-bo-nho.html": "OS 6: Quản lý bộ nhớ",
+  "OS/07-bo-nho-ao.html": "OS 7: Bộ nhớ ảo",
+  "OS/08-o-dia.html": "OS 8: Ổ đĩa và lưu trữ"
 }

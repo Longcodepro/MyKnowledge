@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OS 8: Ổ đĩa và lưu trữ</title>
+<script>
+// Luôn sáng mặc định; chỉ tối khi người đọc tự bấm đổi
+(function(){var t=null;try{t=localStorage.getItem('theme')}catch(e){}
+document.documentElement.dataset.theme=t==='dark'?'dark':'light';})();
+</script>
+<style>
+:root{
+  --bg:#f6f8fc; --card:#ffffff; --fg:#0f172a; --muted:#566277; --line:#e2e8f2; --hov:#f3f6fc;
+  --accent:#2563eb; --accent2:#7c3aed; --accent-soft:#eaf0ff; --hl:#fff0a8; --hl-fg:#5c4600;
+  --grad:linear-gradient(120deg,#2563eb,#7c3aed);
+  --mono:ui-monospace,"Cascadia Code",Consolas,Menlo,monospace;
+  --grid:rgba(15,23,42,.05);
+  --sh:0 1px 2px rgba(15,23,42,.05),0 8px 24px -12px rgba(15,23,42,.12);
+  --sh-hi:0 2px 4px rgba(15,23,42,.06),0 18px 40px -14px rgba(37,99,235,.28);
+  --ts:92%; --tl:94%; --tcl:42%;
+  --glow1:rgba(37,99,235,.16); --glow2:rgba(124,58,237,.13);
+  --ok:#16a34a; --bad:#dc2626; --warn:#b45309; --warn-soft:#fff4d6;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#0a0e16; --card:#121826; --fg:#e8edf6; --muted:#9aa6ba; --line:#212a3b; --hov:#18202f;
+  --accent:#7ab2ff; --accent2:#a78bfa; --accent-soft:#15233d; --hl:#4a3d00; --hl-fg:#ffe58a;
+  --grad:linear-gradient(120deg,#7ab2ff,#a78bfa);
+  --grid:rgba(232,237,246,.045);
+  --sh:0 1px 2px rgba(0,0,0,.3),0 8px 24px -12px rgba(0,0,0,.5);
+  --sh-hi:0 2px 4px rgba(0,0,0,.4),0 18px 40px -14px rgba(122,178,255,.25);
+  --ts:45%; --tl:20%; --tcl:74%;
+  --glow1:rgba(122,178,255,.13); --glow2:rgba(167,139,250,.11);
+  --ok:#4ade80; --bad:#f87171; --warn:#fbbf24; --warn-soft:#3a2f00;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;scrollbar-width:none}
+*::-webkit-scrollbar{display:none}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);min-height:100vh;font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.skip{position:absolute;left:12px;top:-56px;z-index:30;background:var(--accent);color:#fff;padding:9px 16px;border-radius:10px;text-decoration:none;font-weight:600}
+.skip:focus{top:12px}
+.bg{position:absolute;inset:0 0 auto;height:560px;z-index:-1;pointer-events:none;
+  background:radial-gradient(640px 320px at 12% -4%,var(--glow1),transparent 70%),radial-gradient(560px 300px at 88% 6%,var(--glow2),transparent 70%),
+  linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:auto,auto,32px 32px,32px 32px;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent)}
+.wrap{max-width:920px;margin:0 auto;padding:0 24px 64px}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:20px 0}
+.brand{display:flex;align-items:center;gap:11px;font-weight:700;letter-spacing:-.01em}
+.logo{width:34px;height:34px;border-radius:10px;background:var(--grad);display:grid;place-items:center;color:#fff;box-shadow:0 6px 16px -6px var(--accent)}
+:root[data-theme="dark"] .logo{color:#0b1220}
+.btn{font:inherit;font-size:13px;font-weight:500;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 14px;min-height:38px;cursor:pointer;box-shadow:var(--sh)}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn[disabled]{opacity:.45;cursor:default}
+.hero{padding:24px 0 8px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:5px 13px 5px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card);font:600 12.5px system-ui,sans-serif;color:var(--muted);box-shadow:var(--sh)}
+.pill i{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,.18)}
+h1{font-size:clamp(2.1rem,6vw,3.3rem);line-height:1.06;letter-spacing:-.04em;font-weight:800;margin:18px 0 14px}
+.grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{max-width:660px;color:var(--muted);font-size:1.08rem;margin:0 0 22px}
+.lead b{color:var(--fg);font-weight:600}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 30px;padding:0;list-style:none}
+.toc a{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:500;color:var(--fg);text-decoration:none;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 8px;min-height:36px;transition:all .15s}
+.toc a b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font:700 12px var(--mono)}
+.toc a:hover{border-color:var(--accent);transform:translateY(-1px)}
+.toc a[aria-current="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.toc a[aria-current="true"] b{background:var(--bg);color:var(--fg)}
+/* thanh điều hướng nhanh: dính ở mép trên khi mục lục đã cuộn khỏi màn hình */
+.bar{position:fixed;top:10px;left:50%;z-index:25;width:min(100% - 24px,880px);transform:translate(-50%,-90px);opacity:0;visibility:hidden;transition:transform .25s,opacity .25s,visibility 0s .25s;
+  display:flex;align-items:center;gap:6px;padding:6px 8px;background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh-hi)}
+.bar.show{transform:translate(-50%,0);opacity:1;visibility:visible;transition:transform .25s,opacity .25s}
+.bar a{display:grid;place-items:center;flex:none;min-width:30px;height:30px;border-radius:9px;border:1px solid transparent;color:var(--fg);text-decoration:none;font:700 12.5px var(--mono)}
+.bar a:hover{border-color:var(--accent);color:var(--accent)}
+.bar a[aria-current="true"]{background:var(--fg);color:var(--bg)}
+.bar .up{border-color:var(--line);background:var(--card);font:600 16px system-ui;margin-right:2px}
+.bar .nums{display:flex;gap:3px;flex-wrap:nowrap}
+.bar .now{flex:1;min-width:0;margin-left:6px;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+@media(max-width:640px){.bar .now{display:none}.bar{gap:3px;padding:5px 6px}.bar a{min-width:26px;height:28px}.bar .nums{gap:1px}}
+.howto{margin:18px 0 30px;border:1px dashed var(--line);border-radius:14px;padding:12px 16px;color:var(--muted);font-size:14px;background:var(--card)}
+.howto b{color:var(--fg)}
+.card{position:relative;overflow:hidden;background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--sh);padding:24px 24px 22px;margin-bottom:24px;scroll-margin-top:68px}
+.card::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,hsl(var(--h,215) 75% 55%),hsl(calc(var(--h,215) + 45) 75% 62%))}
+.card header{display:flex;gap:14px;align-items:center;margin-bottom:6px}
+.num{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font:800 17px var(--mono);background:hsl(var(--h,215) var(--ts) var(--tl));color:hsl(var(--h,215) 65% var(--tcl))}
+.card h2{font-size:1.28rem;letter-spacing:-.02em;margin:0;line-height:1.25}
+.card h3{font-size:1rem;margin:20px 0 6px}
+.card p{margin:8px 0}
+.lab{display:inline-block;font:700 11px/1 system-ui;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:4px 8px;margin:18px 0 4px}
+.lab.v{background:var(--warn-soft);color:var(--warn)}
+.lab.g{background:var(--accent-soft);color:var(--accent)}
+.lab.t{background:hsl(160 var(--ts) var(--tl));color:hsl(160 65% var(--tcl))}
+.lab.q{background:var(--hov);color:var(--muted);border:1px solid var(--line)}
+.muted{color:var(--muted)}
+code,.mono{font-family:var(--mono);font-size:.9em}
+:not(pre)>code{background:var(--accent-soft);color:var(--accent);padding:1px 6px;border-radius:6px;white-space:nowrap}
+.ana{margin:12px 0;border-left:3px solid hsl(var(--h,215) 60% 60%);padding:6px 14px;background:var(--hov);border-radius:0 12px 12px 0;color:var(--muted)}
+.ana b{color:var(--fg)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:14px;margin:12px 0}
+.box{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--hov)}
+.box b{display:block;margin-bottom:2px}
+.box.on{border-color:var(--accent);background:var(--accent-soft)}
+.status{margin-top:12px;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:12px 16px;background:var(--card)}
+.status b{display:block}
+.why{margin-top:8px;color:var(--muted);font-size:14px}
+.why::before{content:"Vì sao? ";font-weight:700;color:var(--fg)}
+.warn{margin:12px 0;border:1px solid var(--warn);border-radius:12px;padding:10px 14px;background:var(--warn-soft);color:var(--warn)}
+.tbl{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
+.tbl th,.tbl td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.tblw{overflow-x:auto}
+.procs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:14px;margin:12px 0}
+.pbox{border:2px solid hsl(var(--c) 60% 60%);border-radius:16px;padding:10px 14px;background:hsl(var(--c) var(--ts) var(--tl))}
+.pbox b{display:block}
+.pbox .mem{margin-top:6px;border:1px dashed hsl(var(--c) 50% 55%);border-radius:10px;padding:6px 10px;font:12.5px var(--mono);color:var(--fg);background:var(--card)}
+.chain{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin:12px 0}
+.chain .nd{flex:1 1 140px;border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--hov);text-align:center}
+.chain .nd small{display:block;color:var(--muted)}
+.chain .ar{align-self:center;color:var(--muted);font:12px var(--mono);text-align:center;flex:0 0 auto}
+svg.diag{width:100%;height:auto;max-height:300px;display:block}
+.diag .nd rect{fill:var(--card);stroke:var(--line);stroke-width:2}
+.diag .nd text{fill:var(--fg);font:600 14px system-ui,sans-serif;text-anchor:middle}
+.diag .nd .sm{font:12px var(--mono);fill:var(--muted);font-weight:400}
+.diag .nd.on rect{stroke:hsl(var(--h) 70% 50%);fill:hsl(var(--h) var(--ts) var(--tl))}
+.diag .nd.dim{opacity:.38}
+.diag .ln{fill:none;stroke:var(--line);stroke-width:2.5}
+.diag .ln.on{stroke:var(--accent);stroke-dasharray:8 6;animation:flow .8s linear infinite}
+.diag .ln.on.rev{animation-direction:reverse}
+@keyframes flow{to{stroke-dashoffset:-14}}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.chip{display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:13.5px;font-weight:500;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 12px;min-height:36px;cursor:pointer;transition:all .15s}
+.chip i{width:8px;height:8px;border-radius:50%;background:hsl(var(--h,190) 70% 52%)}
+.chip:hover{border-color:var(--accent);transform:translateY(-1px)}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.mw{display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 0 4px}
+.mnode{border:2px solid var(--accent);border-radius:14px;padding:10px 20px;background:var(--accent-soft);font-weight:700;text-align:center}
+.sock{font:12px var(--mono);color:var(--muted);border-left:2px dashed var(--line);padding:2px 0 2px 10px}
+.workers{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.w{border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg);padding:8px 14px;font:13px var(--mono);cursor:pointer;min-width:96px;text-align:center}
+.w:hover{border-color:var(--bad)}
+.w.dead{border-color:var(--bad);color:var(--bad);background:transparent;text-decoration:line-through}
+.w.new{border-color:var(--ok);color:var(--ok)}
+.inst{min-width:120px;text-align:center}
+.inst .bar{height:8px;border-radius:99px;background:var(--line);margin-top:6px;overflow:hidden}
+.inst .bar i{display:block;height:100%;background:var(--grad);width:0;transition:width .25s}
+input[type=range]{width:200px;accent-color:var(--accent)}
+.win{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card);margin:8px 0}
+.win .bar{display:flex;gap:6px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line);background:var(--hov);font:12px var(--mono);color:var(--muted)}
+.win .bar i{width:10px;height:10px;border-radius:50%;background:#ff5f57}.win .bar i:nth-child(2){background:#febc2e}.win .bar i:nth-child(3){background:#28c840}
+.win .bar span{margin-left:8px}
+.codeline{display:block;width:100%;text-align:left;font:13.5px/1.7 var(--mono);color:var(--fg);background:none;border:0;padding:0 14px;cursor:pointer;white-space:pre;border-left:3px solid transparent;overflow-x:auto}
+.codeline:hover{background:var(--hov)}
+.codeline[aria-pressed="true"]{background:var(--accent-soft);border-left-color:var(--accent)}
+.codeline .n{display:inline-block;width:2.2em;color:var(--muted);user-select:none}
+.log{border:1px solid var(--line);border-radius:12px;background:var(--hov);padding:10px 14px;font:13px/1.7 var(--mono);min-height:56px}
+.log .ok{color:var(--ok)}.log .no{color:var(--bad)}
+details{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-top:8px;background:var(--card)}
+summary{cursor:pointer;font-weight:600}
+details p{margin:8px 0 2px;color:var(--muted)}
+.stepper{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.stepper .cnt{font:13px var(--mono);color:var(--muted);margin-left:auto}
+.role{display:inline-block;font:600 12px system-ui;border-radius:999px;padding:2px 10px;background:var(--accent-soft);color:var(--accent);margin-right:6px}
+.foot{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+.foot a{color:var(--accent)}
+kbd{font:12px var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:0 7px;background:var(--card)}
+@media(max-width:640px){.wrap{padding:0 16px 48px}.hero{padding-top:12px}.card{padding:18px 16px}.card header{gap:10px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important;animation:none!important}}
+@media(forced-colors:active){.card,.toc a[aria-current="true"]{border:1px solid}}
+</style>
+<style>
+/* bổ sung riêng cho trang hệ điều hành */
+.banner{background:#fff4d6;color:#6b4e00;text-align:center;padding:6px 12px;font-size:13.5px}
+:root[data-theme="dark"] .banner{background:#3a2f00;color:#ffe58a}
+.memwrap{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start;margin:10px 0}
+@media(max-width:720px){.memwrap{grid-template-columns:1fr}}
+.memcol{display:flex;flex-direction:column;border:2px solid var(--line);border-radius:14px;overflow:hidden;font:13px var(--mono)}
+.memcol .hi,.memcol .lo{padding:4px 12px;background:var(--hov);color:var(--muted);font-size:12px}
+.memcol .reg{padding:10px 12px;border-top:1px solid var(--line);background:var(--card);transition:background .15s}
+.memcol .reg small{display:block;color:var(--muted);font-family:system-ui;font-size:12px}
+.memcol .reg.free{background:repeating-linear-gradient(135deg,transparent 0 8px,var(--hov) 8px 16px);color:var(--muted);text-align:center}
+.memcol .reg.on{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.memcol .reg.on small{color:var(--accent)}
+.sdiag{width:100%;height:auto;max-height:330px;display:block}
+.sdiag .st ellipse{fill:var(--card);stroke:var(--line);stroke-width:2;transition:all .2s}
+.sdiag .st text{fill:var(--fg);font:600 14px system-ui,sans-serif;text-anchor:middle}
+.sdiag .st.on ellipse{stroke:hsl(var(--h) 70% 50%);fill:hsl(var(--h) var(--ts) var(--tl));stroke-width:3}
+.sdiag .tr{fill:none;stroke:var(--line);stroke-width:2.2}
+.sdiag .tr.on{stroke:var(--accent);stroke-width:3;stroke-dasharray:8 6;animation:flow .8s linear infinite}
+.sdiag .lb{fill:var(--muted);font:12px var(--mono);text-anchor:middle}
+.sdiag .lb.on{fill:var(--accent);font-weight:700}
+.sdiag marker path{fill:var(--muted)}
+.cs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px;margin:12px 0}
+.cs .cell{border:2px solid var(--line);border-radius:14px;padding:10px 14px;background:var(--card);transition:all .2s}
+.cs .cell.on{border-color:var(--accent);background:var(--accent-soft)}
+.cs .cell b{display:block;margin-bottom:4px}
+.cs .cell dl{margin:0;font:13px/1.7 var(--mono)}
+.cs .cell dt{display:inline;color:var(--muted)}
+.cs .cell dd{display:inline;margin:0 0 0 6px}
+.box span b{display:inline;margin:0}
+:not(pre)>code{white-space:normal;overflow-wrap:anywhere}
+.pending{opacity:.9}
+.pending p{margin:6px 0 0}
+.lanes{display:grid;grid-template-columns:1fr 130px 1fr;gap:12px;margin:12px 0;align-items:start}
+@media(max-width:720px){.lanes{grid-template-columns:1fr}}
+.lane{border:2px solid var(--line);border-radius:14px;padding:10px 12px;min-height:84px;background:var(--card)}
+.lane h4{margin:0 0 8px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.lane.cpu{border-color:var(--accent);background:var(--accent-soft)}
+.pc{display:inline-flex;align-items:center;justify-content:center;min-width:44px;height:34px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);font:700 13px var(--mono);margin:0 6px 6px 0;padding:0 10px}
+.pc.run{border-color:var(--accent);color:var(--accent)}
+.tree ul{list-style:none;margin:0;padding-left:22px;border-left:2px dashed var(--line)}
+.tree>ul{padding-left:0;border-left:0}
+.tree li{margin:6px 0}
+.tn{display:inline-flex;gap:8px;align-items:center;border:1.5px solid var(--line);border-radius:10px;padding:4px 12px;background:var(--card);color:var(--fg);font:13px var(--mono);cursor:pointer}
+.tn:hover{border-color:var(--accent)}
+.tn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:700}
+.tn small{color:var(--muted)}
+.tn.orph{border-color:var(--warn);color:var(--warn);cursor:default}
+.cells{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 6px}
+.cellb{width:56px;height:44px;border:2px solid var(--line);border-radius:10px;display:grid;place-items:center;font:700 13px var(--mono);background:var(--card);position:relative}
+.cellb.full{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.cellb i{position:absolute;top:-10px;font:700 10px var(--mono);font-style:normal;padding:0 5px;border-radius:5px;background:var(--fg);color:var(--bg)}
+.cellb i.in{left:2px}
+.cellb i.out{right:2px;background:var(--accent2);color:#fff}
+.tcell{width:40px;height:40px;border-radius:9px;display:grid;place-items:center;font:700 12px var(--mono);color:#fff;background:hsl(var(--c) 60% 42%)}
+.th{display:inline-block;border:2px solid var(--line);border-radius:10px;padding:6px 12px;margin:0 6px 6px 0;font:700 13px var(--mono);background:var(--card);color:var(--fg);cursor:pointer}
+.th.ok{border-color:var(--ok);color:var(--ok)}
+.th.blocked{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.th.stuck{border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
+.kt{display:inline-block;border:2px dashed var(--line);border-radius:10px;padding:6px 12px;margin:0 6px 6px 0;font:700 13px var(--mono);color:var(--muted)}
+.kt.blocked{border-color:var(--bad);color:var(--bad)}
+</style>
+</head>
+<body>
+<a class="skip" href="#s1">Bỏ qua tới nội dung</a>
+<div class="bg" aria-hidden="true"></div>
+<nav class="bar" id="bar" aria-label="Điều hướng nhanh"><a class="up" href="#top" aria-label="Lên đầu trang" title="Lên đầu trang">↑</a><span class="nums" id="barNums"></span><span class="now" id="barNow" aria-hidden="true"></span></nav>
+<div class="wrap">
+  <header class="topbar" id="top">
+    <div class="brand"><span class="logo" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9zM9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg></span>Hệ điều hành</div>
+    <button class="btn" id="themeBtn" type="button" aria-label="Đổi giao diện sáng hoặc tối">Sáng / Tối</button>
+  </header>
+
+  <div class="hero">
+    <span class="pill"><i></i>Hệ điều hành · Chương 5 · Cấu trúc lưu trữ</span>
+    <h1>Ổ đĩa: <span class="grad">đầu đọc chạy càng ít càng nhanh</span></h1>
+    <p class="lead">Bên trong ổ cứng, thời gian truy cập đĩa, các thuật toán định thời FCFS, SSTF, SCAN, C-SCAN, C-LOOK, định dạng và phân vùng, và RAID.</p>
+  </div>
+
+  <ol class="toc" id="toc" aria-label="Lộ trình các phần"></ol>
+
+  <main>
+<section class="card" id="s1" style="--h:215" data-title="Bên trong ổ cứng">
+    <header><span class="num">1</span><h2>Bên trong ổ cứng: thời gian đọc ghi gồm những gì</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Đĩa cứng là thiết bị cơ học, chậm hơn CPU và RAM rất nhiều. Muốn tối ưu việc truy cập đĩa phải biết thời gian đọc ghi bị tiêu tốn ở đâu.</p>
+    <span class="lab g">Giải pháp</span>
+    <p>Đĩa cứng trong PC: đường kính đĩa từ 0,85 đến 14 inch (trong lịch sử), thường gặp 3,5, 2,5 và 1,8 inch; dung lượng từ 30 GB đến 3 TB mỗi ổ. Tốc độ truyền lý thuyết 6 Gb/giây, tốc độ truyền hiệu dụng thực tế khoảng 1 Gb/giây. Đĩa loại mới chia thành các vùng có số sector khác nhau (vùng ngoài nhiều sector hơn vùng trong), phân bố lại mật độ thông tin.</p>
+    <div class="tblw"><table class="tbl"><thead><tr><th>Thành phần thời gian</th><th>Nghĩa</th><th>Phụ thuộc</th></tr></thead><tbody>
+      <tr><td><b>Seek time</b></td><td>Di chuyển đầu đọc để định vị đúng track/cylinder. Từ 3 đến 12 ms, khoảng 9 ms với ổ máy tính để bàn; trung bình đo hoặc tính dựa trên 1/3 số track.</td><td>tốc độ và cách di chuyển của đầu đọc</td></tr>
+      <tr><td><b>Rotational delay (latency)</b></td><td>Đầu đọc chờ đến đúng sector cần đọc. Chu kỳ quay = 1 / (RPM / 60) = 60 / RPM giây; độ trễ trung bình = ½ chu kỳ.</td><td>tốc độ quay của đĩa</td></tr>
+      <tr><td><b>Transfer time</b></td><td>Chuyển dữ liệu từ đĩa vào bộ nhớ hoặc ngược lại.</td><td>băng thông kênh truyền giữa đĩa và bộ nhớ</td></tr>
+    </tbody></table></div>
+    <p><b>Disk I/O time = seek time + rotational delay + transfer time.</b></p>
+    <span class="lab t">Minh họa: độ trễ quay theo tốc độ quay (ví dụ các tốc độ phổ biến; seek lấy 9 ms)</span>
+    <div class="row" id="rpmBtns" role="group" aria-label="Chọn tốc độ quay"></div>
+    <div class="status" id="rpmStatus" role="status"></div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s1"></div>
+  </section>
+
+  <section class="card" id="s2" style="--h:160" data-title="Định danh và hiệu suất">
+    <header><span class="num">2</span><h2>Định danh đĩa và các cách tăng hiệu suất</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Hệ điều hành phải gọi tên được từng sector, và phải làm cho việc truy cập đĩa nhanh nhất có thể.</p>
+    <span class="lab g">Giải pháp</span>
+    <ul>
+      <li><b>Định danh:</b> đĩa loại cũ xác định bởi cylinder/head/sector (CHS); đĩa loại mới dùng chỉ số block luận lý (<b>LBA</b>, logical block address). Phần mềm hệ thống file chuyển block luận lý sang vị trí vật lý. Với người dùng đĩa, "khối" hay "sector" là như nhau; với người dùng hệ thống file, "khối" có dung lượng cố định gồm một hay nhiều sector.</li>
+      <li><b>Mục tiêu định thời đĩa:</b> quản lý hàng đợi yêu cầu truy xuất đĩa và phục vụ hợp lý (ví dụ đầu từ dịch đến vị trí gần nhất). Mục tiêu định danh luận lý: che giấu phần chuyển đổi vật lý. Thực tế hệ điều hành vẫn phải quan tâm đến việc sắp đặt không gian trên đĩa.</li>
+    </ul>
+    <div class="two">
+      <div class="box"><b>Cách tăng hiệu suất truy cập</b><span class="muted">Giảm kích thước đĩa; tăng tốc độ quay; <b>định thời</b> các tác vụ truy xuất (disk scheduling) để hạn chế di chuyển đầu đọc; bố trí ghi dữ liệu hợp lý (dữ liệu liên quan nằm trên các track gần nhau, interleaving, file thường dùng đặt ở vị trí thích hợp); chọn kích thước logical block; read ahead.</span></div>
+      <div class="box"><b>Đặc trưng đáp ứng yêu cầu đĩa</b><span class="muted">Thông năng (throughput), disk utilization (phần thời gian truyền dữ liệu trong disk I/O time), deadline, thời gian đáp ứng, công bằng. Cần tối đa thông năng và disk utilization, tối thiểu số deadline bị lỡ và thời gian đáp ứng trung bình, và công bằng với mọi yêu cầu.</span></div>
+    </div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s2"></div>
+  </section>
+
+  <section class="card" id="s3" style="--h:28" data-title="Định thời truy cập đĩa">
+    <header><span class="num">3</span><h2>Định thời truy cập đĩa: sắp lại yêu cầu để đầu đọc chạy ít hơn</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Các yêu cầu đọc ghi đến theo thứ tự lộn xộn. Phục vụ đúng thứ tự đến thì đầu đọc phải chạy qua lại rất nhiều, mà seek time là phần tốn kém nhất.</p>
+    <span class="lab g">Giải pháp</span>
+    <p>Sắp xếp lại trật tự các yêu cầu để giảm thiểu thời gian di chuyển đầu đọc. Năm thuật toán: <b>FCFS</b> (đến trước phục vụ trước), <b>SSTF</b> (Shortest-Seek-Time First, gần nhất trước), <b>SCAN</b> (thuật toán thang máy: đầu đọc chạy tới một đầu rồi quay lại), <b>C-SCAN</b> (Circular SCAN: tới một đầu rồi nhảy về đầu kia, luôn phục vụ theo một hướng) và <b>C-LOOK</b> (như C-SCAN nhưng chỉ chạy tới yêu cầu xa nhất rồi nhảy về yêu cầu gần đầu kia nhất).</p>
+    <p>Ví dụ của slide: hàng đợi yêu cầu tại các cylinder 98, 183, 37, 122, 14, 124, 65, 67; đầu đọc đang ở cylinder 53. Bên dưới giả sử đĩa có cylinder từ 0 đến 199; SCAN đi về phía cylinder 0 trước, C-SCAN và C-LOOK đi về phía cylinder lớn trước.</p>
+    <span class="lab t">Minh họa: đường đi của đầu đọc</span>
+    <div class="row" id="dkBtns" role="group" aria-label="Chọn thuật toán"></div>
+    <div id="dkChart"></div>
+    <div class="status" id="dkStatus" role="status"></div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s3"></div>
+  </section>
+
+  <section class="card" id="s4" style="--h:280" data-title="Định dạng và phân vùng">
+    <header><span class="num">4</span><h2>Định dạng, phân vùng, raw disk, swap và khối lỗi</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Một đĩa trắng chưa dùng được ngay. Phải chia thành sector, chia thành vùng, dựng hệ thống file, và xử lý những chỗ hỏng.</p>
+    <span class="lab g">Giải pháp</span>
+    <div class="two">
+      <div class="box"><b>Định dạng cấp thấp (formatting)</b><span class="muted">Định dạng vật lý, chia đĩa thành nhiều sector, mỗi sector có cấu trúc header – data – trailer. Header và trailer chứa thông tin riêng cho disk controller như chỉ số sector và mã sửa lỗi <b>ECC</b>. Khi ghi, controller cập nhật ECC theo dữ liệu; khi đọc, tính lại ECC và so với giá trị đã lưu để kiểm tra dữ liệu có đúng không.</span></div>
+      <div class="box"><b>Phân vùng (partitioning)</b><span class="muted">Chia đĩa thành nhiều vùng (partition), mỗi vùng gồm nhiều block liên tục và được xem như một "đĩa luận lý" riêng. Sau đó <b>định dạng luận lý</b> cho partition: tạo hệ thống file (FAT, ext2...), lưu các cấu trúc khởi đầu và cấu trúc quản lý không gian trống và đã cấp phát (DOS: FAT, UNIX: inode table).</span></div>
+      <div class="box"><b>Raw disk</b><span class="muted">Partition không có hệ thống file; I/O lên raw disk gọi là raw I/O: đọc ghi trực tiếp các block, không dùng dịch vụ của file system (buffer cache, file locking, prefetching, cấp phát không gian trống, định danh file và thư mục). Ví dụ một số hệ cơ sở dữ liệu chọn dùng raw disk.</span></div>
+      <div class="box"><b>Không gian tráo đổi (swap space)</b><span class="muted">Không gian đĩa dùng để mở rộng bộ nhớ trong kỹ thuật bộ nhớ ảo, mục tiêu là hiệu suất cao nhất cho quản lý bộ nhớ ảo. Cài bằng partition riêng (swap partition của Linux) hoặc qua một file system (file <code>pagefile.sys</code> của Windows), thường kèm caching hoặc cấp phát liên tục.</span></div>
+    </div>
+    <p><b>Khối bị lỗi:</b> một số sector bị lỗi ngay khi xuất xưởng thì tự sửa bằng cách thay bằng sector, track dự trữ. Lỗi phát hiện sau một thời gian dùng: ví dụ block logic 87 không truy xuất được, bộ điều khiển đĩa phát hiện ECC sai và báo hệ điều hành; hệ điều hành ghi nhận để lần reboot sau báo bộ điều khiển đĩa thay thế; sau đó vị trí block 87 được cập nhật lại.</p>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s4"></div>
+  </section>
+
+  <section class="card" id="s5" style="--h:340" data-title="RAID">
+    <header><span class="num">5</span><h2>RAID: nhiều đĩa chạy song song và dự phòng</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Mật độ yêu cầu truy cập đĩa cao thì đĩa thành "cổ chai", hạn chế hiệu năng và tính ổn định của hệ thống. Một đĩa cũng có thể hỏng bất cứ lúc nào (thời gian làm việc trung bình MTTF của một đĩa khoảng 50.000 giờ, tức khoảng 5,7 năm).</p>
+    <span class="lab g">Giải pháp</span>
+    <p>Kết hợp nhiều đĩa (array) truy xuất song hành: <b>RAID</b> (Redundant Arrays of Independent Disks). Hiệu năng tăng nhờ <b>phân mảnh dữ liệu (data striping)</b>: chia mảnh dữ liệu đều trên nhiều đĩa theo giải thuật xoay vòng (Round Robin), mỗi mảnh gọi là striping unit; người dùng vẫn thấy như một đĩa dung lượng lớn. Độ tin cậy tăng nhờ lưu trữ <b>dư thừa (redundancy)</b>.</p>
+    <ul>
+      <li><b>Phân mảnh khối và phân mảnh bit:</b> hệ RAID có D đĩa thì tốc độ tăng tối đa D lần (D đĩa truy xuất song hành). Khi đọc khối dữ liệu lớn, hai kiểu không khác biệt. Nhưng với nhiều yêu cầu không liên quan nhau, phân mảnh khối hiệu quả hơn: phân mảnh bit bắt cả D đĩa cùng truy xuất để có một block, còn phân mảnh khối thì mỗi đĩa có thể thỏa mãn một yêu cầu riêng.</li>
+      <li><b>Độ tin cậy:</b> thông tin dự trữ dùng để khôi phục thông tin bị mất khi truy xuất lỗi. Dữ liệu dự trữ có thể nằm trên một đĩa riêng hoặc phân bố đều trên các đĩa, thường dưới dạng <b>bit chẵn lẻ (parity)</b>.</li>
+      <li><b>Parity:</b> mỗi bit dữ liệu có bit chẵn/lẻ chứa trên đĩa kiểm tra. Nếu tổng các bit 1 của dữ liệu là chẵn thì bit parity là 0; nếu là lẻ thì bit parity là 1. Dữ liệu trên bất cứ đĩa nào bị lỗi đều phục hồi được từng bit một.</li>
+      <li>Có nhiều mức RAID (levels) theo tiêu chí lưu dự trữ, trong đó có các kiểu ghép RAID 0 + 1 và 1 + 0.</li>
+    </ul>
+    <span class="lab t">Minh họa: mất một đĩa vẫn phục hồi được (ví dụ 4 đĩa dữ liệu và 1 đĩa parity)</span>
+    <div class="row" id="rdBtns" role="group" aria-label="Chọn đĩa bị hỏng"></div>
+    <div class="status" id="rdStatus" role="status"></div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s5"></div>
+  </section>
+  </main>
+</div>
+<script>
+const DATA = {quiz: {}};
+// ===== Phần dùng chung cho mọi trang hệ điều hành =====
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
+const btn = (label, fn, off) => { const b = el('button', {className: 'btn', type: 'button', onclick: fn}, label); if (off) b.disabled = true; return b; };
+const setP = (b, v) => b.setAttribute('aria-pressed', String(v));
+
+// Đổi giao diện sáng/tối, nhớ lựa chọn
+$('#themeBtn').addEventListener('click', () => {
+  const d = document.documentElement, n = d.dataset.theme === 'dark' ? 'light' : 'dark';
+  d.dataset.theme = n; try { localStorage.setItem('theme', n); } catch (e) {}
+});
+
+// Mục lục và thanh điều hướng nhanh
+const secs = $$('main > section');
+secs.forEach((s, i) => {
+  $('#toc').append(el('li', {}, el('a', {href: '#' + s.id}, el('b', {}, String(i + 1)), s.dataset.title)));
+  $('#barNums').append(el('a', {href: '#' + s.id, title: (i + 1) + '. ' + s.dataset.title, ariaLabel: 'Phần ' + (i + 1) + ': ' + s.dataset.title}, String(i + 1)));
+});
+function setCurrent(id){
+  $$('#toc a, #barNums a').forEach(a => a.hash === '#' + id ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current'));
+  const s = secs.find(x => x.id === id); if (s) $('#barNow').textContent = (secs.indexOf(s) + 1) + '. ' + s.dataset.title;
+}
+if ('IntersectionObserver' in window) {
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) setCurrent(e.target.id); }), {rootMargin: '-20% 0px -70% 0px'});
+  secs.forEach(s => io.observe(s));
+  new IntersectionObserver(es => es.forEach(e => $('#bar').classList.toggle('show', !e.isIntersecting && e.boundingClientRect.top < 0))).observe($('#toc'));
+}
+
+// Kiểm tra nhanh: DATA.quiz = { s1: [[câu hỏi, đáp án], ...], ... }
+function renderQuizzes(){
+  $$('[data-quiz]').forEach(box => (DATA.quiz[box.dataset.quiz] || []).forEach(([q, a]) => box.append(el('details', {}, el('summary', {}, q), el('p', {}, a)))));
+}
+
+// Dòng mã bấm được: lines = [[dòng, giải thích], ...]
+function annotCode(rootSel, statusSel, lines, start){
+  const root = $(rootSel);
+  lines.forEach(([line], i) => { const b = el('button', {className: 'codeline', type: 'button', onclick: () => pick(i)}, el('span', {className: 'n'}, String(i + 1)), line || ' '); b.setAttribute('aria-label', 'Dòng ' + (i + 1) + ': ' + (line.trim() || 'trống')); root.append(b); });
+  function pick(i){ [...root.children].forEach((b, k) => setP(b, k === i)); const [line, note] = lines[i]; $(statusSel).replaceChildren(el('b', {}, line.trim() || 'Dòng trống'), el('span', {}, note || 'Không có gì thêm ở dòng này.')); }
+  pick(start || 0);
+}
+
+// Hàng chip chọn một mục: items = [{k: nhãn, ...}], onPick(item, index) được gọi khi chọn
+function chooser(hostSel, items, onPick, start){
+  const host = $(hostSel);
+  items.forEach((it, i) => host.append(el('button', {className: 'chip', type: 'button', onclick: () => pick(i)}, el('i'), it.k)));
+  function pick(i){ [...host.children].forEach((b, k) => setP(b, k === i)); onPick(items[i], i); }
+  pick(start || 0);
+}
+// Ô trạng thái: tiêu đề đậm + các đoạn (chuỗi hoặc phần tử)
+const note = (sel, title, ...parts) => $(sel).replaceChildren(el('b', {}, title), ...parts.map(p => typeof p === 'string' ? el('span', {}, p) : p));
+// Chồng các lớp (kiến trúc): layers = [{n: tên lớp, items: [...], c: 'k'|'u'|'h'}]
+const stack = (sel, layers) => $(sel).replaceChildren(...layers.map(l => el('div', {className: 'lyr ' + (l.c || '')}, el('b', {}, l.n), ...(l.items || []).map(t => el('span', {className: 'it'}, t)))));
+
+// Bộ chạy từng bước: steps = [{t, d}], gọi draw(step, index) mỗi lần đổi
+function stepper(prefix, steps, draw){
+  let i = 0;
+  const render = () => {
+    draw(steps[i], i);
+    $('#' + prefix + 'Status').replaceChildren(el('b', {}, steps[i].t), el('span', {}, steps[i].d));
+    $('#' + prefix + 'Cnt').textContent = 'Bước ' + (i + 1) + '/' + steps.length;
+    $('#' + prefix + 'Back').disabled = i === 0; $('#' + prefix + 'Next').disabled = i === steps.length - 1;
+  };
+  $('#' + prefix + 'Next').addEventListener('click', () => { if (i < steps.length - 1) { i++; render(); } });
+  $('#' + prefix + 'Back').addEventListener('click', () => { if (i > 0) { i--; render(); } });
+  $('#' + prefix + 'Reset').addEventListener('click', () => { i = 0; render(); });
+  render();
+}
+
+Object.assign(DATA.quiz, {
+  s1: [['Disk I/O time gồm những thành phần nào?', 'Seek time + rotational delay (latency) + transfer time.'],
+       ['Độ trễ quay trung bình tính thế nào?', 'Chu kỳ quay = 60 / RPM giây; độ trễ trung bình bằng một nửa chu kỳ quay.']],
+  s2: [['CHS và LBA khác nhau thế nào?', 'CHS xác định sector bằng cylinder/head/sector (đĩa cũ). LBA dùng chỉ số block luận lý (đĩa mới); hệ thống file chuyển sang vị trí vật lý.'],
+       ['Kể ba cách tăng hiệu suất truy cập đĩa.', 'Ví dụ: tăng tốc độ quay, định thời tác vụ truy xuất đĩa để hạn chế di chuyển đầu đọc, đặt dữ liệu liên quan trên các track gần nhau, read ahead.']],
+  s3: [['SCAN và C-SCAN khác nhau thế nào?', 'SCAN chạy tới một đầu rồi quay lại và phục vụ cả hai chiều. C-SCAN chạy tới một đầu rồi nhảy về đầu kia, luôn phục vụ theo một hướng.'],
+       ['C-LOOK khác C-SCAN ở điểm nào?', 'C-LOOK chỉ chạy tới yêu cầu xa nhất rồi nhảy về yêu cầu gần đầu kia nhất, không đi hết tới cylinder cuối của đĩa.']],
+  s4: [['ECC dùng để làm gì?', 'Kiểm tra dữ liệu của sector có đúng không: ghi thì cập nhật ECC theo dữ liệu, đọc thì tính lại ECC và so với giá trị đã lưu.'],
+       ['Raw disk là gì?', 'Partition không có hệ thống file; đọc ghi trực tiếp các block, không dùng dịch vụ của file system. Một số cơ sở dữ liệu chọn dùng.']],
+  s5: [['Vì sao phân mảnh khối hiệu quả hơn phân mảnh bit với nhiều yêu cầu nhỏ?', 'Phân mảnh bit bắt tất cả D đĩa truy xuất để có một block, còn phân mảnh khối cho mỗi đĩa phục vụ một yêu cầu khác nhau.'],
+       ['Bit parity được tính thế nào?', 'Tổng số bit 1 của dữ liệu chẵn thì parity là 0, lẻ thì parity là 1. Mất một đĩa thì bit của nó là giá trị làm cho tổng chẵn/lẻ khớp lại với parity.']]
+});
+renderQuizzes();
+
+// Phần 1: độ trễ quay
+chooser('#rpmBtns', [5400, 7200, 10000, 15000].map(r => ({k: r + ' vòng/phút', r})), it => {
+  const rot = 60000 / it.r, lat = rot / 2, f = x => Math.round(x * 100) / 100;
+  note('#rpmStatus', it.k + ': độ trễ quay trung bình ≈ ' + f(lat) + ' ms', el('span', {}, 'Chu kỳ quay = 60 / ' + it.r + ' giây = ' + f(rot) + ' ms; độ trễ trung bình = ½ × ' + f(rot) + ' = ' + f(lat) + ' ms.'),
+    el('div', {className: 'why'}, 'Cộng seek 9 ms: thời gian định vị trung bình ≈ ' + f(9 + lat) + ' ms trước khi bắt đầu truyền dữ liệu.'));
+});
+
+// Phần 3: định thời đĩa
+const DQ = [98, 183, 37, 122, 14, 124, 65, 67], HEAD = 53, MAXC = 199;
+function diskRun(algo){
+  let pos = HEAD, total = 0; const path = [HEAD];
+  const go = c => { total += Math.abs(c - pos); pos = c; path.push(c); };
+  const hi = DQ.filter(c => c >= HEAD).sort((a, b) => a - b), lo = DQ.filter(c => c < HEAD).sort((a, b) => a - b);
+  if (algo === 'fcfs') DQ.forEach(go);
+  else if (algo === 'sstf') { const rest = DQ.slice(); while (rest.length) { let bi = 0; rest.forEach((c, i) => { if (Math.abs(c - pos) < Math.abs(rest[bi] - pos)) bi = i; }); go(rest.splice(bi, 1)[0]); } }
+  else if (algo === 'scan') { lo.slice().reverse().forEach(go); go(0); hi.forEach(go); }
+  else if (algo === 'cscan') { hi.forEach(go); go(MAXC); go(0); lo.forEach(go); }
+  else { hi.forEach(go); lo.forEach(go); }
+  return {path, total};
+}
+chooser('#dkBtns', [{k: 'FCFS', id: 'fcfs'}, {k: 'SSTF', id: 'sstf'}, {k: 'SCAN', id: 'scan'}, {k: 'C-SCAN', id: 'cscan'}, {k: 'C-LOOK', id: 'clook'}], it => {
+  const {path, total} = diskRun(it.id), W = 640, H = 22 * path.length + 28, X = c => 20 + c / MAXC * (W - 40);
+  const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg'); svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', 'Đường đi của đầu đọc qua các cylinder'); svg.style.cssText = 'width:100%;height:auto;max-height:420px';
+  const pl = document.createElementNS(ns, 'polyline'); pl.setAttribute('points', path.map((c, i) => X(c) + ',' + (16 + i * 22)).join(' ')); pl.setAttribute('fill', 'none'); pl.setAttribute('stroke', 'currentColor'); pl.setAttribute('stroke-width', '2'); pl.style.color = 'var(--accent)'; svg.append(pl);
+  path.forEach((c, i) => { const t = document.createElementNS(ns, 'text'); if (X(c) > W - 50) { t.setAttribute('x', X(c) - 6); t.setAttribute('text-anchor', 'end'); } else t.setAttribute('x', X(c) + 6); t.setAttribute('y', 14 + i * 22); t.setAttribute('font-size', '12'); t.setAttribute('fill', 'currentColor'); t.textContent = c; svg.append(t); const d = document.createElementNS(ns, 'circle'); d.setAttribute('cx', X(c)); d.setAttribute('cy', 16 + i * 22); d.setAttribute('r', 3.5); d.setAttribute('fill', 'currentColor'); d.style.color = 'var(--accent2)'; svg.append(d); });
+  $('#dkChart').replaceChildren(svg);
+  const extra = {fcfs: 'Phục vụ đúng thứ tự đến, đầu đọc chạy qua lại nhiều nhất.', sstf: 'Luôn đến yêu cầu gần vị trí hiện tại nhất.', scan: 'Chạy về cylinder 0, rồi đảo chiều phục vụ các yêu cầu còn lại.', cscan: 'Chạy tới cylinder 199, nhảy về 0 (quãng nhảy được tính vào tổng), rồi tiếp tục cùng chiều.', clook: 'Chạy tới yêu cầu xa nhất (183), nhảy về yêu cầu gần nhất phía kia (14), rồi tiếp tục cùng chiều.'}[it.id];
+  note('#dkStatus', it.k + ': tổng quãng đường đầu đọc = ' + total + ' cylinder', el('span', {}, 'Thứ tự phục vụ: ' + path.join(' → ') + '. ' + extra));
+});
+
+// Phần 5: parity
+const RD = [1, 0, 1, 1], PAR = RD.reduce((a, b) => a + b, 0) % 2;
+chooser('#rdBtns', [{k: 'Cả 5 đĩa bình thường', lost: -1}, ...RD.map((v, i) => ({k: 'Mất đĩa dữ liệu ' + (i + 1), lost: i}))], it => {
+  const cells = RD.map((v, i) => el('div', {className: 'cellb' + (i === it.lost ? '' : ' full')}, i === it.lost ? '?' : String(v), el('i', {className: 'in'}, 'D' + (i + 1)))).concat(el('div', {className: 'cellb full'}, String(PAR), el('i', {className: 'out'}, 'parity')));
+  const rec = it.lost < 0 ? null : (RD.reduce((a, b, i) => i === it.lost ? a : a + b, 0) + PAR) % 2;
+  note('#rdStatus', it.lost < 0 ? 'Dữ liệu ' + RD.join(' ') + ', parity = ' + PAR : it.k + ': khôi phục được bit ' + rec,
+    el('div', {className: 'cells'}, ...cells),
+    el('span', {}, it.lost < 0 ? 'Có ' + RD.filter(x => x).length + ' bit 1 (lẻ) nên bit parity = 1.' : 'Các đĩa còn lại cộng với parity cho tổng số bit 1 phải khớp quy tắc chẵn/lẻ, nên bit mất là ' + rec + (rec === RD[it.lost] ? ', đúng bằng giá trị ban đầu.' : '.')));
+});
+
+</script>
+</body>
+</html>

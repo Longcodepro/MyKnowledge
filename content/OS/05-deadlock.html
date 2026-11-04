@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OS 5: Deadlock</title>
+<script>
+// Luôn sáng mặc định; chỉ tối khi người đọc tự bấm đổi
+(function(){var t=null;try{t=localStorage.getItem('theme')}catch(e){}
+document.documentElement.dataset.theme=t==='dark'?'dark':'light';})();
+</script>
+<style>
+:root{
+  --bg:#f6f8fc; --card:#ffffff; --fg:#0f172a; --muted:#566277; --line:#e2e8f2; --hov:#f3f6fc;
+  --accent:#2563eb; --accent2:#7c3aed; --accent-soft:#eaf0ff; --hl:#fff0a8; --hl-fg:#5c4600;
+  --grad:linear-gradient(120deg,#2563eb,#7c3aed);
+  --mono:ui-monospace,"Cascadia Code",Consolas,Menlo,monospace;
+  --grid:rgba(15,23,42,.05);
+  --sh:0 1px 2px rgba(15,23,42,.05),0 8px 24px -12px rgba(15,23,42,.12);
+  --sh-hi:0 2px 4px rgba(15,23,42,.06),0 18px 40px -14px rgba(37,99,235,.28);
+  --ts:92%; --tl:94%; --tcl:42%;
+  --glow1:rgba(37,99,235,.16); --glow2:rgba(124,58,237,.13);
+  --ok:#16a34a; --bad:#dc2626; --warn:#b45309; --warn-soft:#fff4d6;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#0a0e16; --card:#121826; --fg:#e8edf6; --muted:#9aa6ba; --line:#212a3b; --hov:#18202f;
+  --accent:#7ab2ff; --accent2:#a78bfa; --accent-soft:#15233d; --hl:#4a3d00; --hl-fg:#ffe58a;
+  --grad:linear-gradient(120deg,#7ab2ff,#a78bfa);
+  --grid:rgba(232,237,246,.045);
+  --sh:0 1px 2px rgba(0,0,0,.3),0 8px 24px -12px rgba(0,0,0,.5);
+  --sh-hi:0 2px 4px rgba(0,0,0,.4),0 18px 40px -14px rgba(122,178,255,.25);
+  --ts:45%; --tl:20%; --tcl:74%;
+  --glow1:rgba(122,178,255,.13); --glow2:rgba(167,139,250,.11);
+  --ok:#4ade80; --bad:#f87171; --warn:#fbbf24; --warn-soft:#3a2f00;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;scrollbar-width:none}
+*::-webkit-scrollbar{display:none}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);min-height:100vh;font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.skip{position:absolute;left:12px;top:-56px;z-index:30;background:var(--accent);color:#fff;padding:9px 16px;border-radius:10px;text-decoration:none;font-weight:600}
+.skip:focus{top:12px}
+.bg{position:absolute;inset:0 0 auto;height:560px;z-index:-1;pointer-events:none;
+  background:radial-gradient(640px 320px at 12% -4%,var(--glow1),transparent 70%),radial-gradient(560px 300px at 88% 6%,var(--glow2),transparent 70%),
+  linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:auto,auto,32px 32px,32px 32px;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent)}
+.wrap{max-width:920px;margin:0 auto;padding:0 24px 64px}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:20px 0}
+.brand{display:flex;align-items:center;gap:11px;font-weight:700;letter-spacing:-.01em}
+.logo{width:34px;height:34px;border-radius:10px;background:var(--grad);display:grid;place-items:center;color:#fff;box-shadow:0 6px 16px -6px var(--accent)}
+:root[data-theme="dark"] .logo{color:#0b1220}
+.btn{font:inherit;font-size:13px;font-weight:500;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 14px;min-height:38px;cursor:pointer;box-shadow:var(--sh)}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn[disabled]{opacity:.45;cursor:default}
+.hero{padding:24px 0 8px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:5px 13px 5px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card);font:600 12.5px system-ui,sans-serif;color:var(--muted);box-shadow:var(--sh)}
+.pill i{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,.18)}
+h1{font-size:clamp(2.1rem,6vw,3.3rem);line-height:1.06;letter-spacing:-.04em;font-weight:800;margin:18px 0 14px}
+.grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{max-width:660px;color:var(--muted);font-size:1.08rem;margin:0 0 22px}
+.lead b{color:var(--fg);font-weight:600}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 30px;padding:0;list-style:none}
+.toc a{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:500;color:var(--fg);text-decoration:none;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 8px;min-height:36px;transition:all .15s}
+.toc a b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font:700 12px var(--mono)}
+.toc a:hover{border-color:var(--accent);transform:translateY(-1px)}
+.toc a[aria-current="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.toc a[aria-current="true"] b{background:var(--bg);color:var(--fg)}
+/* thanh điều hướng nhanh: dính ở mép trên khi mục lục đã cuộn khỏi màn hình */
+.bar{position:fixed;top:10px;left:50%;z-index:25;width:min(100% - 24px,880px);transform:translate(-50%,-90px);opacity:0;visibility:hidden;transition:transform .25s,opacity .25s,visibility 0s .25s;
+  display:flex;align-items:center;gap:6px;padding:6px 8px;background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh-hi)}
+.bar.show{transform:translate(-50%,0);opacity:1;visibility:visible;transition:transform .25s,opacity .25s}
+.bar a{display:grid;place-items:center;flex:none;min-width:30px;height:30px;border-radius:9px;border:1px solid transparent;color:var(--fg);text-decoration:none;font:700 12.5px var(--mono)}
+.bar a:hover{border-color:var(--accent);color:var(--accent)}
+.bar a[aria-current="true"]{background:var(--fg);color:var(--bg)}
+.bar .up{border-color:var(--line);background:var(--card);font:600 16px system-ui;margin-right:2px}
+.bar .nums{display:flex;gap:3px;flex-wrap:nowrap}
+.bar .now{flex:1;min-width:0;margin-left:6px;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+@media(max-width:640px){.bar .now{display:none}.bar{gap:3px;padding:5px 6px}.bar a{min-width:26px;height:28px}.bar .nums{gap:1px}}
+.howto{margin:18px 0 30px;border:1px dashed var(--line);border-radius:14px;padding:12px 16px;color:var(--muted);font-size:14px;background:var(--card)}
+.howto b{color:var(--fg)}
+.card{position:relative;overflow:hidden;background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--sh);padding:24px 24px 22px;margin-bottom:24px;scroll-margin-top:68px}
+.card::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,hsl(var(--h,215) 75% 55%),hsl(calc(var(--h,215) + 45) 75% 62%))}
+.card header{display:flex;gap:14px;align-items:center;margin-bottom:6px}
+.num{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font:800 17px var(--mono);background:hsl(var(--h,215) var(--ts) var(--tl));color:hsl(var(--h,215) 65% var(--tcl))}
+.card h2{font-size:1.28rem;letter-spacing:-.02em;margin:0;line-height:1.25}
+.card h3{font-size:1rem;margin:20px 0 6px}
+.card p{margin:8px 0}
+.lab{display:inline-block;font:700 11px/1 system-ui;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:4px 8px;margin:18px 0 4px}
+.lab.v{background:var(--warn-soft);color:var(--warn)}
+.lab.g{background:var(--accent-soft);color:var(--accent)}
+.lab.t{background:hsl(160 var(--ts) var(--tl));color:hsl(160 65% var(--tcl))}
+.lab.q{background:var(--hov);color:var(--muted);border:1px solid var(--line)}
+.muted{color:var(--muted)}
+code,.mono{font-family:var(--mono);font-size:.9em}
+:not(pre)>code{background:var(--accent-soft);color:var(--accent);padding:1px 6px;border-radius:6px;white-space:nowrap}
+.ana{margin:12px 0;border-left:3px solid hsl(var(--h,215) 60% 60%);padding:6px 14px;background:var(--hov);border-radius:0 12px 12px 0;color:var(--muted)}
+.ana b{color:var(--fg)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:14px;margin:12px 0}
+.box{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--hov)}
+.box b{display:block;margin-bottom:2px}
+.box.on{border-color:var(--accent);background:var(--accent-soft)}
+.status{margin-top:12px;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:12px 16px;background:var(--card)}
+.status b{display:block}
+.why{margin-top:8px;color:var(--muted);font-size:14px}
+.why::before{content:"Vì sao? ";font-weight:700;color:var(--fg)}
+.warn{margin:12px 0;border:1px solid var(--warn);border-radius:12px;padding:10px 14px;background:var(--warn-soft);color:var(--warn)}
+.tbl{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
+.tbl th,.tbl td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.tblw{overflow-x:auto}
+.procs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:14px;margin:12px 0}
+.pbox{border:2px solid hsl(var(--c) 60% 60%);border-radius:16px;padding:10px 14px;background:hsl(var(--c) var(--ts) var(--tl))}
+.pbox b{display:block}
+.pbox .mem{margin-top:6px;border:1px dashed hsl(var(--c) 50% 55%);border-radius:10px;padding:6px 10px;font:12.5px var(--mono);color:var(--fg);background:var(--card)}
+.chain{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin:12px 0}
+.chain .nd{flex:1 1 140px;border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--hov);text-align:center}
+.chain .nd small{display:block;color:var(--muted)}
+.chain .ar{align-self:center;color:var(--muted);font:12px var(--mono);text-align:center;flex:0 0 auto}
+svg.diag{width:100%;height:auto;max-height:300px;display:block}
+.diag .nd rect{fill:var(--card);stroke:var(--line);stroke-width:2}
+.diag .nd text{fill:var(--fg);font:600 14px system-ui,sans-serif;text-anchor:middle}
+.diag .nd .sm{font:12px var(--mono);fill:var(--muted);font-weight:400}
+.diag .nd.on rect{stroke:hsl(var(--h) 70% 50%);fill:hsl(var(--h) var(--ts) var(--tl))}
+.diag .nd.dim{opacity:.38}
+.diag .ln{fill:none;stroke:var(--line);stroke-width:2.5}
+.diag .ln.on{stroke:var(--accent);stroke-dasharray:8 6;animation:flow .8s linear infinite}
+.diag .ln.on.rev{animation-direction:reverse}
+@keyframes flow{to{stroke-dashoffset:-14}}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.chip{display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:13.5px;font-weight:500;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 12px;min-height:36px;cursor:pointer;transition:all .15s}
+.chip i{width:8px;height:8px;border-radius:50%;background:hsl(var(--h,190) 70% 52%)}
+.chip:hover{border-color:var(--accent);transform:translateY(-1px)}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.mw{display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 0 4px}
+.mnode{border:2px solid var(--accent);border-radius:14px;padding:10px 20px;background:var(--accent-soft);font-weight:700;text-align:center}
+.sock{font:12px var(--mono);color:var(--muted);border-left:2px dashed var(--line);padding:2px 0 2px 10px}
+.workers{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.w{border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg);padding:8px 14px;font:13px var(--mono);cursor:pointer;min-width:96px;text-align:center}
+.w:hover{border-color:var(--bad)}
+.w.dead{border-color:var(--bad);color:var(--bad);background:transparent;text-decoration:line-through}
+.w.new{border-color:var(--ok);color:var(--ok)}
+.inst{min-width:120px;text-align:center}
+.inst .bar{height:8px;border-radius:99px;background:var(--line);margin-top:6px;overflow:hidden}
+.inst .bar i{display:block;height:100%;background:var(--grad);width:0;transition:width .25s}
+input[type=range]{width:200px;accent-color:var(--accent)}
+.win{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card);margin:8px 0}
+.win .bar{display:flex;gap:6px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line);background:var(--hov);font:12px var(--mono);color:var(--muted)}
+.win .bar i{width:10px;height:10px;border-radius:50%;background:#ff5f57}.win .bar i:nth-child(2){background:#febc2e}.win .bar i:nth-child(3){background:#28c840}
+.win .bar span{margin-left:8px}
+.codeline{display:block;width:100%;text-align:left;font:13.5px/1.7 var(--mono);color:var(--fg);background:none;border:0;padding:0 14px;cursor:pointer;white-space:pre;border-left:3px solid transparent;overflow-x:auto}
+.codeline:hover{background:var(--hov)}
+.codeline[aria-pressed="true"]{background:var(--accent-soft);border-left-color:var(--accent)}
+.codeline .n{display:inline-block;width:2.2em;color:var(--muted);user-select:none}
+.log{border:1px solid var(--line);border-radius:12px;background:var(--hov);padding:10px 14px;font:13px/1.7 var(--mono);min-height:56px}
+.log .ok{color:var(--ok)}.log .no{color:var(--bad)}
+details{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-top:8px;background:var(--card)}
+summary{cursor:pointer;font-weight:600}
+details p{margin:8px 0 2px;color:var(--muted)}
+.stepper{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.stepper .cnt{font:13px var(--mono);color:var(--muted);margin-left:auto}
+.role{display:inline-block;font:600 12px system-ui;border-radius:999px;padding:2px 10px;background:var(--accent-soft);color:var(--accent);margin-right:6px}
+.foot{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+.foot a{color:var(--accent)}
+kbd{font:12px var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:0 7px;background:var(--card)}
+@media(max-width:640px){.wrap{padding:0 16px 48px}.hero{padding-top:12px}.card{padding:18px 16px}.card header{gap:10px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important;animation:none!important}}
+@media(forced-colors:active){.card,.toc a[aria-current="true"]{border:1px solid}}
+</style>
+<style>
+/* bổ sung riêng cho trang hệ điều hành */
+.banner{background:#fff4d6;color:#6b4e00;text-align:center;padding:6px 12px;font-size:13.5px}
+:root[data-theme="dark"] .banner{background:#3a2f00;color:#ffe58a}
+.memwrap{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start;margin:10px 0}
+@media(max-width:720px){.memwrap{grid-template-columns:1fr}}
+.memcol{display:flex;flex-direction:column;border:2px solid var(--line);border-radius:14px;overflow:hidden;font:13px var(--mono)}
+.memcol .hi,.memcol .lo{padding:4px 12px;background:var(--hov);color:var(--muted);font-size:12px}
+.memcol .reg{padding:10px 12px;border-top:1px solid var(--line);background:var(--card);transition:background .15s}
+.memcol .reg small{display:block;color:var(--muted);font-family:system-ui;font-size:12px}
+.memcol .reg.free{background:repeating-linear-gradient(135deg,transparent 0 8px,var(--hov) 8px 16px);color:var(--muted);text-align:center}
+.memcol .reg.on{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.memcol .reg.on small{color:var(--accent)}
+.sdiag{width:100%;height:auto;max-height:330px;display:block}
+.sdiag .st ellipse{fill:var(--card);stroke:var(--line);stroke-width:2;transition:all .2s}
+.sdiag .st text{fill:var(--fg);font:600 14px system-ui,sans-serif;text-anchor:middle}
+.sdiag .st.on ellipse{stroke:hsl(var(--h) 70% 50%);fill:hsl(var(--h) var(--ts) var(--tl));stroke-width:3}
+.sdiag .tr{fill:none;stroke:var(--line);stroke-width:2.2}
+.sdiag .tr.on{stroke:var(--accent);stroke-width:3;stroke-dasharray:8 6;animation:flow .8s linear infinite}
+.sdiag .lb{fill:var(--muted);font:12px var(--mono);text-anchor:middle}
+.sdiag .lb.on{fill:var(--accent);font-weight:700}
+.sdiag marker path{fill:var(--muted)}
+.cs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px;margin:12px 0}
+.cs .cell{border:2px solid var(--line);border-radius:14px;padding:10px 14px;background:var(--card);transition:all .2s}
+.cs .cell.on{border-color:var(--accent);background:var(--accent-soft)}
+.cs .cell b{display:block;margin-bottom:4px}
+.cs .cell dl{margin:0;font:13px/1.7 var(--mono)}
+.cs .cell dt{display:inline;color:var(--muted)}
+.cs .cell dd{display:inline;margin:0 0 0 6px}
+.box span b{display:inline;margin:0}
+:not(pre)>code{white-space:normal;overflow-wrap:anywhere}
+.pending{opacity:.9}
+.pending p{margin:6px 0 0}
+.lanes{display:grid;grid-template-columns:1fr 130px 1fr;gap:12px;margin:12px 0;align-items:start}
+@media(max-width:720px){.lanes{grid-template-columns:1fr}}
+.lane{border:2px solid var(--line);border-radius:14px;padding:10px 12px;min-height:84px;background:var(--card)}
+.lane h4{margin:0 0 8px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.lane.cpu{border-color:var(--accent);background:var(--accent-soft)}
+.pc{display:inline-flex;align-items:center;justify-content:center;min-width:44px;height:34px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);font:700 13px var(--mono);margin:0 6px 6px 0;padding:0 10px}
+.pc.run{border-color:var(--accent);color:var(--accent)}
+.tree ul{list-style:none;margin:0;padding-left:22px;border-left:2px dashed var(--line)}
+.tree>ul{padding-left:0;border-left:0}
+.tree li{margin:6px 0}
+.tn{display:inline-flex;gap:8px;align-items:center;border:1.5px solid var(--line);border-radius:10px;padding:4px 12px;background:var(--card);color:var(--fg);font:13px var(--mono);cursor:pointer}
+.tn:hover{border-color:var(--accent)}
+.tn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:700}
+.tn small{color:var(--muted)}
+.tn.orph{border-color:var(--warn);color:var(--warn);cursor:default}
+.cells{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 6px}
+.cellb{width:56px;height:44px;border:2px solid var(--line);border-radius:10px;display:grid;place-items:center;font:700 13px var(--mono);background:var(--card);position:relative}
+.cellb.full{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.cellb i{position:absolute;top:-10px;font:700 10px var(--mono);font-style:normal;padding:0 5px;border-radius:5px;background:var(--fg);color:var(--bg)}
+.cellb i.in{left:2px}
+.cellb i.out{right:2px;background:var(--accent2);color:#fff}
+.tcell{width:40px;height:40px;border-radius:9px;display:grid;place-items:center;font:700 12px var(--mono);color:#fff;background:hsl(var(--c) 60% 42%)}
+.th{display:inline-block;border:2px solid var(--line);border-radius:10px;padding:6px 12px;margin:0 6px 6px 0;font:700 13px var(--mono);background:var(--card);color:var(--fg);cursor:pointer}
+.th.ok{border-color:var(--ok);color:var(--ok)}
+.th.blocked{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.th.stuck{border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
+.kt{display:inline-block;border:2px dashed var(--line);border-radius:10px;padding:6px 12px;margin:0 6px 6px 0;font:700 13px var(--mono);color:var(--muted)}
+.kt.blocked{border-color:var(--bad);color:var(--bad)}
+</style>
+</head>
+<body>
+<a class="skip" href="#s1">Bỏ qua tới nội dung</a>
+<div class="bg" aria-hidden="true"></div>
+<nav class="bar" id="bar" aria-label="Điều hướng nhanh"><a class="up" href="#top" aria-label="Lên đầu trang" title="Lên đầu trang">↑</a><span class="nums" id="barNums"></span><span class="now" id="barNow" aria-hidden="true"></span></nav>
+<div class="wrap">
+  <header class="topbar" id="top">
+    <div class="brand"><span class="logo" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9zM9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg></span>Hệ điều hành</div>
+    <button class="btn" id="themeBtn" type="button" aria-label="Đổi giao diện sáng hoặc tối">Sáng / Tối</button>
+  </header>
+
+  <div class="hero">
+    <span class="pill"><i></i>Hệ điều hành · Chương 3 · Deadlock</span>
+    <h1>Deadlock: <span class="grad">khi mọi người cùng chờ nhau</span></h1>
+    <p class="lead">Deadlock là gì, bốn điều kiện cần có, đồ thị cấp phát tài nguyên, và bốn cách đối phó: ngăn ngừa, phòng tránh (giải thuật nhà băng), phát hiện và phục hồi.</p>
+  </div>
+
+  <ol class="toc" id="toc" aria-label="Lộ trình các phần"></ol>
+
+  <main>
+<section class="card" id="s1" style="--h:215" data-title="Deadlock là gì">
+    <header><span class="num">1</span><h2>Deadlock là gì: hai bên cùng giữ cái bên kia cần</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Hệ thống có nhiều tiến trình dùng chung tài nguyên (nhiều loại, mỗi loại có thể nhiều đơn vị, ví dụ 2 CPU, 5 máy in). Mỗi tiến trình thường: <b>đòi hỏi</b> tài nguyên (chưa có sẵn thì phải đợi), <b>sử dụng</b> rồi <b>giải phóng</b>. Khi các tiến trình dùng chung ít nhất hai tài nguyên, hệ thống có thể gặp nguy hiểm.</p>
+    <span class="lab g">Giải pháp: hiểu hiện tượng trước</span>
+    <p>Ví dụ: P1 và P2 cùng dùng hai tài nguyên R1, R2, được điều độ bởi hai đèn báo S1 và S2 (cả hai khởi đầu bằng 1). P1 làm <code>P(S1); P(S2); dùng R1 và R2; V(S1); V(S2)</code>. Nếu P2 xin theo thứ tự ngược lại (S2 rồi S1) thì mỗi bên giữ một đèn và chờ đèn kia.</p>
+    <div class="ana"><b>Đời thường:</b> hai ô tô đối đầu nhau trên một cây cầu hẹp chỉ đủ rộng cho một chiếc. Mỗi đoạn cầu là một tài nguyên. Nếu kẹt, chỉ giải quyết được khi một hay vài xe lùi lại nhường đường.</div>
+    <p><b>Deadlock</b> là trạng thái trong hệ thống có ít nhất hai tiến trình đang dừng chờ lẫn nhau và không thể chạy tiếp. Sự chờ này có thể kéo dài vô hạn nếu không có tác động từ bên ngoài.</p>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s1"></div>
+  </section>
+
+  <section class="card" id="s2" style="--h:160" data-title="Bốn điều kiện">
+    <header><span class="num">2</span><h2>Bốn điều kiện cần của deadlock: thiếu một là hết</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Muốn đối phó với deadlock phải biết nó cần những gì mới xảy ra. Nếu phá được một điều kiện cần thì deadlock không thể xảy ra.</p>
+    <span class="lab g">Giải pháp</span>
+    <p>Phải có đủ <b>cả bốn</b> điều kiện, không được thiếu điều kiện nào:</p>
+    <div class="tblw"><table class="tbl"><thead><tr><th>Điều kiện</th><th>Nghĩa</th></tr></thead><tbody>
+      <tr><td><b>Tài nguyên găng</b> (mutual exclusion)</td><td>Tài nguyên không chia sẻ được: mỗi lúc chỉ một tiến trình dùng; tiến trình khác yêu cầu thì phải hoãn đến khi tài nguyên được giải phóng.</td></tr>
+      <tr><td><b>Giữ và chờ</b> (hold and wait)</td><td>Tiến trình chưa được vào đoạn găng phải xếp hàng chờ, trong khi chờ vẫn chiếm giữ các tài nguyên đã được cấp.</td></tr>
+      <tr><td><b>Không trưng dụng</b> (no preemption)</td><td>Tài nguyên không bị lấy lại được; chỉ tiến trình đang giữ giải phóng khi đã xong nhiệm vụ.</td></tr>
+      <tr><td><b>Chờ vòng tròn</b> (circular wait)</td><td>Tồn tại một chu kỳ khép kín các yêu cầu tài nguyên, tạo vòng chờ không kết thúc.</td></tr>
+    </tbody></table></div>
+    <span class="lab t">Minh họa: bật tắt từng điều kiện</span>
+    <div class="row" id="condBtns" role="group" aria-label="Bật tắt điều kiện"></div>
+    <div class="status" id="condStatus" role="status"></div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s2"></div>
+  </section>
+
+  <section class="card" id="s3" style="--h:28" data-title="Đồ thị cấp phát">
+    <header><span class="num">3</span><h2>Đồ thị cấp phát tài nguyên: nhìn deadlock bằng hình</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Làm sao mô hình hóa ai đang giữ gì và ai đang chờ gì để nhìn ra bế tắc?</p>
+    <span class="lab g">Giải pháp</span>
+    <p>Đồ thị cấp phát tài nguyên là đồ thị có hướng gồm tập đỉnh V và tập cung E. Đỉnh gồm hai kiểu: <b>tiến trình</b> P = {P1, ..., Pn} (vẽ hình tròn) và <b>kiểu tài nguyên</b> R = {R1, ..., Rm} (vẽ hình chữ nhật, mỗi đơn vị là một dấu chấm bên trong). Cung gồm hai loại:</p>
+    <ul>
+      <li><b>Cung yêu cầu</b> Pi → Rj: tiến trình Pi yêu cầu tài nguyên Rj.</li>
+      <li><b>Cung sử dụng</b> Rj → Pi: tài nguyên Rj đã được cấp cho Pi (xuất phát từ dấu chấm bên trong Rj).</li>
+    </ul>
+    <p>Khi Pi yêu cầu Rj, cung yêu cầu được chèn vào đồ thị; nếu yêu cầu được thỏa mãn thì cung yêu cầu đổi thành cung sử dụng; khi Pi giải phóng Rj thì cung sử dụng bị xóa. Ví dụ slide: 4 tài nguyên R1 đến R4, 3 tiến trình P1 đến P3. P3 yêu cầu R4 rồi được cấp (cung P3 → R4 đổi thành R4 → P3), rồi giải phóng R4 (xóa cung). Sau đó P3 yêu cầu R1 thì <b>xuất hiện chu trình</b> và hệ thống bị tắc.</p>
+    <div class="two">
+      <div class="box"><b>Đồ thị không có chu trình</b><span class="muted">Không có deadlock.</span></div>
+      <div class="box on"><b>Đồ thị có chu trình</b><span class="muted">Nếu mỗi tài nguyên chỉ có 1 đơn vị: chắc chắn deadlock. Nếu có nhiều hơn 1 đơn vị: chỉ có khả năng deadlock (slide có ví dụ đồ thị có chu trình nhưng hệ thống không bị tắc).</span></div>
+    </div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s3"></div>
+  </section>
+
+  <section class="card" id="s4" style="--h:280" data-title="Ba cách xử lý">
+    <header><span class="num">4</span><h2>Ba hướng xử lý và ngăn ngừa deadlock</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Đối phó deadlock tốn công. Đối phó đến đâu là hợp lý tùy hệ thống hay bị deadlock đến mức nào và thiệt hại lớn hay nhỏ.</p>
+    <span class="lab g">Giải pháp: ba hướng</span>
+    <div class="tblw"><table class="tbl"><thead><tr><th>Hướng</th><th>Cách làm</th><th>Áp dụng khi</th></tr></thead><tbody>
+      <tr><td><b>Ngăn ngừa</b> (prevention)</td><td>Áp dụng biện pháp để hệ thống không bao giờ rơi vào deadlock. Tốn kém.</td><td>Hệ thống hay xảy ra deadlock và tổn thất lớn.</td></tr>
+      <tr><td><b>Phòng tránh</b> (avoidance)</td><td>Kiểm tra từng yêu cầu tài nguyên, từ chối nếu cấp có khả năng dẫn đến deadlock. Thường cần thông tin phụ trợ.</td><td>Hệ thống ít xảy ra deadlock nhưng tổn hại lớn.</td></tr>
+      <tr><td><b>Nhận biết và khắc phục</b> (detection and recovery)</td><td>Cho hệ thống chạy bình thường, định kỳ kiểm tra có deadlock không, nếu có thì loại bỏ.</td><td>Hệ thống ít xảy ra deadlock và thiệt hại không lớn.</td></tr>
+    </tbody></table></div>
+    <h3>Ngăn ngừa: tác động vào từng điều kiện</h3>
+    <ul>
+      <li><b>Giảm tài nguyên găng:</b> tài nguyên chia sẻ được (file chỉ đọc) thì dùng đồng thời. Kỹ thuật <b>SPOOL</b> (Simultaneous Peripheral Operation On-Line): không phân phối tài nguyên khi chưa thực sự cần; chỉ tiến trình đặc biệt (printer daemon) mới làm việc với máy in, nên tắc vì máy in bị hủy bỏ. Không phải tài nguyên nào cũng spool được.</li>
+      <li><b>Phá "giữ và chờ":</b> chỉ cho xin tài nguyên khi không giữ cái nào khác. Cách 1 <i>cung cấp trước</i>: xin toàn bộ ngay từ đầu (hiệu quả sử dụng thấp, tổng số có thể vượt khả năng hệ thống). Cách 2 <i>giải phóng</i> tất cả trước khi xin tài nguyên mới (chạy chậm, phải bảo đảm dữ liệu trong tài nguyên tạm trả không mất). Ví dụ tiến trình hai giai đoạn (sắp xếp dữ liệu trong file rồi đưa ra máy in; sao chép dữ liệu từ băng từ sang file trên đĩa): cung cấp trước xin cả băng từ, file đĩa và máy in nên lãng phí máy in ở giai đoạn đầu, băng từ ở giai đoạn cuối; cách giải phóng xin băng từ và file đĩa cho giai đoạn 1, rồi giải phóng, rồi xin file đĩa và máy in cho giai đoạn 2.</li>
+      <li><b>Cho phép trưng dụng:</b> cách 1: nếu A đang giữ tài nguyên mà xin thêm chưa được, hệ thống lấy lại mọi tài nguyên A giữ; A chỉ chạy lại khi có đủ cả tài nguyên cũ và mới. Cách 2: xét tài nguyên A xin: nếu đang do một tiến trình khác đang chờ thêm tài nguyên giữ thì lấy lại cấp cho A; nếu do tiến trình không chờ giữ thì A phải đợi (và tài nguyên của A có thể bị lấy lại).</li>
+      <li><b>Phá chờ vòng tròn:</b> đánh thứ tự cho mọi loại tài nguyên và buộc mỗi tiến trình xin theo thứ tự đó. Ví dụ muốn dùng cả ổ đĩa và máy in thì phải xin ổ đĩa trước, được cấp rồi mới xin máy in.</li>
+    </ul>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s4"></div>
+  </section>
+
+  <section class="card" id="s5" style="--h:340" data-title="Phòng tránh, nhà băng">
+    <header><span class="num">5</span><h2>Phòng tránh deadlock và giải thuật nhà băng</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Ngăn ngừa khắt khe làm tài nguyên dùng kém hiệu quả. Có thể cho phép mọi thứ nhưng từ chối đúng những yêu cầu nguy hiểm không?</p>
+    <span class="lab g">Giải pháp</span>
+    <p>Phòng tránh đòi hỏi hệ điều hành biết trước <b>mỗi tiến trình sẽ cần tối đa bao nhiêu mỗi loại tài nguyên</b>. Giải thuật kiểm tra trạng thái cấp phát (số tài nguyên còn lại, số đã cấp, nhu cầu tối đa) để hệ thống không rơi vào deadlock.</p>
+    <ul>
+      <li><b>Trạng thái an toàn (safe):</b> hệ thống có thể thỏa mãn nhu cầu của mọi tiến trình theo một thứ tự nào đó (chuỗi an toàn) mà không deadlock. Không tồn tại chuỗi an toàn thì là trạng thái <b>không an toàn (unsafe)</b>.</li>
+      <li>An toàn thì không có deadlock; không an toàn thì <i>có thể</i> có deadlock. Phòng tránh nghĩa là không bao giờ để hệ thống bước vào trạng thái không an toàn.</li>
+      <li>Mỗi loại tài nguyên 1 đơn vị: dùng <b>thuật toán đồ thị phân phối tài nguyên</b>. Nhiều đơn vị: dùng <b>giải thuật nhà băng (banker)</b>.</li>
+    </ul>
+    <p><b>Đồ thị phân phối:</b> thêm <b>cung đòi hỏi</b> Pi ⇢ Rj (Pi có thể xin Rj trong tương lai). Yêu cầu của Pi chỉ được đáp ứng nếu việc đổi cung yêu cầu thành cung sử dụng <b>không tạo chu trình</b>. Ví dụ slide: P1 và P2 đều có thể xin R1, R2; cấp R1 cho P1 và R2 cho P2 sẽ khiến khi P1 xin R2 thì P1 phải đợi và khi P2 xin R1 thì P2 phải đợi: hệ thống bị tắc, nên yêu cầu thứ hai không được đáp ứng.</p>
+    <h3>Giải thuật nhà băng</h3>
+    <p>Tiến trình mới vào phải khai báo số tối đa mỗi loại tài nguyên cần (không vượt tổng số có). Khi có yêu cầu cấp phát, hệ thống kiểm tra sau khi cấp vẫn <b>an toàn</b> thì cấp, nếu không thì tiến trình phải chờ. <b>Bước 1:</b> lập bảng Cần = Max − Chiếm. <b>Bước 2:</b> lặp: tìm tiến trình Pi có Cần(Pi) ≤ Còn, giả sử nó chạy xong và trả hết: Còn = Còn + Chiếm(Pi); nếu tất cả tiến trình xong thì an toàn. Với một yêu cầu Request(P): nếu Request(P) > Còn thì không cấp được; ngược lại giả sử cấp (Còn −= Request, Chiếm(P) += Request), rồi kiểm tra an toàn: an toàn thì cấp ngay, không thì chưa cấp.</p>
+    <p>Ví dụ của slide: 5 tiến trình P0 đến P4, 3 tài nguyên R0 (10 đơn vị), R1 (5), R2 (7). Mỗi yêu cầu dưới đây được xét độc lập, bắt đầu từ trạng thái ban đầu.</p>
+    <span class="lab t">Minh họa: chạy giải thuật nhà băng</span>
+    <div class="row" id="bankBtns" role="group" aria-label="Chọn tình huống"></div>
+    <div class="status" id="bankStatus" role="status"></div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s5"></div>
+  </section>
+
+  <section class="card" id="s6" style="--h:95" data-title="Phát hiện">
+    <header><span class="num">6</span><h2>Phát hiện deadlock: kiểm tra định kỳ</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Nếu không ngăn ngừa cũng không phòng tránh, hệ thống có thể rơi vào deadlock. Làm sao biết đã deadlock hay chưa?</p>
+    <span class="lab g">Giải pháp</span>
+    <ul>
+      <li><b>Mỗi tài nguyên một đơn vị:</b> kiểm tra chu trình trên đồ thị cấp phát. Có chu trình thì đang deadlock. Thuật toán tốn khoảng n² thao tác (n là số đỉnh). Có thể dùng <b>đồ thị chờ đợi</b> (wait-for graph), bản thu gọn chỉ còn đỉnh tiến trình: cung Pi → Pj nghĩa là Pi đang đợi Pj giải phóng tài nguyên; cung này tồn tại khi và chỉ khi đồ thị cấp phát có đồng thời cung Pi → R và cung R → Pj.</li>
+      <li><b>Nhiều đơn vị mỗi loại:</b> dùng thuật toán chỉ ra deadlock tổng quát, tương tự giải thuật nhà băng nhưng dùng ma trận <b>yêu cầu hiện tại</b> (Request) thay cho nhu cầu tối đa.</li>
+    </ul>
+    <p>Ví dụ của slide: 5 tiến trình P0 đến P4, 3 tài nguyên R0 (7 đơn vị), R1 (2), R2 (6); tài nguyên hiện có (0, 0, 0).</p>
+    <span class="lab t">Minh họa: chạy thuật toán phát hiện</span>
+    <div class="row" id="detBtns" role="group" aria-label="Chọn thời điểm"></div>
+    <div class="status" id="detStatus" role="status"></div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s6"></div>
+  </section>
+
+  <section class="card" id="s7" style="--h:250" data-title="Phục hồi">
+    <header><span class="num">7</span><h2>Phục hồi deadlock: gỡ bế tắc đã xảy ra</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Đã phát hiện deadlock rồi thì phải gỡ. Gỡ bằng cách nào mà thiệt hại nhỏ nhất?</p>
+    <span class="lab g">Giải pháp</span>
+    <p>Hai hướng khắc phục: <b>kết thúc tiến trình</b> và <b>trưng dụng tài nguyên</b>. Với trưng dụng: lấy liên tục một vài tài nguyên từ một số tiến trình đang deadlock cho các tiến trình khác đến khi deadlock bị hủy. Cần cân nhắc:</p>
+    <ul>
+      <li><b>Chọn nạn nhân (victim):</b> lấy tài nguyên nào, của tiến trình nào, theo thứ tự nào để chi phí nhỏ nhất (dựa vào lượng tài nguyên đang giữ, thời gian đã dùng...).</li>
+      <li><b>Quay lui (rollback):</b> đưa tiến trình về một trạng thái an toàn trước đó rồi bắt đầu lại. Phải lưu thông tin trạng thái của tiến trình đang chạy.</li>
+      <li><b>Đói tài nguyên (starvation):</b> một tiến trình bị trưng dụng quá nhiều lần sẽ chờ vô hạn. Giải pháp: ghi lại số lần bị trưng dụng.</li>
+    </ul>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s7"></div>
+  </section>
+  </main>
+</div>
+<script>
+const DATA = {quiz: {}};
+// ===== Phần dùng chung cho mọi trang hệ điều hành =====
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
+const btn = (label, fn, off) => { const b = el('button', {className: 'btn', type: 'button', onclick: fn}, label); if (off) b.disabled = true; return b; };
+const setP = (b, v) => b.setAttribute('aria-pressed', String(v));
+
+// Đổi giao diện sáng/tối, nhớ lựa chọn
+$('#themeBtn').addEventListener('click', () => {
+  const d = document.documentElement, n = d.dataset.theme === 'dark' ? 'light' : 'dark';
+  d.dataset.theme = n; try { localStorage.setItem('theme', n); } catch (e) {}
+});
+
+// Mục lục và thanh điều hướng nhanh
+const secs = $$('main > section');
+secs.forEach((s, i) => {
+  $('#toc').append(el('li', {}, el('a', {href: '#' + s.id}, el('b', {}, String(i + 1)), s.dataset.title)));
+  $('#barNums').append(el('a', {href: '#' + s.id, title: (i + 1) + '. ' + s.dataset.title, ariaLabel: 'Phần ' + (i + 1) + ': ' + s.dataset.title}, String(i + 1)));
+});
+function setCurrent(id){
+  $$('#toc a, #barNums a').forEach(a => a.hash === '#' + id ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current'));
+  const s = secs.find(x => x.id === id); if (s) $('#barNow').textContent = (secs.indexOf(s) + 1) + '. ' + s.dataset.title;
+}
+if ('IntersectionObserver' in window) {
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) setCurrent(e.target.id); }), {rootMargin: '-20% 0px -70% 0px'});
+  secs.forEach(s => io.observe(s));
+  new IntersectionObserver(es => es.forEach(e => $('#bar').classList.toggle('show', !e.isIntersecting && e.boundingClientRect.top < 0))).observe($('#toc'));
+}
+
+// Kiểm tra nhanh: DATA.quiz = { s1: [[câu hỏi, đáp án], ...], ... }
+function renderQuizzes(){
+  $$('[data-quiz]').forEach(box => (DATA.quiz[box.dataset.quiz] || []).forEach(([q, a]) => box.append(el('details', {}, el('summary', {}, q), el('p', {}, a)))));
+}
+
+// Dòng mã bấm được: lines = [[dòng, giải thích], ...]
+function annotCode(rootSel, statusSel, lines, start){
+  const root = $(rootSel);
+  lines.forEach(([line], i) => { const b = el('button', {className: 'codeline', type: 'button', onclick: () => pick(i)}, el('span', {className: 'n'}, String(i + 1)), line || ' '); b.setAttribute('aria-label', 'Dòng ' + (i + 1) + ': ' + (line.trim() || 'trống')); root.append(b); });
+  function pick(i){ [...root.children].forEach((b, k) => setP(b, k === i)); const [line, note] = lines[i]; $(statusSel).replaceChildren(el('b', {}, line.trim() || 'Dòng trống'), el('span', {}, note || 'Không có gì thêm ở dòng này.')); }
+  pick(start || 0);
+}
+
+// Hàng chip chọn một mục: items = [{k: nhãn, ...}], onPick(item, index) được gọi khi chọn
+function chooser(hostSel, items, onPick, start){
+  const host = $(hostSel);
+  items.forEach((it, i) => host.append(el('button', {className: 'chip', type: 'button', onclick: () => pick(i)}, el('i'), it.k)));
+  function pick(i){ [...host.children].forEach((b, k) => setP(b, k === i)); onPick(items[i], i); }
+  pick(start || 0);
+}
+// Ô trạng thái: tiêu đề đậm + các đoạn (chuỗi hoặc phần tử)
+const note = (sel, title, ...parts) => $(sel).replaceChildren(el('b', {}, title), ...parts.map(p => typeof p === 'string' ? el('span', {}, p) : p));
+// Chồng các lớp (kiến trúc): layers = [{n: tên lớp, items: [...], c: 'k'|'u'|'h'}]
+const stack = (sel, layers) => $(sel).replaceChildren(...layers.map(l => el('div', {className: 'lyr ' + (l.c || '')}, el('b', {}, l.n), ...(l.items || []).map(t => el('span', {className: 'it'}, t)))));
+
+// Bộ chạy từng bước: steps = [{t, d}], gọi draw(step, index) mỗi lần đổi
+function stepper(prefix, steps, draw){
+  let i = 0;
+  const render = () => {
+    draw(steps[i], i);
+    $('#' + prefix + 'Status').replaceChildren(el('b', {}, steps[i].t), el('span', {}, steps[i].d));
+    $('#' + prefix + 'Cnt').textContent = 'Bước ' + (i + 1) + '/' + steps.length;
+    $('#' + prefix + 'Back').disabled = i === 0; $('#' + prefix + 'Next').disabled = i === steps.length - 1;
+  };
+  $('#' + prefix + 'Next').addEventListener('click', () => { if (i < steps.length - 1) { i++; render(); } });
+  $('#' + prefix + 'Back').addEventListener('click', () => { if (i > 0) { i--; render(); } });
+  $('#' + prefix + 'Reset').addEventListener('click', () => { i = 0; render(); });
+  render();
+}
+
+Object.assign(DATA.quiz, {
+  s1: [['Deadlock là gì?', 'Trạng thái có ít nhất hai tiến trình đang dừng chờ lẫn nhau và không thể chạy tiếp; sự chờ có thể kéo dài vô hạn nếu không có tác động từ bên ngoài.'],
+       ['Vì sao P1 (S1 rồi S2) và P2 (S2 rồi S1) có thể kẹt nhau?', 'Mỗi bên có thể giữ một đèn báo và chờ đèn còn lại do bên kia giữ.']],
+  s2: [['Nêu bốn điều kiện cần của deadlock.', 'Tài nguyên găng (mutual exclusion), giữ và chờ (hold and wait), không trưng dụng (no preemption), chờ vòng tròn (circular wait).'],
+       ['Nếu phá một trong bốn điều kiện thì sao?', 'Deadlock không thể xảy ra, vì cần có đủ cả bốn điều kiện.']],
+  s3: [['Đồ thị có chu trình thì có chắc deadlock không?', 'Chỉ chắc chắn khi mỗi tài nguyên có 1 đơn vị. Nếu có nhiều đơn vị thì chỉ có khả năng deadlock.'],
+       ['Cung yêu cầu và cung sử dụng khác nhau thế nào?', 'Cung yêu cầu đi từ tiến trình tới tài nguyên (Pi → Rj). Cung sử dụng đi từ tài nguyên tới tiến trình (Rj → Pi), nghĩa là đã được cấp.']],
+  s4: [['Đánh thứ tự tài nguyên phá điều kiện nào?', 'Điều kiện chờ vòng tròn: nếu mọi tiến trình xin theo cùng một thứ tự thì không thể có chu kỳ chờ.'],
+       ['Cung cấp trước và giải phóng trước khi xin phá điều kiện nào, và nhược điểm?', 'Phá giữ và chờ. Cung cấp trước làm hiệu quả sử dụng tài nguyên thấp; giải phóng trước làm chạy chậm và phải bảo đảm dữ liệu không mất.']],
+  s5: [['Trạng thái an toàn nghĩa là gì, và an toàn có chắc không deadlock không?', 'Có chuỗi thứ tự thỏa mãn nhu cầu của mọi tiến trình. Trạng thái an toàn thì không có deadlock; trạng thái không an toàn thì có thể có deadlock.'],
+       ['Công thức bảng Cần trong giải thuật nhà băng?', 'Cần = Max − Chiếm (Allocation).']],
+  s6: [['Đồ thị chờ đợi là gì?', 'Bản thu gọn của đồ thị cấp phát chỉ còn đỉnh tiến trình; cung Pi → Pj nghĩa là Pi đợi Pj giải phóng tài nguyên.'],
+       ['Thuật toán phát hiện khác giải thuật nhà băng ở đâu?', 'Nó dùng ma trận yêu cầu hiện tại (Request) thay cho nhu cầu tối đa.']],
+  s7: [['Starvation khi phục hồi deadlock là gì và xử lý ra sao?', 'Một tiến trình bị trưng dụng quá nhiều lần sẽ chờ vô hạn. Ghi lại số lần bị trưng dụng để tránh chọn đi chọn lại cùng một nạn nhân.']]
+});
+renderQuizzes();
+
+// Phần 2: bật tắt bốn điều kiện
+const CONDS = [
+  {k: 'Tài nguyên găng', fix: 'giảm mức găng: dùng đồng thời tài nguyên chia sẻ được, dùng SPOOL'},
+  {k: 'Giữ và chờ', fix: 'chỉ cho xin khi không giữ gì: cung cấp trước hoặc giải phóng trước khi xin'},
+  {k: 'Không trưng dụng', fix: 'cho phép hệ thống lấy lại tài nguyên'},
+  {k: 'Chờ vòng tròn', fix: 'đánh thứ tự các loại tài nguyên và xin theo thứ tự'}
+];
+const condOn = new Set([0, 1, 2, 3]);
+function renderCond(){
+  $('#condBtns').replaceChildren(...CONDS.map((c, i) => { const b = el('button', {className: 'chip', type: 'button', onclick: () => { condOn.has(i) ? condOn.delete(i) : condOn.add(i); renderCond(); }}, el('i'), c.k + (condOn.has(i) ? ': có' : ': đã phá')); setP(b, condOn.has(i)); return b; }));
+  const missing = CONDS.filter((c, i) => !condOn.has(i));
+  note('#condStatus', condOn.size === 4 ? 'Đủ cả bốn điều kiện: deadlock có thể xảy ra' : 'Thiếu ' + missing.length + ' điều kiện: deadlock không thể xảy ra',
+    el('span', {}, condOn.size === 4 ? 'Bấm vào một điều kiện để thử phá nó.' : 'Đã phá: ' + missing.map(c => c.k + ' (' + c.fix + ')').join('; ') + '.'));
+}
+renderCond();
+
+// Giải thuật an toàn dùng chung cho nhà băng (Need) và phát hiện (Request)
+function safeSeq(avail, alloc, need){
+  const n = alloc.length, work = avail.slice(), fin = Array(n).fill(false), order = [], steps = [];
+  let moved = true;
+  while (moved) { moved = false;
+    for (let i = 0; i < n; i++) if (!fin[i] && need[i].every((x, k) => x <= work[k])) { steps.push({i, work: work.slice()}); work.forEach((_, k) => { work[k] += alloc[i][k]; }); fin[i] = true; order.push(i); moved = true; } }
+  return {ok: fin.every(Boolean), order, work, stuck: fin.map((f, i) => f ? -1 : i).filter(i => i >= 0), steps};
+}
+const vec = v => '(' + v.join(', ') + ')';
+const matTable = (heads, rows) => el('div', {className: 'tblw'}, el('table', {className: 'tbl'}, el('thead', {}, el('tr', {}, ...heads.map(h => el('th', {}, h)))), el('tbody', {}, ...rows.map(r => el('tr', {}, ...r.map((c, i) => el(i === 0 ? 'td' : 'td', {}, i === 0 ? el('b', {}, c) : c)))))));
+
+// Phần 5: giải thuật nhà băng
+const B_TOTAL = [10, 5, 7], B_MAX = [[7, 5, 3], [3, 2, 2], [9, 0, 2], [2, 2, 2], [4, 3, 3]], B_ALLOC = [[0, 1, 0], [2, 0, 0], [3, 0, 2], [2, 1, 1], [0, 0, 2]];
+const B_AVAIL = B_TOTAL.map((t, k) => t - B_ALLOC.reduce((s, r) => s + r[k], 0));
+chooser('#bankBtns', [
+  {k: 'Trạng thái ban đầu có an toàn?'}, {k: 'P4 xin thêm (3, 3, 0)', p: 4, r: [3, 3, 0]}, {k: 'P1 xin thêm (1, 0, 2)', p: 1, r: [1, 0, 2]}, {k: 'P0 xin thêm (0, 2, 0)', p: 0, r: [0, 2, 0]}
+], it => {
+  let avail = B_AVAIL.slice(), alloc = B_ALLOC.map(r => r.slice()), msg = '';
+  let need = B_MAX.map((r, i) => r.map((x, k) => x - alloc[i][k]));
+  if (it.r) {
+    if (it.r.some((x, k) => x > need[it.p][k])) { return note('#bankStatus', it.k + ': từ chối', 'Yêu cầu vượt quá nhu cầu tối đa đã khai báo.'); }
+    if (it.r.some((x, k) => x > avail[k])) { return note('#bankStatus', it.k + ': không cấp được', 'Request(P) > Còn = ' + vec(avail) + ': tài nguyên chưa đủ, tiến trình phải chờ.'); }
+    avail = avail.map((x, k) => x - it.r[k]); alloc[it.p] = alloc[it.p].map((x, k) => x + it.r[k]); need[it.p] = need[it.p].map((x, k) => x - it.r[k]);
+    msg = 'Giả sử cấp: Còn = ' + vec(avail) + ', Chiếm(P' + it.p + ') = ' + vec(alloc[it.p]) + '. ';
+  }
+  const res = safeSeq(avail, alloc, need);
+  note('#bankStatus', it.k + ': ' + (res.ok ? (it.r ? 'an toàn, cấp ngay' : 'an toàn') : (it.r ? 'không an toàn, chưa cấp ngay' : 'không an toàn')),
+    el('span', {}, msg + 'Còn khi bắt đầu kiểm tra an toàn = ' + vec(avail) + (res.ok ? '. Chuỗi an toàn: ' + res.order.map(i => 'P' + i).join(' → ') + '.' : '. Không tìm được chuỗi an toàn; các tiến trình không thể kết thúc: ' + res.stuck.map(i => 'P' + i).join(', ') + '.')),
+    matTable(['Tiến trình', 'Max', 'Chiếm', 'Cần'], B_MAX.map((m, i) => ['P' + i, vec(m), vec(alloc[i]), vec(need[i])])),
+    el('div', {className: 'why'}, 'Mỗi bước chọn tiến trình có Cần ≤ Còn rồi cộng Chiếm của nó vào Còn: ' + res.steps.map(s => 'P' + s.i + ' khi Còn = ' + vec(s.work)).join('; ') + '.'));
+});
+
+// Phần 6: thuật toán phát hiện deadlock
+const D_ALLOC = [[0, 1, 0], [2, 0, 0], [3, 0, 3], [2, 1, 1], [0, 0, 2]];
+const D_REQ0 = [[0, 0, 0], [2, 0, 2], [0, 0, 0], [1, 0, 0], [6, 0, 2]];
+chooser('#detBtns', [{k: 'Thời điểm t0', req: D_REQ0}, {k: 'Thời điểm t1: P2 xin thêm 1 đơn vị R2', req: D_REQ0.map((r, i) => i === 2 ? [0, 0, 1] : r)}], it => {
+  const res = safeSeq([0, 0, 0], D_ALLOC, it.req);
+  note('#detStatus', it.k + ': ' + (res.ok ? 'hệ thống không bị tắc' : 'hệ thống đang bị tắc'),
+    el('span', {}, res.ok ? 'Chuỗi kết thúc được: (' + res.order.map(i => 'P' + i).join(', ') + '), Work cuối = ' + vec(res.work) + '.' : 'P' + res.order.join(', P') + ' kết thúc được nhưng các tiến trình ' + res.stuck.map(i => 'P' + i).join(', ') + ' đang chờ lẫn nhau: deadlock.'),
+    matTable(['Tiến trình', 'Allocation', 'Request'], D_ALLOC.map((a, i) => ['P' + i, vec(a), vec(it.req[i])])),
+    el('div', {className: 'why'}, 'Bắt đầu Work = (0, 0, 0) (tài nguyên hiện có), mỗi bước chọn tiến trình có Request ≤ Work rồi cộng Allocation của nó vào Work.'));
+});
+
+</script>
+</body>
+</html>

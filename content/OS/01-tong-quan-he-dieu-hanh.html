@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OS 1: Tổng quan hệ điều hành</title>
+<script>
+// Luôn sáng mặc định; chỉ tối khi người đọc tự bấm đổi
+(function(){var t=null;try{t=localStorage.getItem('theme')}catch(e){}
+document.documentElement.dataset.theme=t==='dark'?'dark':'light';})();
+</script>
+<style>
+:root{
+  --bg:#f6f8fc; --card:#ffffff; --fg:#0f172a; --muted:#566277; --line:#e2e8f2; --hov:#f3f6fc;
+  --accent:#2563eb; --accent2:#7c3aed; --accent-soft:#eaf0ff; --hl:#fff0a8; --hl-fg:#5c4600;
+  --grad:linear-gradient(120deg,#2563eb,#7c3aed);
+  --mono:ui-monospace,"Cascadia Code",Consolas,Menlo,monospace;
+  --grid:rgba(15,23,42,.05);
+  --sh:0 1px 2px rgba(15,23,42,.05),0 8px 24px -12px rgba(15,23,42,.12);
+  --sh-hi:0 2px 4px rgba(15,23,42,.06),0 18px 40px -14px rgba(37,99,235,.28);
+  --ts:92%; --tl:94%; --tcl:42%;
+  --glow1:rgba(37,99,235,.16); --glow2:rgba(124,58,237,.13);
+  --ok:#16a34a; --bad:#dc2626; --warn:#b45309; --warn-soft:#fff4d6;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#0a0e16; --card:#121826; --fg:#e8edf6; --muted:#9aa6ba; --line:#212a3b; --hov:#18202f;
+  --accent:#7ab2ff; --accent2:#a78bfa; --accent-soft:#15233d; --hl:#4a3d00; --hl-fg:#ffe58a;
+  --grad:linear-gradient(120deg,#7ab2ff,#a78bfa);
+  --grid:rgba(232,237,246,.045);
+  --sh:0 1px 2px rgba(0,0,0,.3),0 8px 24px -12px rgba(0,0,0,.5);
+  --sh-hi:0 2px 4px rgba(0,0,0,.4),0 18px 40px -14px rgba(122,178,255,.25);
+  --ts:45%; --tl:20%; --tcl:74%;
+  --glow1:rgba(122,178,255,.13); --glow2:rgba(167,139,250,.11);
+  --ok:#4ade80; --bad:#f87171; --warn:#fbbf24; --warn-soft:#3a2f00;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;scrollbar-width:none}
+*::-webkit-scrollbar{display:none}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);min-height:100vh;font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.skip{position:absolute;left:12px;top:-56px;z-index:30;background:var(--accent);color:#fff;padding:9px 16px;border-radius:10px;text-decoration:none;font-weight:600}
+.skip:focus{top:12px}
+.bg{position:absolute;inset:0 0 auto;height:560px;z-index:-1;pointer-events:none;
+  background:radial-gradient(640px 320px at 12% -4%,var(--glow1),transparent 70%),radial-gradient(560px 300px at 88% 6%,var(--glow2),transparent 70%),
+  linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:auto,auto,32px 32px,32px 32px;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent)}
+.wrap{max-width:920px;margin:0 auto;padding:0 24px 64px}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:20px 0}
+.brand{display:flex;align-items:center;gap:11px;font-weight:700;letter-spacing:-.01em}
+.logo{width:34px;height:34px;border-radius:10px;background:var(--grad);display:grid;place-items:center;color:#fff;box-shadow:0 6px 16px -6px var(--accent)}
+:root[data-theme="dark"] .logo{color:#0b1220}
+.btn{font:inherit;font-size:13px;font-weight:500;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 14px;min-height:38px;cursor:pointer;box-shadow:var(--sh)}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn[disabled]{opacity:.45;cursor:default}
+.hero{padding:24px 0 8px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:5px 13px 5px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card);font:600 12.5px system-ui,sans-serif;color:var(--muted);box-shadow:var(--sh)}
+.pill i{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,.18)}
+h1{font-size:clamp(2.1rem,6vw,3.3rem);line-height:1.06;letter-spacing:-.04em;font-weight:800;margin:18px 0 14px}
+.grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{max-width:660px;color:var(--muted);font-size:1.08rem;margin:0 0 22px}
+.lead b{color:var(--fg);font-weight:600}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 30px;padding:0;list-style:none}
+.toc a{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:500;color:var(--fg);text-decoration:none;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 8px;min-height:36px;transition:all .15s}
+.toc a b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font:700 12px var(--mono)}
+.toc a:hover{border-color:var(--accent);transform:translateY(-1px)}
+.toc a[aria-current="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.toc a[aria-current="true"] b{background:var(--bg);color:var(--fg)}
+/* thanh điều hướng nhanh: dính ở mép trên khi mục lục đã cuộn khỏi màn hình */
+.bar{position:fixed;top:10px;left:50%;z-index:25;width:min(100% - 24px,880px);transform:translate(-50%,-90px);opacity:0;visibility:hidden;transition:transform .25s,opacity .25s,visibility 0s .25s;
+  display:flex;align-items:center;gap:6px;padding:6px 8px;background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh-hi)}
+.bar.show{transform:translate(-50%,0);opacity:1;visibility:visible;transition:transform .25s,opacity .25s}
+.bar a{display:grid;place-items:center;flex:none;min-width:30px;height:30px;border-radius:9px;border:1px solid transparent;color:var(--fg);text-decoration:none;font:700 12.5px var(--mono)}
+.bar a:hover{border-color:var(--accent);color:var(--accent)}
+.bar a[aria-current="true"]{background:var(--fg);color:var(--bg)}
+.bar .up{border-color:var(--line);background:var(--card);font:600 16px system-ui;margin-right:2px}
+.bar .nums{display:flex;gap:3px;flex-wrap:nowrap}
+.bar .now{flex:1;min-width:0;margin-left:6px;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+@media(max-width:640px){.bar .now{display:none}.bar{gap:3px;padding:5px 6px}.bar a{min-width:26px;height:28px}.bar .nums{gap:1px}}
+.howto{margin:18px 0 30px;border:1px dashed var(--line);border-radius:14px;padding:12px 16px;color:var(--muted);font-size:14px;background:var(--card)}
+.howto b{color:var(--fg)}
+.card{position:relative;overflow:hidden;background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--sh);padding:24px 24px 22px;margin-bottom:24px;scroll-margin-top:68px}
+.card::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,hsl(var(--h,215) 75% 55%),hsl(calc(var(--h,215) + 45) 75% 62%))}
+.card header{display:flex;gap:14px;align-items:center;margin-bottom:6px}
+.num{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font:800 17px var(--mono);background:hsl(var(--h,215) var(--ts) var(--tl));color:hsl(var(--h,215) 65% var(--tcl))}
+.card h2{font-size:1.28rem;letter-spacing:-.02em;margin:0;line-height:1.25}
+.card h3{font-size:1rem;margin:20px 0 6px}
+.card p{margin:8px 0}
+.lab{display:inline-block;font:700 11px/1 system-ui;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:4px 8px;margin:18px 0 4px}
+.lab.v{background:var(--warn-soft);color:var(--warn)}
+.lab.g{background:var(--accent-soft);color:var(--accent)}
+.lab.t{background:hsl(160 var(--ts) var(--tl));color:hsl(160 65% var(--tcl))}
+.lab.q{background:var(--hov);color:var(--muted);border:1px solid var(--line)}
+.muted{color:var(--muted)}
+code,.mono{font-family:var(--mono);font-size:.9em}
+:not(pre)>code{background:var(--accent-soft);color:var(--accent);padding:1px 6px;border-radius:6px;white-space:nowrap}
+.ana{margin:12px 0;border-left:3px solid hsl(var(--h,215) 60% 60%);padding:6px 14px;background:var(--hov);border-radius:0 12px 12px 0;color:var(--muted)}
+.ana b{color:var(--fg)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:14px;margin:12px 0}
+.box{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--hov)}
+.box b{display:block;margin-bottom:2px}
+.box.on{border-color:var(--accent);background:var(--accent-soft)}
+.status{margin-top:12px;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:12px 16px;background:var(--card)}
+.status b{display:block}
+.why{margin-top:8px;color:var(--muted);font-size:14px}
+.why::before{content:"Vì sao? ";font-weight:700;color:var(--fg)}
+.warn{margin:12px 0;border:1px solid var(--warn);border-radius:12px;padding:10px 14px;background:var(--warn-soft);color:var(--warn)}
+.tbl{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
+.tbl th,.tbl td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.tblw{overflow-x:auto}
+.procs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:14px;margin:12px 0}
+.pbox{border:2px solid hsl(var(--c) 60% 60%);border-radius:16px;padding:10px 14px;background:hsl(var(--c) var(--ts) var(--tl))}
+.pbox b{display:block}
+.pbox .mem{margin-top:6px;border:1px dashed hsl(var(--c) 50% 55%);border-radius:10px;padding:6px 10px;font:12.5px var(--mono);color:var(--fg);background:var(--card)}
+.chain{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin:12px 0}
+.chain .nd{flex:1 1 140px;border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--hov);text-align:center}
+.chain .nd small{display:block;color:var(--muted)}
+.chain .ar{align-self:center;color:var(--muted);font:12px var(--mono);text-align:center;flex:0 0 auto}
+svg.diag{width:100%;height:auto;max-height:300px;display:block}
+.diag .nd rect{fill:var(--card);stroke:var(--line);stroke-width:2}
+.diag .nd text{fill:var(--fg);font:600 14px system-ui,sans-serif;text-anchor:middle}
+.diag .nd .sm{font:12px var(--mono);fill:var(--muted);font-weight:400}
+.diag .nd.on rect{stroke:hsl(var(--h) 70% 50%);fill:hsl(var(--h) var(--ts) var(--tl))}
+.diag .nd.dim{opacity:.38}
+.diag .ln{fill:none;stroke:var(--line);stroke-width:2.5}
+.diag .ln.on{stroke:var(--accent);stroke-dasharray:8 6;animation:flow .8s linear infinite}
+.diag .ln.on.rev{animation-direction:reverse}
+@keyframes flow{to{stroke-dashoffset:-14}}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.chip{display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:13.5px;font-weight:500;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 12px;min-height:36px;cursor:pointer;transition:all .15s}
+.chip i{width:8px;height:8px;border-radius:50%;background:hsl(var(--h,190) 70% 52%)}
+.chip:hover{border-color:var(--accent);transform:translateY(-1px)}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.mw{display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 0 4px}
+.mnode{border:2px solid var(--accent);border-radius:14px;padding:10px 20px;background:var(--accent-soft);font-weight:700;text-align:center}
+.sock{font:12px var(--mono);color:var(--muted);border-left:2px dashed var(--line);padding:2px 0 2px 10px}
+.workers{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.w{border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg);padding:8px 14px;font:13px var(--mono);cursor:pointer;min-width:96px;text-align:center}
+.w:hover{border-color:var(--bad)}
+.w.dead{border-color:var(--bad);color:var(--bad);background:transparent;text-decoration:line-through}
+.w.new{border-color:var(--ok);color:var(--ok)}
+.inst{min-width:120px;text-align:center}
+.inst .bar{height:8px;border-radius:99px;background:var(--line);margin-top:6px;overflow:hidden}
+.inst .bar i{display:block;height:100%;background:var(--grad);width:0;transition:width .25s}
+input[type=range]{width:200px;accent-color:var(--accent)}
+.win{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card);margin:8px 0}
+.win .bar{display:flex;gap:6px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line);background:var(--hov);font:12px var(--mono);color:var(--muted)}
+.win .bar i{width:10px;height:10px;border-radius:50%;background:#ff5f57}.win .bar i:nth-child(2){background:#febc2e}.win .bar i:nth-child(3){background:#28c840}
+.win .bar span{margin-left:8px}
+.codeline{display:block;width:100%;text-align:left;font:13.5px/1.7 var(--mono);color:var(--fg);background:none;border:0;padding:0 14px;cursor:pointer;white-space:pre;border-left:3px solid transparent;overflow-x:auto}
+.codeline:hover{background:var(--hov)}
+.codeline[aria-pressed="true"]{background:var(--accent-soft);border-left-color:var(--accent)}
+.codeline .n{display:inline-block;width:2.2em;color:var(--muted);user-select:none}
+.log{border:1px solid var(--line);border-radius:12px;background:var(--hov);padding:10px 14px;font:13px/1.7 var(--mono);min-height:56px}
+.log .ok{color:var(--ok)}.log .no{color:var(--bad)}
+details{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-top:8px;background:var(--card)}
+summary{cursor:pointer;font-weight:600}
+details p{margin:8px 0 2px;color:var(--muted)}
+.stepper{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.stepper .cnt{font:13px var(--mono);color:var(--muted);margin-left:auto}
+.role{display:inline-block;font:600 12px system-ui;border-radius:999px;padding:2px 10px;background:var(--accent-soft);color:var(--accent);margin-right:6px}
+.foot{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+.foot a{color:var(--accent)}
+kbd{font:12px var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:0 7px;background:var(--card)}
+@media(max-width:640px){.wrap{padding:0 16px 48px}.hero{padding-top:12px}.card{padding:18px 16px}.card header{gap:10px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important;animation:none!important}}
+@media(forced-colors:active){.card,.toc a[aria-current="true"]{border:1px solid}}
+</style>
+<style>
+/* bổ sung riêng cho trang hệ điều hành */
+.banner{background:#fff4d6;color:#6b4e00;text-align:center;padding:6px 12px;font-size:13.5px}
+:root[data-theme="dark"] .banner{background:#3a2f00;color:#ffe58a}
+.memwrap{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start;margin:10px 0}
+@media(max-width:720px){.memwrap{grid-template-columns:1fr}}
+.memcol{display:flex;flex-direction:column;border:2px solid var(--line);border-radius:14px;overflow:hidden;font:13px var(--mono)}
+.memcol .hi,.memcol .lo{padding:4px 12px;background:var(--hov);color:var(--muted);font-size:12px}
+.memcol .reg{padding:10px 12px;border-top:1px solid var(--line);background:var(--card);transition:background .15s}
+.memcol .reg small{display:block;color:var(--muted);font-family:system-ui;font-size:12px}
+.memcol .reg.free{background:repeating-linear-gradient(135deg,transparent 0 8px,var(--hov) 8px 16px);color:var(--muted);text-align:center}
+.memcol .reg.on{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.memcol .reg.on small{color:var(--accent)}
+.sdiag{width:100%;height:auto;max-height:330px;display:block}
+.sdiag .st ellipse{fill:var(--card);stroke:var(--line);stroke-width:2;transition:all .2s}
+.sdiag .st text{fill:var(--fg);font:600 14px system-ui,sans-serif;text-anchor:middle}
+.sdiag .st.on ellipse{stroke:hsl(var(--h) 70% 50%);fill:hsl(var(--h) var(--ts) var(--tl));stroke-width:3}
+.sdiag .tr{fill:none;stroke:var(--line);stroke-width:2.2}
+.sdiag .tr.on{stroke:var(--accent);stroke-width:3;stroke-dasharray:8 6;animation:flow .8s linear infinite}
+.sdiag .lb{fill:var(--muted);font:12px var(--mono);text-anchor:middle}
+.sdiag .lb.on{fill:var(--accent);font-weight:700}
+.sdiag marker path{fill:var(--muted)}
+.cs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px;margin:12px 0}
+.cs .cell{border:2px solid var(--line);border-radius:14px;padding:10px 14px;background:var(--card);transition:all .2s}
+.cs .cell.on{border-color:var(--accent);background:var(--accent-soft)}
+.cs .cell b{display:block;margin-bottom:4px}
+.cs .cell dl{margin:0;font:13px/1.7 var(--mono)}
+.cs .cell dt{display:inline;color:var(--muted)}
+.cs .cell dd{display:inline;margin:0 0 0 6px}
+.box span b{display:inline;margin:0}
+:not(pre)>code{white-space:normal;overflow-wrap:anywhere}
+.pending{opacity:.9}
+.pending p{margin:6px 0 0}
+.lanes{display:grid;grid-template-columns:1fr 130px 1fr;gap:12px;margin:12px 0;align-items:start}
+@media(max-width:720px){.lanes{grid-template-columns:1fr}}
+.lane{border:2px solid var(--line);border-radius:14px;padding:10px 12px;min-height:84px;background:var(--card)}
+.lane h4{margin:0 0 8px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.lane.cpu{border-color:var(--accent);background:var(--accent-soft)}
+.pc{display:inline-flex;align-items:center;justify-content:center;min-width:44px;height:34px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);font:700 13px var(--mono);margin:0 6px 6px 0;padding:0 10px}
+.pc.run{border-color:var(--accent);color:var(--accent)}
+.tree ul{list-style:none;margin:0;padding-left:22px;border-left:2px dashed var(--line)}
+.tree>ul{padding-left:0;border-left:0}
+.tree li{margin:6px 0}
+.tn{display:inline-flex;gap:8px;align-items:center;border:1.5px solid var(--line);border-radius:10px;padding:4px 12px;background:var(--card);color:var(--fg);font:13px var(--mono);cursor:pointer}
+.tn:hover{border-color:var(--accent)}
+.tn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:700}
+.tn small{color:var(--muted)}
+.tn.orph{border-color:var(--warn);color:var(--warn);cursor:default}
+.cells{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 6px}
+.cellb{width:56px;height:44px;border:2px solid var(--line);border-radius:10px;display:grid;place-items:center;font:700 13px var(--mono);background:var(--card);position:relative}
+.cellb.full{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.cellb i{position:absolute;top:-10px;font:700 10px var(--mono);font-style:normal;padding:0 5px;border-radius:5px;background:var(--fg);color:var(--bg)}
+.cellb i.in{left:2px}
+.cellb i.out{right:2px;background:var(--accent2);color:#fff}
+.tcell{width:40px;height:40px;border-radius:9px;display:grid;place-items:center;font:700 12px var(--mono);color:#fff;background:hsl(var(--c) 60% 42%)}
+.th{display:inline-block;border:2px solid var(--line);border-radius:10px;padding:6px 12px;margin:0 6px 6px 0;font:700 13px var(--mono);background:var(--card);color:var(--fg);cursor:pointer}
+.th.ok{border-color:var(--ok);color:var(--ok)}
+.th.blocked{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.th.stuck{border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
+.kt{display:inline-block;border:2px dashed var(--line);border-radius:10px;padding:6px 12px;margin:0 6px 6px 0;font:700 13px var(--mono);color:var(--muted)}
+.kt.blocked{border-color:var(--bad);color:var(--bad)}
+</style>
+</head>
+<body>
+<a class="skip" href="#s1">Bỏ qua tới nội dung</a>
+<div class="bg" aria-hidden="true"></div>
+<nav class="bar" id="bar" aria-label="Điều hướng nhanh"><a class="up" href="#top" aria-label="Lên đầu trang" title="Lên đầu trang">↑</a><span class="nums" id="barNums"></span><span class="now" id="barNow" aria-hidden="true"></span></nav>
+<div class="wrap">
+  <header class="topbar" id="top">
+    <div class="brand"><span class="logo" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9zM9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg></span>Hệ điều hành</div>
+    <button class="btn" id="themeBtn" type="button" aria-label="Đổi giao diện sáng hoặc tối">Sáng / Tối</button>
+  </header>
+
+  <div class="hero">
+    <span class="pill"><i></i>Hệ điều hành · Chương 1 · Tổng quan</span>
+    <h1>Hệ điều hành: <span class="grad">người quản lý</span> của cả cỗ máy</h1>
+    <p class="lead">Từ phần cứng máy tính đến hệ điều hành là gì, nó ra đời thế nào, quản lý những gì (tiến trình, bộ nhớ, file, thiết bị, an ninh), cách chương trình gọi nó và cách nó được tổ chức.</p>
+  </div>
+
+  <ol class="toc" id="toc" aria-label="Lộ trình các phần"></ol>
+
+  <main>
+<style>
+.stack{display:flex;flex-direction:column;gap:6px;margin:12px 0}
+.lyr{border:2px solid var(--line);border-radius:12px;padding:8px 12px;background:var(--card)}
+.lyr b{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px}
+.lyr .it{display:inline-block;border:1.5px solid var(--line);border-radius:8px;padding:2px 10px;margin:2px 6px 2px 0;font:12.5px var(--mono);background:var(--hov)}
+.lyr.k{border-color:var(--accent);background:var(--accent-soft)}
+.lyr.u{border-color:hsl(160 60% 50%)}
+.lyr.h{background:var(--hov)}
+.blist{margin:6px 0;padding-left:20px}
+</style>
+  <section class="card" id="s1" style="--h:215" data-title="Cấu trúc máy tính">
+    <header><span class="num">1</span><h2>Cấu trúc máy tính: hệ điều hành đang quản lý cái gì</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Muốn hiểu hệ điều hành phải biết nó đứng ở đâu và quản lý những gì. Phần cứng gồm những thành phần nào, chúng liên kết với nhau ra sao?</p>
+    <span class="lab g">Giải pháp</span>
+    <p>Một hệ thống máy tính chia thành <b>4 thành phần</b>: phần cứng (CPU, bộ nhớ...), hệ điều hành, chương trình ứng dụng và người dùng.</p>
+    <div class="two">
+      <div class="box"><b>CPU (bộ xử lý trung tâm)</b><span class="muted">Mạch xử lý dữ liệu theo chương trình, gồm hàng triệu transistor. Được xem là bộ não và thường là bộ phận đắt nhất. Nhận lệnh, giải mã và điều khiển các khối khác thực hiện lệnh; làm các phép tính số học, logic; sinh tín hiệu địa chỉ để truy nhập bộ nhớ.</span></div>
+      <div class="box"><b>Vào/ra và liên kết hệ thống</b><span class="muted">Thiết bị ngoại vi trao đổi dữ liệu giữa máy và thế giới ngoài (vào: từ ngoài vào bộ nhớ trong; ra: ngược lại). Các thành phần nối nhau qua <b>bus</b> (tuyến đường cho dữ liệu, lệnh, địa chỉ chạy), <b>khe cắm mở rộng</b> (card đồ họa, âm thanh, modem) và các <b>cổng</b> (PS/2, VGA, LPT, RJ45, USB).</span></div>
+    </div>
+    <h3>Bộ nhớ: nhanh thì nhỏ và đắt</h3>
+    <p>Qua các cấp bộ nhớ, dung lượng tăng dần, tốc độ giảm dần và giá mỗi bit giảm dần.</p>
+    <span class="lab t">Minh họa: các cấp bộ nhớ</span>
+    <div class="row" id="memLv" role="group" aria-label="Chọn cấp bộ nhớ"></div>
+    <div class="status" id="memLvStatus" role="status"></div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s1"></div>
+  </section>
+
+  <section class="card" id="s2" style="--h:160" data-title="Hệ điều hành là gì">
+    <header><span class="num">2</span><h2>Hệ điều hành là gì: máy mở rộng và người quản lý tài nguyên</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Phần cứng phức tạp, khó dùng, và nhiều chương trình cùng muốn dùng chung nó. Ai che chi tiết khó khăn đi, và ai phân chia cho công bằng?</p>
+    <span class="lab g">Giải pháp</span>
+    <p>Máy tính số là một <b>máy nhiều cấp</b>: vật lý (phần cứng), chương trình hệ thống, rồi chương trình ứng dụng. Hệ điều hành nằm giữa phần cứng (ngôn ngữ máy, vi kiến trúc, thiết bị vật lý) và các ứng dụng như hệ thống ngân hàng, đặt vé máy bay, trình duyệt web (bên trên có thêm compilers, editors, command interpreter).</p>
+    <p>Có hai cách định nghĩa hệ điều hành:</p>
+    <div class="two">
+      <div class="box"><b>Máy tính luận lý mở rộng (nhìn từ ngoài vào)</b><span class="muted">Giấu các chi tiết phần cứng khó khăn, phiền phức, và cung cấp cho người dùng một máy luận lý dễ dùng hơn, độc lập với phần cứng, thông qua các lời gọi hệ thống (system calls).</span></div>
+      <div class="box"><b>Hệ quản lý tài nguyên (nhìn từ bên trong)</b><span class="muted">Chia tài nguyên cho các chương trình theo hai cách: <b>theo thời gian</b> và <b>theo không gian</b>.</span></div>
+    </div>
+    <span class="lab t">Minh họa: tài nguyên nào chia theo cách nào</span>
+    <div class="row" id="resKind" role="group" aria-label="Chọn tài nguyên"></div>
+    <div class="status" id="resKindStatus" role="status"></div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s2"></div>
+  </section>
+
+  <section class="card" id="s3" style="--h:28" data-title="Lịch sử">
+    <header><span class="num">3</span><h2>Lịch sử hệ điều hành: bốn thế hệ gắn với phần cứng</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Hệ điều hành không xuất hiện sẵn. Mỗi thế hệ phần cứng đặt ra một vấn đề mới (CPU chờ, nhiều người cùng dùng, máy cá nhân), và hệ điều hành tiến hóa để giải quyết.</p>
+    <span class="lab g">Giải pháp</span>
+    <p>Lịch sử hệ điều hành gắn liền với lịch sử phần cứng máy tính số qua <b>4 thế hệ</b>.</p>
+    <span class="lab t">Minh họa: các thế hệ</span>
+    <div class="row" id="genBtns" role="group" aria-label="Chọn thế hệ"></div>
+    <div class="status" id="genStatus" role="status"></div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s3"></div>
+  </section>
+
+  <section class="card" id="s4" style="--h:280" data-title="Phân loại">
+    <header><span class="num">4</span><h2>Phân loại hệ điều hành theo bốn góc độ</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>"Hệ điều hành" chỉ rất nhiều thứ khác nhau, từ thẻ chip nhỏ đến máy chủ lớn. Cần một cách chia nhóm để gọi tên cho rõ.</p>
+    <span class="lab g">Giải pháp</span>
+    <div class="tblw"><table class="tbl"><thead><tr><th>Góc độ</th><th>Các loại</th></tr></thead><tbody>
+      <tr><td><b>Theo loại máy tính</b></td><td>Máy mainframe · máy server · máy nhiều CPU · máy tính cá nhân (PC) · máy PDA (hệ điều hành nhúng, embedded OS) · máy chuyên biệt · thẻ chip (SmartCard)</td></tr>
+      <tr><td><b>Theo người dùng và số chương trình chạy cùng lúc</b></td><td>Đơn nhiệm một người dùng · đa nhiệm một người dùng · đa nhiệm nhiều người dùng</td></tr>
+      <tr><td><b>Theo người dùng truy xuất tài nguyên cùng lúc</b></td><td>Một người dùng · nhiều người dùng · mạng ngang hàng · mạng có máy chủ (LAN, WAN...)</td></tr>
+      <tr><td><b>Theo hình thức xử lý</b></td><td>Xử lý theo lô · xử lý theo lô đa chương · chia sẻ thời gian · song song · phân tán · xử lý thời gian thực</td></tr>
+    </tbody></table></div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s4"></div>
+  </section>
+
+  <section class="card" id="s5" style="--h:340" data-title="Khái niệm cơ bản">
+    <header><span class="num">5</span><h2>Các khái niệm cơ bản: tài nguyên, tiến trình, lập lịch, race và deadlock</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Nhiều chương trình cùng chạy trên một máy sẽ nảy sinh một chuỗi vấn đề nối tiếp nhau. Phần này đi qua từng cái, và mỗi giải pháp lại tạo ra vấn đề kế tiếp.</p>
+    <span class="lab g">Giải pháp</span>
+    <h3>Tài nguyên</h3>
+    <p>Tài nguyên của một chương trình là bất kỳ thành phần nào của máy mà chương trình đó dùng. <b>Phần cứng:</b> CPU, bộ nhớ, đĩa, màn hình, bàn phím, chuột, card mạng... <b>Phần mềm:</b> các file dữ liệu và hệ phần mềm khác mà chương trình cần truy xuất. Hệ điều hành quản lý để việc dùng chúng tin cậy, an toàn, hiệu quả và độc lập với tính chất vật lý của chúng.</p>
+    <h3>Tiến trình (process) và lập thời biểu (scheduler)</h3>
+    <ul>
+      <li>File thực thi (<code>*.exe</code> trên Windows) chưa chạy thì chỉ là thành phần thụ động. Khi người dùng kích hoạt, CPU chạy nó và ta gọi là <b>tiến trình</b>. Tiến trình có thể tạo ra tiến trình con và cứ thế tiếp tục, thành một <b>cây tiến trình</b> (ví dụ A tạo hai con B, C; B tạo ba con D, E, F).</li>
+      <li>Cho chạy tuần tự từng chương trình là đơn giản nhất, nhưng chương trình hay phải chờ vào/ra (chờ nhập phím) chậm hơn CPU rất nhiều, nên CPU phải ngủ chờ, lãng phí.</li>
+      <li>Giải pháp thông dụng là <b>chia sẻ thời gian (time sharing)</b>: chia trục thời gian thành các khe nhỏ (<b>quantum</b>), cho mỗi chương trình chạy một khe rồi chọn chương trình khác cho khe kế. Module của hệ điều hành làm việc này là <b>trình lập thời biểu (scheduler)</b>.</li>
+      <li>Về mặt vật lý, một máy một CPU không bao giờ chạy đồng thời hai chương trình; nhưng người dùng cảm nhận chúng chạy đồng thời.</li>
+    </ul>
+    <h3>Truy xuất dùng chung tài nguyên và race</h3>
+    <p>Nếu hai chương trình cùng muốn truy xuất một tài nguyên dùng chung mà không kiểm soát thì xảy ra <b>race</b>: lỗi bất định khi hai hay nhiều tiến trình truy xuất đồng thời một tài nguyên dùng chung. Ví dụ: tài khoản A có 1000 USD. P1 nạp 700 USD, P2 rút 500 USD. Mỗi bên làm ba bước: đọc A vào bộ nhớ, đổi giá trị trong bộ nhớ, ghi lại. Giá trị đúng là 1200 USD.</p>
+    <span class="lab t">Minh họa: ba thứ tự chạy của P1 và P2</span>
+    <div class="row" id="raceBtns" role="group" aria-label="Chọn thứ tự chạy"></div>
+    <div class="status" id="raceStatus" role="status"></div>
+    <p>Cách tránh race: <b>loại trừ tương hỗ (mutual exclusion)</b> các vùng mã truy xuất cùng một tài nguyên dùng chung (vùng găng, critical section): không cho chạy đồng thời mà tuần tự hóa. Vùng găng thường rất hiếm và rất ngắn nên việc này ít ảnh hưởng đến tính đồng thời của các tiến trình.</p>
+    <h3>Deadlock</h3>
+    <p>Loại trừ tương hỗ lại có thể dẫn tới <b>deadlock</b>: ít nhất hai tiến trình dừng chờ lẫn nhau và kẹt mãi mãi. Trường hợp xấu nhất là mọi tiến trình đều chờ lẫn nhau, hệ thống tê liệt. Ví dụ A cần file1 rồi file2, B cần file2 rồi file1.</p>
+    <span class="lab t">Minh họa: hai tiến trình kẹt nhau</span>
+    <div class="stepper"><button class="btn" id="dlBack" type="button">← Lùi</button><button class="btn" id="dlNext" type="button">Tiếp →</button><button class="btn" id="dlReset" type="button">Về đầu</button><span class="cnt" id="dlCnt"></span></div>
+    <div class="cs" id="dlBox"></div>
+    <div class="status" id="dlStatus" role="status"></div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s5"></div>
+  </section>
+
+  <section class="card" id="s6" style="--h:95" data-title="Bộ nhớ, file, thiết bị, an ninh">
+    <header><span class="num">6</span><h2>Bộ nhớ, hệ thống file, thiết bị và an ninh</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Chương trình cần chỗ trong bộ nhớ, chỗ lưu dữ liệu trên đĩa, cách nói chuyện với thiết bị lạ, và phải an toàn khi nhiều người cùng dùng. Hệ điều hành lo cả bốn việc.</p>
+    <span class="lab g">Giải pháp: quản lý bộ nhớ</span>
+    <ul>
+      <li><b>Phân vùng tĩnh:</b> chia bộ nhớ thành nhiều partition kích thước khác nhau để chạy nhiều tiến trình đòi hỏi kích thước khác nhau (mỗi partition một hàng chờ, hoặc dùng một hàng chờ chung).</li>
+      <li><b>Phân vùng động:</b> mỗi lần tiến trình xin, hệ thống tạo partition vừa đúng yêu cầu. Theo thời gian bộ nhớ bị băm nát bởi các vùng được trả lại; khắc phục bằng cách sắp xếp lại để vùng trống duy nhất và liên tục (compactage).</li>
+      <li><b>Swapping:</b> đưa toàn bộ vùng nhớ của một tiến trình ra đĩa rồi nạp vào lại khi cần chạy tiếp. Phiền vì kích thước các tiến trình rất khác nhau, nhưng ý tưởng này dẫn tới bộ nhớ ảo.</li>
+      <li><b>Bộ nhớ ảo:</b> tại mỗi thời điểm chỉ cần nội dung lệnh đang chạy và dữ liệu lệnh đó truy cập; mọi thứ khác để trên đĩa. Có 3 kỹ thuật: phân trang, phân đoạn, và kết hợp cả hai. Mỗi tiến trình có bảng trang cho biết trang ảo nào đang ánh xạ vào trang thật nào.</li>
+    </ul>
+    <span class="lab g">Giải pháp: hệ thống file, từng cấp một</span>
+    <p>Mỗi cấp trừu tượng ra đời để giải quyết khó khăn của cấp trước:</p>
+    <div class="row" id="fsLv" role="group" aria-label="Chọn cấp đĩa"></div>
+    <div class="status" id="fsLvStatus" role="status"></div>
+    <span class="lab g">Giải pháp: thiết bị và an ninh</span>
+    <div class="two">
+      <div class="box"><b>Giao tiếp với bên ngoài</b><span class="muted">Có rất nhiều hãng và model card I/O. Để mã chương trình độc lập với phần cứng của card, hệ điều hành dùng một module riêng cho mỗi card gọi là <b>device driver</b>, gồm n hàm chức năng theo quy định của hệ điều hành. Chi tiết từng hàm phụ thuộc phần cứng, còn cách dùng thì độc lập với phần cứng.</span></div>
+      <div class="box"><b>An ninh hệ thống</b><span class="muted">Ba vấn đề chính: <b>bảo mật</b> dữ liệu (mỗi người chỉ truy xuất tài nguyên được phép), <b>toàn vẹn</b> dữ liệu (truy xuất không được làm hư hỏng dữ liệu), <b>sẵn sàng</b> dữ liệu (người dùng hợp pháp luôn được phục vụ nhanh nhất). Biện pháp bảo mật: quản lý người dùng theo tài khoản và mật mã hóa dữ liệu.</span></div>
+    </div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s6"></div>
+  </section>
+
+  <section class="card" id="s7" style="--h:250" data-title="System call">
+    <header><span class="num">7</span><h2>System call và dịch vụ hệ thống</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Giao diện người dùng (dòng lệnh, đồ họa, màn hình cảm ứng) chỉ làm việc với con người. Làm sao một chương trình xin hệ điều hành làm việc hộ (đọc file, tạo tiến trình) mà không được chạm thẳng vào phần cứng?</p>
+    <span class="lab g">Giải pháp</span>
+    <p>Hệ điều hành cung cấp <b>system call</b>: mỗi system call là một hàm thực hiện một chức năng xác định. Thường chỉ mã chương trình gọi system call; người dùng cuối dùng dịch vụ gián tiếp qua ứng dụng (ví dụ quản lý file trên Windows qua Windows Explorer).</p>
+    <p>Gọi system call giống gọi hàm thường, khác biệt lớn nhất là <b>quyền truy xuất thay đổi</b>: lệnh của ứng dụng có quyền thấp; khi gọi system call, quyền lên rất cao (quyền hệ thống); xong thì trả về mức thấp.</p>
+    <span class="lab t">Minh họa: một lần gọi system call</span>
+    <div class="stepper"><button class="btn" id="scBack" type="button">← Lùi</button><button class="btn" id="scNext" type="button">Tiếp →</button><button class="btn" id="scReset" type="button">Về đầu</button><span class="cnt" id="scCnt"></span></div>
+    <div class="cs" id="scBox"></div>
+    <div class="status" id="scStatus" role="status"></div>
+    <h3>Ví dụ: UNIX và Win32</h3>
+    <div class="tblw"><table class="tbl"><thead><tr><th>UNIX</th><th>Win32</th><th>Việc làm</th></tr></thead><tbody>
+      <tr><td><code>fork</code></td><td><code>CreateProcess</code></td><td>Tạo tiến trình mới</td></tr>
+      <tr><td><code>waitpid</code></td><td><code>WaitForSingleObject</code></td><td>Đợi một tiến trình kết thúc</td></tr>
+      <tr><td><code>execve</code></td><td>(không có)</td><td>CreateProcess = fork + execve</td></tr>
+      <tr><td><code>exit</code></td><td><code>ExitProcess</code></td><td>Kết thúc thực thi</td></tr>
+      <tr><td><code>open</code> / <code>close</code></td><td><code>CreateFile</code> / <code>CloseHandle</code></td><td>Tạo hoặc mở file / đóng file</td></tr>
+      <tr><td><code>read</code> / <code>write</code></td><td><code>ReadFile</code> / <code>WriteFile</code></td><td>Đọc / ghi dữ liệu file</td></tr>
+      <tr><td><code>mkdir</code> / <code>rmdir</code></td><td><code>CreateDirectory</code> / <code>RemoveDirectory</code></td><td>Tạo thư mục / xóa thư mục rỗng</td></tr>
+      <tr><td><code>chdir</code></td><td><code>SetCurrentDirectory</code></td><td>Đổi thư mục làm việc</td></tr>
+    </tbody></table></div>
+    <h3>API và các loại system call</h3>
+    <p>Đa phần lập trình viên dùng <b>API</b> chứ không gọi system call trực tiếp. Ví dụ API chuẩn <code>read()</code> của UNIX và Linux (cần <code>unistd.h</code>) có ba tham số: <code>int fd</code> (file descriptor cần đọc), <code>void *buf</code> (vùng đệm nhận dữ liệu), <code>size_t count</code> (số byte tối đa). Trả về số byte đã đọc; 0 nghĩa là hết file; -1 nghĩa là lỗi. System call chia thành 5 loại: quản lý tập tin, quản lý thiết bị, quản lý thông tin, giao tiếp, an toàn thông tin.</p>
+    <h3>Dịch vụ hệ thống và quá trình biên dịch</h3>
+    <p>Người dùng chủ yếu dùng các <b>system program</b>; chúng dùng <b>system services</b> để nối xuống system calls. Dịch vụ cốt lõi: giao tiếp với người dùng (UI), thực thi chương trình, tổ chức xuất nhập (I/O), quản lý hệ thống file, truyền tin, xác định và xử lý lỗi, các dịch vụ hệ thống.</p>
+    <p>Từ mã nguồn đến chương trình chạy (C/C++): <b>(1)</b> soạn mã nguồn <code>.c</code> và <code>.h</code>; <b>(2)</b> tiền xử lý (thay các <code>#define</code>, <code>#include</code>...); <b>(3)</b> compiler biên dịch thành object code (<code>.obj</code>); <b>(4)</b> linker nối object code với các object code khác, thư viện tĩnh, thư viện động để ra file <code>.EXE</code>; <b>(5)</b> loader nạp <code>.EXE</code> vào bộ nhớ; <b>(6)</b> chạy với dữ liệu nhập vào.</p>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s7"></div>
+  </section>
+
+  <section class="card" id="s8" style="--h:300" data-title="Cấu trúc hệ điều hành">
+    <header><span class="num">8</span><h2>Cấu trúc hệ điều hành: các cách tổ chức một hệ điều hành</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Hệ điều hành rất lớn. Chia các phần của nó ra thế nào để dễ viết, dễ sửa, và biết phần nào chạy với quyền nào?</p>
+    <span class="lab g">Giải pháp: năm cách tổ chức</span>
+    <span class="lab t">Minh họa: các lớp của từng kiến trúc</span>
+    <div class="row" id="archBtns" role="group" aria-label="Chọn kiến trúc"></div>
+    <div class="stack" id="archStack"></div>
+    <div class="status" id="archStatus" role="status"></div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s8"></div>
+  </section>
+  </main>
+</div>
+<script>
+const DATA = {quiz: {}};
+// ===== Phần dùng chung cho mọi trang hệ điều hành =====
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
+const btn = (label, fn, off) => { const b = el('button', {className: 'btn', type: 'button', onclick: fn}, label); if (off) b.disabled = true; return b; };
+const setP = (b, v) => b.setAttribute('aria-pressed', String(v));
+
+// Đổi giao diện sáng/tối, nhớ lựa chọn
+$('#themeBtn').addEventListener('click', () => {
+  const d = document.documentElement, n = d.dataset.theme === 'dark' ? 'light' : 'dark';
+  d.dataset.theme = n; try { localStorage.setItem('theme', n); } catch (e) {}
+});
+
+// Mục lục và thanh điều hướng nhanh
+const secs = $$('main > section');
+secs.forEach((s, i) => {
+  $('#toc').append(el('li', {}, el('a', {href: '#' + s.id}, el('b', {}, String(i + 1)), s.dataset.title)));
+  $('#barNums').append(el('a', {href: '#' + s.id, title: (i + 1) + '. ' + s.dataset.title, ariaLabel: 'Phần ' + (i + 1) + ': ' + s.dataset.title}, String(i + 1)));
+});
+function setCurrent(id){
+  $$('#toc a, #barNums a').forEach(a => a.hash === '#' + id ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current'));
+  const s = secs.find(x => x.id === id); if (s) $('#barNow').textContent = (secs.indexOf(s) + 1) + '. ' + s.dataset.title;
+}
+if ('IntersectionObserver' in window) {
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) setCurrent(e.target.id); }), {rootMargin: '-20% 0px -70% 0px'});
+  secs.forEach(s => io.observe(s));
+  new IntersectionObserver(es => es.forEach(e => $('#bar').classList.toggle('show', !e.isIntersecting && e.boundingClientRect.top < 0))).observe($('#toc'));
+}
+
+// Kiểm tra nhanh: DATA.quiz = { s1: [[câu hỏi, đáp án], ...], ... }
+function renderQuizzes(){
+  $$('[data-quiz]').forEach(box => (DATA.quiz[box.dataset.quiz] || []).forEach(([q, a]) => box.append(el('details', {}, el('summary', {}, q), el('p', {}, a)))));
+}
+
+// Dòng mã bấm được: lines = [[dòng, giải thích], ...]
+function annotCode(rootSel, statusSel, lines, start){
+  const root = $(rootSel);
+  lines.forEach(([line], i) => { const b = el('button', {className: 'codeline', type: 'button', onclick: () => pick(i)}, el('span', {className: 'n'}, String(i + 1)), line || ' '); b.setAttribute('aria-label', 'Dòng ' + (i + 1) + ': ' + (line.trim() || 'trống')); root.append(b); });
+  function pick(i){ [...root.children].forEach((b, k) => setP(b, k === i)); const [line, note] = lines[i]; $(statusSel).replaceChildren(el('b', {}, line.trim() || 'Dòng trống'), el('span', {}, note || 'Không có gì thêm ở dòng này.')); }
+  pick(start || 0);
+}
+
+// Hàng chip chọn một mục: items = [{k: nhãn, ...}], onPick(item, index) được gọi khi chọn
+function chooser(hostSel, items, onPick, start){
+  const host = $(hostSel);
+  items.forEach((it, i) => host.append(el('button', {className: 'chip', type: 'button', onclick: () => pick(i)}, el('i'), it.k)));
+  function pick(i){ [...host.children].forEach((b, k) => setP(b, k === i)); onPick(items[i], i); }
+  pick(start || 0);
+}
+// Ô trạng thái: tiêu đề đậm + các đoạn (chuỗi hoặc phần tử)
+const note = (sel, title, ...parts) => $(sel).replaceChildren(el('b', {}, title), ...parts.map(p => typeof p === 'string' ? el('span', {}, p) : p));
+// Chồng các lớp (kiến trúc): layers = [{n: tên lớp, items: [...], c: 'k'|'u'|'h'}]
+const stack = (sel, layers) => $(sel).replaceChildren(...layers.map(l => el('div', {className: 'lyr ' + (l.c || '')}, el('b', {}, l.n), ...(l.items || []).map(t => el('span', {className: 'it'}, t)))));
+
+// Bộ chạy từng bước: steps = [{t, d}], gọi draw(step, index) mỗi lần đổi
+function stepper(prefix, steps, draw){
+  let i = 0;
+  const render = () => {
+    draw(steps[i], i);
+    $('#' + prefix + 'Status').replaceChildren(el('b', {}, steps[i].t), el('span', {}, steps[i].d));
+    $('#' + prefix + 'Cnt').textContent = 'Bước ' + (i + 1) + '/' + steps.length;
+    $('#' + prefix + 'Back').disabled = i === 0; $('#' + prefix + 'Next').disabled = i === steps.length - 1;
+  };
+  $('#' + prefix + 'Next').addEventListener('click', () => { if (i < steps.length - 1) { i++; render(); } });
+  $('#' + prefix + 'Back').addEventListener('click', () => { if (i > 0) { i--; render(); } });
+  $('#' + prefix + 'Reset').addEventListener('click', () => { i = 0; render(); });
+  render();
+}
+
+Object.assign(DATA.quiz, {
+  s1: [['Theo thứ tự cache, RAM, bộ nhớ ngoài, điều gì tăng và điều gì giảm?', 'Dung lượng tăng dần, tốc độ giảm dần, giá mỗi bit giảm dần.'],
+       ['CPU có truy cập trực tiếp bộ nhớ ngoài được không?', 'Không. Dữ liệu ở bộ nhớ ngoài (đĩa, USB, SSD) phải được chuyển dần vào bộ nhớ trong trước khi dùng.']],
+  s2: [['Hệ điều hành là "máy mở rộng" nghĩa là gì?', 'Nó giấu các chi tiết phần cứng khó khăn và cung cấp một máy luận lý dễ dùng, độc lập với phần cứng, thông qua các system call.'],
+       ['CPU và bộ nhớ được chia cho các chương trình theo cách nào?', 'CPU (và máy in) chia theo thời gian. Bộ nhớ và đĩa cứng chia theo không gian.']],
+  s3: [['Thế hệ nào có hệ thống xử lý bó (batch)?', 'Thế hệ 2 (1955 – 1965), dùng bóng bán dẫn.'],
+       ['Đa chương, spooling và chia sẻ thời gian xuất hiện ở thế hệ nào?', 'Thế hệ 3 (1965 – 1980), dùng vi mạch tích hợp.']],
+  s4: [['Hệ điều hành nhúng thuộc cách phân loại nào?', 'Phân loại theo loại máy tính: hệ điều hành dành cho máy PDA (embedded OS).'],
+       ['Nêu các hình thức xử lý.', 'Theo lô, theo lô đa chương, chia sẻ thời gian, song song, phân tán, thời gian thực.']],
+  s5: [['Vì sao cho chạy tuần tự từng chương trình thì lãng phí CPU?', 'Chương trình hay phải chờ vào/ra, chậm hơn CPU rất nhiều, nên lúc chờ CPU phải ngủ, mất hiệu suất.'],
+       ['Race là gì và cách tránh?', 'Race là lỗi bất định khi hai hay nhiều tiến trình truy xuất đồng thời một tài nguyên dùng chung. Tránh bằng loại trừ tương hỗ các vùng găng.'],
+       ['Điều gì khiến A và B kẹt nhau trong ví dụ file1, file2?', 'Mỗi bên giữ một file và xin file còn lại, nên cả hai chờ lẫn nhau mãi mãi: deadlock.']],
+  s6: [['Compactage dùng để làm gì?', 'Sắp xếp lại các vùng nhớ để vùng trống thành duy nhất và liên tục, khắc phục tình trạng bộ nhớ bị băm nát.'],
+       ['Device driver giải quyết vấn đề gì?', 'Giúp mã chương trình giao tiếp với I/O độc lập hoàn toàn với phần cứng của từng card.']],
+  s7: [['Điểm khác giữa gọi system call và gọi hàm thường là gì?', 'Quyền truy xuất thay đổi: thấp trước khi gọi, rất cao trong lúc gọi, rồi trả về thấp.'],
+       ['Compiler, linker và loader mỗi cái làm gì?', 'Compiler biên dịch mã đã tiền xử lý thành object code. Linker nối object code với thư viện để tạo file .EXE. Loader nạp .EXE vào bộ nhớ để chạy.']],
+  s8: [['Trong microkernel, file system và device driver chạy ở đâu?', 'Ở user mode. Nhân (kernel mode) chỉ giữ giao tiếp liên tiến trình, quản lý bộ nhớ và điều phối CPU; các thành phần trao đổi bằng thông điệp.'],
+       ['Android dựa trên nhân nào?', 'Nhân Linux (Linux kernel), bên trên có Bionic, HAL, các thư viện gốc, ART VM, Android frameworks và ứng dụng.']]
+});
+renderQuizzes();
+
+// Phần 1: các cấp bộ nhớ
+chooser('#memLv', [
+  {k: 'Cache', d: 'Bộ nhớ đệm giữa CPU và RAM, tốc độ rất cao, thường đặt trên chip CPU. CPU tìm dữ liệu trong cache trước; không thấy mới tìm ở RAM rồi nạp vào cache để tăng tốc cho lệnh sau. Là RAM tĩnh (SRAM): mỗi bit lưu bằng flip-flop, cấu trúc phức tạp, giá cao. Mất thông tin khi mất nguồn.'},
+  {k: 'RAM', d: 'Thường chỉ RAM động (DRAM): lưu bit bằng tụ điện (tụ tích điện là bit 1, xả hết là bit 0), cấu trúc đơn giản, chậm hơn và rẻ hơn SRAM. Nạp hệ điều hành khi khởi động, chứa lệnh và dữ liệu chương trình đang chạy: "phòng đợi" của CPU. Mất thông tin khi mất nguồn.'},
+  {k: 'ROM', d: 'Chỉ cho phép đọc, nội dung cố định ghi lúc chế tạo, không mất khi mất nguồn. Chứa tập lệnh khởi động máy (truy cập đĩa cứng, tìm hệ điều hành, nạp vào RAM) gọi là BIOS (Basic Input/Output System).'},
+  {k: 'Bộ nhớ ngoài', d: 'Đĩa từ (đĩa cứng), đĩa quang (CD, DVD, Bluray), bộ nhớ flash (thẻ nhớ, USB, SSD). CPU không truy cập trực tiếp: dữ liệu phải chuyển dần vào bộ nhớ trong. Dung lượng lớn hơn, tốc độ thấp hơn bộ nhớ trong, không mất khi mất nguồn. Thông tin tổ chức theo khối logic gọi là tệp (file).'}
+], (it, i) => note('#memLvStatus', it.k + (i < 3 ? ' (bộ nhớ trong)' : ''), it.d, el('div', {className: 'why'}, 'Từ cache đến bộ nhớ ngoài: dung lượng tăng dần, tốc độ giảm dần, giá mỗi bit giảm dần.')));
+
+// Phần 2: chia tài nguyên theo thời gian hay không gian
+chooser('#resKind', [
+  {k: 'CPU', t: 'thời gian', e: 'Mỗi chương trình dùng CPU một khoảng thời gian rồi giao lại cho chương trình khác.'},
+  {k: 'Máy in', t: 'thời gian', e: 'Mỗi chương trình dùng máy in một lúc rồi nhường cho chương trình khác.'},
+  {k: 'Bộ nhớ', t: 'không gian', e: 'Mỗi chương trình được dùng một vùng nhỏ của bộ nhớ, nhiều chương trình có vùng riêng cùng lúc.'},
+  {k: 'Đĩa cứng', t: 'không gian', e: 'Mỗi chương trình dùng một phần nhỏ của đĩa, nhiều chương trình cùng lúc.'}
+], it => note('#resKindStatus', it.k + ': chia theo ' + it.t, it.e));
+
+// Phần 3: bốn thế hệ
+chooser('#genBtns', [
+  {k: '1945 – 1955', t: 'Thế hệ 1', l: ['Dùng đèn điện tử chân không (vacuum tubes) và bảng cắm dây (plug boards).', 'Nhà phát minh: Aiken (Mỹ), Zuse (Đức).', 'Chưa cần hệ điều hành.']},
+  {k: '1955 – 1965', t: 'Thế hệ 2', l: ['Dùng bóng bán dẫn (transistors); xuất hiện hệ thống xử lý bó (batch systems).', 'Cách xử lý bó thời kỳ đầu: xuyên phiếu chuyển chương trình thành chồng card đục lỗ; đưa các chồng card theo thứ tự cho máy đọc card IBM 1401 đọc và ghi lên băng từ; gắn băng từ cho máy IBM 7094 xử lý tuần tự từng chương trình, kết quả ghi lên băng kết xuất; gắn băng kết xuất vào máy in 1401 để in ra giấy.', 'FMS (Fortran Monitor System) là hệ điều hành của IBM cho mainframe 7094.']},
+  {k: '1965 – 1980', t: 'Thế hệ 3', l: ['Dùng vi mạch tích hợp (IC).', 'Ba kỹ thuật: đa chương (multiprogramming: bộ nhớ chia thành các phân vùng để nhiều chương trình cùng nằm trong bộ nhớ), spooling (Simultaneous Peripheral Operation On Line) và chia sẻ thời gian (time sharing).', 'Hệ điều hành tiêu biểu: OS/360 của IBM, MULTICS (MIT, Bell Labs).']},
+  {k: '1980 – nay', t: 'Thế hệ 4', l: ['Dùng vi mạch tích hợp quy mô lớn (LSI); ra đời hệ điều hành cho máy tính cá nhân.', '1974: máy vi tính đầu tiên; Intel 8080 là CPU 8-bit đa dụng đầu tiên; đĩa mềm; CP/M (Control Program for Microcomputers).', 'Đầu thập niên 1980: IBM PC, DOS rồi MS-DOS; 1983: IBM PC/AT (CPU Intel 80286).', '1985 – 1995: Windows chạy trên nền MS-DOS, máy Pentium. Sau đó UNIX, Linux, Windows 2000; hệ thống X Windows (UNIX, Linux).']}
+], it => note('#genStatus', it.t + ' (' + it.k + ')', el('ul', {className: 'blist'}, ...it.l.map(x => el('li', {}, x)))));
+
+// Phần 5: race trên tài khoản A
+const RACE_OPS = {
+  '21a': ['P1', 'đọc A vào bộ nhớ', s => { s.m1 = s.A; }], '22a': ['P1', 'tăng giá trị trong bộ nhớ lên 700', s => { s.m1 += 700; }], '23a': ['P1', 'ghi giá trị mới', s => { s.A = s.m1; }],
+  '21b': ['P2', 'đọc A vào bộ nhớ', s => { s.m2 = s.A; }], '22b': ['P2', 'giảm giá trị trong bộ nhớ đi 500', s => { s.m2 -= 500; }], '23b': ['P2', 'ghi giá trị mới', s => { s.A = s.m2; }]
+};
+const RACE = [
+  {k: 'P1 xong rồi P2 chạy', o: ['21a', '22a', '23a', '21b', '22b', '23b'], w: 'Tuần tự: kết quả đúng.'},
+  {k: 'Xen kẽ như slide', o: ['21a', '22a', '21b', '22b', '23b', '23a'], w: 'P2 đọc A khi P1 chưa ghi, rồi P1 ghi sau cùng nên đè mất phép rút.'},
+  {k: 'Xen kẽ khác', o: ['21a', '21b', '22a', '22b', '23a', '23b'], w: 'Cả hai đọc A = 1000, P2 ghi sau cùng nên đè mất phép nạp.'}
+];
+chooser('#raceBtns', RACE, it => {
+  const s = {A: 1000, m1: '—', m2: '—'};
+  const rows = it.o.map((key, i) => { const [who, text, fn] = RACE_OPS[key]; fn(s); return el('tr', {}, el('td', {}, String(i + 1)), el('td', {}, key), el('td', {}, who + ': ' + text), el('td', {}, String(s.m1)), el('td', {}, String(s.m2)), el('td', {}, String(s.A))); });
+  note('#raceStatus', it.k + ': tài khoản A cuối cùng = ' + s.A + ' USD' + (s.A === 1200 ? ' (đúng)' : ' (sai, đúng là 1200)'),
+    el('div', {className: 'tblw'}, el('table', {className: 'tbl'}, el('thead', {}, el('tr', {}, ...['Bước', 'Lệnh', 'Việc', 'Bộ nhớ P1', 'Bộ nhớ P2', 'A trên đĩa'].map(h => el('th', {}, h)))), el('tbody', {}, ...rows))),
+    el('span', {}, it.w));
+});
+
+// Phần 5: deadlock
+const box = (title, o, on) => el('div', {className: 'cell' + (on ? ' on' : '')}, el('b', {}, title), el('dl', {}, ...Object.entries(o).flatMap(([k, v]) => [el('dt', {}, k + ':'), el('dd', {}, v), el('br')])));
+stepper('dl', [
+  {t: 'Trước khi bắt đầu', d: 'A sẽ cần file1 rồi file2. B sẽ cần file2 rồi file1. Chưa ai giữ file nào.', A: ['—', '—'], B: ['—', '—'], f: ['tự do', 'tự do'], on: -1},
+  {t: 'Tại t1: A xin file1', d: 'file1 đang tự do nên được cấp, A chạy tiếp.', A: ['file1', '—'], B: ['—', '—'], f: ['của A', 'tự do'], on: 0},
+  {t: 'Tại t2: B xin file2', d: 'file2 đang tự do nên được cấp, B chạy tiếp.', A: ['file1', '—'], B: ['file2', '—'], f: ['của A', 'của B'], on: 1},
+  {t: 'Tại t3: A xin file2', d: 'A vẫn giữ file1 nên chưa trả. file2 đang của B, A không được cấp, phải dừng đợi B.', A: ['file1', 'file2'], B: ['file2', '—'], f: ['của A', 'của B'], on: 0},
+  {t: 'Tại t4: B xin file1', d: 'B vẫn giữ file2 nên chưa trả. file1 đang của A, B không được cấp, phải dừng đợi A.', A: ['file1', 'file2'], B: ['file2', 'file1'], f: ['của A', 'của B'], on: 1},
+  {t: 'Từ t4 trở đi: deadlock', d: 'A chờ B và B chờ A. Cả hai bị dừng, không bao giờ chạy tiếp được nữa.', A: ['file1', 'file2'], B: ['file2', 'file1'], f: ['của A', 'của B'], on: 2}
+], (s, i) => $('#dlBox').replaceChildren(
+  box('Process A', {'đang giữ': s.A[0], 'đang xin': i < 3 ? '—' : s.A[1] === '—' ? '—' : s.A[1], 'trạng thái': i >= 3 ? 'đợi' : 'chạy'}, s.on === 0 || s.on === 2),
+  box('Process B', {'đang giữ': s.B[0], 'đang xin': i < 4 ? '—' : s.B[1], 'trạng thái': i >= 4 ? 'đợi' : 'chạy'}, s.on === 1 || s.on === 2),
+  box('Tài nguyên', {file1: s.f[0], file2: s.f[1]}, false)));
+
+// Phần 6: các cấp đĩa
+chooser('#fsLv', [
+  {k: 'Đĩa vật lý', d: 'Không gian 3 chiều: đĩa gồm nhiều cylinder, mỗi cylinder gồm nhiều track (vòng tròn cùng bán kính), mỗi track chứa nhiều cung nhỏ truy xuất độc lập gọi là sector. Sector là đơn vị truy xuất nhỏ nhất ở cấp vật lý. Muốn truy xuất phải biết bộ ba (C, H, S): rất khó dùng.'},
+  {k: 'Luận lý cấp 1: cluster', d: 'Không gian 1 chiều: danh sách các đơn vị độ dài cố định gọi là cluster (hay block, sector luận lý), độ dài độc lập với đĩa vật lý. Muốn truy xuất chỉ cần một chỉ số. Nhưng dữ liệu có nghĩa thường cần nhiều cluster và kích thước khác nhau, người dùng vẫn phải nhớ chỉ số.'},
+  {k: 'Luận lý cấp 2: file', d: 'Không gian 1 chiều gồm các file: đơn vị độ dài thay đổi theo yêu cầu người dùng, nhận dạng bằng tên gợi nhớ thay vì chỉ số. Mỗi dữ liệu có nghĩa chỉ cần một file. Nhưng đĩa chứa hàng triệu file nên không gian phẳng khó đặt tên và khó phân biệt file của chương trình nào, người nào.'},
+  {k: 'Luận lý cấp 3: cây thư mục', d: 'Không gian dạng cây phân cấp: thư mục gốc chứa các phần tử con, mỗi phần tử là file hay thư mục khác. Nhận dạng bằng đường dẫn (pathname): tuyệt đối (xuất phát từ thư mục gốc) hoặc tương đối (xuất phát từ thư mục làm việc, working directory). Trong Windows dấu ngăn là "\\" và thư mục gốc là "\\".'}
+], it => note('#fsLvStatus', it.k, it.d));
+
+// Phần 7: một lần gọi system call
+stepper('sc', [
+  {t: 'Chương trình ứng dụng đang chạy', d: 'Các lệnh của ứng dụng có quyền truy xuất thấp.', on: 0, q: 'thấp'},
+  {t: '(1) Chương trình người dùng "trap" vào nhân', d: 'Gọi system call: chương trình chuyển điều khiển vào nhân hệ điều hành (kernel).', on: 1, q: 'đang chuyển lên cao'},
+  {t: '(2) Hệ điều hành xác định số hiệu dịch vụ cần dùng', d: 'Quyền đã đổi thành rất cao (quyền hệ thống) để hàm system call thực hiện được chức năng đặc biệt của nó.', on: 1, q: 'rất cao'},
+  {t: '(3) Hệ điều hành gọi thủ tục dịch vụ', d: 'Thủ tục dịch vụ (ví dụ đọc file) chạy với quyền hệ thống.', on: 1, q: 'rất cao'},
+  {t: '(4) Điều khiển được trả về chương trình người dùng', d: 'Quyền được trả về mức thấp của ứng dụng; các lệnh sau lệnh gọi chạy như cũ.', on: 0, q: 'thấp'}
+], s => $('#scBox').replaceChildren(
+  box('Chương trình người dùng', {'đang chạy': s.on === 0 ? 'có' : 'không'}, s.on === 0),
+  box('Nhân hệ điều hành', {'đang chạy': s.on === 1 ? 'có' : 'không'}, s.on === 1),
+  box('Quyền truy xuất', {mức: s.q}, false)));
+
+// Phần 8: các kiến trúc
+const ARCH = [
+  {k: 'Cơ bản của UNIX', e: 'Người dùng dùng shell, trình biên dịch và thư viện hệ thống, rồi gọi vào nhân qua giao diện system call. Nhân gồm ba cụm: xử lý tín hiệu và terminal; file system, swapping, vào/ra khối và driver đĩa; điều phối CPU, thay trang, phân trang theo yêu cầu và bộ nhớ ảo. Nhân nói chuyện với phần cứng qua giao diện riêng.', layers: [
+    {n: 'Người dùng (users)', items: ['shells and commands', 'compilers and interpreters', 'system libraries'], c: 'u'},
+    {n: 'Giao diện system call vào nhân', items: ['system-call interface to the kernel'], c: 'h'},
+    {n: 'Nhân (kernel)', items: ['signals', 'terminal handling', 'character I/O system', 'terminal drivers', 'file system', 'swapping', 'block I/O system', 'disk and tape drivers', 'CPU scheduling', 'page replacement', 'demand paging', 'virtual memory'], c: 'k'},
+    {n: 'Giao diện nhân với phần cứng', items: ['kernel interface to the hardware'], c: 'h'},
+    {n: 'Phần cứng', items: ['terminal controllers', 'terminals', 'device controllers', 'disks and tapes', 'memory controllers', 'physical memory'], c: 'h'}]},
+  {k: 'Phân cấp', e: 'Các thủ tục chia thành ba lớp: thủ tục chính (main procedure) gọi các thủ tục dịch vụ (service procedures), các thủ tục dịch vụ gọi các thủ tục tiện ích (utility procedures). Mỗi lớp dựa trên lớp thấp hơn nó.', layers: [
+    {n: 'Main procedure', items: ['thủ tục chính'], c: 'u'},
+    {n: 'Service procedures', items: ['các thủ tục dịch vụ'], c: 'k'},
+    {n: 'Utility procedures', items: ['các thủ tục tiện ích'], c: 'h'}]},
+  {k: 'Microkernel', e: 'Nhân (kernel mode) chỉ giữ giao tiếp liên tiến trình, quản lý bộ nhớ và điều phối CPU. Ứng dụng, file system và device driver chạy ở user mode và trao đổi với nhau bằng thông điệp (messages) qua microkernel.', layers: [
+    {n: 'User mode', items: ['application program', 'file system', 'device driver'], c: 'u'},
+    {n: 'Kernel mode: microkernel', items: ['interprocess communication', 'memory management', 'CPU scheduling'], c: 'k'},
+    {n: 'Phần cứng', items: ['hardware'], c: 'h'}]},
+  {k: 'Android', e: 'Android xếp thành nhiều lớp trên nhân Linux: Bionic và lớp trừu tượng phần cứng HAL, các thư viện gốc (SQLite, openGL, webkit, surface manager, SSL, media framework), môi trường chạy ART VM cùng Android frameworks và JNI, trên cùng là các ứng dụng.', layers: [
+    {n: 'Ứng dụng', items: ['applications'], c: 'u'},
+    {n: 'Môi trường chạy', items: ['ART VM', 'Android frameworks', 'JNI'], c: 'u'},
+    {n: 'Thư viện gốc (native libraries)', items: ['SQLite', 'openGL', 'webkit', 'surface manager', 'SSL', 'media framework'], c: 'k'},
+    {n: 'Lớp trừu tượng phần cứng', items: ['HAL', 'Bionic'], c: 'k'},
+    {n: 'Nhân', items: ['Linux kernel'], c: 'k'},
+    {n: 'Phần cứng', items: ['hardware'], c: 'h'}]},
+  {k: 'Client – server', e: 'Dịch vụ như file server, memory server, process server, terminal server chạy như các tiến trình ở user mode. Tiến trình client nhận dịch vụ bằng cách gửi thông điệp tới các server process, qua microkernel ở kernel mode.', layers: [
+    {n: 'User mode', items: ['client process', 'client process', 'process server', 'terminal server', '...', 'file server', 'memory server'], c: 'u'},
+    {n: 'Kernel mode', items: ['microkernel'], c: 'k'}]}
+];
+chooser('#archBtns', ARCH, it => { stack('#archStack', it.layers); note('#archStatus', it.k, it.e); });
+
+</script>
+</body>
+</html>

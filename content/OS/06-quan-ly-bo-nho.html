@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OS 6: Quản lý bộ nhớ</title>
+<script>
+// Luôn sáng mặc định; chỉ tối khi người đọc tự bấm đổi
+(function(){var t=null;try{t=localStorage.getItem('theme')}catch(e){}
+document.documentElement.dataset.theme=t==='dark'?'dark':'light';})();
+</script>
+<style>
+:root{
+  --bg:#f6f8fc; --card:#ffffff; --fg:#0f172a; --muted:#566277; --line:#e2e8f2; --hov:#f3f6fc;
+  --accent:#2563eb; --accent2:#7c3aed; --accent-soft:#eaf0ff; --hl:#fff0a8; --hl-fg:#5c4600;
+  --grad:linear-gradient(120deg,#2563eb,#7c3aed);
+  --mono:ui-monospace,"Cascadia Code",Consolas,Menlo,monospace;
+  --grid:rgba(15,23,42,.05);
+  --sh:0 1px 2px rgba(15,23,42,.05),0 8px 24px -12px rgba(15,23,42,.12);
+  --sh-hi:0 2px 4px rgba(15,23,42,.06),0 18px 40px -14px rgba(37,99,235,.28);
+  --ts:92%; --tl:94%; --tcl:42%;
+  --glow1:rgba(37,99,235,.16); --glow2:rgba(124,58,237,.13);
+  --ok:#16a34a; --bad:#dc2626; --warn:#b45309; --warn-soft:#fff4d6;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#0a0e16; --card:#121826; --fg:#e8edf6; --muted:#9aa6ba; --line:#212a3b; --hov:#18202f;
+  --accent:#7ab2ff; --accent2:#a78bfa; --accent-soft:#15233d; --hl:#4a3d00; --hl-fg:#ffe58a;
+  --grad:linear-gradient(120deg,#7ab2ff,#a78bfa);
+  --grid:rgba(232,237,246,.045);
+  --sh:0 1px 2px rgba(0,0,0,.3),0 8px 24px -12px rgba(0,0,0,.5);
+  --sh-hi:0 2px 4px rgba(0,0,0,.4),0 18px 40px -14px rgba(122,178,255,.25);
+  --ts:45%; --tl:20%; --tcl:74%;
+  --glow1:rgba(122,178,255,.13); --glow2:rgba(167,139,250,.11);
+  --ok:#4ade80; --bad:#f87171; --warn:#fbbf24; --warn-soft:#3a2f00;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;scrollbar-width:none}
+*::-webkit-scrollbar{display:none}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);min-height:100vh;font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.skip{position:absolute;left:12px;top:-56px;z-index:30;background:var(--accent);color:#fff;padding:9px 16px;border-radius:10px;text-decoration:none;font-weight:600}
+.skip:focus{top:12px}
+.bg{position:absolute;inset:0 0 auto;height:560px;z-index:-1;pointer-events:none;
+  background:radial-gradient(640px 320px at 12% -4%,var(--glow1),transparent 70%),radial-gradient(560px 300px at 88% 6%,var(--glow2),transparent 70%),
+  linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:auto,auto,32px 32px,32px 32px;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent)}
+.wrap{max-width:920px;margin:0 auto;padding:0 24px 64px}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:20px 0}
+.brand{display:flex;align-items:center;gap:11px;font-weight:700;letter-spacing:-.01em}
+.logo{width:34px;height:34px;border-radius:10px;background:var(--grad);display:grid;place-items:center;color:#fff;box-shadow:0 6px 16px -6px var(--accent)}
+:root[data-theme="dark"] .logo{color:#0b1220}
+.btn{font:inherit;font-size:13px;font-weight:500;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 14px;min-height:38px;cursor:pointer;box-shadow:var(--sh)}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn[disabled]{opacity:.45;cursor:default}
+.hero{padding:24px 0 8px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:5px 13px 5px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card);font:600 12.5px system-ui,sans-serif;color:var(--muted);box-shadow:var(--sh)}
+.pill i{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,.18)}
+h1{font-size:clamp(2.1rem,6vw,3.3rem);line-height:1.06;letter-spacing:-.04em;font-weight:800;margin:18px 0 14px}
+.grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{max-width:660px;color:var(--muted);font-size:1.08rem;margin:0 0 22px}
+.lead b{color:var(--fg);font-weight:600}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 30px;padding:0;list-style:none}
+.toc a{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:500;color:var(--fg);text-decoration:none;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 8px;min-height:36px;transition:all .15s}
+.toc a b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font:700 12px var(--mono)}
+.toc a:hover{border-color:var(--accent);transform:translateY(-1px)}
+.toc a[aria-current="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.toc a[aria-current="true"] b{background:var(--bg);color:var(--fg)}
+/* thanh điều hướng nhanh: dính ở mép trên khi mục lục đã cuộn khỏi màn hình */
+.bar{position:fixed;top:10px;left:50%;z-index:25;width:min(100% - 24px,880px);transform:translate(-50%,-90px);opacity:0;visibility:hidden;transition:transform .25s,opacity .25s,visibility 0s .25s;
+  display:flex;align-items:center;gap:6px;padding:6px 8px;background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh-hi)}
+.bar.show{transform:translate(-50%,0);opacity:1;visibility:visible;transition:transform .25s,opacity .25s}
+.bar a{display:grid;place-items:center;flex:none;min-width:30px;height:30px;border-radius:9px;border:1px solid transparent;color:var(--fg);text-decoration:none;font:700 12.5px var(--mono)}
+.bar a:hover{border-color:var(--accent);color:var(--accent)}
+.bar a[aria-current="true"]{background:var(--fg);color:var(--bg)}
+.bar .up{border-color:var(--line);background:var(--card);font:600 16px system-ui;margin-right:2px}
+.bar .nums{display:flex;gap:3px;flex-wrap:nowrap}
+.bar .now{flex:1;min-width:0;margin-left:6px;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+@media(max-width:640px){.bar .now{display:none}.bar{gap:3px;padding:5px 6px}.bar a{min-width:26px;height:28px}.bar .nums{gap:1px}}
+.howto{margin:18px 0 30px;border:1px dashed var(--line);border-radius:14px;padding:12px 16px;color:var(--muted);font-size:14px;background:var(--card)}
+.howto b{color:var(--fg)}
+.card{position:relative;overflow:hidden;background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--sh);padding:24px 24px 22px;margin-bottom:24px;scroll-margin-top:68px}
+.card::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,hsl(var(--h,215) 75% 55%),hsl(calc(var(--h,215) + 45) 75% 62%))}
+.card header{display:flex;gap:14px;align-items:center;margin-bottom:6px}
+.num{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font:800 17px var(--mono);background:hsl(var(--h,215) var(--ts) var(--tl));color:hsl(var(--h,215) 65% var(--tcl))}
+.card h2{font-size:1.28rem;letter-spacing:-.02em;margin:0;line-height:1.25}
+.card h3{font-size:1rem;margin:20px 0 6px}
+.card p{margin:8px 0}
+.lab{display:inline-block;font:700 11px/1 system-ui;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:4px 8px;margin:18px 0 4px}
+.lab.v{background:var(--warn-soft);color:var(--warn)}
+.lab.g{background:var(--accent-soft);color:var(--accent)}
+.lab.t{background:hsl(160 var(--ts) var(--tl));color:hsl(160 65% var(--tcl))}
+.lab.q{background:var(--hov);color:var(--muted);border:1px solid var(--line)}
+.muted{color:var(--muted)}
+code,.mono{font-family:var(--mono);font-size:.9em}
+:not(pre)>code{background:var(--accent-soft);color:var(--accent);padding:1px 6px;border-radius:6px;white-space:nowrap}
+.ana{margin:12px 0;border-left:3px solid hsl(var(--h,215) 60% 60%);padding:6px 14px;background:var(--hov);border-radius:0 12px 12px 0;color:var(--muted)}
+.ana b{color:var(--fg)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:14px;margin:12px 0}
+.box{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--hov)}
+.box b{display:block;margin-bottom:2px}
+.box.on{border-color:var(--accent);background:var(--accent-soft)}
+.status{margin-top:12px;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:12px 16px;background:var(--card)}
+.status b{display:block}
+.why{margin-top:8px;color:var(--muted);font-size:14px}
+.why::before{content:"Vì sao? ";font-weight:700;color:var(--fg)}
+.warn{margin:12px 0;border:1px solid var(--warn);border-radius:12px;padding:10px 14px;background:var(--warn-soft);color:var(--warn)}
+.tbl{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
+.tbl th,.tbl td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.tblw{overflow-x:auto}
+.procs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:14px;margin:12px 0}
+.pbox{border:2px solid hsl(var(--c) 60% 60%);border-radius:16px;padding:10px 14px;background:hsl(var(--c) var(--ts) var(--tl))}
+.pbox b{display:block}
+.pbox .mem{margin-top:6px;border:1px dashed hsl(var(--c) 50% 55%);border-radius:10px;padding:6px 10px;font:12.5px var(--mono);color:var(--fg);background:var(--card)}
+.chain{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin:12px 0}
+.chain .nd{flex:1 1 140px;border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--hov);text-align:center}
+.chain .nd small{display:block;color:var(--muted)}
+.chain .ar{align-self:center;color:var(--muted);font:12px var(--mono);text-align:center;flex:0 0 auto}
+svg.diag{width:100%;height:auto;max-height:300px;display:block}
+.diag .nd rect{fill:var(--card);stroke:var(--line);stroke-width:2}
+.diag .nd text{fill:var(--fg);font:600 14px system-ui,sans-serif;text-anchor:middle}
+.diag .nd .sm{font:12px var(--mono);fill:var(--muted);font-weight:400}
+.diag .nd.on rect{stroke:hsl(var(--h) 70% 50%);fill:hsl(var(--h) var(--ts) var(--tl))}
+.diag .nd.dim{opacity:.38}
+.diag .ln{fill:none;stroke:var(--line);stroke-width:2.5}
+.diag .ln.on{stroke:var(--accent);stroke-dasharray:8 6;animation:flow .8s linear infinite}
+.diag .ln.on.rev{animation-direction:reverse}
+@keyframes flow{to{stroke-dashoffset:-14}}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.chip{display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:13.5px;font-weight:500;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 12px;min-height:36px;cursor:pointer;transition:all .15s}
+.chip i{width:8px;height:8px;border-radius:50%;background:hsl(var(--h,190) 70% 52%)}
+.chip:hover{border-color:var(--accent);transform:translateY(-1px)}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.mw{display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 0 4px}
+.mnode{border:2px solid var(--accent);border-radius:14px;padding:10px 20px;background:var(--accent-soft);font-weight:700;text-align:center}
+.sock{font:12px var(--mono);color:var(--muted);border-left:2px dashed var(--line);padding:2px 0 2px 10px}
+.workers{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.w{border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg);padding:8px 14px;font:13px var(--mono);cursor:pointer;min-width:96px;text-align:center}
+.w:hover{border-color:var(--bad)}
+.w.dead{border-color:var(--bad);color:var(--bad);background:transparent;text-decoration:line-through}
+.w.new{border-color:var(--ok);color:var(--ok)}
+.inst{min-width:120px;text-align:center}
+.inst .bar{height:8px;border-radius:99px;background:var(--line);margin-top:6px;overflow:hidden}
+.inst .bar i{display:block;height:100%;background:var(--grad);width:0;transition:width .25s}
+input[type=range]{width:200px;accent-color:var(--accent)}
+.win{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card);margin:8px 0}
+.win .bar{display:flex;gap:6px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line);background:var(--hov);font:12px var(--mono);color:var(--muted)}
+.win .bar i{width:10px;height:10px;border-radius:50%;background:#ff5f57}.win .bar i:nth-child(2){background:#febc2e}.win .bar i:nth-child(3){background:#28c840}
+.win .bar span{margin-left:8px}
+.codeline{display:block;width:100%;text-align:left;font:13.5px/1.7 var(--mono);color:var(--fg);background:none;border:0;padding:0 14px;cursor:pointer;white-space:pre;border-left:3px solid transparent;overflow-x:auto}
+.codeline:hover{background:var(--hov)}
+.codeline[aria-pressed="true"]{background:var(--accent-soft);border-left-color:var(--accent)}
+.codeline .n{display:inline-block;width:2.2em;color:var(--muted);user-select:none}
+.log{border:1px solid var(--line);border-radius:12px;background:var(--hov);padding:10px 14px;font:13px/1.7 var(--mono);min-height:56px}
+.log .ok{color:var(--ok)}.log .no{color:var(--bad)}
+details{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-top:8px;background:var(--card)}
+summary{cursor:pointer;font-weight:600}
+details p{margin:8px 0 2px;color:var(--muted)}
+.stepper{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.stepper .cnt{font:13px var(--mono);color:var(--muted);margin-left:auto}
+.role{display:inline-block;font:600 12px system-ui;border-radius:999px;padding:2px 10px;background:var(--accent-soft);color:var(--accent);margin-right:6px}
+.foot{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+.foot a{color:var(--accent)}
+kbd{font:12px var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:0 7px;background:var(--card)}
+@media(max-width:640px){.wrap{padding:0 16px 48px}.hero{padding-top:12px}.card{padding:18px 16px}.card header{gap:10px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important;animation:none!important}}
+@media(forced-colors:active){.card,.toc a[aria-current="true"]{border:1px solid}}
+</style>
+<style>
+/* bổ sung riêng cho trang hệ điều hành */
+.banner{background:#fff4d6;color:#6b4e00;text-align:center;padding:6px 12px;font-size:13.5px}
+:root[data-theme="dark"] .banner{background:#3a2f00;color:#ffe58a}
+.memwrap{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start;margin:10px 0}
+@media(max-width:720px){.memwrap{grid-template-columns:1fr}}
+.memcol{display:flex;flex-direction:column;border:2px solid var(--line);border-radius:14px;overflow:hidden;font:13px var(--mono)}
+.memcol .hi,.memcol .lo{padding:4px 12px;background:var(--hov);color:var(--muted);font-size:12px}
+.memcol .reg{padding:10px 12px;border-top:1px solid var(--line);background:var(--card);transition:background .15s}
+.memcol .reg small{display:block;color:var(--muted);font-family:system-ui;font-size:12px}
+.memcol .reg.free{background:repeating-linear-gradient(135deg,transparent 0 8px,var(--hov) 8px 16px);color:var(--muted);text-align:center}
+.memcol .reg.on{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.memcol .reg.on small{color:var(--accent)}
+.sdiag{width:100%;height:auto;max-height:330px;display:block}
+.sdiag .st ellipse{fill:var(--card);stroke:var(--line);stroke-width:2;transition:all .2s}
+.sdiag .st text{fill:var(--fg);font:600 14px system-ui,sans-serif;text-anchor:middle}
+.sdiag .st.on ellipse{stroke:hsl(var(--h) 70% 50%);fill:hsl(var(--h) var(--ts) var(--tl));stroke-width:3}
+.sdiag .tr{fill:none;stroke:var(--line);stroke-width:2.2}
+.sdiag .tr.on{stroke:var(--accent);stroke-width:3;stroke-dasharray:8 6;animation:flow .8s linear infinite}
+.sdiag .lb{fill:var(--muted);font:12px var(--mono);text-anchor:middle}
+.sdiag .lb.on{fill:var(--accent);font-weight:700}
+.sdiag marker path{fill:var(--muted)}
+.cs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px;margin:12px 0}
+.cs .cell{border:2px solid var(--line);border-radius:14px;padding:10px 14px;background:var(--card);transition:all .2s}
+.cs .cell.on{border-color:var(--accent);background:var(--accent-soft)}
+.cs .cell b{display:block;margin-bottom:4px}
+.cs .cell dl{margin:0;font:13px/1.7 var(--mono)}
+.cs .cell dt{display:inline;color:var(--muted)}
+.cs .cell dd{display:inline;margin:0 0 0 6px}
+.box span b{display:inline;margin:0}
+:not(pre)>code{white-space:normal;overflow-wrap:anywhere}
+.pending{opacity:.9}
+.pending p{margin:6px 0 0}
+.lanes{display:grid;grid-template-columns:1fr 130px 1fr;gap:12px;margin:12px 0;align-items:start}
+@media(max-width:720px){.lanes{grid-template-columns:1fr}}
+.lane{border:2px solid var(--line);border-radius:14px;padding:10px 12px;min-height:84px;background:var(--card)}
+.lane h4{margin:0 0 8px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.lane.cpu{border-color:var(--accent);background:var(--accent-soft)}
+.pc{display:inline-flex;align-items:center;justify-content:center;min-width:44px;height:34px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);font:700 13px var(--mono);margin:0 6px 6px 0;padding:0 10px}
+.pc.run{border-color:var(--accent);color:var(--accent)}
+.tree ul{list-style:none;margin:0;padding-left:22px;border-left:2px dashed var(--line)}
+.tree>ul{padding-left:0;border-left:0}
+.tree li{margin:6px 0}
+.tn{display:inline-flex;gap:8px;align-items:center;border:1.5px solid var(--line);border-radius:10px;padding:4px 12px;background:var(--card);color:var(--fg);font:13px var(--mono);cursor:pointer}
+.tn:hover{border-color:var(--accent)}
+.tn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:700}
+.tn small{color:var(--muted)}
+.tn.orph{border-color:var(--warn);color:var(--warn);cursor:default}
+.cells{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 6px}
+.cellb{width:56px;height:44px;border:2px solid var(--line);border-radius:10px;display:grid;place-items:center;font:700 13px var(--mono);background:var(--card);position:relative}
+.cellb.full{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.cellb i{position:absolute;top:-10px;font:700 10px var(--mono);font-style:normal;padding:0 5px;border-radius:5px;background:var(--fg);color:var(--bg)}
+.cellb i.in{left:2px}
+.cellb i.out{right:2px;background:var(--accent2);color:#fff}
+.tcell{width:40px;height:40px;border-radius:9px;display:grid;place-items:center;font:700 12px var(--mono);color:#fff;background:hsl(var(--c) 60% 42%)}
+.th{display:inline-block;border:2px solid var(--line);border-radius:10px;padding:6px 12px;margin:0 6px 6px 0;font:700 13px var(--mono);background:var(--card);color:var(--fg);cursor:pointer}
+.th.ok{border-color:var(--ok);color:var(--ok)}
+.th.blocked{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.th.stuck{border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
+.kt{display:inline-block;border:2px dashed var(--line);border-radius:10px;padding:6px 12px;margin:0 6px 6px 0;font:700 13px var(--mono);color:var(--muted)}
+.kt.blocked{border-color:var(--bad);color:var(--bad)}
+</style>
+</head>
+<body>
+<a class="skip" href="#s1">Bỏ qua tới nội dung</a>
+<div class="bg" aria-hidden="true"></div>
+<nav class="bar" id="bar" aria-label="Điều hướng nhanh"><a class="up" href="#top" aria-label="Lên đầu trang" title="Lên đầu trang">↑</a><span class="nums" id="barNums"></span><span class="now" id="barNow" aria-hidden="true"></span></nav>
+<div class="wrap">
+  <header class="topbar" id="top">
+    <div class="brand"><span class="logo" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9zM9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg></span>Hệ điều hành</div>
+    <button class="btn" id="themeBtn" type="button" aria-label="Đổi giao diện sáng hoặc tối">Sáng / Tối</button>
+  </header>
+
+  <div class="hero">
+    <span class="pill"><i></i>Hệ điều hành · Chương 4 · Quản lý bộ nhớ</span>
+    <h1>Quản lý bộ nhớ: <span class="grad">chia RAM cho nhiều tiến trình</span></h1>
+    <p class="lead">Từ địa chỉ logic và vật lý, cấp phát liên tục và phân mảnh, đến phân trang, phân đoạn và kết hợp cả hai, với các minh họa tự tính địa chỉ.</p>
+  </div>
+
+  <ol class="toc" id="toc" aria-label="Lộ trình các phần"></ol>
+
+  <main>
+<section class="card" id="s1" style="--h:215" data-title="Bộ nhớ cần quản lý gì">
+    <header><span class="num">1</span><h2>Quản lý bộ nhớ làm những việc gì</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Một chương trình muốn chạy phải được nạp vào bộ nhớ chính (RAM). Cần quyết định ba điều: <b>khi nào nạp, nạp vào đâu, nạp những phần nào</b>, sao cho nhiều tiến trình cùng nằm trong RAM (nâng cao tính đa chương) và tận dụng tối đa bộ nhớ.</p>
+    <span class="lab g">Giải pháp</span>
+    <p>Quản lý bộ nhớ là công việc của hệ điều hành, có phần cứng hỗ trợ, nhằm phân phối và sắp xếp các tiến trình trong bộ nhớ sao cho hiệu quả. Phần lớn hệ thống để <b>kernel chiếm một phần cố định</b>, phần còn lại chia cho các tiến trình. Năm nhiệm vụ:</p>
+    <ol>
+      <li>Tổ chức và quản lý bộ nhớ vật lý.</li>
+      <li>Tổ chức và quản lý bộ nhớ logic.</li>
+      <li>Định vị và tái định vị các tiến trình.</li>
+      <li>Chia sẻ bộ nhớ cho các tiến trình.</li>
+      <li>Bảo vệ vùng nhớ của các tiến trình.</li>
+    </ol>
+    <div class="two">
+      <div class="box"><b>Hệ đơn chương</b><span class="muted">Bộ nhớ chỉ có Operating System và chương trình hiện tại.</span></div>
+      <div class="box on"><b>Hệ đa chương</b><span class="muted">Bộ nhớ có Operating System và nhiều tiến trình cùng trú đóng (Process A, B, C...).</span></div>
+    </div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s1"></div>
+  </section>
+
+  <section class="card" id="s2" style="--h:160" data-title="Địa chỉ và liên kết">
+    <header><span class="num">2</span><h2>Địa chỉ logic, địa chỉ vật lý và thời điểm liên kết</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Trình biên dịch không biết chương trình sẽ nằm ở đâu trong RAM, nhưng mã lệnh vẫn phải tham chiếu bộ nhớ. Làm sao ánh xạ từ địa chỉ trong chương trình sang ô nhớ thật?</p>
+    <span class="lab g">Giải pháp</span>
+    <ul>
+      <li><b>Địa chỉ vật lý</b> (thực, tuyệt đối): vị trí thực trong bộ nhớ chính. <b>Địa chỉ logic</b> (luận lý): tham chiếu độc lập với tổ chức vật lý; mã do compiler sinh ra chỉ dùng địa chỉ logic. <b>Địa chỉ tương đối</b>: địa chỉ logic tính từ một điểm xác định trong chương trình. Khi thực thi, địa chỉ logic phải được dịch sang địa chỉ vật lý với phần cứng hỗ trợ.</li>
+      <li>Qua các giai đoạn: mã nguồn dùng địa chỉ tượng trưng (biến, hằng, con trỏ); lúc biên dịch là địa chỉ tái định vị (relocatable) hay tương đối (ví dụ biến a cách header module 14 byte); lúc link/load là địa chỉ tuyệt đối (ví dụ ô nhớ thực 2030). <b>Linker</b> kết hợp các object module thành <b>load module</b> khả thực thi; <b>loader</b> nạp nó vào bộ nhớ.</li>
+    </ul>
+    <div class="tblw"><table class="tbl"><thead><tr><th>Thời điểm ánh xạ</th><th>Đặc điểm</th></tr></thead><tbody>
+      <tr><td><b>Biên dịch (compile time)</b></td><td>Biết trước địa chỉ vùng nhớ thì sinh mã tuyệt đối. Đổi vị trí bắt đầu phải biên dịch lại (ví dụ chương trình <code>.com</code> của MS-DOS, lệnh <code>org xxx</code>).</td></tr>
+      <tr><td><b>Nạp (load time)</b></td><td>Chưa biết địa chỉ lúc dịch thì sinh mã tái định vị được (relocatable code).</td></tr>
+      <tr><td><b>Thực thi (execution time)</b></td><td>Trì hoãn đến lúc chạy nếu tiến trình có thể bị di chuyển giữa các vùng nhớ. Bắt buộc có phần cứng hỗ trợ (thanh ghi base, limit).</td></tr>
+    </tbody></table></div>
+    <div class="two">
+      <div class="box"><b>Liên kết động (dynamic linking)</b><span class="muted">Link module ngoài (<code>.dll</code> trên Windows, <code>.so</code> trên Unix) sau khi đã tạo load module; load module chỉ chứa tham chiếu. Tiết kiệm bộ nhớ (module ngoài nạp một lần, nhiều tiến trình dùng chung), cập nhật thư viện không cần biên dịch lại. Cần hệ điều hành hỗ trợ.</span></div>
+      <div class="box"><b>Nạp động (dynamic loading)</b><span class="muted">Thủ tục chỉ được nạp vào RAM khi được gọi, tăng hiệu dụng bộ nhớ, tránh lãng phí cho mã ít dùng (như mã xử lý lỗi). Do lập trình viên thiết kế, hệ điều hành chỉ cung cấp thư viện hỗ trợ.</span></div>
+    </div>
+    <p><b>MMU (Memory Management Unit)</b> là phần cứng ánh xạ địa chỉ logic thành địa chỉ vật lý lúc xử lý: mỗi địa chỉ do tiến trình phát sinh được cộng giá trị của <b>thanh ghi tái định vị (relocation register)</b>. Tiến trình chỉ thấy địa chỉ logic. Mô hình base and bound: <code>nếu (địa chỉ logic) &lt; (thanh ghi giới hạn) thì (địa chỉ vật lý) = (thanh ghi nền) + (địa chỉ logic), ngược lại báo lỗi</code>.</p>
+    <span class="lab t">Minh họa: base và limit (ví dụ base = 14000, limit = 3000)</span>
+    <div class="row" id="blBtns" role="group" aria-label="Chọn địa chỉ logic"></div>
+    <div class="status" id="blStatus" role="status"></div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s2"></div>
+  </section>
+
+  <section class="card" id="s3" style="--h:28" data-title="Cấp phát liên tục">
+    <header><span class="num">3</span><h2>Cấp phát liên tục, phân mảnh và các chiến lược chọn vùng</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Cách đơn giản nhất: mỗi tiến trình nằm trong một vùng nhớ liên tục đủ chứa toàn bộ. Nhưng sau nhiều lần cấp và trả, bộ nhớ bị băm nát: tổng vùng trống đủ lớn mà không có vùng trống <i>liên tục</i> đủ lớn. Ví dụ ba vùng trống 1 MB, 3 MB, 5 MB (tổng 9 MB) vẫn không nạp được tiến trình 6 MB.</p>
+    <span class="lab g">Giải pháp</span>
+    <div class="two">
+      <div class="box"><b>Phân mảnh ngoại (external)</b><span class="muted">Vùng trống đủ lớn nhưng bị phân tán, không liên tục. Khắc phục bằng dồn bộ nhớ (compaction).</span></div>
+      <div class="box"><b>Phân mảnh nội (internal)</b><span class="muted">Vùng được cấp lớn hơn vùng yêu cầu, thường khi chia bộ nhớ thành các khối kích thước cố định.</span></div>
+    </div>
+    <p>Bốn biện pháp: <b>chiến lược cấp phát hợp lý</b>, <b>tái định vị</b> (compaction), <b>hoán vị</b> (swapping) và <b>phủ lấp</b> (overlay).</p>
+    <ul>
+      <li><b>First-fit:</b> cấp vùng trống liên tục đầu tiên đủ lớn (nhanh hơn). <b>Best-fit:</b> cấp vùng nhỏ nhất đủ lớn, để lại lỗ thừa nhỏ nhất (phải tìm cả danh sách). <b>Worst-fit:</b> cấp vùng lớn nhất, để lại lỗ thừa lớn nhất (phải tìm cả danh sách).</li>
+      <li><b>Compaction:</b> dồn các mảnh trống nhỏ thành vùng trống lớn liên tục; tốn nhiều thời gian CPU và chỉ làm được khi liên kết địa chỉ diễn ra lúc thực thi.</li>
+      <li><b>Swapping:</b> chuyển tiến trình tạm ra bộ nhớ phụ (swap out), cần thì nạp lại (swap in); chính sách Round Robin hoặc roll out / roll in theo độ ưu tiên.</li>
+      <li><b>Overlay:</b> chia chương trình thành nhiều phần, chỉ giữ trong RAM phần đang cần; hữu ích khi tiến trình lớn hơn RAM cấp cho nó, nhưng người lập trình phải thiết kế cấu trúc overlay. Ví dụ trình biên dịch 2 pass: Pass 1 (70K), Pass 2 (80K), bảng ký hiệu (20K), thủ tục chung (30K): dùng chung một vùng cho hai pass chỉ cần 30 + 20 + 80 = 130K thay vì 200K.</li>
+    </ul>
+    <p>Hai mô hình quản lý bộ nhớ thực (ít dùng ngày nay nhưng là nền của bộ nhớ ảo): <b>phân vùng cố định</b> (chia RAM thành các partition bằng nhau hay khác nhau; tiến trình lớn hơn partition phải dùng overlay; dễ phân mảnh nội; hàng đợi riêng cho từng partition hoặc một hàng đợi chung) và <b>phân vùng động</b> (số lượng và kích thước partition thay đổi, mỗi tiến trình được cấp đúng dung lượng yêu cầu; hết phân mảnh nội nhưng gây phân mảnh ngoại).</p>
+    <span class="lab t">Minh họa: ba chiến lược trên cùng một bộ yêu cầu (ví dụ: các vùng trống 100, 500, 200, 300, 600 KB; yêu cầu 212, 417, 112, 426 KB)</span>
+    <div class="row" id="fitBtns" role="group" aria-label="Chọn chiến lược"></div>
+    <div class="status" id="fitStatus" role="status"></div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s3"></div>
+  </section>
+
+  <section class="card" id="s4" style="--h:280" data-title="Phân trang">
+    <header><span class="num">4</span><h2>Phân trang: bỏ yêu cầu phải nằm liên tục</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Cấp phát liên tục luôn gây phân mảnh ngoại. Có thể cho tiến trình nằm rải rác trong RAM không?</p>
+    <span class="lab g">Giải pháp</span>
+    <ul>
+      <li>Chia bộ nhớ vật lý thành các khối kích thước cố định gọi là <b>khung (frame)</b> (kích thước là lũy thừa của 2, từ 512 đến 8192 byte). Chia không gian logic thành các khối cùng kích thước gọi là <b>trang (page)</b>. Chạy chương trình n trang chỉ cần tìm n khung trống bất kỳ. Hệ điều hành giữ <b>bảng trang (page table)</b> để dịch địa chỉ. Vẫn còn phân mảnh nội ở trang cuối của tiến trình.</li>
+      <li>Địa chỉ CPU sinh ra gồm hai phần: <b>số trang p</b> (chỉ số tra bảng trang để lấy địa chỉ cơ sở của khung) và <b>offset d</b> (độ lệch trong trang).</li>
+      <li>Bảng trang nằm trong RAM, có thanh ghi trỏ tới đầu bảng (PTBR) và thanh ghi cho biết độ dài. Nhược điểm: mỗi truy xuất cần 2 lần truy cập RAM (đọc bảng trang, rồi đọc dữ liệu). Khắc phục bằng bộ đệm phần cứng <b>TLB</b> (Translation Look-aside Buffer): <b>TLB hit</b> (p có trong TLB) lấy ngay số khung, tiết kiệm một lần đọc RAM; <b>TLB miss</b> thì tra bảng trang như thường (rồi cập nhật TLB).</li>
+      <li><b>Bảo vệ:</b> mỗi mục bảng trang có <b>valid-invalid bit</b>: valid là trang thuộc không gian logic hợp lệ của tiến trình; invalid thì truy xuất bị ngắt lỗi.</li>
+    </ul>
+    <span class="lab t">Minh họa: dịch địa chỉ (ví dụ: trang 1024 byte, bảng trang: trang 0 → khung 5, trang 1 → khung 2, trang 2 → khung 7, trang 3 → khung 1)</span>
+    <div class="row" id="pgBtns" role="group" aria-label="Chọn địa chỉ logic"></div>
+    <div class="status" id="pgStatus" role="status"></div>
+    <h3>Khi bảng trang quá lớn</h3>
+    <div class="two">
+      <div class="box"><b>Phân trang đa cấp</b><span class="muted">Chính bảng trang cũng được phân trang. Ví dụ máy 32 bit, trang 4 KB (2<sup>12</sup> byte nên d = 12 bit): 20 bit còn lại tách thành p1 (10 bit, chỉ mục bảng trang ngoài) và p2 (10 bit, chỉ mục bảng trang trong). Dùng 1 cấp cần bảng 2<sup>20</sup> mục; dùng 2 cấp thì bảng ngoài chỉ 2<sup>10</sup> mục, các bảng trong có thể để ở bộ nhớ phụ và nạp khi cần.</span></div>
+      <div class="box"><b>Bảng trang nghịch đảo</b><span class="muted">Một bảng duy nhất cho cả hệ thống, mỗi mục ứng với một khung vật lý và chứa (pid, số trang p). Giảm mạnh dung lượng bảng nhưng tìm lâu hơn; khắc phục bằng bảng băm (hash) từ số trang.</span></div>
+    </div>
+    <p><b>Chia sẻ:</b> thực hiện ở mức trang. Bất tiện: đoạn mã nằm trên nhiều trang thì phải chia sẻ tất cả các trang đó, và mã phải ở cùng một vị trí địa chỉ logic trong mọi tiến trình tham gia.</p>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s4"></div>
+  </section>
+
+  <section class="card" id="s5" style="--h:340" data-title="Phân đoạn">
+    <header><span class="num">5</span><h2>Phân đoạn: quản lý bộ nhớ theo cách người lập trình nhìn</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Phân trang chia theo kích thước cố định, không phản ánh cấu trúc chương trình. Người lập trình nhìn chương trình là các thành phần có tên: mã, dữ liệu, stack, heap.</p>
+    <span class="lab g">Giải pháp</span>
+    <ul>
+      <li>Một chương trình gồm nhiều <b>phân đoạn (segment)</b>: đoạn mã, biến toàn cục và dữ liệu, stack, heap. Compiler tự xây dựng các segment, loader gán cho mỗi segment một số định danh.</li>
+      <li>Không gian địa chỉ ảo là tập các đoạn, mỗi đoạn có tên và kích thước riêng. Địa chỉ logic là <code>&lt;segment-number, offset&gt;</code>. Bộ nhớ vật lý cấp không liên tục cho tiến trình.</li>
+      <li><b>Bảng phân đoạn:</b> chuyển địa chỉ hai chiều thành địa chỉ vật lý một chiều. Mỗi ô gồm <b>base</b> (địa chỉ vật lý bắt đầu của đoạn) và <b>limit</b> (kích thước đoạn). Có thanh ghi STBR (địa chỉ bảng phân đoạn) và STLR (số đoạn dùng).</li>
+      <li>Địa chỉ ảo <code>&lt;s, d&gt;</code>: <b>s</b> là chỉ mục vào bảng; <b>d</b> phải nằm trong khoảng từ 0 đến giới hạn của đoạn; hợp lệ thì cộng với base để ra địa chỉ vật lý.</li>
+      <li>Tái định vị động qua bảng phân đoạn. Chia sẻ đoạn giữa các chương trình bằng chung chỉ số segment. Cấp phát first-fit hoặc best-fit, nên có phân mảnh ngoại vi. Bảo vệ: mỗi ô có <b>valid bit</b> (0 là đoạn không hợp lệ) và phân quyền read/write/execute theo từng đoạn.</li>
+    </ul>
+    <span class="lab t">Minh họa: dịch địa chỉ phân đoạn (ví dụ bảng: đoạn 0: base 1400, limit 1000; đoạn 1: 6300, 400; đoạn 2: 4300, 400; đoạn 3: 3200, 1100; đoạn 4: 4700, 1000)</span>
+    <div class="row" id="sgBtns" role="group" aria-label="Chọn địa chỉ logic"></div>
+    <div class="status" id="sgStatus" role="status"></div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s5"></div>
+  </section>
+
+  <section class="card" id="s6" style="--h:95" data-title="Kết hợp">
+    <header><span class="num">6</span><h2>Kết hợp phân trang và phân đoạn</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Phân đoạn thuần vẫn bị phân mảnh ngoại. Phân trang thuần không theo cấu trúc chương trình. Lấy ưu điểm của cả hai thì sao?</p>
+    <span class="lab g">Giải pháp</span>
+    <p><b>Phân trang trong mỗi phân đoạn:</b> bộ nhớ gồm nhiều phân đoạn, mỗi phân đoạn gồm nhiều trang. Cách này giải quyết phân mảnh ngoại vi. Mỗi tiến trình có một bảng phân đoạn và nhiều bảng trang (mỗi phân đoạn một bảng trang).</p>
+    <ul>
+      <li>Địa chỉ ảo gồm ba phần: <b>Segment Number</b> (chỉ mục vào bảng phân đoạn), <b>Page Number</b> (chỉ mục vào bảng trang của đoạn đó, để tính khung nhớ thực) và <b>Offset</b> (vị trí trong khung).</li>
+      <li>Mỗi phần tử bảng phân đoạn gồm <b>limit</b> (kích thước đoạn, như phân đoạn thuần) và <b>base</b> (địa chỉ của bảng trang của đoạn đó, khác phân đoạn thuần).</li>
+      <li>Mỗi phần tử bảng trang gồm số khung (Frame Number) cùng các bit điều khiển như P (present) và M (modified).</li>
+    </ul>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s6"></div>
+  </section>
+  </main>
+</div>
+<script>
+const DATA = {quiz: {}};
+// ===== Phần dùng chung cho mọi trang hệ điều hành =====
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
+const btn = (label, fn, off) => { const b = el('button', {className: 'btn', type: 'button', onclick: fn}, label); if (off) b.disabled = true; return b; };
+const setP = (b, v) => b.setAttribute('aria-pressed', String(v));
+
+// Đổi giao diện sáng/tối, nhớ lựa chọn
+$('#themeBtn').addEventListener('click', () => {
+  const d = document.documentElement, n = d.dataset.theme === 'dark' ? 'light' : 'dark';
+  d.dataset.theme = n; try { localStorage.setItem('theme', n); } catch (e) {}
+});
+
+// Mục lục và thanh điều hướng nhanh
+const secs = $$('main > section');
+secs.forEach((s, i) => {
+  $('#toc').append(el('li', {}, el('a', {href: '#' + s.id}, el('b', {}, String(i + 1)), s.dataset.title)));
+  $('#barNums').append(el('a', {href: '#' + s.id, title: (i + 1) + '. ' + s.dataset.title, ariaLabel: 'Phần ' + (i + 1) + ': ' + s.dataset.title}, String(i + 1)));
+});
+function setCurrent(id){
+  $$('#toc a, #barNums a').forEach(a => a.hash === '#' + id ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current'));
+  const s = secs.find(x => x.id === id); if (s) $('#barNow').textContent = (secs.indexOf(s) + 1) + '. ' + s.dataset.title;
+}
+if ('IntersectionObserver' in window) {
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) setCurrent(e.target.id); }), {rootMargin: '-20% 0px -70% 0px'});
+  secs.forEach(s => io.observe(s));
+  new IntersectionObserver(es => es.forEach(e => $('#bar').classList.toggle('show', !e.isIntersecting && e.boundingClientRect.top < 0))).observe($('#toc'));
+}
+
+// Kiểm tra nhanh: DATA.quiz = { s1: [[câu hỏi, đáp án], ...], ... }
+function renderQuizzes(){
+  $$('[data-quiz]').forEach(box => (DATA.quiz[box.dataset.quiz] || []).forEach(([q, a]) => box.append(el('details', {}, el('summary', {}, q), el('p', {}, a)))));
+}
+
+// Dòng mã bấm được: lines = [[dòng, giải thích], ...]
+function annotCode(rootSel, statusSel, lines, start){
+  const root = $(rootSel);
+  lines.forEach(([line], i) => { const b = el('button', {className: 'codeline', type: 'button', onclick: () => pick(i)}, el('span', {className: 'n'}, String(i + 1)), line || ' '); b.setAttribute('aria-label', 'Dòng ' + (i + 1) + ': ' + (line.trim() || 'trống')); root.append(b); });
+  function pick(i){ [...root.children].forEach((b, k) => setP(b, k === i)); const [line, note] = lines[i]; $(statusSel).replaceChildren(el('b', {}, line.trim() || 'Dòng trống'), el('span', {}, note || 'Không có gì thêm ở dòng này.')); }
+  pick(start || 0);
+}
+
+// Hàng chip chọn một mục: items = [{k: nhãn, ...}], onPick(item, index) được gọi khi chọn
+function chooser(hostSel, items, onPick, start){
+  const host = $(hostSel);
+  items.forEach((it, i) => host.append(el('button', {className: 'chip', type: 'button', onclick: () => pick(i)}, el('i'), it.k)));
+  function pick(i){ [...host.children].forEach((b, k) => setP(b, k === i)); onPick(items[i], i); }
+  pick(start || 0);
+}
+// Ô trạng thái: tiêu đề đậm + các đoạn (chuỗi hoặc phần tử)
+const note = (sel, title, ...parts) => $(sel).replaceChildren(el('b', {}, title), ...parts.map(p => typeof p === 'string' ? el('span', {}, p) : p));
+// Chồng các lớp (kiến trúc): layers = [{n: tên lớp, items: [...], c: 'k'|'u'|'h'}]
+const stack = (sel, layers) => $(sel).replaceChildren(...layers.map(l => el('div', {className: 'lyr ' + (l.c || '')}, el('b', {}, l.n), ...(l.items || []).map(t => el('span', {className: 'it'}, t)))));
+
+// Bộ chạy từng bước: steps = [{t, d}], gọi draw(step, index) mỗi lần đổi
+function stepper(prefix, steps, draw){
+  let i = 0;
+  const render = () => {
+    draw(steps[i], i);
+    $('#' + prefix + 'Status').replaceChildren(el('b', {}, steps[i].t), el('span', {}, steps[i].d));
+    $('#' + prefix + 'Cnt').textContent = 'Bước ' + (i + 1) + '/' + steps.length;
+    $('#' + prefix + 'Back').disabled = i === 0; $('#' + prefix + 'Next').disabled = i === steps.length - 1;
+  };
+  $('#' + prefix + 'Next').addEventListener('click', () => { if (i < steps.length - 1) { i++; render(); } });
+  $('#' + prefix + 'Back').addEventListener('click', () => { if (i > 0) { i--; render(); } });
+  $('#' + prefix + 'Reset').addEventListener('click', () => { i = 0; render(); });
+  render();
+}
+
+Object.assign(DATA.quiz, {
+  s1: [['Quản lý bộ nhớ phải trả lời ba câu hỏi nào khi nạp chương trình?', 'Khi nào nạp, nạp vào đâu, và nạp những phần nào của chương trình.'],
+       ['Phần nào của bộ nhớ thường cố định trong hầu hết hệ thống?', 'Phần của kernel (nhân hệ điều hành); phần còn lại chia cho các tiến trình.']],
+  s2: [['Địa chỉ logic và địa chỉ vật lý khác nhau thế nào?', 'Địa chỉ logic độc lập với tổ chức vật lý của bộ nhớ và là thứ mã chương trình dùng. Địa chỉ vật lý là vị trí thực trong RAM; MMU ánh xạ từ logic sang vật lý.'],
+       ['Vì sao liên kết địa chỉ lúc thực thi cần phần cứng hỗ trợ?', 'Vì địa chỉ phải được dịch mỗi lần truy xuất bộ nhớ (cộng thanh ghi base, kiểm tra limit), và nhờ đó tiến trình mới di chuyển được giữa các vùng nhớ.']],
+  s3: [['Phân mảnh ngoại và phân mảnh nội khác nhau thế nào?', 'Ngoại: vùng trống đủ lớn nhưng không liên tục. Nội: vùng được cấp lớn hơn vùng yêu cầu.'],
+       ['Compaction chỉ làm được khi nào?', 'Khi việc kết buộc địa chỉ diễn ra lúc thực thi, vì tiến trình bị dời chỗ.'],
+       ['Phân vùng động khắc phục phân mảnh nào và gây ra phân mảnh nào?', 'Hết phân mảnh nội (mỗi tiến trình được đúng dung lượng yêu cầu) nhưng gây phân mảnh ngoại.']],
+  s4: [['Phân trang có hết phân mảnh không?', 'Hết phân mảnh ngoại, nhưng vẫn còn phân mảnh nội ở trang cuối của tiến trình.'],
+       ['TLB hit và TLB miss khác nhau thế nào?', 'Hit: số trang có trong TLB nên lấy ngay số khung, tiết kiệm một lần đọc RAM. Miss: phải tra bảng trang trong RAM như thường.'],
+       ['Vì sao dùng phân trang đa cấp?', 'Bảng trang một cấp quá lớn (2^20 mục với 32 bit, trang 4 KB). Đa cấp chỉ cần bảng ngoài trong RAM, bảng trong có thể ở bộ nhớ phụ và nạp khi cần.']],
+  s5: [['Địa chỉ <s, d> hợp lệ khi nào?', 'Khi d nằm trong giới hạn của đoạn s (0 ≤ d < limit); khi đó địa chỉ vật lý = base của đoạn s + d.'],
+       ['Phân đoạn có phân mảnh nào?', 'Phân mảnh ngoại vi, vì các đoạn có kích thước khác nhau và được cấp bằng first-fit hay best-fit.']],
+  s6: [['Phần tử bảng phân đoạn trong mô hình kết hợp khác phân đoạn thuần ở đâu?', 'Base không chứa địa chỉ bắt đầu của đoạn mà chứa địa chỉ bảng trang của đoạn đó; limit vẫn là kích thước đoạn.'],
+       ['Địa chỉ ảo trong mô hình kết hợp gồm những phần nào?', 'Segment Number, Page Number và Offset.']]
+});
+renderQuizzes();
+
+// Phần 2: base và limit
+const BL = {base: 14000, limit: 3000};
+chooser('#blBtns', [346, 2999, 3000, 5000].map(a => ({k: 'logic ' + a, a})), it => {
+  const ok = it.a < BL.limit;
+  note('#blStatus', it.k + ': ' + (ok ? 'địa chỉ vật lý = ' + (BL.base + it.a) : 'báo lỗi (trap)'), ok ? el('span', {}, it.a + ' < limit (' + BL.limit + ') nên vật lý = base (' + BL.base + ') + ' + it.a + ' = ' + (BL.base + it.a) + '.') : el('span', {}, it.a + ' ≥ limit (' + BL.limit + '): truy xuất ngoài vùng nhớ của tiến trình, phần cứng báo lỗi.'));
+});
+
+// Phần 3: first-fit, best-fit, worst-fit
+function fit(algo){
+  const holes = [100, 500, 200, 300, 600], log = [];
+  [212, 417, 112, 426].forEach(r => {
+    let idx = -1;
+    holes.forEach((h, i) => { if (h >= r && (idx < 0 || (algo === 'best' && h < holes[idx]) || (algo === 'worst' && h > holes[idx]))) idx = i; });
+    if (idx < 0) log.push({r, ok: false}); else { log.push({r, ok: true, from: holes[idx], left: holes[idx] - r}); holes[idx] -= r; }
+  });
+  return {log, holes};
+}
+chooser('#fitBtns', [{k: 'First-fit', id: 'first'}, {k: 'Best-fit', id: 'best'}, {k: 'Worst-fit', id: 'worst'}], it => {
+  const {log, holes} = fit(it.id), fails = log.filter(x => !x.ok).length;
+  note('#fitStatus', it.k + (fails ? ': có ' + fails + ' yêu cầu không được cấp' : ': cấp được cả 4 yêu cầu'),
+    el('div', {className: 'tblw'}, el('table', {className: 'tbl'}, el('thead', {}, el('tr', {}, ...['Yêu cầu (KB)', 'Kết quả'].map(h => el('th', {}, h)))), el('tbody', {}, ...log.map(x => el('tr', {}, el('td', {}, String(x.r)), el('td', {}, x.ok ? 'cấp từ vùng ' + x.from + ' KB, còn dư ' + x.left + ' KB' : 'không có vùng liên tục đủ lớn: phải chờ')))))),
+    el('span', {className: 'muted'}, 'Các vùng trống còn lại: ' + holes.filter(h => h > 0).join(', ') + ' KB (tổng ' + holes.reduce((a, b) => a + b, 0) + ' KB, nhưng không liên tục).'));
+});
+
+// Phần 4: dịch địa chỉ phân trang
+const PG = {size: 1024, table: [5, 2, 7, 1]};
+chooser('#pgBtns', [100, 1500, 2100, 3500, 5000].map(a => ({k: 'logic ' + a, a})), it => {
+  const p = Math.floor(it.a / PG.size), d = it.a % PG.size;
+  if (p >= PG.table.length) return note('#pgStatus', it.k + ': lỗi trang (invalid)', el('span', {}, 'p = ' + it.a + ' / ' + PG.size + ' = ' + p + ' không có trong bảng trang (bit invalid): truy xuất bị ngắt lỗi.'));
+  note('#pgStatus', it.k + ': địa chỉ vật lý = ' + (PG.table[p] * PG.size + d), el('span', {}, 'p = ' + it.a + ' div ' + PG.size + ' = ' + p + ', d = ' + it.a + ' mod ' + PG.size + ' = ' + d + '. Bảng trang cho trang ' + p + ' → khung ' + PG.table[p] + '. Vật lý = ' + PG.table[p] + ' × ' + PG.size + ' + ' + d + ' = ' + (PG.table[p] * PG.size + d) + '.'));
+});
+
+// Phần 5: dịch địa chỉ phân đoạn
+const SEG = [[1400, 1000], [6300, 400], [4300, 400], [3200, 1100], [4700, 1000]];
+chooser('#sgBtns', [[2, 53], [3, 852], [0, 1222], [1, 400]].map(([s, d]) => ({k: '<' + s + ', ' + d + '>', s, d})), it => {
+  const [base, limit] = SEG[it.s];
+  note('#sgStatus', it.k + ': ' + (it.d < limit ? 'địa chỉ vật lý = ' + (base + it.d) : 'báo lỗi (trap)'), it.d < limit ? el('span', {}, 'Đoạn ' + it.s + ': base = ' + base + ', limit = ' + limit + '. ' + it.d + ' < ' + limit + ' nên vật lý = ' + base + ' + ' + it.d + ' = ' + (base + it.d) + '.') : el('span', {}, 'Đoạn ' + it.s + ' có limit = ' + limit + ' nhưng offset = ' + it.d + ' không nhỏ hơn limit: địa chỉ ngoài đoạn, báo lỗi.'));
+});
+
+</script>
+</body>
+</html>

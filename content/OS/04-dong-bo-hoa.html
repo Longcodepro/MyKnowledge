@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OS 4: Đồng bộ hóa tiến trình</title>
+<script>
+// Luôn sáng mặc định; chỉ tối khi người đọc tự bấm đổi
+(function(){var t=null;try{t=localStorage.getItem('theme')}catch(e){}
+document.documentElement.dataset.theme=t==='dark'?'dark':'light';})();
+</script>
+<style>
+:root{
+  --bg:#f6f8fc; --card:#ffffff; --fg:#0f172a; --muted:#566277; --line:#e2e8f2; --hov:#f3f6fc;
+  --accent:#2563eb; --accent2:#7c3aed; --accent-soft:#eaf0ff; --hl:#fff0a8; --hl-fg:#5c4600;
+  --grad:linear-gradient(120deg,#2563eb,#7c3aed);
+  --mono:ui-monospace,"Cascadia Code",Consolas,Menlo,monospace;
+  --grid:rgba(15,23,42,.05);
+  --sh:0 1px 2px rgba(15,23,42,.05),0 8px 24px -12px rgba(15,23,42,.12);
+  --sh-hi:0 2px 4px rgba(15,23,42,.06),0 18px 40px -14px rgba(37,99,235,.28);
+  --ts:92%; --tl:94%; --tcl:42%;
+  --glow1:rgba(37,99,235,.16); --glow2:rgba(124,58,237,.13);
+  --ok:#16a34a; --bad:#dc2626; --warn:#b45309; --warn-soft:#fff4d6;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#0a0e16; --card:#121826; --fg:#e8edf6; --muted:#9aa6ba; --line:#212a3b; --hov:#18202f;
+  --accent:#7ab2ff; --accent2:#a78bfa; --accent-soft:#15233d; --hl:#4a3d00; --hl-fg:#ffe58a;
+  --grad:linear-gradient(120deg,#7ab2ff,#a78bfa);
+  --grid:rgba(232,237,246,.045);
+  --sh:0 1px 2px rgba(0,0,0,.3),0 8px 24px -12px rgba(0,0,0,.5);
+  --sh-hi:0 2px 4px rgba(0,0,0,.4),0 18px 40px -14px rgba(122,178,255,.25);
+  --ts:45%; --tl:20%; --tcl:74%;
+  --glow1:rgba(122,178,255,.13); --glow2:rgba(167,139,250,.11);
+  --ok:#4ade80; --bad:#f87171; --warn:#fbbf24; --warn-soft:#3a2f00;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;scrollbar-width:none}
+*::-webkit-scrollbar{display:none}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);min-height:100vh;font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.skip{position:absolute;left:12px;top:-56px;z-index:30;background:var(--accent);color:#fff;padding:9px 16px;border-radius:10px;text-decoration:none;font-weight:600}
+.skip:focus{top:12px}
+.bg{position:absolute;inset:0 0 auto;height:560px;z-index:-1;pointer-events:none;
+  background:radial-gradient(640px 320px at 12% -4%,var(--glow1),transparent 70%),radial-gradient(560px 300px at 88% 6%,var(--glow2),transparent 70%),
+  linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:auto,auto,32px 32px,32px 32px;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent)}
+.wrap{max-width:920px;margin:0 auto;padding:0 24px 64px}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:20px 0}
+.brand{display:flex;align-items:center;gap:11px;font-weight:700;letter-spacing:-.01em}
+.logo{width:34px;height:34px;border-radius:10px;background:var(--grad);display:grid;place-items:center;color:#fff;box-shadow:0 6px 16px -6px var(--accent)}
+:root[data-theme="dark"] .logo{color:#0b1220}
+.btn{font:inherit;font-size:13px;font-weight:500;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 14px;min-height:38px;cursor:pointer;box-shadow:var(--sh)}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn[disabled]{opacity:.45;cursor:default}
+.hero{padding:24px 0 8px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:5px 13px 5px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card);font:600 12.5px system-ui,sans-serif;color:var(--muted);box-shadow:var(--sh)}
+.pill i{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,.18)}
+h1{font-size:clamp(2.1rem,6vw,3.3rem);line-height:1.06;letter-spacing:-.04em;font-weight:800;margin:18px 0 14px}
+.grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{max-width:660px;color:var(--muted);font-size:1.08rem;margin:0 0 22px}
+.lead b{color:var(--fg);font-weight:600}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 30px;padding:0;list-style:none}
+.toc a{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:500;color:var(--fg);text-decoration:none;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 8px;min-height:36px;transition:all .15s}
+.toc a b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font:700 12px var(--mono)}
+.toc a:hover{border-color:var(--accent);transform:translateY(-1px)}
+.toc a[aria-current="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.toc a[aria-current="true"] b{background:var(--bg);color:var(--fg)}
+/* thanh điều hướng nhanh: dính ở mép trên khi mục lục đã cuộn khỏi màn hình */
+.bar{position:fixed;top:10px;left:50%;z-index:25;width:min(100% - 24px,880px);transform:translate(-50%,-90px);opacity:0;visibility:hidden;transition:transform .25s,opacity .25s,visibility 0s .25s;
+  display:flex;align-items:center;gap:6px;padding:6px 8px;background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh-hi)}
+.bar.show{transform:translate(-50%,0);opacity:1;visibility:visible;transition:transform .25s,opacity .25s}
+.bar a{display:grid;place-items:center;flex:none;min-width:30px;height:30px;border-radius:9px;border:1px solid transparent;color:var(--fg);text-decoration:none;font:700 12.5px var(--mono)}
+.bar a:hover{border-color:var(--accent);color:var(--accent)}
+.bar a[aria-current="true"]{background:var(--fg);color:var(--bg)}
+.bar .up{border-color:var(--line);background:var(--card);font:600 16px system-ui;margin-right:2px}
+.bar .nums{display:flex;gap:3px;flex-wrap:nowrap}
+.bar .now{flex:1;min-width:0;margin-left:6px;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+@media(max-width:640px){.bar .now{display:none}.bar{gap:3px;padding:5px 6px}.bar a{min-width:26px;height:28px}.bar .nums{gap:1px}}
+.howto{margin:18px 0 30px;border:1px dashed var(--line);border-radius:14px;padding:12px 16px;color:var(--muted);font-size:14px;background:var(--card)}
+.howto b{color:var(--fg)}
+.card{position:relative;overflow:hidden;background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--sh);padding:24px 24px 22px;margin-bottom:24px;scroll-margin-top:68px}
+.card::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,hsl(var(--h,215) 75% 55%),hsl(calc(var(--h,215) + 45) 75% 62%))}
+.card header{display:flex;gap:14px;align-items:center;margin-bottom:6px}
+.num{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font:800 17px var(--mono);background:hsl(var(--h,215) var(--ts) var(--tl));color:hsl(var(--h,215) 65% var(--tcl))}
+.card h2{font-size:1.28rem;letter-spacing:-.02em;margin:0;line-height:1.25}
+.card h3{font-size:1rem;margin:20px 0 6px}
+.card p{margin:8px 0}
+.lab{display:inline-block;font:700 11px/1 system-ui;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:4px 8px;margin:18px 0 4px}
+.lab.v{background:var(--warn-soft);color:var(--warn)}
+.lab.g{background:var(--accent-soft);color:var(--accent)}
+.lab.t{background:hsl(160 var(--ts) var(--tl));color:hsl(160 65% var(--tcl))}
+.lab.q{background:var(--hov);color:var(--muted);border:1px solid var(--line)}
+.muted{color:var(--muted)}
+code,.mono{font-family:var(--mono);font-size:.9em}
+:not(pre)>code{background:var(--accent-soft);color:var(--accent);padding:1px 6px;border-radius:6px;white-space:nowrap}
+.ana{margin:12px 0;border-left:3px solid hsl(var(--h,215) 60% 60%);padding:6px 14px;background:var(--hov);border-radius:0 12px 12px 0;color:var(--muted)}
+.ana b{color:var(--fg)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:14px;margin:12px 0}
+.box{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--hov)}
+.box b{display:block;margin-bottom:2px}
+.box.on{border-color:var(--accent);background:var(--accent-soft)}
+.status{margin-top:12px;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:12px 16px;background:var(--card)}
+.status b{display:block}
+.why{margin-top:8px;color:var(--muted);font-size:14px}
+.why::before{content:"Vì sao? ";font-weight:700;color:var(--fg)}
+.warn{margin:12px 0;border:1px solid var(--warn);border-radius:12px;padding:10px 14px;background:var(--warn-soft);color:var(--warn)}
+.tbl{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
+.tbl th,.tbl td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.tblw{overflow-x:auto}
+.procs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:14px;margin:12px 0}
+.pbox{border:2px solid hsl(var(--c) 60% 60%);border-radius:16px;padding:10px 14px;background:hsl(var(--c) var(--ts) var(--tl))}
+.pbox b{display:block}
+.pbox .mem{margin-top:6px;border:1px dashed hsl(var(--c) 50% 55%);border-radius:10px;padding:6px 10px;font:12.5px var(--mono);color:var(--fg);background:var(--card)}
+.chain{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin:12px 0}
+.chain .nd{flex:1 1 140px;border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--hov);text-align:center}
+.chain .nd small{display:block;color:var(--muted)}
+.chain .ar{align-self:center;color:var(--muted);font:12px var(--mono);text-align:center;flex:0 0 auto}
+svg.diag{width:100%;height:auto;max-height:300px;display:block}
+.diag .nd rect{fill:var(--card);stroke:var(--line);stroke-width:2}
+.diag .nd text{fill:var(--fg);font:600 14px system-ui,sans-serif;text-anchor:middle}
+.diag .nd .sm{font:12px var(--mono);fill:var(--muted);font-weight:400}
+.diag .nd.on rect{stroke:hsl(var(--h) 70% 50%);fill:hsl(var(--h) var(--ts) var(--tl))}
+.diag .nd.dim{opacity:.38}
+.diag .ln{fill:none;stroke:var(--line);stroke-width:2.5}
+.diag .ln.on{stroke:var(--accent);stroke-dasharray:8 6;animation:flow .8s linear infinite}
+.diag .ln.on.rev{animation-direction:reverse}
+@keyframes flow{to{stroke-dashoffset:-14}}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.chip{display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:13.5px;font-weight:500;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 12px;min-height:36px;cursor:pointer;transition:all .15s}
+.chip i{width:8px;height:8px;border-radius:50%;background:hsl(var(--h,190) 70% 52%)}
+.chip:hover{border-color:var(--accent);transform:translateY(-1px)}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.mw{display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 0 4px}
+.mnode{border:2px solid var(--accent);border-radius:14px;padding:10px 20px;background:var(--accent-soft);font-weight:700;text-align:center}
+.sock{font:12px var(--mono);color:var(--muted);border-left:2px dashed var(--line);padding:2px 0 2px 10px}
+.workers{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.w{border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg);padding:8px 14px;font:13px var(--mono);cursor:pointer;min-width:96px;text-align:center}
+.w:hover{border-color:var(--bad)}
+.w.dead{border-color:var(--bad);color:var(--bad);background:transparent;text-decoration:line-through}
+.w.new{border-color:var(--ok);color:var(--ok)}
+.inst{min-width:120px;text-align:center}
+.inst .bar{height:8px;border-radius:99px;background:var(--line);margin-top:6px;overflow:hidden}
+.inst .bar i{display:block;height:100%;background:var(--grad);width:0;transition:width .25s}
+input[type=range]{width:200px;accent-color:var(--accent)}
+.win{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card);margin:8px 0}
+.win .bar{display:flex;gap:6px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line);background:var(--hov);font:12px var(--mono);color:var(--muted)}
+.win .bar i{width:10px;height:10px;border-radius:50%;background:#ff5f57}.win .bar i:nth-child(2){background:#febc2e}.win .bar i:nth-child(3){background:#28c840}
+.win .bar span{margin-left:8px}
+.codeline{display:block;width:100%;text-align:left;font:13.5px/1.7 var(--mono);color:var(--fg);background:none;border:0;padding:0 14px;cursor:pointer;white-space:pre;border-left:3px solid transparent;overflow-x:auto}
+.codeline:hover{background:var(--hov)}
+.codeline[aria-pressed="true"]{background:var(--accent-soft);border-left-color:var(--accent)}
+.codeline .n{display:inline-block;width:2.2em;color:var(--muted);user-select:none}
+.log{border:1px solid var(--line);border-radius:12px;background:var(--hov);padding:10px 14px;font:13px/1.7 var(--mono);min-height:56px}
+.log .ok{color:var(--ok)}.log .no{color:var(--bad)}
+details{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-top:8px;background:var(--card)}
+summary{cursor:pointer;font-weight:600}
+details p{margin:8px 0 2px;color:var(--muted)}
+.stepper{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.stepper .cnt{font:13px var(--mono);color:var(--muted);margin-left:auto}
+.role{display:inline-block;font:600 12px system-ui;border-radius:999px;padding:2px 10px;background:var(--accent-soft);color:var(--accent);margin-right:6px}
+.foot{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+.foot a{color:var(--accent)}
+kbd{font:12px var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:0 7px;background:var(--card)}
+@media(max-width:640px){.wrap{padding:0 16px 48px}.hero{padding-top:12px}.card{padding:18px 16px}.card header{gap:10px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important;animation:none!important}}
+@media(forced-colors:active){.card,.toc a[aria-current="true"]{border:1px solid}}
+</style>
+<style>
+/* bổ sung riêng cho trang hệ điều hành */
+.banner{background:#fff4d6;color:#6b4e00;text-align:center;padding:6px 12px;font-size:13.5px}
+:root[data-theme="dark"] .banner{background:#3a2f00;color:#ffe58a}
+.memwrap{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start;margin:10px 0}
+@media(max-width:720px){.memwrap{grid-template-columns:1fr}}
+.memcol{display:flex;flex-direction:column;border:2px solid var(--line);border-radius:14px;overflow:hidden;font:13px var(--mono)}
+.memcol .hi,.memcol .lo{padding:4px 12px;background:var(--hov);color:var(--muted);font-size:12px}
+.memcol .reg{padding:10px 12px;border-top:1px solid var(--line);background:var(--card);transition:background .15s}
+.memcol .reg small{display:block;color:var(--muted);font-family:system-ui;font-size:12px}
+.memcol .reg.free{background:repeating-linear-gradient(135deg,transparent 0 8px,var(--hov) 8px 16px);color:var(--muted);text-align:center}
+.memcol .reg.on{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.memcol .reg.on small{color:var(--accent)}
+.sdiag{width:100%;height:auto;max-height:330px;display:block}
+.sdiag .st ellipse{fill:var(--card);stroke:var(--line);stroke-width:2;transition:all .2s}
+.sdiag .st text{fill:var(--fg);font:600 14px system-ui,sans-serif;text-anchor:middle}
+.sdiag .st.on ellipse{stroke:hsl(var(--h) 70% 50%);fill:hsl(var(--h) var(--ts) var(--tl));stroke-width:3}
+.sdiag .tr{fill:none;stroke:var(--line);stroke-width:2.2}
+.sdiag .tr.on{stroke:var(--accent);stroke-width:3;stroke-dasharray:8 6;animation:flow .8s linear infinite}
+.sdiag .lb{fill:var(--muted);font:12px var(--mono);text-anchor:middle}
+.sdiag .lb.on{fill:var(--accent);font-weight:700}
+.sdiag marker path{fill:var(--muted)}
+.cs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px;margin:12px 0}
+.cs .cell{border:2px solid var(--line);border-radius:14px;padding:10px 14px;background:var(--card);transition:all .2s}
+.cs .cell.on{border-color:var(--accent);background:var(--accent-soft)}
+.cs .cell b{display:block;margin-bottom:4px}
+.cs .cell dl{margin:0;font:13px/1.7 var(--mono)}
+.cs .cell dt{display:inline;color:var(--muted)}
+.cs .cell dd{display:inline;margin:0 0 0 6px}
+.box span b{display:inline;margin:0}
+:not(pre)>code{white-space:normal;overflow-wrap:anywhere}
+.pending{opacity:.9}
+.pending p{margin:6px 0 0}
+.lanes{display:grid;grid-template-columns:1fr 130px 1fr;gap:12px;margin:12px 0;align-items:start}
+@media(max-width:720px){.lanes{grid-template-columns:1fr}}
+.lane{border:2px solid var(--line);border-radius:14px;padding:10px 12px;min-height:84px;background:var(--card)}
+.lane h4{margin:0 0 8px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.lane.cpu{border-color:var(--accent);background:var(--accent-soft)}
+.pc{display:inline-flex;align-items:center;justify-content:center;min-width:44px;height:34px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);font:700 13px var(--mono);margin:0 6px 6px 0;padding:0 10px}
+.pc.run{border-color:var(--accent);color:var(--accent)}
+.tree ul{list-style:none;margin:0;padding-left:22px;border-left:2px dashed var(--line)}
+.tree>ul{padding-left:0;border-left:0}
+.tree li{margin:6px 0}
+.tn{display:inline-flex;gap:8px;align-items:center;border:1.5px solid var(--line);border-radius:10px;padding:4px 12px;background:var(--card);color:var(--fg);font:13px var(--mono);cursor:pointer}
+.tn:hover{border-color:var(--accent)}
+.tn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:700}
+.tn small{color:var(--muted)}
+.tn.orph{border-color:var(--warn);color:var(--warn);cursor:default}
+.cells{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 6px}
+.cellb{width:56px;height:44px;border:2px solid var(--line);border-radius:10px;display:grid;place-items:center;font:700 13px var(--mono);background:var(--card);position:relative}
+.cellb.full{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.cellb i{position:absolute;top:-10px;font:700 10px var(--mono);font-style:normal;padding:0 5px;border-radius:5px;background:var(--fg);color:var(--bg)}
+.cellb i.in{left:2px}
+.cellb i.out{right:2px;background:var(--accent2);color:#fff}
+.tcell{width:40px;height:40px;border-radius:9px;display:grid;place-items:center;font:700 12px var(--mono);color:#fff;background:hsl(var(--c) 60% 42%)}
+.th{display:inline-block;border:2px solid var(--line);border-radius:10px;padding:6px 12px;margin:0 6px 6px 0;font:700 13px var(--mono);background:var(--card);color:var(--fg);cursor:pointer}
+.th.ok{border-color:var(--ok);color:var(--ok)}
+.th.blocked{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.th.stuck{border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
+.kt{display:inline-block;border:2px dashed var(--line);border-radius:10px;padding:6px 12px;margin:0 6px 6px 0;font:700 13px var(--mono);color:var(--muted)}
+.kt.blocked{border-color:var(--bad);color:var(--bad)}
+</style>
+</head>
+<body>
+<a class="skip" href="#s1">Bỏ qua tới nội dung</a>
+<div class="bg" aria-hidden="true"></div>
+<nav class="bar" id="bar" aria-label="Điều hướng nhanh"><a class="up" href="#top" aria-label="Lên đầu trang" title="Lên đầu trang">↑</a><span class="nums" id="barNums"></span><span class="now" id="barNow" aria-hidden="true"></span></nav>
+<div class="wrap">
+  <header class="topbar" id="top">
+    <div class="brand"><span class="logo" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9zM9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg></span>Hệ điều hành</div>
+    <button class="btn" id="themeBtn" type="button" aria-label="Đổi giao diện sáng hoặc tối">Sáng / Tối</button>
+  </header>
+
+  <div class="hero">
+    <span class="pill"><i></i>Hệ điều hành · Chương 2 · Đồng bộ hóa</span>
+    <h1>Đồng bộ hóa: <span class="grad">để nhiều tiến trình không giẫm chân nhau</span></h1>
+    <p class="lead">Từ race condition và vùng găng đến các giải pháp phần mềm, phần cứng, semaphore, monitor, truyền thông điệp, và ba bài toán kinh điển: Producer–Consumer, Readers–Writers, Dining Philosophers.</p>
+  </div>
+
+  <ol class="toc" id="toc" aria-label="Lộ trình các phần"></ol>
+
+  <main>
+<style>
+.dpr{display:grid;grid-template-columns:90px 1fr auto;gap:8px;align-items:center;border:1.5px solid var(--line);border-radius:12px;padding:6px 10px;margin:6px 0;background:var(--card)}
+.dpr .btns{display:flex;gap:6px;flex-wrap:wrap}
+.dpr .btn{padding:3px 10px;min-height:30px;font-size:12px}
+.dpr.eat{border-color:var(--ok)}
+@media(max-width:560px){.dpr{grid-template-columns:1fr}}
+</style>
+  <section class="card" id="s1" style="--h:215" data-title="Hợp tác và race">
+    <header><span class="num">1</span><h2>Khi các tiến trình hợp tác: race condition và phối hợp</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Tiến trình độc lập không ảnh hưởng nhau. Nhưng <b>tiến trình hợp tác</b> ảnh hưởng và chịu ảnh hưởng của nhau: chia sẻ thông tin, tăng tốc tính toán, module hóa, tiện lợi. Hợp tác có hai rủi ro: nếu giao tiếp thì có thể <b>deadlock</b> (mỗi tiến trình chờ thông điệp của tiến trình khác thành vòng vô tận) hoặc <b>starvation</b> (hai tiến trình nhắn qua lại, tiến trình thứ ba bị bỏ quên mãi).</p>
+    <span class="lab g">Giải pháp: gọi tên hai bài toán</span>
+    <div class="two">
+      <div class="box"><b>Tranh chấp và race condition</b><span class="muted">Nhiều tiến trình truy xuất đồng thời một tài nguyên không chia sẻ được. Kết quả phụ thuộc thứ tự và tốc độ chạy, thường "khó biết, nhưng thường là sai".</span></div>
+      <div class="box"><b>Phối hợp (rendez-vous)</b><span class="muted">Các tiến trình không biết tiến độ của nhau nên chạy lệch nhịp. Cần "điểm hẹn" để chúng điều chỉnh hoạt động cho ăn khớp.</span></div>
+    </div>
+    <p><b>Tài nguyên găng (critical resource)</b> là tài nguyên có nguy cơ hỏng hay sai lệch khi hệ điều hành chia sẻ đồng thời cho nhiều tiến trình: thiết bị vật lý (máy in, ổ đĩa) hoặc dữ liệu dùng chung (biến, bộ nhớ, tệp). Ví dụ bán vé: biến chung <code>SCA</code> (số chỗ còn) ban đầu bằng 1; P1 và P2 cùng chạy năm bước b1 đến b5 (đọc N := SCA, kiểm tra N, ..., giảm SCA).</p>
+    <span class="lab t">Minh họa: hai tiến trình cùng bán một vé</span>
+    <div class="row" id="scaBtns" role="group" aria-label="Chọn cách chạy"></div>
+    <div class="status" id="scaStatus" role="status"></div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s1"></div>
+  </section>
+
+  <section class="card" id="s2" style="--h:160" data-title="Đoạn găng">
+    <header><span class="num">2</span><h2>Đoạn găng và ba điều kiện của một giải pháp đúng</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Phải ngăn nhiều tiến trình cùng sửa tài nguyên găng. Nhưng giải pháp nào cũng phải vừa an toàn vừa không làm tiến trình kẹt vô lý.</p>
+    <span class="lab g">Giải pháp</span>
+    <p><b>Đoạn găng (critical section, CS)</b> là đoạn mã tác động đến tài nguyên găng; chỉ cho một tiến trình thi hành tại một thời điểm. Một tiến trình có cấu trúc: <code>entry section</code> (kiểm tra và xác lập quyền vào), <code>critical section</code>, <code>exit section</code> (xác nhận khi rời), rồi <code>noncritical section</code>. <b>Loại trừ hỗ tương (mutual exclusion)</b> và đoạn găng là hai khái niệm cùng một mục đích.</p>
+    <p>Mọi giải pháp đồng bộ phải thỏa <b>ba điều kiện</b>:</p>
+    <div class="tblw"><table class="tbl"><thead><tr><th>Điều kiện</th><th>Nghĩa</th></tr></thead><tbody>
+      <tr><td><b>Mutual Exclusion</b></td><td>Không có hai tiến trình cùng ở trong đoạn găng.</td></tr>
+      <tr><td><b>Progress</b></td><td>Một tiến trình tạm dừng bên ngoài đoạn găng không được ngăn các tiến trình khác vào.</td></tr>
+      <tr><td><b>Bounded Waiting</b></td><td>Không tiến trình nào phải chờ vô hạn để vào đoạn găng.</td></tr>
+    </tbody></table></div>
+    <div class="two">
+      <div class="box"><b>Chờ bận (busy waiting)</b><span class="muted">Tiếp tục dùng CPU trong lúc lặp kiểm tra điều kiện vào đoạn găng. Không cần hệ điều hành hỗ trợ. Gồm giải pháp phần mềm (biến cờ, kiểm tra luân phiên, Peterson) và phần cứng (cấm ngắt, TSL).</span></div>
+      <div class="box"><b>Ngủ và thức (sleep and wakeup)</b><span class="muted">Chưa được vào đoạn găng thì tiến trình bỏ CPU, khi đoạn găng trống thì được đánh thức. Tiết kiệm CPU nhưng cần hệ điều hành hỗ trợ. Gồm semaphore, monitor, truyền thông điệp.</span></div>
+    </div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s2"></div>
+  </section>
+
+  <section class="card" id="s3" style="--h:28" data-title="Giải pháp phần mềm">
+    <header><span class="num">3</span><h2>Giải pháp phần mềm: biến cờ, luân phiên và Peterson</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Có thể giải quyết đoạn găng chỉ bằng vài biến chung, không cần hệ điều hành hay phần cứng đặc biệt không?</p>
+    <span class="lab g">Giải pháp</span>
+    <div class="two">
+      <div class="box"><b>Biến cờ hiệu (lock)</b><span class="muted"><code>int lock = 0</code>. Mở rộng được cho n tiến trình, nhưng <b>không bảo đảm mutual exclusion</b>, vì thao tác kiểm tra rồi đặt lại <code>lock</code> chính nó là một đoạn găng.</span></div>
+      <div class="box"><b>Kiểm tra luân phiên (turn)</b><span class="muted"><code>int turn = 1</code>. Chỉ cho 2 tiến trình. Bảo đảm mutual exclusion vì <code>turn</code> mỗi lúc chỉ có một giá trị, nhưng <b>không bảo đảm progress</b>: "mở cửa cho tiến trình khác thì tự đóng lấy chính mình".</span></div>
+    </div>
+    <span class="lab t">Minh họa: vì sao biến cờ hiệu thất bại</span>
+    <div class="stepper"><button class="btn" id="lkBack" type="button">← Lùi</button><button class="btn" id="lkNext" type="button">Tiếp →</button><button class="btn" id="lkReset" type="button">Về đầu</button><span class="cnt" id="lkCnt"></span></div>
+    <div class="cs" id="lkBox"></div>
+    <div class="status" id="lkStatus" role="status"></div>
+    <h3>Giải pháp Peterson</h3>
+    <p>Kết hợp hai ý trên cho P0 và P1, dùng hai biến chung: <code>int turn</code> (đến phiên ai) và <code>int interest[2] = FALSE</code> (<code>interest[i] = TRUE</code> nghĩa là Pi muốn vào đoạn găng). Mã của Pi (với <code>j = 1 − i</code>):</p>
+    <div class="win" role="group" aria-label="Mã Peterson"><div class="bar"><i></i><i></i><i></i><span>Peterson, tiến trình Pi</span></div><pre style="margin:0;padding:10px 16px;font:13.5px/1.7 var(--mono);overflow-x:auto">NonCS;
+interest[i] = TRUE;
+turn = j;
+while (turn == j && interest[j] == TRUE)
+    ;               /* chờ */
+CS;
+interest[i] = FALSE;
+NonCS;</pre></div>
+    <p>Peterson đáp ứng cả ba điều kiện: Pi chỉ vào được khi <code>interest[j] == FALSE</code> hoặc <code>turn == i</code>; nếu cả hai cùng muốn vào thì <code>turn</code> chỉ nhận 0 hoặc 1 nên chỉ một tiến trình vào (mutual exclusion). Hai biến <code>interest[i]</code> riêng biệt nên đối phương không khóa được mình (progress). <code>interest[i]</code> và <code>turn</code> đều đổi giá trị (bounded waiting). Nhược điểm: không mở rộng được cho N tiến trình. Nói chung, giải pháp phần mềm không cần hệ thống hỗ trợ nhưng khó mở rộng và dễ sai.</p>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s3"></div>
+  </section>
+
+  <section class="card" id="s4" style="--h:280" data-title="Giải pháp phần cứng">
+    <header><span class="num">4</span><h2>Giải pháp phần cứng: cấm ngắt và chỉ thị TSL</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Giải pháp phần mềm khó đúng và khó mở rộng. Phần cứng có giúp được không?</p>
+    <span class="lab g">Giải pháp</span>
+    <div class="two">
+      <div class="box"><b>Cấm ngắt</b><span class="muted">Disable Interrupt (cấm mọi ngắt, kể cả ngắt đồng hồ) khi vào đoạn găng, Enable Interrupt khi ra. Thiếu thận trọng: nếu tiến trình bị khóa trong đoạn găng thì hệ thống dừng; trao đặc quyền cho tiến trình là quá liều; máy N CPU thì không bảo đảm mutual exclusion.</span></div>
+      <div class="box"><b>Chỉ thị TSL (Test and Set Lock)</b><span class="muted">CPU hỗ trợ chỉ thị trả về giá trị hiện hành của một biến và đặt lại biến đó thành TRUE, thực hiện <b>không thể phân chia</b>: <code>TSL(boolean &amp;target) { TSL = target; target = TRUE; }</code>.</span></div>
+    </div>
+    <p>Giải pháp phần cứng nói chung dễ mở rộng cho n tiến trình, nhưng cần cơ chế phần cứng hỗ trợ, và trên máy nhiều vi xử lý điều đó không dễ.</p>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s4"></div>
+  </section>
+
+  <section class="card" id="s5" style="--h:340" data-title="Semaphore">
+    <header><span class="num">5</span><h2>Semaphore: đèn báo hiệu của Dijkstra</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Chờ bận tốn CPU và các giải pháp trên khó dùng. Cần một cơ chế để tiến trình <b>ngủ</b> khi chưa được vào và được <b>đánh thức</b> khi đến lượt.</p>
+    <span class="lab g">Giải pháp</span>
+    <p><b>Semaphore</b> do Dijkstra đề nghị năm 1965: một giá trị nguyên chỉ được thao tác bởi hai primitive không thể phân chia, <code>Down(s)</code> và <code>Up(s)</code>. Xem semaphore như một tài nguyên: tiến trình "yêu cầu" bằng <code>Down(s)</code>; chưa được cấp thì bị blocked và đưa vào hàng đợi <code>s.L</code>. Cần hệ điều hành hỗ trợ <code>Sleep()</code> và <code>Wakeup()</code>.</p>
+    <div class="win" role="group" aria-label="Down và Up"><div class="bar"><i></i><i></i><i></i><span>Down(S) và Up(S)</span></div><pre style="margin:0;padding:10px 16px;font:13.5px/1.7 var(--mono);overflow-x:auto">Down(S):              Up(S):
+    S.value--;            S.value++;
+    if (S.value &lt; 0)       if (S.value &lt;= 0)
+        Add(P, S.L);          Remove(P, S.L);
+        Sleep();              Wakeup(P);</pre></div>
+    <p>Hai cách dùng: <b>độc quyền truy xuất</b> (mutual exclusion) và <b>hò hẹn</b> (rendez-vous), đều bằng Down và Up. Semaphore dễ dùng cho N tiến trình, nhưng ý nghĩa sử dụng không rõ ràng (chưa phân biệt qua mô hình), khó dùng đúng và dễ nhầm lẫn.</p>
+    <span class="lab t">Minh họa: hàng đợi của semaphore</span>
+    <div class="row" id="semInit" role="group" aria-label="Giá trị đầu của semaphore"></div>
+    <div class="row" id="semBtns" role="group" aria-label="Down và Up"></div>
+    <div class="status" id="semStatus" role="status"></div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s5"></div>
+  </section>
+
+  <section class="card" id="s6" style="--h:95" data-title="Monitor và thông điệp">
+    <header><span class="num">6</span><h2>Monitor và truyền thông điệp</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Semaphore dễ viết sai: quên một Down hay Up là hỏng cả hệ thống. Có cơ chế nào tự bảo đảm loại trừ hỗ tương, và dùng được cả trên nhiều máy?</p>
+    <span class="lab g">Giải pháp</span>
+    <div class="two">
+      <div class="box"><b>Monitor (Hoare 1974, Brinch 1975)</b><span class="muted">Cơ chế do ngôn ngữ lập trình cung cấp, dễ dùng và dễ kiểm soát hơn semaphore. Là một module định nghĩa cấu trúc dữ liệu dùng chung và các phương thức xử lý chúng (đóng gói, encapsulation). Tiến trình muốn truy xuất dữ liệu phải dùng phương thức của monitor. <b>Tự động bảo đảm mutual exclusion</b>: một thời điểm chỉ một tiến trình chạy phương thức của monitor, các tiến trình khác chờ ở <b>entry queue</b>.</span></div>
+      <div class="box"><b>Biến điều kiện (condition variable)</b><span class="muted">Dùng để đồng bộ trong monitor. <code>Wait(c)</code>: tiến trình gọi bị blocked. <code>Signal(c)</code>: giải phóng một tiến trình đang bị blocked trên <code>c</code>. <code>c.queue</code> là danh sách tiến trình đang blocked trên c. Sau khi gọi Signal, tiến trình gọi có thể bị blocked (nhường quyền vào monitor cho tiến trình được đánh thức) hoặc tiếp tục xử lý hết chu kỳ rồi blocked.</span></div>
+      <div class="box"><b>Truyền thông điệp (message passing)</b><span class="muted">Do hệ điều hành hỗ trợ, đồng bộ hóa được cả trên môi trường phân tán, qua hai primitive <code>Send</code> và <code>Receive</code>, cài đặt theo mode blocking.</span></div>
+    </div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s6"></div>
+  </section>
+
+  <section class="card" id="s7" style="--h:250" data-title="Producer–Consumer">
+    <header><span class="num">7</span><h2>Bài toán Producer–Consumer với semaphore</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Hai tiến trình P (sản xuất) và C (tiêu thụ) hoạt động đồng hành qua một buffer kích thước giới hạn. Ba tình huống cần xử lý: P và C đồng thời truy cập buffer; P thêm hàng vào buffer đầy; C lấy hàng từ buffer trống.</p>
+    <span class="lab g">Giải pháp</span>
+    <ul>
+      <li>P không được ghi vào buffer đã đầy (rendez-vous).</li>
+      <li>P và C không được thao tác buffer cùng lúc (mutual exclusion).</li>
+      <li>C không được đọc từ buffer đang trống (rendez-vous).</li>
+    </ul>
+    <p>Biến chung: <code>BufferSize = N</code>; <code>semaphore mutex = 1</code> (độc quyền truy xuất); <code>semaphore empty = BufferSize</code> (số chỗ trống); <code>semaphore full = 0</code> (số chỗ đầy); <code>int Buffer[BufferSize]</code>.</p>
+    <div class="win" role="group" aria-label="Producer Consumer bằng semaphore"><div class="bar"><i></i><i></i><i></i><span>giải pháp semaphore</span></div><pre style="margin:0;padding:10px 16px;font:13.5px/1.7 var(--mono);overflow-x:auto">Producer() {                     Consumer() {
+  int item;                        int item;
+  while (TRUE) {                   while (TRUE) {
+    produce_item(&amp;item);             down(&amp;full);
+    down(&amp;empty);                    down(&amp;mutex);
+    down(&amp;mutex);                    remove_item(&amp;item, Buffer);
+    enter_item(item, Buffer);        up(&amp;mutex);
+    up(&amp;mutex);                      up(&amp;empty);
+    up(&amp;full);                       consume_item(item);
+  }                                }
+}                                }</pre></div>
+    <p>Thứ tự các lệnh <code>down</code> quan trọng. Slide so sánh với bản đảo thứ tự (<code>down(&amp;mutex)</code> trước <code>down(&amp;empty)</code> ở producer).</p>
+    <span class="lab t">Minh họa: buffer đầy, chọn thứ tự down</span>
+    <div class="row" id="pcBtns" role="group" aria-label="Chọn thứ tự down"></div>
+    <div class="status" id="pcStatus" role="status"></div>
+    <p>Cách khác: <b>monitor</b> <code>ProducerConsumer</code> với biến điều kiện <code>full</code>, <code>empty</code> và <code>count</code>. <code>enter()</code>: nếu <code>count == N</code> thì <code>wait(full)</code>; thêm sản phẩm; <code>count++</code>; nếu <code>count == 1</code> thì <code>signal(empty)</code>. <code>remove()</code>: nếu <code>count == 0</code> thì <code>wait(empty)</code>; lấy sản phẩm; <code>count--</code>; nếu <code>count == N−1</code> thì <code>signal(full)</code>. Và cách <b>truyền thông điệp</b>: consumer gửi N yêu cầu cho producer, rồi vòng lặp nhận hàng, xử lý và gửi lại yêu cầu mới.</p>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s7"></div>
+  </section>
+
+  <section class="card" id="s8" style="--h:300" data-title="Readers–Writers, triết gia">
+    <header><span class="num">8</span><h2>Readers–Writers và Dining Philosophers</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p><b>Readers–Writers:</b> N tiến trình đọc (R) và ghi (W) chia sẻ một cơ sở dữ liệu. Nhiều R cùng đọc được. W phải độc quyền: không được cập nhật khi có R đang đọc, R không được đọc khi W đang cập nhật, và mỗi lúc chỉ một W được sửa.</p>
+    <span class="lab g">Giải pháp: Readers–Writers với semaphore</span>
+    <p>Cách đơn giản <code>semaphore db = 1</code> cho cả R và W khiến chỉ một Reader được đọc mỗi lúc. Cải tiến: thêm <code>int rc</code> (số Reader đang đọc) và <code>semaphore mutex = 1</code> bảo vệ <code>rc</code>. Reader đầu tiên (<code>rc == 1</code>) gọi <code>down(&amp;db)</code>, Reader cuối cùng (<code>rc == 0</code>) gọi <code>up(&amp;db)</code>. Câu hỏi còn mở: khi một W vừa xong, ai vào tiếp? Ưu tiên Writer thì Reader có thể starvation; ưu tiên Reader thì Writer có thể starvation.</p>
+    <span class="lab t">Minh họa: Readers và Writers</span>
+    <div class="row" id="rwBtns" role="group" aria-label="Thao tác Readers Writers"></div>
+    <div class="status" id="rwStatus" role="status"></div>
+    <h3>Dining Philosophers</h3>
+    <p>Năm triết gia ngồi quanh bàn ăn spaghetti, giữa mỗi hai đĩa có một cái nĩa (5 nĩa). Ăn cần <b>hai</b> nĩa. Mỗi triết gia xen kẽ nghĩ và ăn. Nguy hiểm: hai triết gia tranh cùng một nĩa. Cần đồng bộ sao cho <b>không deadlock</b> và <b>không starvation</b>.</p>
+    <span class="lab t">Minh họa: năm triết gia và năm cái nĩa</span>
+    <div id="dpTbl" role="group" aria-label="Năm triết gia"></div>
+    <div class="status" id="dpStatus" role="status"></div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s8"></div>
+  </section>
+  </main>
+</div>
+<script>
+const DATA = {quiz: {}};
+// ===== Phần dùng chung cho mọi trang hệ điều hành =====
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
+const btn = (label, fn, off) => { const b = el('button', {className: 'btn', type: 'button', onclick: fn}, label); if (off) b.disabled = true; return b; };
+const setP = (b, v) => b.setAttribute('aria-pressed', String(v));
+
+// Đổi giao diện sáng/tối, nhớ lựa chọn
+$('#themeBtn').addEventListener('click', () => {
+  const d = document.documentElement, n = d.dataset.theme === 'dark' ? 'light' : 'dark';
+  d.dataset.theme = n; try { localStorage.setItem('theme', n); } catch (e) {}
+});
+
+// Mục lục và thanh điều hướng nhanh
+const secs = $$('main > section');
+secs.forEach((s, i) => {
+  $('#toc').append(el('li', {}, el('a', {href: '#' + s.id}, el('b', {}, String(i + 1)), s.dataset.title)));
+  $('#barNums').append(el('a', {href: '#' + s.id, title: (i + 1) + '. ' + s.dataset.title, ariaLabel: 'Phần ' + (i + 1) + ': ' + s.dataset.title}, String(i + 1)));
+});
+function setCurrent(id){
+  $$('#toc a, #barNums a').forEach(a => a.hash === '#' + id ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current'));
+  const s = secs.find(x => x.id === id); if (s) $('#barNow').textContent = (secs.indexOf(s) + 1) + '. ' + s.dataset.title;
+}
+if ('IntersectionObserver' in window) {
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) setCurrent(e.target.id); }), {rootMargin: '-20% 0px -70% 0px'});
+  secs.forEach(s => io.observe(s));
+  new IntersectionObserver(es => es.forEach(e => $('#bar').classList.toggle('show', !e.isIntersecting && e.boundingClientRect.top < 0))).observe($('#toc'));
+}
+
+// Kiểm tra nhanh: DATA.quiz = { s1: [[câu hỏi, đáp án], ...], ... }
+function renderQuizzes(){
+  $$('[data-quiz]').forEach(box => (DATA.quiz[box.dataset.quiz] || []).forEach(([q, a]) => box.append(el('details', {}, el('summary', {}, q), el('p', {}, a)))));
+}
+
+// Dòng mã bấm được: lines = [[dòng, giải thích], ...]
+function annotCode(rootSel, statusSel, lines, start){
+  const root = $(rootSel);
+  lines.forEach(([line], i) => { const b = el('button', {className: 'codeline', type: 'button', onclick: () => pick(i)}, el('span', {className: 'n'}, String(i + 1)), line || ' '); b.setAttribute('aria-label', 'Dòng ' + (i + 1) + ': ' + (line.trim() || 'trống')); root.append(b); });
+  function pick(i){ [...root.children].forEach((b, k) => setP(b, k === i)); const [line, note] = lines[i]; $(statusSel).replaceChildren(el('b', {}, line.trim() || 'Dòng trống'), el('span', {}, note || 'Không có gì thêm ở dòng này.')); }
+  pick(start || 0);
+}
+
+// Hàng chip chọn một mục: items = [{k: nhãn, ...}], onPick(item, index) được gọi khi chọn
+function chooser(hostSel, items, onPick, start){
+  const host = $(hostSel);
+  items.forEach((it, i) => host.append(el('button', {className: 'chip', type: 'button', onclick: () => pick(i)}, el('i'), it.k)));
+  function pick(i){ [...host.children].forEach((b, k) => setP(b, k === i)); onPick(items[i], i); }
+  pick(start || 0);
+}
+// Ô trạng thái: tiêu đề đậm + các đoạn (chuỗi hoặc phần tử)
+const note = (sel, title, ...parts) => $(sel).replaceChildren(el('b', {}, title), ...parts.map(p => typeof p === 'string' ? el('span', {}, p) : p));
+// Chồng các lớp (kiến trúc): layers = [{n: tên lớp, items: [...], c: 'k'|'u'|'h'}]
+const stack = (sel, layers) => $(sel).replaceChildren(...layers.map(l => el('div', {className: 'lyr ' + (l.c || '')}, el('b', {}, l.n), ...(l.items || []).map(t => el('span', {className: 'it'}, t)))));
+
+// Bộ chạy từng bước: steps = [{t, d}], gọi draw(step, index) mỗi lần đổi
+function stepper(prefix, steps, draw){
+  let i = 0;
+  const render = () => {
+    draw(steps[i], i);
+    $('#' + prefix + 'Status').replaceChildren(el('b', {}, steps[i].t), el('span', {}, steps[i].d));
+    $('#' + prefix + 'Cnt').textContent = 'Bước ' + (i + 1) + '/' + steps.length;
+    $('#' + prefix + 'Back').disabled = i === 0; $('#' + prefix + 'Next').disabled = i === steps.length - 1;
+  };
+  $('#' + prefix + 'Next').addEventListener('click', () => { if (i < steps.length - 1) { i++; render(); } });
+  $('#' + prefix + 'Back').addEventListener('click', () => { if (i > 0) { i--; render(); } });
+  $('#' + prefix + 'Reset').addEventListener('click', () => { i = 0; render(); });
+  render();
+}
+
+Object.assign(DATA.quiz, {
+  s1: [['Vì sao P1 và P2 cùng bán được vé khi SCA = 1?', 'Cả hai đều đọc N = SCA = 1 trước khi bên kia giảm SCA, nên cả hai thấy còn vé và cùng giảm: SCA thành −1 (bán lố).'],
+       ['Tài nguyên găng có thể là những gì?', 'Thiết bị vật lý (máy in, ổ đĩa) hoặc dữ liệu dùng chung (biến, bộ nhớ, tệp).']],
+  s2: [['Ba điều kiện của một giải pháp đồng bộ là gì?', 'Mutual Exclusion, Progress, Bounded Waiting.'],
+       ['Chờ bận và ngủ-thức khác nhau thế nào?', 'Chờ bận vẫn tiêu thụ CPU khi lặp kiểm tra và không cần hệ điều hành hỗ trợ. Ngủ-thức nhường CPU khi chưa được vào, tiết kiệm CPU nhưng cần hệ điều hành hỗ trợ.']],
+  s3: [['Vì sao biến cờ hiệu lock không bảo đảm mutual exclusion?', 'Thao tác kiểm tra lock rồi đặt lock = 1 không thể phân chia; nếu bị ngắt giữa hai bước, tiến trình kia cũng thấy lock = 0 và cùng vào đoạn găng.'],
+       ['Kiểm tra luân phiên vi phạm điều kiện nào?', 'Progress: tiến trình ra khỏi đoạn găng nhường lượt, nếu tiến trình kia chưa cần vào thì mình bị kẹt khi muốn vào lại.'],
+       ['Nhược điểm của Peterson?', 'Không mở rộng được cho N tiến trình (chỉ dùng cho hai).']],
+  s4: [['Vì sao cấm ngắt là giải pháp thiếu thận trọng?', 'Nếu tiến trình bị khóa trong đoạn găng thì cả hệ thống dừng; trao đặc quyền cho tiến trình là quá liều; và máy nhiều CPU thì không bảo đảm mutual exclusion.'],
+       ['TSL làm gì và vì sao phải không thể phân chia?', 'TSL trả về giá trị hiện hành của một biến và đặt lại biến thành TRUE. Phải không thể phân chia để hai tiến trình không cùng thấy giá trị cũ.']],
+  s5: [['Down(S) làm gì?', 'Giảm S.value; nếu S.value < 0 thì đưa tiến trình vào S.L và cho ngủ (Sleep).'],
+       ['Giá trị đầu 1 và 0 của semaphore dùng cho việc gì?', '1: độc quyền truy xuất (mutual exclusion). 0: hò hẹn (rendez-vous): tiến trình gọi Down phải chờ đến khi có Up.']],
+  s6: [['Monitor bảo đảm mutual exclusion bằng cách nào?', 'Tại một thời điểm chỉ một tiến trình chạy các phương thức của monitor; tiến trình khác chờ ở entry queue.'],
+       ['Wait(c) và Signal(c) làm gì?', 'Wait(c): tiến trình gọi bị blocked trên biến điều kiện c. Signal(c): giải phóng một tiến trình đang blocked trên c.']],
+  s7: [['Ba nhiệm vụ của mutex, empty và full trong Producer–Consumer?', 'mutex: loại trừ hỗ tương khi truy cập buffer. empty: đếm chỗ trống, chặn producer khi buffer đầy. full: đếm chỗ đầy, chặn consumer khi buffer rỗng.'],
+       ['Vì sao đảo thứ tự down(mutex) và down(empty) ở producer gây deadlock?', 'Producer giữ mutex rồi mới chờ empty. Consumer muốn up(empty) thì phải down(mutex) trước, mà mutex đang do producer giữ: cả hai chờ nhau.']],
+  s8: [['Reader đầu tiên và Reader cuối cùng làm gì với db?', 'Reader đầu tiên (rc == 1) gọi down(&db) để chặn Writer; Reader cuối cùng (rc == 0) gọi up(&db) để cho Writer vào.'],
+       ['Dining Philosophers có thể deadlock khi nào?', 'Khi cả năm triết gia cùng cầm nĩa bên trái và chờ nĩa bên phải: không ai ăn được, không ai đặt nĩa xuống.']]
+});
+renderQuizzes();
+
+// Phần 1: hai tiến trình cùng bán một vé
+const SCA_T = [
+  {k: 'Không đồng bộ (xen kẽ)', rows: [['0', '', '', 'SCA = 1'], ['1', 'b1: N := SCA', '', ''], ['2', 'b2: (N = 1)', 'b1: N := SCA', ''], ['3', 'b3:', 'b2: (N = 1)', ''], ['4', 'b4:', 'b3:', ''], ['5', 'b5:', 'b4:', 'SCA = SCA − 1 = 0'], ['6', '', 'b5:', 'SCA = SCA − 1 = −1']], res: 'Cả hai đọc N = 1 và đều bán vé, SCA = −1: bán lố vé. Đây là race condition trên tài nguyên găng SCA.'},
+  {k: 'Có loại trừ hỗ tương', rows: [['0', '', '', 'SCA = 1'], ['1', 'vào đoạn găng: N := SCA (1)', 'chờ vào đoạn găng', ''], ['2', 'b2 đến b5: giảm SCA', 'chờ', 'SCA = 0'], ['3', 'ra khỏi đoạn găng', 'vào đoạn găng: N := SCA (0)', ''], ['4', '', 'N = 0: hết vé, không bán', 'SCA = 0']], res: 'Hai tiến trình chạy tuần tự trong đoạn găng nên SCA không bao giờ âm. P1 bán được vé, P2 thấy hết vé.'}
+];
+chooser('#scaBtns', SCA_T, it => note('#scaStatus', it.k, el('div', {className: 'tblw'}, el('table', {className: 'tbl'}, el('thead', {}, el('tr', {}, ...['Thời điểm', 'P1', 'P2', 'Giá trị'].map(h => el('th', {}, h)))), el('tbody', {}, ...it.rows.map(r => el('tr', {}, ...r.map(c => el('td', {}, c))))))), el('span', {}, it.res)));
+
+// Phần 3: biến cờ hiệu thất bại
+const cellK = (title, o, on) => el('div', {className: 'cell' + (on ? ' on' : '')}, el('b', {}, title), el('dl', {}, ...Object.entries(o).flatMap(([k, v]) => [el('dt', {}, k + ':'), el('dd', {}, v), el('br')])));
+stepper('lk', [
+  {t: 'Ban đầu', d: 'lock = 0. Cả hai tiến trình muốn vào đoạn găng. Mỗi tiến trình làm: while (lock == 1); rồi lock = 1; rồi vào đoạn găng.', p1: 'chưa chạy', p2: 'chưa chạy', lock: 0, cs: 'trống', on: ''},
+  {t: 'P1 kiểm tra lock', d: 'P1 thấy lock == 0 nên qua vòng chờ. Nhưng P1 chưa kịp gán lock = 1 thì CPU bị chuyển đi.', p1: 'đã thấy lock == 0, chưa gán', p2: 'chưa chạy', lock: 0, cs: 'trống', on: 'p1'},
+  {t: 'CPU chuyển sang P2', d: 'P2 cũng thấy lock == 0, qua vòng chờ, gán lock = 1 và vào đoạn găng.', p1: 'đã thấy lock == 0, chưa gán', p2: 'gán lock = 1, vào đoạn găng', lock: 1, cs: 'P2', on: 'p2'},
+  {t: 'CPU quay lại P1', d: 'P1 tiếp tục từ chỗ đã dừng (nó đã kiểm tra xong), gán lock = 1 và cũng vào đoạn găng.', p1: 'gán lock = 1, vào đoạn găng', p2: 'đang trong đoạn găng', lock: 1, cs: 'P1 và P2', on: 'cs'}
+], s => $('#lkBox').replaceChildren(cellK('P1', {'trạng thái': s.p1}, s.on === 'p1'), cellK('P2', {'trạng thái': s.p2}, s.on === 'p2'), cellK('Chung', {lock: String(s.lock), 'trong đoạn găng': s.cs}, s.on === 'cs')));
+
+// Phần 5: semaphore
+const SEM = {v: 1, init: 1, q: [], hold: [], n: 0};
+function renderSem(msg){
+  $('#semBtns').replaceChildren(
+    btn('Tiến trình mới gọi Down(s)', () => { const p = 'P' + (++SEM.n); SEM.v--; if (SEM.v < 0) { SEM.q.push(p); renderSem(p + ' gọi Down(s): S.value = ' + SEM.v + ' < 0 nên ' + p + ' vào s.L và Sleep().'); } else { SEM.hold.push(p); renderSem(p + ' gọi Down(s): S.value = ' + SEM.v + ' ≥ 0 nên ' + p + ' qua, đang giữ tài nguyên.'); } }, SEM.n >= 8),
+    btn('Up(s)', () => { SEM.v++; const gone = SEM.hold.shift(); let m = (gone ? gone + ' gọi Up(s)' : 'Up(s) được gọi') + ': S.value = ' + SEM.v + '.'; if (SEM.v <= 0) { const w = SEM.q.shift(); SEM.hold.push(w); m += ' S.value ≤ 0 nên ' + w + ' được Remove khỏi s.L và Wakeup().'; } renderSem(m); }),
+    btn('Làm lại', () => { Object.assign(SEM, {v: SEM.init, q: [], hold: [], n: 0}); renderSem(); }));
+  note('#semStatus', msg || 'Khởi tạo S.value = ' + SEM.init, el('span', {className: 'muted'}, 'S.value = ' + SEM.v + ' · đang giữ: ' + (SEM.hold.join(', ') || '—') + ' · đang chờ trong s.L: ' + (SEM.q.join(', ') || '—')));
+}
+chooser('#semInit', [{k: 'S.value đầu = 1 (độc quyền truy xuất)', v: 1}, {k: 'S.value đầu = 0 (hò hẹn)', v: 0}, {k: 'S.value đầu = 2', v: 2}], it => { SEM.init = it.v; Object.assign(SEM, {v: it.v, q: [], hold: [], n: 0}); renderSem(); });
+
+// Phần 7: thứ tự down trong Producer–Consumer (buffer đầy: empty = 0, full = 1, mutex = 1)
+const PC = [
+  {k: 'Đúng: down(empty) rồi down(mutex)', rows: [['1', 'Producer', 'down(&empty)', 'empty = −1 → Producer bị chặn (chưa giữ mutex)', '−1', '1', '1'], ['2', 'Consumer', 'down(&full)', 'full = 0, qua', '−1', '0', '1'], ['3', 'Consumer', 'down(&mutex)', 'mutex = 0, qua', '−1', '0', '0'], ['4', 'Consumer', 'remove_item', 'lấy một sản phẩm khỏi buffer', '−1', '0', '0'], ['5', 'Consumer', 'up(&mutex)', 'mutex = 1', '−1', '0', '1'], ['6', 'Consumer', 'up(&empty)', 'empty = 0 → đánh thức Producer', '0', '0', '1']], res: 'Chạy được: Consumer lấy được mutex, trả chỗ trống và đánh thức Producer.'},
+  {k: 'Sai: down(mutex) rồi down(empty)', rows: [['1', 'Producer', 'down(&mutex)', 'mutex = 0, qua', '0', '1', '0'], ['2', 'Producer', 'down(&empty)', 'empty = −1 → Producer bị chặn, ĐANG GIỮ mutex', '−1', '1', '0'], ['3', 'Consumer', 'down(&mutex)', 'mutex = −1 → Consumer bị chặn', '−1', '1', '−1'], ['4', '—', '—', 'Producer chờ empty (cần Consumer up), Consumer chờ mutex (Producer giữ): DEADLOCK', '−1', '1', '−1']], res: 'Deadlock: không ai có thể gọi up để đánh thức bên kia.'}
+];
+chooser('#pcBtns', PC, it => note('#pcStatus', it.k, el('div', {className: 'tblw'}, el('table', {className: 'tbl'}, el('thead', {}, el('tr', {}, ...['Bước', 'Ai', 'Lệnh', 'Kết quả', 'empty', 'full', 'mutex'].map(h => el('th', {}, h)))), el('tbody', {}, ...it.rows.map(r => el('tr', {}, ...r.map((c, i) => el('td', {}, i === 2 ? el('code', {}, c) : c))))))), el('div', {className: 'why'}, it.res)));
+
+// Phần 8: Readers và Writers
+const RW = {rc: 0, w: false};
+function renderRw(msg){
+  $('#rwBtns').replaceChildren(
+    btn('Reader vào', () => { if (RW.w) return renderRw('Reader phải đợi: một Writer đang cập nhật CSDL (db đang bị giữ).'); RW.rc++; renderRw(RW.rc === 1 ? 'Reader đầu tiên (rc = 1) gọi down(&db): chặn Writer. Reader bắt đầu đọc.' : 'Reader vào đọc cùng các Reader khác (rc = ' + RW.rc + '), không cần down(&db) nữa.'); }),
+    btn('Reader ra', () => { if (!RW.rc) return renderRw('Không có Reader nào đang đọc.'); RW.rc--; renderRw(RW.rc === 0 ? 'Reader cuối cùng (rc = 0) gọi up(&db): Writer có thể vào.' : 'Một Reader ra (còn ' + RW.rc + ' Reader đang đọc).'); }),
+    btn('Writer vào', () => { if (RW.w) return renderRw('Writer phải đợi: đã có một Writer đang cập nhật (mỗi lúc chỉ một Writer).'); if (RW.rc) return renderRw('Writer phải đợi: còn ' + RW.rc + ' Reader đang đọc (down(&db) bị chặn).'); RW.w = true; renderRw('Writer gọi down(&db) thành công, độc quyền cập nhật CSDL.'); }),
+    btn('Writer ra', () => { if (!RW.w) return renderRw('Không có Writer nào đang cập nhật.'); RW.w = false; renderRw('Writer gọi up(&db), CSDL rảnh.'); }),
+    btn('Làm lại', () => { RW.rc = 0; RW.w = false; renderRw(); }));
+  note('#rwStatus', msg || 'CSDL đang rảnh', el('span', {className: 'muted'}, 'rc = ' + RW.rc + ' (Reader đang đọc) · Writer đang cập nhật: ' + (RW.w ? 'có' : 'không')));
+}
+renderRw();
+
+// Phần 8: Dining Philosophers (triết gia i: nĩa trái = i, nĩa phải = (i + 1) % 5)
+const DP = {own: Array(5).fill(-1)};
+const dpHold = i => [0, 1, 2, 3, 4].filter(f => DP.own[f] === i);
+function dpTake(i, side){
+  const f = side === 'L' ? i : (i + 1) % 5;
+  if (DP.own[f] === i) return renderDp('Triết gia ' + (i + 1) + ' đã cầm nĩa ' + (f + 1) + ' rồi.');
+  if (DP.own[f] !== -1) return renderDp('Triết gia ' + (i + 1) + ' phải chờ: nĩa ' + (f + 1) + ' đang do triết gia ' + (DP.own[f] + 1) + ' giữ.');
+  DP.own[f] = i; renderDp('Triết gia ' + (i + 1) + ' cầm nĩa ' + (f + 1) + (dpHold(i).length === 2 ? ' và bắt đầu ăn.' : '.'));
+}
+function renderDp(msg){
+  $('#dpTbl').replaceChildren(...[0, 1, 2, 3, 4].map(i => { const h = dpHold(i);
+    return el('div', {className: 'dpr' + (h.length === 2 ? ' eat' : '')}, el('b', {}, 'Triết gia ' + (i + 1)), el('span', {}, h.length === 2 ? 'đang ăn (nĩa ' + h.map(x => x + 1).join(', ') + ')' : h.length ? 'đang cầm nĩa ' + (h[0] + 1) + ', chờ nĩa còn lại' : 'đang nghĩ'),
+      el('div', {className: 'btns'}, btn('Cầm nĩa trái (' + (i + 1) + ')', () => dpTake(i, 'L')), btn('Cầm nĩa phải (' + ((i + 1) % 5 + 1) + ')', () => dpTake(i, 'R')), btn('Đặt nĩa xuống', () => { DP.own = DP.own.map(o => o === i ? -1 : o); renderDp('Triết gia ' + (i + 1) + ' đặt nĩa xuống.'); }, !h.length))); }));
+  const dead = [0, 1, 2, 3, 4].every(i => dpHold(i).length === 1);
+  note('#dpStatus', dead ? 'Deadlock: mọi triết gia đều cầm một nĩa và chờ nĩa còn lại' : (msg || 'Năm triết gia đang nghĩ'), el('span', {className: dead ? '' : 'muted'}, dead ? 'Không ai ăn được và không ai đặt nĩa xuống. Hãy dùng nút "Đặt nĩa xuống" để gỡ.' : 'Triết gia i dùng nĩa i (trái) và nĩa i+1 (phải), nĩa cuối nối vòng về nĩa 1.'));
+}
+renderDp();
+
+</script>
+</body>
+</html>

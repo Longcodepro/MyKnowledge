@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OS 7: Bộ nhớ ảo</title>
+<script>
+// Luôn sáng mặc định; chỉ tối khi người đọc tự bấm đổi
+(function(){var t=null;try{t=localStorage.getItem('theme')}catch(e){}
+document.documentElement.dataset.theme=t==='dark'?'dark':'light';})();
+</script>
+<style>
+:root{
+  --bg:#f6f8fc; --card:#ffffff; --fg:#0f172a; --muted:#566277; --line:#e2e8f2; --hov:#f3f6fc;
+  --accent:#2563eb; --accent2:#7c3aed; --accent-soft:#eaf0ff; --hl:#fff0a8; --hl-fg:#5c4600;
+  --grad:linear-gradient(120deg,#2563eb,#7c3aed);
+  --mono:ui-monospace,"Cascadia Code",Consolas,Menlo,monospace;
+  --grid:rgba(15,23,42,.05);
+  --sh:0 1px 2px rgba(15,23,42,.05),0 8px 24px -12px rgba(15,23,42,.12);
+  --sh-hi:0 2px 4px rgba(15,23,42,.06),0 18px 40px -14px rgba(37,99,235,.28);
+  --ts:92%; --tl:94%; --tcl:42%;
+  --glow1:rgba(37,99,235,.16); --glow2:rgba(124,58,237,.13);
+  --ok:#16a34a; --bad:#dc2626; --warn:#b45309; --warn-soft:#fff4d6;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#0a0e16; --card:#121826; --fg:#e8edf6; --muted:#9aa6ba; --line:#212a3b; --hov:#18202f;
+  --accent:#7ab2ff; --accent2:#a78bfa; --accent-soft:#15233d; --hl:#4a3d00; --hl-fg:#ffe58a;
+  --grad:linear-gradient(120deg,#7ab2ff,#a78bfa);
+  --grid:rgba(232,237,246,.045);
+  --sh:0 1px 2px rgba(0,0,0,.3),0 8px 24px -12px rgba(0,0,0,.5);
+  --sh-hi:0 2px 4px rgba(0,0,0,.4),0 18px 40px -14px rgba(122,178,255,.25);
+  --ts:45%; --tl:20%; --tcl:74%;
+  --glow1:rgba(122,178,255,.13); --glow2:rgba(167,139,250,.11);
+  --ok:#4ade80; --bad:#f87171; --warn:#fbbf24; --warn-soft:#3a2f00;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;scrollbar-width:none}
+*::-webkit-scrollbar{display:none}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);min-height:100vh;font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.skip{position:absolute;left:12px;top:-56px;z-index:30;background:var(--accent);color:#fff;padding:9px 16px;border-radius:10px;text-decoration:none;font-weight:600}
+.skip:focus{top:12px}
+.bg{position:absolute;inset:0 0 auto;height:560px;z-index:-1;pointer-events:none;
+  background:radial-gradient(640px 320px at 12% -4%,var(--glow1),transparent 70%),radial-gradient(560px 300px at 88% 6%,var(--glow2),transparent 70%),
+  linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:auto,auto,32px 32px,32px 32px;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent)}
+.wrap{max-width:920px;margin:0 auto;padding:0 24px 64px}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:20px 0}
+.brand{display:flex;align-items:center;gap:11px;font-weight:700;letter-spacing:-.01em}
+.logo{width:34px;height:34px;border-radius:10px;background:var(--grad);display:grid;place-items:center;color:#fff;box-shadow:0 6px 16px -6px var(--accent)}
+:root[data-theme="dark"] .logo{color:#0b1220}
+.btn{font:inherit;font-size:13px;font-weight:500;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 14px;min-height:38px;cursor:pointer;box-shadow:var(--sh)}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn[disabled]{opacity:.45;cursor:default}
+.hero{padding:24px 0 8px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:5px 13px 5px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card);font:600 12.5px system-ui,sans-serif;color:var(--muted);box-shadow:var(--sh)}
+.pill i{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,.18)}
+h1{font-size:clamp(2.1rem,6vw,3.3rem);line-height:1.06;letter-spacing:-.04em;font-weight:800;margin:18px 0 14px}
+.grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{max-width:660px;color:var(--muted);font-size:1.08rem;margin:0 0 22px}
+.lead b{color:var(--fg);font-weight:600}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 30px;padding:0;list-style:none}
+.toc a{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:500;color:var(--fg);text-decoration:none;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 8px;min-height:36px;transition:all .15s}
+.toc a b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font:700 12px var(--mono)}
+.toc a:hover{border-color:var(--accent);transform:translateY(-1px)}
+.toc a[aria-current="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.toc a[aria-current="true"] b{background:var(--bg);color:var(--fg)}
+/* thanh điều hướng nhanh: dính ở mép trên khi mục lục đã cuộn khỏi màn hình */
+.bar{position:fixed;top:10px;left:50%;z-index:25;width:min(100% - 24px,880px);transform:translate(-50%,-90px);opacity:0;visibility:hidden;transition:transform .25s,opacity .25s,visibility 0s .25s;
+  display:flex;align-items:center;gap:6px;padding:6px 8px;background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh-hi)}
+.bar.show{transform:translate(-50%,0);opacity:1;visibility:visible;transition:transform .25s,opacity .25s}
+.bar a{display:grid;place-items:center;flex:none;min-width:30px;height:30px;border-radius:9px;border:1px solid transparent;color:var(--fg);text-decoration:none;font:700 12.5px var(--mono)}
+.bar a:hover{border-color:var(--accent);color:var(--accent)}
+.bar a[aria-current="true"]{background:var(--fg);color:var(--bg)}
+.bar .up{border-color:var(--line);background:var(--card);font:600 16px system-ui;margin-right:2px}
+.bar .nums{display:flex;gap:3px;flex-wrap:nowrap}
+.bar .now{flex:1;min-width:0;margin-left:6px;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+@media(max-width:640px){.bar .now{display:none}.bar{gap:3px;padding:5px 6px}.bar a{min-width:26px;height:28px}.bar .nums{gap:1px}}
+.howto{margin:18px 0 30px;border:1px dashed var(--line);border-radius:14px;padding:12px 16px;color:var(--muted);font-size:14px;background:var(--card)}
+.howto b{color:var(--fg)}
+.card{position:relative;overflow:hidden;background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--sh);padding:24px 24px 22px;margin-bottom:24px;scroll-margin-top:68px}
+.card::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,hsl(var(--h,215) 75% 55%),hsl(calc(var(--h,215) + 45) 75% 62%))}
+.card header{display:flex;gap:14px;align-items:center;margin-bottom:6px}
+.num{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font:800 17px var(--mono);background:hsl(var(--h,215) var(--ts) var(--tl));color:hsl(var(--h,215) 65% var(--tcl))}
+.card h2{font-size:1.28rem;letter-spacing:-.02em;margin:0;line-height:1.25}
+.card h3{font-size:1rem;margin:20px 0 6px}
+.card p{margin:8px 0}
+.lab{display:inline-block;font:700 11px/1 system-ui;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:4px 8px;margin:18px 0 4px}
+.lab.v{background:var(--warn-soft);color:var(--warn)}
+.lab.g{background:var(--accent-soft);color:var(--accent)}
+.lab.t{background:hsl(160 var(--ts) var(--tl));color:hsl(160 65% var(--tcl))}
+.lab.q{background:var(--hov);color:var(--muted);border:1px solid var(--line)}
+.muted{color:var(--muted)}
+code,.mono{font-family:var(--mono);font-size:.9em}
+:not(pre)>code{background:var(--accent-soft);color:var(--accent);padding:1px 6px;border-radius:6px;white-space:nowrap}
+.ana{margin:12px 0;border-left:3px solid hsl(var(--h,215) 60% 60%);padding:6px 14px;background:var(--hov);border-radius:0 12px 12px 0;color:var(--muted)}
+.ana b{color:var(--fg)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:14px;margin:12px 0}
+.box{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--hov)}
+.box b{display:block;margin-bottom:2px}
+.box.on{border-color:var(--accent);background:var(--accent-soft)}
+.status{margin-top:12px;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:12px 16px;background:var(--card)}
+.status b{display:block}
+.why{margin-top:8px;color:var(--muted);font-size:14px}
+.why::before{content:"Vì sao? ";font-weight:700;color:var(--fg)}
+.warn{margin:12px 0;border:1px solid var(--warn);border-radius:12px;padding:10px 14px;background:var(--warn-soft);color:var(--warn)}
+.tbl{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
+.tbl th,.tbl td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.tblw{overflow-x:auto}
+.procs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:14px;margin:12px 0}
+.pbox{border:2px solid hsl(var(--c) 60% 60%);border-radius:16px;padding:10px 14px;background:hsl(var(--c) var(--ts) var(--tl))}
+.pbox b{display:block}
+.pbox .mem{margin-top:6px;border:1px dashed hsl(var(--c) 50% 55%);border-radius:10px;padding:6px 10px;font:12.5px var(--mono);color:var(--fg);background:var(--card)}
+.chain{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin:12px 0}
+.chain .nd{flex:1 1 140px;border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--hov);text-align:center}
+.chain .nd small{display:block;color:var(--muted)}
+.chain .ar{align-self:center;color:var(--muted);font:12px var(--mono);text-align:center;flex:0 0 auto}
+svg.diag{width:100%;height:auto;max-height:300px;display:block}
+.diag .nd rect{fill:var(--card);stroke:var(--line);stroke-width:2}
+.diag .nd text{fill:var(--fg);font:600 14px system-ui,sans-serif;text-anchor:middle}
+.diag .nd .sm{font:12px var(--mono);fill:var(--muted);font-weight:400}
+.diag .nd.on rect{stroke:hsl(var(--h) 70% 50%);fill:hsl(var(--h) var(--ts) var(--tl))}
+.diag .nd.dim{opacity:.38}
+.diag .ln{fill:none;stroke:var(--line);stroke-width:2.5}
+.diag .ln.on{stroke:var(--accent);stroke-dasharray:8 6;animation:flow .8s linear infinite}
+.diag .ln.on.rev{animation-direction:reverse}
+@keyframes flow{to{stroke-dashoffset:-14}}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.chip{display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:13.5px;font-weight:500;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 12px;min-height:36px;cursor:pointer;transition:all .15s}
+.chip i{width:8px;height:8px;border-radius:50%;background:hsl(var(--h,190) 70% 52%)}
+.chip:hover{border-color:var(--accent);transform:translateY(-1px)}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.mw{display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 0 4px}
+.mnode{border:2px solid var(--accent);border-radius:14px;padding:10px 20px;background:var(--accent-soft);font-weight:700;text-align:center}
+.sock{font:12px var(--mono);color:var(--muted);border-left:2px dashed var(--line);padding:2px 0 2px 10px}
+.workers{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.w{border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg);padding:8px 14px;font:13px var(--mono);cursor:pointer;min-width:96px;text-align:center}
+.w:hover{border-color:var(--bad)}
+.w.dead{border-color:var(--bad);color:var(--bad);background:transparent;text-decoration:line-through}
+.w.new{border-color:var(--ok);color:var(--ok)}
+.inst{min-width:120px;text-align:center}
+.inst .bar{height:8px;border-radius:99px;background:var(--line);margin-top:6px;overflow:hidden}
+.inst .bar i{display:block;height:100%;background:var(--grad);width:0;transition:width .25s}
+input[type=range]{width:200px;accent-color:var(--accent)}
+.win{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card);margin:8px 0}
+.win .bar{display:flex;gap:6px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line);background:var(--hov);font:12px var(--mono);color:var(--muted)}
+.win .bar i{width:10px;height:10px;border-radius:50%;background:#ff5f57}.win .bar i:nth-child(2){background:#febc2e}.win .bar i:nth-child(3){background:#28c840}
+.win .bar span{margin-left:8px}
+.codeline{display:block;width:100%;text-align:left;font:13.5px/1.7 var(--mono);color:var(--fg);background:none;border:0;padding:0 14px;cursor:pointer;white-space:pre;border-left:3px solid transparent;overflow-x:auto}
+.codeline:hover{background:var(--hov)}
+.codeline[aria-pressed="true"]{background:var(--accent-soft);border-left-color:var(--accent)}
+.codeline .n{display:inline-block;width:2.2em;color:var(--muted);user-select:none}
+.log{border:1px solid var(--line);border-radius:12px;background:var(--hov);padding:10px 14px;font:13px/1.7 var(--mono);min-height:56px}
+.log .ok{color:var(--ok)}.log .no{color:var(--bad)}
+details{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-top:8px;background:var(--card)}
+summary{cursor:pointer;font-weight:600}
+details p{margin:8px 0 2px;color:var(--muted)}
+.stepper{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.stepper .cnt{font:13px var(--mono);color:var(--muted);margin-left:auto}
+.role{display:inline-block;font:600 12px system-ui;border-radius:999px;padding:2px 10px;background:var(--accent-soft);color:var(--accent);margin-right:6px}
+.foot{margin-top:30px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+.foot a{color:var(--accent)}
+kbd{font:12px var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:0 7px;background:var(--card)}
+@media(max-width:640px){.wrap{padding:0 16px 48px}.hero{padding-top:12px}.card{padding:18px 16px}.card header{gap:10px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important;animation:none!important}}
+@media(forced-colors:active){.card,.toc a[aria-current="true"]{border:1px solid}}
+</style>
+<style>
+/* bổ sung riêng cho trang hệ điều hành */
+.banner{background:#fff4d6;color:#6b4e00;text-align:center;padding:6px 12px;font-size:13.5px}
+:root[data-theme="dark"] .banner{background:#3a2f00;color:#ffe58a}
+.memwrap{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start;margin:10px 0}
+@media(max-width:720px){.memwrap{grid-template-columns:1fr}}
+.memcol{display:flex;flex-direction:column;border:2px solid var(--line);border-radius:14px;overflow:hidden;font:13px var(--mono)}
+.memcol .hi,.memcol .lo{padding:4px 12px;background:var(--hov);color:var(--muted);font-size:12px}
+.memcol .reg{padding:10px 12px;border-top:1px solid var(--line);background:var(--card);transition:background .15s}
+.memcol .reg small{display:block;color:var(--muted);font-family:system-ui;font-size:12px}
+.memcol .reg.free{background:repeating-linear-gradient(135deg,transparent 0 8px,var(--hov) 8px 16px);color:var(--muted);text-align:center}
+.memcol .reg.on{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.memcol .reg.on small{color:var(--accent)}
+.sdiag{width:100%;height:auto;max-height:330px;display:block}
+.sdiag .st ellipse{fill:var(--card);stroke:var(--line);stroke-width:2;transition:all .2s}
+.sdiag .st text{fill:var(--fg);font:600 14px system-ui,sans-serif;text-anchor:middle}
+.sdiag .st.on ellipse{stroke:hsl(var(--h) 70% 50%);fill:hsl(var(--h) var(--ts) var(--tl));stroke-width:3}
+.sdiag .tr{fill:none;stroke:var(--line);stroke-width:2.2}
+.sdiag .tr.on{stroke:var(--accent);stroke-width:3;stroke-dasharray:8 6;animation:flow .8s linear infinite}
+.sdiag .lb{fill:var(--muted);font:12px var(--mono);text-anchor:middle}
+.sdiag .lb.on{fill:var(--accent);font-weight:700}
+.sdiag marker path{fill:var(--muted)}
+.cs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px;margin:12px 0}
+.cs .cell{border:2px solid var(--line);border-radius:14px;padding:10px 14px;background:var(--card);transition:all .2s}
+.cs .cell.on{border-color:var(--accent);background:var(--accent-soft)}
+.cs .cell b{display:block;margin-bottom:4px}
+.cs .cell dl{margin:0;font:13px/1.7 var(--mono)}
+.cs .cell dt{display:inline;color:var(--muted)}
+.cs .cell dd{display:inline;margin:0 0 0 6px}
+.box span b{display:inline;margin:0}
+:not(pre)>code{white-space:normal;overflow-wrap:anywhere}
+.pending{opacity:.9}
+.pending p{margin:6px 0 0}
+.lanes{display:grid;grid-template-columns:1fr 130px 1fr;gap:12px;margin:12px 0;align-items:start}
+@media(max-width:720px){.lanes{grid-template-columns:1fr}}
+.lane{border:2px solid var(--line);border-radius:14px;padding:10px 12px;min-height:84px;background:var(--card)}
+.lane h4{margin:0 0 8px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.lane.cpu{border-color:var(--accent);background:var(--accent-soft)}
+.pc{display:inline-flex;align-items:center;justify-content:center;min-width:44px;height:34px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);font:700 13px var(--mono);margin:0 6px 6px 0;padding:0 10px}
+.pc.run{border-color:var(--accent);color:var(--accent)}
+.tree ul{list-style:none;margin:0;padding-left:22px;border-left:2px dashed var(--line)}
+.tree>ul{padding-left:0;border-left:0}
+.tree li{margin:6px 0}
+.tn{display:inline-flex;gap:8px;align-items:center;border:1.5px solid var(--line);border-radius:10px;padding:4px 12px;background:var(--card);color:var(--fg);font:13px var(--mono);cursor:pointer}
+.tn:hover{border-color:var(--accent)}
+.tn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:700}
+.tn small{color:var(--muted)}
+.tn.orph{border-color:var(--warn);color:var(--warn);cursor:default}
+.cells{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 6px}
+.cellb{width:56px;height:44px;border:2px solid var(--line);border-radius:10px;display:grid;place-items:center;font:700 13px var(--mono);background:var(--card);position:relative}
+.cellb.full{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.cellb i{position:absolute;top:-10px;font:700 10px var(--mono);font-style:normal;padding:0 5px;border-radius:5px;background:var(--fg);color:var(--bg)}
+.cellb i.in{left:2px}
+.cellb i.out{right:2px;background:var(--accent2);color:#fff}
+.tcell{width:40px;height:40px;border-radius:9px;display:grid;place-items:center;font:700 12px var(--mono);color:#fff;background:hsl(var(--c) 60% 42%)}
+.th{display:inline-block;border:2px solid var(--line);border-radius:10px;padding:6px 12px;margin:0 6px 6px 0;font:700 13px var(--mono);background:var(--card);color:var(--fg);cursor:pointer}
+.th.ok{border-color:var(--ok);color:var(--ok)}
+.th.blocked{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.th.stuck{border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
+.kt{display:inline-block;border:2px dashed var(--line);border-radius:10px;padding:6px 12px;margin:0 6px 6px 0;font:700 13px var(--mono);color:var(--muted)}
+.kt.blocked{border-color:var(--bad);color:var(--bad)}
+</style>
+</head>
+<body>
+<a class="skip" href="#s1">Bỏ qua tới nội dung</a>
+<div class="bg" aria-hidden="true"></div>
+<nav class="bar" id="bar" aria-label="Điều hướng nhanh"><a class="up" href="#top" aria-label="Lên đầu trang" title="Lên đầu trang">↑</a><span class="nums" id="barNums"></span><span class="now" id="barNow" aria-hidden="true"></span></nav>
+<div class="wrap">
+  <header class="topbar" id="top">
+    <div class="brand"><span class="logo" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9zM9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg></span>Hệ điều hành</div>
+    <button class="btn" id="themeBtn" type="button" aria-label="Đổi giao diện sáng hoặc tối">Sáng / Tối</button>
+  </header>
+
+  <div class="hero">
+    <span class="pill"><i></i>Hệ điều hành · Chương 4 · Bộ nhớ ảo</span>
+    <h1>Bộ nhớ ảo: <span class="grad">chạy chương trình lớn hơn RAM</span></h1>
+    <p class="lead">Vì sao không cần nạp cả chương trình, phân trang theo yêu cầu và lỗi trang, các thuật toán thay thế trang FIFO, tối ưu, LRU, cấp phát khung trang và hiện tượng trì trệ (thrashing).</p>
+  </div>
+
+  <ol class="toc" id="toc" aria-label="Lộ trình các phần"></ol>
+
+  <main>
+<section class="card" id="s1" style="--h:215" data-title="Khái niệm">
+    <header><span class="num">1</span><h2>Bộ nhớ ảo: ý tưởng và lợi ích</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Chương trình có thể lớn hơn RAM, và RAM lại phải chia cho nhiều tiến trình. Nếu phải nạp trọn vẹn từng chương trình thì rất ít tiến trình chạy được cùng lúc.</p>
+    <span class="lab g">Giải pháp</span>
+    <p><b>Bộ nhớ ảo</b> là kỹ thuật cho phép một không gian địa chỉ logic lớn được ánh xạ vào một bộ nhớ vật lý nhỏ hơn. Triển khai bằng phân trang hoặc phân đoạn (hiện nay phân trang thông dụng hơn). Nó cho phép chạy tiến trình cực lớn, tăng mức đa chương và hiệu suất dùng CPU, và giải phóng lập trình viên khỏi lo bộ nhớ có đủ hay không.</p>
+    <p>Dựa trên <b>hai đặc trưng</b> của phân trang và phân đoạn: mọi truy xuất bộ nhớ đều được chuyển đổi địa chỉ lúc thi hành (nên có thể swap-in, swap-out), và một tiến trình chia thành các phần (trang hoặc đoạn) không nhất thiết nằm liên tục. Nếu hai tính chất đó đảm bảo thì <b>không cần mọi trang hay đoạn nằm trong RAM lúc chạy</b>.</p>
+    <ul>
+      <li>Ưu điểm: nhiều tiến trình trong bộ nhớ hơn; tiến trình chạy được dù lớn hơn bộ nhớ.</li>
+      <li>Bộ nhớ mà địa chỉ logic tham chiếu tới gọi là bộ nhớ ảo, gồm <b>bộ nhớ thực + phần thứ cấp</b> (đĩa cứng...). Phần ảo thường nằm ở vùng đặc biệt gọi là <b>swap space</b>. Việc chuyển đổi địa chỉ có phần cứng hỗ trợ.</li>
+      <li>Yêu cầu: phần cứng quản lý bộ nhớ hỗ trợ phân trang và phân đoạn; hệ điều hành quản lý việc di chuyển trang/đoạn giữa bộ nhớ chính và bộ nhớ thứ cấp.</li>
+      <li>Có thể kết hợp phân trang và phân đoạn: mỗi tiến trình có một bảng phân đoạn và nhiều bảng trang (mỗi đoạn một bảng); địa chỉ logic gồm segment number, page number, offset.</li>
+    </ul>
+    <h3>Ba chính sách cần quyết định</h3>
+    <div class="two">
+      <div class="box"><b>Chính sách nạp (fetch)</b><span class="muted">Khi nào một trang được nạp vào bộ nhớ?</span></div>
+      <div class="box"><b>Chính sách đặt (placement)</b><span class="muted">Trang hoặc đoạn được đặt ở đâu trong bộ nhớ chính?</span></div>
+      <div class="box on"><b>Chính sách thay thế (replacement)</b><span class="muted">Khi cần nạp trang mới, chọn trang nào để đưa ra?</span></div>
+    </div>
+    <p>Cài đặt: <b>phân trang theo yêu cầu (demand paging)</b> hoặc phân đoạn theo yêu cầu (demand segmentation, khó hơn vì kích thước không đồng nhất).</p>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s1"></div>
+  </section>
+
+  <section class="card" id="s2" style="--h:160" data-title="Phân trang theo yêu cầu">
+    <header><span class="num">2</span><h2>Phân trang theo yêu cầu và lỗi trang</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>Nếu trang chưa nằm trong RAM thì khi chương trình truy xuất, hệ thống phải biết và đi lấy nó từ đĩa về.</p>
+    <span class="lab g">Giải pháp</span>
+    <p><b>Phân trang theo yêu cầu = phân trang + swapping.</b> Tiến trình là tập các trang thường trú trên bộ nhớ phụ; một trang chỉ được nạp vào RAM khi có yêu cầu. Bảng trang phải phản ánh trang đang ở RAM hay ở bộ nhớ phụ và vị trí tương ứng, bằng <b>bit valid/invalid</b>: valid là trang có trong bộ nhớ chính; invalid là trang không hợp lệ hoặc đang nằm ở bộ nhớ phụ (không gian swapping trên đĩa).</p>
+    <p>Truy xuất một trang bị đánh dấu invalid làm phát sinh <b>lỗi trang (page fault)</b>: khi dò bảng trang thấy trang bất hợp lệ, phần cứng sinh một ngắt để báo hệ điều hành.</p>
+    <span class="lab t">Minh họa: hệ điều hành xử lý một lỗi trang</span>
+    <div class="stepper"><button class="btn" id="pfBack" type="button">← Lùi</button><button class="btn" id="pfNext" type="button">Tiếp →</button><button class="btn" id="pfReset" type="button">Về đầu</button><span class="cnt" id="pfCnt"></span></div>
+    <div class="cs" id="pfBox"></div>
+    <div class="status" id="pfStatus" role="status"></div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s2"></div>
+  </section>
+
+  <section class="card" id="s3" style="--h:28" data-title="Thay thế trang">
+    <header><span class="num">3</span><h2>Thay thế trang: chọn trang "nạn nhân"</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>RAM đã đầy mà cần nạp thêm một trang. Phải đưa một trang đang ở RAM ra đĩa. Chọn trang nào để gây ít lỗi trang nhất về sau?</p>
+    <span class="lab g">Giải pháp</span>
+    <p><b>Thay thế trang</b> là thay một trang đang ở bộ nhớ nhưng chưa cần dùng bằng một trang đang ở đĩa (swap space) đang được yêu cầu. Hai thao tác: chuyển trang từ RAM ra bộ nhớ phụ, rồi mang trang cần dùng từ bộ nhớ phụ vào. Giảm số thao tác bằng <b>bit cập nhật (dirty bit)</b>: bằng 1 nghĩa là nội dung trang đã bị đổi nên phải lưu lại trên đĩa; bằng 0 thì không cần lưu.</p>
+    <div class="tblw"><table class="tbl"><thead><tr><th>Thuật toán</th><th>Ý tưởng</th><th>Ghi chú</th></tr></thead><tbody>
+      <tr><td><b>FIFO</b></td><td>Ghi nhận thời điểm nạp, thay trang ở trong bộ nhớ lâu nhất (có thể dùng danh sách FIFO, thay trang đầu).</td><td>Dễ hiểu, dễ cài, nhưng trang nạp đầu tiên có thể là trang quan trọng và hay dùng. Có <b>nghịch lý Belady</b>: tăng số khung trang mà số lỗi trang lại tăng.</td></tr>
+      <tr><td><b>Tối ưu (OPT)</b></td><td>Thay trang sẽ lâu được dùng nhất trong tương lai.</td><td>Hoàn hảo về ý tưởng nhưng không khả thi vì không dự đoán được chuỗi truy xuất tương lai.</td></tr>
+      <tr><td><b>LRU</b> (Least Recently Used)</td><td>Thay trang chưa được truy cập lâu nhất; dùng quá khứ gần để dự đoán tương lai.</td><td>Cài bằng <b>bộ đếm</b> (mỗi mục bảng trang ghi thời điểm truy xuất mới nhất, thay trang có giá trị nhỏ nhất) hoặc bằng <b>stack</b> (trang vừa truy xuất lên đầu, thay trang ở đáy). Đòi hỏi phần cứng hỗ trợ khá nhiều.</td></tr>
+      <tr><td><b>Xấp xỉ LRU</b></td><td>Thêm <b>reference bit</b> vào mỗi mục bảng trang: ban đầu 0, có truy xuất thì thành 1; sau mỗi chu kỳ kiểm tra rồi đặt lại 0.</td><td>Ba cách: nhiều bit tham khảo, cơ hội thứ hai, cơ hội thứ hai cải tiến. Biết trang nào được truy xuất gần đây nhưng không biết thứ tự.</td></tr>
+    </tbody></table></div>
+    <span class="lab t">Minh họa: chạy thuật toán thay thế trang</span>
+    <div class="row" id="rpSet" role="group" aria-label="Chọn chuỗi tham chiếu"></div>
+    <div class="row" id="rpAlgo" role="group" aria-label="Chọn thuật toán"></div>
+    <div class="tblw" id="rpTable"></div>
+    <div class="status" id="rpStatus" role="status"></div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s3"></div>
+  </section>
+
+  <section class="card" id="s4" style="--h:280" data-title="Cấp phát khung trang">
+    <header><span class="num">4</span><h2>Cấp phát khung trang: mỗi tiến trình được bao nhiêu</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p>RAM có m khung trang, có n tiến trình. Mỗi tiến trình nên được cấp bao nhiêu khung, và khi thiếu khung thì thay trang trong phạm vi nào?</p>
+    <span class="lab g">Giải pháp: các hướng cấp phát</span>
+    <ul>
+      <li><b>Cấp phát cố định:</b> mỗi tiến trình có số khung cố định từ đầu đến khi kết thúc. <b>Công bằng:</b> m khung, n tiến trình thì mỗi tiến trình được m/n. <b>Theo tỉ lệ:</b> gọi Si là kích thước bộ nhớ ảo của tiến trình i và S = tổng Si, thì tiến trình i được (Si / S) × m khung.</li>
+      <li><b>Theo độ ưu tiên:</b> số khung phụ thuộc độ ưu tiên của tiến trình tại thời điểm đó. Nếu tiến trình pi gặp lỗi trang, chọn một khung của chính nó hoặc một khung của tiến trình có độ ưu tiên thấp hơn để thay.</li>
+    </ul>
+    <span class="lab t">Minh họa: chia khung (ví dụ: m = 62 khung, hai tiến trình có kích thước ảo 10 và 127 trang)</span>
+    <div class="row" id="alBtns" role="group" aria-label="Chọn cách chia"></div>
+    <div class="status" id="alStatus" role="status"></div>
+    <div class="two">
+      <div class="box"><b>Thay thế toàn cục</b><span class="muted">Trang "nạn nhân" có thể là khung của bất kỳ tiến trình nào, không nhất thiết của tiến trình đang gặp lỗi. Linh hoạt hơn nhưng có thể gây trì trệ hệ thống (thrashing).</span></div>
+      <div class="box"><b>Thay thế cục bộ</b><span class="muted">Trang nạn nhân là một trong các khung của chính tiến trình đó.</span></div>
+    </div>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s4"></div>
+  </section>
+
+  <section class="card" id="s5" style="--h:340" data-title="Thrashing">
+    <header><span class="num">5</span><h2>Trì trệ toàn hệ thống (thrashing)</h2></header>
+    <span class="lab v">Vấn đề</span>
+    <p><b>Thrashing</b> là hiện tượng tiến trình thường xuyên phát sinh lỗi trang nên phải dùng rất nhiều thời gian CPU để thay trang, còn rất ít thời gian xử lý công việc. Tốc độ lỗi trang tăng rất cao, không công việc nào kết thúc vì mọi tiến trình đều bận thay trang: cả hệ thống gần như mất khả năng xử lý. Nguyên nhân: tiến trình <b>không có đủ khung trang</b> để chứa những trang cần cho công việc.</p>
+    <span class="lab g">Giải pháp</span>
+    <p>Phải xác định và điều chỉnh mức cấp khung cho từng tiến trình sao cho <b>không thừa không thiếu</b>, vừa tránh trì trệ vừa duy trì mức đa chương cao. Hai trong số các giải pháp: <b>mô hình tập làm việc (working set)</b> và <b>kiểm soát tần suất lỗi trang (page-fault frequency)</b>.</p>
+    <span class="lab q">Kiểm tra nhanh</span>
+    <div data-quiz="s5"></div>
+  </section>
+  </main>
+</div>
+<script>
+const DATA = {quiz: {}};
+// ===== Phần dùng chung cho mọi trang hệ điều hành =====
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
+const btn = (label, fn, off) => { const b = el('button', {className: 'btn', type: 'button', onclick: fn}, label); if (off) b.disabled = true; return b; };
+const setP = (b, v) => b.setAttribute('aria-pressed', String(v));
+
+// Đổi giao diện sáng/tối, nhớ lựa chọn
+$('#themeBtn').addEventListener('click', () => {
+  const d = document.documentElement, n = d.dataset.theme === 'dark' ? 'light' : 'dark';
+  d.dataset.theme = n; try { localStorage.setItem('theme', n); } catch (e) {}
+});
+
+// Mục lục và thanh điều hướng nhanh
+const secs = $$('main > section');
+secs.forEach((s, i) => {
+  $('#toc').append(el('li', {}, el('a', {href: '#' + s.id}, el('b', {}, String(i + 1)), s.dataset.title)));
+  $('#barNums').append(el('a', {href: '#' + s.id, title: (i + 1) + '. ' + s.dataset.title, ariaLabel: 'Phần ' + (i + 1) + ': ' + s.dataset.title}, String(i + 1)));
+});
+function setCurrent(id){
+  $$('#toc a, #barNums a').forEach(a => a.hash === '#' + id ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current'));
+  const s = secs.find(x => x.id === id); if (s) $('#barNow').textContent = (secs.indexOf(s) + 1) + '. ' + s.dataset.title;
+}
+if ('IntersectionObserver' in window) {
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) setCurrent(e.target.id); }), {rootMargin: '-20% 0px -70% 0px'});
+  secs.forEach(s => io.observe(s));
+  new IntersectionObserver(es => es.forEach(e => $('#bar').classList.toggle('show', !e.isIntersecting && e.boundingClientRect.top < 0))).observe($('#toc'));
+}
+
+// Kiểm tra nhanh: DATA.quiz = { s1: [[câu hỏi, đáp án], ...], ... }
+function renderQuizzes(){
+  $$('[data-quiz]').forEach(box => (DATA.quiz[box.dataset.quiz] || []).forEach(([q, a]) => box.append(el('details', {}, el('summary', {}, q), el('p', {}, a)))));
+}
+
+// Dòng mã bấm được: lines = [[dòng, giải thích], ...]
+function annotCode(rootSel, statusSel, lines, start){
+  const root = $(rootSel);
+  lines.forEach(([line], i) => { const b = el('button', {className: 'codeline', type: 'button', onclick: () => pick(i)}, el('span', {className: 'n'}, String(i + 1)), line || ' '); b.setAttribute('aria-label', 'Dòng ' + (i + 1) + ': ' + (line.trim() || 'trống')); root.append(b); });
+  function pick(i){ [...root.children].forEach((b, k) => setP(b, k === i)); const [line, note] = lines[i]; $(statusSel).replaceChildren(el('b', {}, line.trim() || 'Dòng trống'), el('span', {}, note || 'Không có gì thêm ở dòng này.')); }
+  pick(start || 0);
+}
+
+// Hàng chip chọn một mục: items = [{k: nhãn, ...}], onPick(item, index) được gọi khi chọn
+function chooser(hostSel, items, onPick, start){
+  const host = $(hostSel);
+  items.forEach((it, i) => host.append(el('button', {className: 'chip', type: 'button', onclick: () => pick(i)}, el('i'), it.k)));
+  function pick(i){ [...host.children].forEach((b, k) => setP(b, k === i)); onPick(items[i], i); }
+  pick(start || 0);
+}
+// Ô trạng thái: tiêu đề đậm + các đoạn (chuỗi hoặc phần tử)
+const note = (sel, title, ...parts) => $(sel).replaceChildren(el('b', {}, title), ...parts.map(p => typeof p === 'string' ? el('span', {}, p) : p));
+// Chồng các lớp (kiến trúc): layers = [{n: tên lớp, items: [...], c: 'k'|'u'|'h'}]
+const stack = (sel, layers) => $(sel).replaceChildren(...layers.map(l => el('div', {className: 'lyr ' + (l.c || '')}, el('b', {}, l.n), ...(l.items || []).map(t => el('span', {className: 'it'}, t)))));
+
+// Bộ chạy từng bước: steps = [{t, d}], gọi draw(step, index) mỗi lần đổi
+function stepper(prefix, steps, draw){
+  let i = 0;
+  const render = () => {
+    draw(steps[i], i);
+    $('#' + prefix + 'Status').replaceChildren(el('b', {}, steps[i].t), el('span', {}, steps[i].d));
+    $('#' + prefix + 'Cnt').textContent = 'Bước ' + (i + 1) + '/' + steps.length;
+    $('#' + prefix + 'Back').disabled = i === 0; $('#' + prefix + 'Next').disabled = i === steps.length - 1;
+  };
+  $('#' + prefix + 'Next').addEventListener('click', () => { if (i < steps.length - 1) { i++; render(); } });
+  $('#' + prefix + 'Back').addEventListener('click', () => { if (i > 0) { i--; render(); } });
+  $('#' + prefix + 'Reset').addEventListener('click', () => { i = 0; render(); });
+  render();
+}
+
+Object.assign(DATA.quiz, {
+  s1: [['Vì sao không cần nạp trọn chương trình vào RAM?', 'Nhờ chuyển đổi địa chỉ lúc thi hành và việc chia tiến trình thành các phần không cần liên tục, nên chỉ những phần đang cần mới phải nằm trong RAM.'],
+       ['Bộ nhớ ảo gồm những gì?', 'Bộ nhớ thực cộng phần thứ cấp (đĩa cứng...), phần ảo thường lưu ở swap space.']],
+  s2: [['Bit valid và invalid trong bảng trang cho biết điều gì?', 'Valid: trang có trong bộ nhớ chính. Invalid: trang không hợp lệ hoặc đang nằm ở bộ nhớ phụ.'],
+       ['Lỗi trang là gì?', 'Truy xuất một trang bị đánh dấu invalid. Phần cứng sinh ngắt để báo cho hệ điều hành xử lý.']],
+  s3: [['Nghịch lý Belady là gì?', 'Với FIFO, tăng số khung trang mà số lỗi trang lại tăng. Chạy chuỗi 1, 2, 3, 4, 1, 2, 5, 1, 2, 3, 4, 5 với 3 khung rồi 4 khung để thấy.'],
+       ['Vì sao thuật toán tối ưu không dùng được thật?', 'Vì nó cần biết chuỗi trang sẽ được truy xuất trong tương lai, mà điều đó không thể dự đoán chính xác.'],
+       ['Dirty bit giúp gì?', 'Trang chưa bị sửa (bit 0) không cần ghi lại ra đĩa khi bị thay, giảm số thao tác.']],
+  s4: [['Cấp phát theo tỉ lệ tính thế nào?', 'Tiến trình i được (Si / S) × m khung, với Si là kích thước bộ nhớ ảo của tiến trình i, S là tổng các Si, m là số khung.'],
+       ['Thay thế toàn cục và cục bộ khác nhau thế nào?', 'Toàn cục: nạn nhân có thể là khung của bất kỳ tiến trình nào. Cục bộ: nạn nhân chỉ là khung của chính tiến trình gặp lỗi.']],
+  s5: [['Nguyên nhân của thrashing?', 'Tiến trình không có đủ khung trang để chứa các trang cần thiết cho công việc, nên liên tục lỗi trang.'],
+       ['Nêu hai giải pháp chống thrashing.', 'Mô hình tập làm việc (working set) và kiểm soát tần suất lỗi trang.']]
+});
+renderQuizzes();
+
+// Phần 2: xử lý lỗi trang
+const boxP = (title, o, on) => el('div', {className: 'cell' + (on ? ' on' : '')}, el('b', {}, title), el('dl', {}, ...Object.entries(o).flatMap(([k, v]) => [el('dt', {}, k + ':'), el('dd', {}, v), el('br')])));
+stepper('pf', [
+  {t: 'Tiến trình truy xuất một trang', d: 'Phần cứng dò bảng trang và thấy trang bị đánh dấu invalid: phát sinh lỗi trang (page fault), một ngắt báo cho hệ điều hành.', on: 'proc', ram: 'chưa có trang', disk: 'trang nằm ở swap'},
+  {t: '1 và 2. Kiểm tra trang có hợp lệ không', d: 'Nếu truy xuất không hợp lệ thì kết thúc tiến trình. Nếu hợp lệ (trang chỉ đang ở bộ nhớ phụ) thì đi tiếp.', on: 'os', ram: 'chưa có trang', disk: 'trang nằm ở swap'},
+  {t: '3. Tìm vị trí trang trên đĩa', d: 'Hệ điều hành xác định trang muốn truy xuất đang nằm ở đâu trên đĩa cứng.', on: 'disk', ram: 'chưa có trang', disk: 'đã định vị trang'},
+  {t: '4. Tìm một khung trang trống', d: 'Nếu có khung trống thì dùng ngay. Nếu không, chọn một khung "nạn nhân", chuyển nó ra bộ nhớ phụ và cập nhật bảng trang.', on: 'ram', ram: 'có khung trống (hoặc vừa giải phóng)', disk: 'đã định vị trang'},
+  {t: '6. Nạp trang vào bộ nhớ chính', d: 'Chuyển trang cần truy xuất từ bộ nhớ phụ vào bộ nhớ chính, cập nhật bảng trang và bảng khung trang. (Slide đánh số bước 5 ngay sau bước 4 rồi sang bước 6.)', on: 'ram', ram: 'trang đã nằm trong khung', disk: 'bản sao ở swap'},
+  {t: '7. Tái kích hoạt tiến trình', d: 'Tiến trình chạy lại tại đúng chỉ thị đã truy xuất trang; lần này trang hợp lệ.', on: 'proc', ram: 'trang đã nằm trong khung', disk: 'bản sao ở swap'}
+], s => $('#pfBox').replaceChildren(boxP('Tiến trình', {'trạng thái': s.on === 'proc' ? 'đang truy xuất / chạy' : 'chờ'}, s.on === 'proc'), boxP('Hệ điều hành', {'việc': s.on === 'os' ? 'kiểm tra hợp lệ' : s.on === 'disk' || s.on === 'ram' ? 'xử lý lỗi trang' : 'chưa vào cuộc'}, s.on === 'os' || s.on === 'disk'), boxP('RAM', {'trang': s.ram}, s.on === 'ram'), boxP('Đĩa (swap)', {'trang': s.disk}, s.on === 'disk')));
+
+// Phần 3: thay thế trang
+function replace(algo, refs, nf){
+  const fr = [], cols = []; let faults = 0;
+  refs.forEach((p, t) => {
+    let fault = false, hit = fr.find(f => f.p === p);
+    if (hit) hit.u = t;
+    else {
+      fault = true; faults++;
+      if (fr.length < nf) fr.push({p, l: t, u: t});
+      else {
+        let v = 0;
+        if (algo === 'fifo') v = fr.reduce((b, f, i) => f.l < fr[b].l ? i : b, 0);
+        else if (algo === 'lru') v = fr.reduce((b, f, i) => f.u < fr[b].u ? i : b, 0);
+        else { const nxt = f => { const k = refs.indexOf(f.p, t + 1); return k < 0 ? Infinity : k; }; v = fr.reduce((b, f, i) => nxt(f) > nxt(fr[b]) ? i : b, 0); }
+        fr[v] = {p, l: t, u: t};
+      }
+    }
+    cols.push({p, fault, frames: fr.map(f => f.p)});
+  });
+  return {cols, faults};
+}
+const BEL = [1, 2, 3, 4, 1, 2, 5, 1, 2, 3, 4, 5], R20 = [7, 0, 1, 2, 0, 3, 0, 4, 2, 3, 0, 3, 2, 1, 2, 0, 1, 7, 0, 1];
+let rpSet = 0, rpAlgo = 0;
+const RP_SETS = [{k: 'Chuỗi 1,2,3,4,1,2,5,1,2,3,4,5 với 3 khung', refs: BEL, nf: 3}, {k: 'Chuỗi 1,2,3,4,1,2,5,1,2,3,4,5 với 4 khung', refs: BEL, nf: 4}, {k: 'Chuỗi 20 trang với 3 khung', refs: R20, nf: 3}];
+const RP_ALGOS = [{k: 'FIFO', id: 'fifo'}, {k: 'Tối ưu (OPT)', id: 'opt'}, {k: 'LRU', id: 'lru'}];
+function renderRp(){
+  const s = RP_SETS[rpSet], a = RP_ALGOS[rpAlgo], {cols, faults} = replace(a.id, s.refs, s.nf);
+  const rowOf = (label, f) => el('tr', {}, el('td', {}, el('b', {}, label)), ...cols.map((c, i) => el('td', {}, f(c, i))));
+  $('#rpTable').replaceChildren(el('table', {className: 'tbl'}, el('tbody', {},
+    rowOf('Trang', c => el('b', {}, String(c.p))), ...Array.from({length: s.nf}, (_, k) => rowOf('Khung ' + (k + 1), c => c.frames[k] === undefined ? '' : String(c.frames[k]))), rowOf('Lỗi', c => c.fault ? '*' : ''))));
+  const cmp = {}; RP_ALGOS.forEach(x => { cmp[x.id] = replace(x.id, s.refs, s.nf).faults; });
+  note('#rpStatus', a.k + ': ' + faults + ' lỗi trang trên ' + s.refs.length + ' lần truy xuất', el('span', {className: 'muted'}, s.k + '. So sánh cùng tập: FIFO ' + cmp.fifo + ', tối ưu ' + cmp.opt + ', LRU ' + cmp.lru + ' lỗi trang.'),
+    s.refs === BEL && a.id === 'fifo' ? el('div', {className: 'why'}, 'Đổi giữa 3 khung và 4 khung với FIFO: số lỗi trang không giảm mà còn tăng. Đó là nghịch lý Belady.') : '');
+}
+chooser('#rpSet', RP_SETS, (it, i) => { rpSet = i; renderRp(); });
+chooser('#rpAlgo', RP_ALGOS, (it, i) => { rpAlgo = i; renderRp(); });
+renderRp();
+
+// Phần 4: chia khung trang
+chooser('#alBtns', [{k: 'Chia công bằng'}, {k: 'Chia theo tỉ lệ kích thước'}], (it, i) => {
+  const m = 62, sz = [10, 127], S = 137;
+  const got = i === 0 ? sz.map(() => m / sz.length) : sz.map(s => Math.round(s / S * m));
+  note('#alStatus', it.k + ': ' + got.join(' và ') + ' khung', el('span', {}, i === 0 ? 'm / n = 62 / 2 = 31 khung cho mỗi tiến trình, bất kể kích thước.' : 'Si / S × m: 10 / 137 × 62 ≈ ' + got[0] + ' và 127 / 137 × 62 ≈ ' + got[1] + ' khung. Tiến trình lớn được nhiều khung hơn.'));
+});
+
+</script>
+</body>
+</html>
