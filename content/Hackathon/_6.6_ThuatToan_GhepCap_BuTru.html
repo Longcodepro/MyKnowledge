@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>6.6 Thuật toán ghép cặp bù trừ</title>
+<link rel="stylesheet" href="assets/hoc.css">
+<script src="assets/hoc.js"></script>
+<style>
+.al{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:10px 0}
+.al input[type=range]{flex:1;min-width:160px;max-width:320px}
+.al output{font-variant-numeric:tabular-nums;font-weight:700;min-width:2.6em}
+.pp{display:flex;gap:8px 18px;flex-wrap:wrap;margin:6px 0;font-size:14px;color:var(--mut)}
+.pp b{color:var(--ink);font-variant-numeric:tabular-nums}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+pre{margin:10px 0;padding:12px;overflow-x:auto;border:1.5px solid var(--ink);background:var(--paper);font:13.5px/1.55 ui-monospace,Consolas,monospace}
+pre i{color:var(--mut);font-style:normal}
+</style>
+</head>
+<body>
+<header class="top"><a href="index.html">← Mục lục</a><button class="b" id="tg" type="button">Chế độ tối</button></header>
+<main class="wrap">
+<div class="head"><span class="no">6.6</span><div><h1>Thuật toán ghép cặp bù trừ</h1><p class="lede">Hai bạn chỉ được ghép khi mỗi người dạy được cho người kia; Blossom chọn tổ hợp tốt nhất cho cả lớp.</p></div></div>
+
+<div class="nho"><ul>
+<li>Đỉnh là SV đã bật ghép cặp và chưa có cặp hoạt động; cạnh (a, b) có trọng số <mark>w(a, b) &gt; 0</mark>.</li>
+<li>Mục tiêu: tập cặp không trùng người có <mark>tổng w lớn nhất</mark>, tối ưu cho cả lớp, không tham lam từng cặp.</li>
+<li>Trọng số lấy <mark>min</mark> của hai chiều: một bên không dạy được gì thì w = 0 và cặp bị loại.</li>
+<li>Giải bằng Blossom (O(V³)); V ≤ 100 chạy dưới 1 giây.</li>
+</ul></div>
+
+<h2>Ba bước tính</h2>
+<ol>
+<li><b>Đạt(a)</b> là các nút a đã Đạt. <b>Biên(a)</b> là các nút a chưa Đạt nhưng mọi tiên quyết đã Đạt (vừa tầm, theo ZPD).</li>
+<li><b>Độ ưu tiên nút:</b> <code>p(n) = 1 + α · (1 − tỉ lệ Đạt của n)</code>. Nút càng nhiều người chưa Đạt (điểm nghẽn) càng nặng. α mặc định 1.</li>
+<li><b>Trọng số cặp:</b> <code>w(a, b) = min( Σp(n), n ∈ Đạt(a) ∩ Biên(b) ; Σp(n), n ∈ Đạt(b) ∩ Biên(a) )</code>.</li>
+</ol>
+<p>Chỉ dùng nút thuộc Biên để nội dung người học nhận được vừa tầm, không vượt quá tiên quyết.</p>
+
+<h2>Thử với 5 SV (ví dụ của đề cương)</h2>
+<div class="fig">
+<div class="tw"><table>
+<tr><th>SV</th><th>N2 Mảng</th><th>N4 Đệ quy</th><th>N5 Con trỏ</th><th>N6 Cấp phát</th></tr>
+<tr><td>An</td><td>Đ</td><td>B</td><td>Đ</td><td>B</td></tr>
+<tr><td>Châu</td><td>Đ</td><td>Đ</td><td>B</td><td>K</td></tr>
+<tr><td>Hà</td><td>B</td><td>B</td><td>B</td><td>K</td></tr>
+<tr><td>Dũng</td><td>Đ</td><td>Đ</td><td>Đ</td><td>B</td></tr>
+<tr><td>Khang</td><td>Đ</td><td>K</td><td>K</td><td>K</td></tr>
+</table></div>
+<p class="cap">Đ = Đạt, B = thuộc Biên (vừa tầm), K = Khóa. Ma trận rút gọn; tỉ lệ Đạt của từng nút lấy theo cả lớp như trong đề cương.</p>
+
+<div class="al"><label for="al">Hệ số α:</label><input id="al" type="range" min="0" max="3" step="0.25" value="1"><output id="alv" for="al">1</output>
+<label><input id="rc" type="checkbox"> An–Châu vừa ghép trong 14 ngày (BR-08)</label></div>
+<div class="pp" id="pp" aria-live="polite"></div>
+<div class="tw"><table id="tb"></table></div>
+<div class="msg" id="msg" aria-live="polite"></div>
+<p class="cap">Với α = 1 ra đúng ví dụ đề cương: chỉ An–Châu có w = 1,33; Hà ghép một chiều với Dũng; Khang chờ vòng sau. Kéo α hoặc đánh dấu BR-08 để xem kết quả đổi.</p>
+</div>
+
+<h2>Trường hợp đặc biệt</h2>
+<div class="tw"><table>
+<tr><th>Tình huống</th><th>Xử lý</th></tr>
+<tr><td>Cặp một chiều (w = 0)</td><td>Không tạo cạnh trong đồ thị hai chiều.</td></tr>
+<tr><td>SV lẻ, không có cặp hai chiều</td><td>Ghép <b>một chiều</b> với SV đã Đạt nút Biên có p cao nhất (vai trò mentor), hoặc đưa vào hàng chờ.</td></tr>
+<tr><td>Cặp vừa ghép gần đây</td><td>Không ghép lại cùng cặp trong N ngày (mặc định 14) để đa dạng hóa.</td></tr>
+<tr><td>Nội dung mỗi cặp</td><td>Mỗi chiều chọn tối đa m = 2 nút có p cao nhất.</td></tr>
+<tr><td>Blossom không chạy được</td><td>Phương án dự phòng: tham lam theo trọng số giảm dần.</td></tr>
+</table></div>
+
+<h2>Mã giả trong đề cương</h2>
+<pre>def run_round(students, mastered, frontier, pass_rate, recent_pairs, alpha=1.0, m=2):
+    p = {n: 1 + alpha * (1 - r) for n, r in pass_rate.items()}   <i># độ ưu tiên nút</i>
+    G = nx.Graph()
+    for a, b in itertools.combinations(students, 2):
+        if (a, b) in recent_pairs: continue                       <i># BR-08</i>
+        t_ab = mastered[a] &amp; frontier[b]                          <i># a dạy b</i>
+        t_ba = mastered[b] &amp; frontier[a]                          <i># b dạy a</i>
+        w = min(sum(p[n] for n in t_ab), sum(p[n] for n in t_ba)) <i># bù trừ hai chiều</i>
+        if w &gt; 0: G.add_edge(a, b, weight=w, t_ab=t_ab, t_ba=t_ba)
+    pairs = nx.max_weight_matching(G, maxcardinality=False)       <i># Blossom</i>
+    ...  <i># mỗi chiều lấy top-m nút theo p; SV chưa ghép → một chiều / hàng chờ</i></pre>
+
+<h2>Đo hiệu quả (6.6.6)</h2>
+<ul>
+<li>Tỉ lệ chấp nhận gợi ý; tỉ lệ cặp STUDIED; tỉ lệ mục ghép cặp được xác nhận Đạt.</li>
+<li>So tỉ lệ Đạt ở lượt kế tiếp giữa SV có học cặp và SV tự ôn (trong thí điểm). Mục tiêu MT6: ≥ 50% cặp được xác nhận.</li>
+</ul>
+
+<h2>Dễ bị hỏi</h2>
+<details><summary>Vì sao dùng min mà không dùng tổng?</summary><p>Tổng cho phép một bên dạy rất nhiều còn bên kia không dạy được gì vẫn có điểm cao. Min ép bù trừ hai chiều: cặp chỉ tốt bằng chiều yếu hơn.</p></details>
+<details><summary>Vì sao chỉ xét Biên mà không xét mọi nút đã Đạt?</summary><p>Nút ngoài Biên còn thiếu tiên quyết, học vào vượt tầm. Biên là vùng phát triển gần (ZPD), nơi một bạn kèm có ích nhất.</p></details>
+<details><summary>Vì sao p(n) tăng theo số người chưa Đạt?</summary><p>Nút nhiều người kẹt là điểm nghẽn; dạy được nút đó có lợi cho cả lớp nên được ưu tiên. α chỉnh mức ưu tiên (mặc định 1).</p></details>
+<details><summary>Vì sao không ghép tham lam từng cặp?</summary><p>Tham lam chọn cặp nặng nhất trước và có thể chặn mất hai cặp khác cộng lại lớn hơn. Blossom tối ưu tổng cho cả lớp (xem 2.2.6).</p></details>
+<details><summary>SV lẻ thì sao?</summary><p>Được ghép một chiều với mentor (người Đạt nút Biên có p cao nhất của mình) hoặc vào hàng chờ đến vòng sau.</p></details>
+</main>
+<script>
+var R = { N2: 0.88, N4: 0.67, N5: 0.32, N6: 0.25 };              // tỉ lệ Đạt từng nút (cả lớp)
+var NODES = ['N2', 'N4', 'N5', 'N6'];
+var S = [
+  { n: 'An',    d: ['N2', 'N5'],       b: ['N4', 'N6'] },
+  { n: 'Châu',  d: ['N2', 'N4'],       b: ['N5'] },
+  { n: 'Hà',    d: [],                 b: ['N2', 'N4', 'N5'] },
+  { n: 'Dũng',  d: ['N2', 'N4', 'N5'], b: ['N6'] },
+  { n: 'Khang', d: ['N2'],             b: [] }
+];
+var al = 1, recent = false;
+function f2(x) { return x.toFixed(2).replace('.', ','); }
+function p(n) { return 1 + al * (1 - R[n]); }
+function sum(a) { return a.reduce(function (s, n) { return s + p(n); }, 0); }
+function inter(x, y) { return x.filter(function (n) { return y.indexOf(n) >= 0; }); }
+function list(a) { return a.length ? '{' + a.join(', ') + '}' : '{}'; }
+function top(a) { return a.slice().sort(function (x, y) { return p(y) - p(x); }).slice(0, 2); }
+function build() {
+  var E = {};
+  for (var i = 0; i < S.length; i++) for (var j = i + 1; j < S.length; j++) {
+    var ab = inter(S[i].d, S[j].b), ba = inter(S[j].d, S[i].b);
+    var w = Math.min(sum(ab), sum(ba));
+    if (recent && i === 0 && j === 1) w = 0;                       // BR-08: bỏ cạnh
+    E[i + '-' + j] = { i: i, j: j, ab: ab, ba: ba, sab: sum(ab), sba: sum(ba), w: w };
+  }
+  return E;
+}
+function best(av, E) {                                             // thử mọi cách ghép (chỉ 5 SV), cho kết quả như Blossom
+  if (av.length < 2) return { w: 0, pr: [] };
+  var first = av[0], rest = av.slice(1), b = best(rest, E);
+  rest.forEach(function (g) {
+    var e = E[Math.min(first, g) + '-' + Math.max(first, g)];
+    if (e.w > 0) {
+      var r = best(rest.filter(function (x) { return x !== g; }), E);
+      if (r.w + e.w > b.w + 1e-9) b = { w: r.w + e.w, pr: r.pr.concat([e]) };
+    }
+  });
+  return b;
+}
+function oneWay(used) {                                            // SV lẻ: ghép một chiều với mentor, không thì hàng chờ
+  var out = [];
+  S.forEach(function (L, li) {
+    if (used[li]) return;
+    var bs = L.b.slice().sort(function (x, y) { return p(y) - p(x); });
+    for (var k = 0; k < bs.length; k++) {
+      var cand = [];
+      S.forEach(function (M, mi) { if (mi !== li && !used[mi] && M.d.indexOf(bs[k]) >= 0) cand.push(mi); });
+      if (cand.length) {
+        cand.sort(function (x, y) { return sum(inter(S[y].d, L.b)) - sum(inter(S[x].d, L.b)); });
+        used[li] = used[cand[0]] = true;
+        out.push({ L: li, M: cand[0], t: top(inter(S[cand[0]].d, L.b)) });
+        return;
+      }
+    }
+  });
+  return out;
+}
+function draw() {
+  $('#pp').innerHTML = NODES.map(function (n) { return 'p(' + n + ') = <b>' + f2(p(n)) + '</b>'; }).join('');
+  var E = build(), keys = Object.keys(E);
+  var m = best(S.map(function (_, i) { return i; }), E);
+  var used = {}, chosen = {};
+  m.pr.forEach(function (e) { used[e.i] = used[e.j] = true; chosen[e.i + '-' + e.j] = true; });
+  var ow = oneWay(used);
+  var h = '<tr><th>Cặp</th><th>a dạy b</th><th class="n">Σp</th><th>b dạy a</th><th class="n">Σp</th><th class="n">w = min</th></tr>';
+  keys.forEach(function (k) {
+    var e = E[k], a = S[e.i].n, b = S[e.j].n, cls = chosen[k] ? 'c-ok' : (e.w === 0 ? 'c-lk' : '');
+    h += '<tr class="' + cls + '"><td>' + a + ' – ' + b + (chosen[k] ? ' ✓' : '') + '</td><td>' + list(e.ab) + '</td><td class="n">' + f2(e.sab) + '</td><td>' + list(e.ba) + '</td><td class="n">' + f2(e.sba) + '</td><td class="n">' + f2(e.w) + (e.w === 0 ? ' (loại)' : '') + '</td></tr>';
+  });
+  $('#tb').innerHTML = h;
+  var msg = '<b>Ghép hai chiều (tổng w = ' + f2(m.w) + '):</b> ';
+  msg += m.pr.length ? m.pr.map(function (e) { return S[e.i].n + ' ↔ ' + S[e.j].n + ' (' + S[e.i].n + ' dạy ' + top(e.ab).join(', ') + '; ' + S[e.j].n + ' dạy ' + top(e.ba).join(', ') + ')'; }).join('; ') : 'không có cặp nào.';
+  msg += '<br><b>Một chiều:</b> ' + (ow.length ? ow.map(function (o) { return S[o.M].n + ' kèm ' + S[o.L].n + ' (' + o.t.join(', ') + ')'; }).join('; ') : 'không có.');
+  var wait = S.filter(function (_, i) { return !used[i]; }).map(function (s) { return s.n; });
+  msg += '<br><b>Hàng chờ vòng sau:</b> ' + (wait.length ? wait.join(', ') : 'không ai.');
+  $('#msg').innerHTML = msg;
+}
+document.addEventListener('DOMContentLoaded', function () {
+  $('#al').oninput = function () { al = parseFloat(this.value); $('#alv').textContent = String(al).replace('.', ','); draw(); };
+  $('#rc').onchange = function () { recent = this.checked; draw(); };
+  draw();
+});
+</script>
+</body>
+</html>

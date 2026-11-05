@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>6.5 Bản đồ nhiệt và điểm nghẽn gốc</title>
+<link rel="stylesheet" href="assets/hoc.css">
+<script src="assets/hoc.js"></script>
+<style>
+.al{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:10px 0}
+.al input[type=range]{flex:1;min-width:160px;max-width:320px}
+.al output{font-variant-numeric:tabular-nums;font-weight:700;min-width:3.2em}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.col{display:inline-block;padding:3px 12px;font-weight:700;border:1.5px solid var(--ink)}
+.col.xam{color:var(--mut);border-color:var(--rule)}
+.col.xanh{background:var(--okbg);color:var(--ok);border-color:var(--ok)}
+.col.vang{background:var(--hi);color:#1C2B3A;border-color:#1C2B3A}
+.col.do{background:var(--badbg);color:var(--red);border-color:var(--red)}
+</style>
+</head>
+<body>
+<header class="top"><a href="index.html">← Mục lục</a><button class="b" id="tg" type="button">Chế độ tối</button></header>
+<main class="wrap">
+<div class="head"><span class="no">6.5</span><div><h1>Bản đồ nhiệt và điểm nghẽn gốc</h1><p class="lede">Tô màu từng nút theo tỉ lệ Đạt của lớp, rồi từ nút đỏ lần ngược lên tiên quyết để tìm nút gốc cần giảng lại.</p></div></div>
+
+<div class="nho"><ul>
+<li>Tỉ lệ Đạt <code>p(n)</code> chỉ tính trên SV <mark>đã thử</mark> nút đó: “chưa thử” khác “chưa đạt”.</li>
+<li>Nút <mark>xám</mark> khi chưa đủ 5 SV thử; xanh từ 70%; vàng từ 40%; đỏ dưới 40%.</li>
+<li>Truy vết gốc: tổ tiên X của nút đỏ Y là <mark>ứng viên</mark> nếu phần lớn SV trượt Y cũng chưa Đạt X.</li>
+</ul></div>
+
+<h2>Chỉ số của mỗi nút (6.5.1)</h2>
+<ul>
+<li><b>Tỉ lệ đã thử</b> <code>a(n) = |SV đã có kết quả tại n| / sĩ số</code>.</li>
+<li><b>Tỉ lệ Đạt</b> <code>p(n) = |SV Đạt n| / |SV đã thử n|</code>.</li>
+<li>Số lượt trung bình; top quan niệm sai (đếm từ <code>evaluations.detected_misconceptions</code>).</li>
+<li>Cập nhật <b>tăng dần</b> theo từng sự kiện: chỉ tính lại nút bị ảnh hưởng và các nút con vừa mở khóa.</li>
+</ul>
+
+<h2>Thử phân màu (6.5.2)</h2>
+<div class="fig">
+<div class="al"><label for="th">SV đã thử:</label><input id="th" type="range" min="0" max="30" step="1" value="20"><output id="thv" for="th">20</output></div>
+<div class="al"><label for="da">SV Đạt:</label><input id="da" type="range" min="0" max="30" step="1" value="12"><output id="dav" for="da">12</output></div>
+<div class="msg" id="m1" aria-live="polite"></div>
+<div class="tw"><table>
+<thead><tr><th>Màu</th><th>Điều kiện (mặc định, GV cấu hình được)</th><th>Ý nghĩa với GV</th></tr></thead>
+<tbody>
+<tr><td><span class="col xam">XÁM</span></td><td>Số SV đã thử &lt; cỡ mẫu tối thiểu (5)</td><td>Chưa đủ dữ liệu để kết luận</td></tr>
+<tr><td><span class="col xanh">XANH ✓</span></td><td>p(n) ≥ 70%</td><td>Lớp vững, có thể đi tiếp</td></tr>
+<tr><td><span class="col vang">VÀNG !</span></td><td>40% ≤ p(n) &lt; 70%</td><td>Cần chú ý, cân nhắc ghép cặp</td></tr>
+<tr><td><span class="col do">ĐỎ ✗</span></td><td>p(n) &lt; 40%</td><td>Điểm nghẽn, cần can thiệp</td></tr>
+<tr><td><span class="col">◎ GỐC</span></td><td>Nút do RootCauseAnalyzer xác định là gốc</td><td>Nên giảng lại nút này trước</td></tr>
+</tbody></table></div>
+<p class="cap">Màu luôn đi kèm chữ và biểu tượng, không chỉ dựa vào màu.</p>
+</div>
+
+<h2>Truy vết điểm nghẽn gốc (6.5.3)</h2>
+<p>Với nút đỏ <b>Y</b>, gọi <b>F</b> là tập SV đã thử Y nhưng Chưa đạt. Với mỗi tổ tiên X của Y (độ sâu ≤ D): <code>r(X|Y) = |{s ∈ F : s chưa Đạt X}| / |F|</code>. Nếu <code>r ≥ θ</code> (mặc định 0,6) thì X là ứng viên; chọn ứng viên <mark>xa Y nhất</mark> (gần gốc nhất) vì đó là lỗ hổng nền tảng hơn.</p>
+
+<div class="fig">
+<p>Ví dụ: chuỗi N2 → N4 → N5 → <b>N6 (đỏ)</b>. F gồm 5 SV trượt N6.</p>
+<div class="al"><label for="ta">Ngưỡng θ:</label><input id="ta" type="range" min="0.1" max="1" step="0.05" value="0.6"><output id="tav" for="ta">0,60</output></div>
+<div class="tw"><table id="rt"></table></div>
+<div class="msg" id="m2" aria-live="polite"></div>
+<p class="cap">Số SV trượt tiên quyết là số minh họa, chọn để khớp ca kiểm thử TC12 (đa số SV trượt N6 cũng chưa Đạt N5). Kéo θ xuống 0,4 để thấy nút gốc dịch sâu hơn.</p>
+</div>
+
+<h2>Độ phức tạp (6.5.4)</h2>
+<ul>
+<li>Cập nhật chỉ số một nút: <b>O(số SV)</b>.</li>
+<li>Truy vết gốc: <b>O(|tổ tiên| × |F|)</b>. Lớp 100 SV, cây 50 nút chỉ vài nghìn phép tính, đáp ứng NFR-03.</li>
+</ul>
+
+<h2>Dễ bị hỏi</h2>
+<details><summary>Vì sao tính p(n) trên số SV đã thử, không phải cả lớp?</summary><p>Nếu chia cho cả lớp thì nút chưa ai học cũng có p thấp và bị tô đỏ nhầm. Tách “chưa thử” khỏi “chưa đạt” để màu đỏ nghĩa là thật sự khó.</p></details>
+<details><summary>Vì sao có màu xám với cỡ mẫu 5?</summary><p>Ít hơn 5 SV thử thì một người đổi kết quả cũng làm p nhảy rất mạnh, kết luận không đáng tin. Xám nói rõ “chưa đủ dữ liệu”.</p></details>
+<details><summary>Vì sao ưu tiên ứng viên xa Y hơn?</summary><p>Tổ tiên xa Y là lỗ hổng nền hơn: giảng lại nó giúp cả các nút phía sau. Nếu chỉ dừng ở tiên quyết gần nhất thì có thể mới chạm triệu chứng.</p></details>
+<details><summary>θ và độ sâu D chỉnh để làm gì?</summary><p>θ càng thấp thì càng nhiều ứng viên; D giới hạn số tầng tổ tiên xét để phép tính nhỏ và kết quả dễ đọc.</p></details>
+<details><summary>Cập nhật tăng dần nghĩa là gì?</summary><p>Mỗi khi có kết quả mới chỉ tính lại nút đó và các nút con vừa mở khóa, không tính lại toàn cây. Nhờ vậy dashboard đổi màu trong vài giây (TC11).</p></details>
+</main>
+<script>
+function f2(x) { return x.toFixed(2).replace('.', ','); }
+function pct(x) { return Math.round(x * 100) + '%'; }
+function color(t, d) {
+  if (t < 5) return ['xam', 'XÁM', 'Chưa đủ dữ liệu để kết luận.'];
+  var p = d / t;
+  if (p >= 0.7) return ['xanh', 'XANH ✓', 'Lớp vững, có thể đi tiếp.'];
+  if (p >= 0.4) return ['vang', 'VÀNG !', 'Cần chú ý, cân nhắc ghép cặp.'];
+  return ['do', 'ĐỎ ✗', 'Điểm nghẽn, cần can thiệp.'];
+}
+function d1() {
+  var t = +$('#th').value, d = +$('#da').value;
+  if (d > t) { d = t; $('#da').value = d; }
+  $('#thv').textContent = t; $('#dav').textContent = d;
+  var c = color(t, d);
+  $('#m1').innerHTML = (t ? 'p(n) = ' + d + '/' + t + ' = <b>' + pct(d / t) + '</b>. ' : 'Chưa SV nào thử. ') + '<span class="col ' + c[0] + '">' + c[1] + '</span> ' + c[2];
+}
+var A = [['N5', 1, 4], ['N4', 2, 2], ['N2', 3, 1]];            // [nút, khoảng cách tới Y, số SV trượt tiên quyết trong F]
+var NF = 5;
+function d2() {
+  var th = parseFloat($('#ta').value); $('#tav').textContent = f2(th);
+  var best = null, h = '<thead><tr><th>Tổ tiên X</th><th class="n">Cách Y</th><th class="n">SV trượt X</th><th class="n">r(X|Y)</th><th>Kết quả</th></tr></thead><tbody>';
+  A.forEach(function (a) {
+    var r = a[2] / NF, ok = r >= th - 1e-9;
+    if (ok && (!best || a[1] > best[1])) best = a;
+    h += '<tr class="' + (ok ? 'c-ok' : 'c-lk') + '"><td>' + a[0] + '</td><td class="n">' + a[1] + '</td><td class="n">' + a[2] + '/' + NF + '</td><td class="n">' + f2(r) + '</td><td>' + (ok ? 'ứng viên' : 'dưới ngưỡng') + '</td></tr>';
+  });
+  $('#rt').innerHTML = h + '</tbody>';
+  $('#m2').innerHTML = best ? '<b>◎ GỐC: ' + best[0] + '.</b> Cảnh báo “Nên giảng lại ' + best[0] + '” (xa N6 nhất trong các ứng viên).' : 'Không có ứng viên nào đạt ngưỡng; chưa kết luận được nút gốc.';
+}
+$('#th').oninput = $('#da').oninput = d1;
+$('#ta').oninput = d2;
+d1(); d2();
+</script>
+</body>
+</html>

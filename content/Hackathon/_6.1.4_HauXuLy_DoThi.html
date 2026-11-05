@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>6.1.4 Hậu xử lý đồ thị</title>
+<link rel="stylesheet" href="assets/hoc.css">
+<script src="assets/hoc.js"></script>
+<style>
+pre{margin:10px 0;padding:12px;overflow-x:auto;border:1.5px solid var(--ink);background:var(--paper);font:13.5px/1.55 ui-monospace,Consolas,monospace}
+pre i{color:var(--mut);font-style:normal}
+.ed.gone{opacity:.2}
+</style>
+</head>
+<body>
+<header class="top"><a href="index.html">← Mục lục</a><button class="b" id="tg" type="button">Chế độ tối</button></header>
+<main class="wrap">
+<div class="head"><span class="no">6.1.4</span><div><h1>Hậu xử lý đồ thị</h1><p class="lede">Đồ thị tiên quyết do AI đề xuất có thể có chu trình và cạnh thừa; hàm <code>sanitize</code> dọn cho thành DAG gọn trước khi GV duyệt.</p></div></div>
+
+<div class="nho"><ul>
+<li>Còn chu trình thì <mark>lặp: tìm một chu trình, bỏ cạnh yếu nhất</mark> (ưu tiên cạnh do AI sinh) cho tới khi hết.</li>
+<li>Rồi <mark>rút gọn bắc cầu</mark>: bỏ cạnh A→C khi đã có đường A→…→C.</li>
+<li>Cuối cùng <mark>xếp tầng</mark> (<code>topological_generations</code>) để vẽ cây từ trên xuống.</li>
+</ul></div>
+
+<h2>Chạy từng bước trên ví dụ</h2>
+<div class="fig">
+<div class="row">
+<button class="b" id="bk" type="button">← Lùi</button>
+<button class="b" id="nx" type="button">Bước tiếp →</button>
+<button class="b" id="rs" type="button">Làm lại</button>
+</div>
+<svg class="d" viewBox="0 0 640 220" role="img" aria-label="Đồ thị 4 nút với một chu trình và một cạnh bắc cầu">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker></defs>
+<g id="eg"></g>
+<g id="ng"></g>
+</svg>
+<div class="cnt" id="cnt"></div>
+<div class="msg" id="msg" aria-live="polite"></div>
+<p class="cap">Mỗi cạnh có nhãn nguồn (GV hoặc AI) và độ tin cậy. Cạnh GV thêm luôn được giữ. Đồ thị này là ví dụ tự dựng để minh họa, không phải hình 6.3 của đề cương.</p>
+</div>
+
+<h2>Mã trong đề cương</h2>
+<pre>def sanitize(G):                       <i># G: nx.DiGraph, cạnh có thuộc tính confidence, source</i>
+    while True:
+        try:
+            cycle = nx.find_cycle(G)    <i># DFS, O(V + E)</i>
+        except nx.NetworkXNoCycle:
+            break
+        ai_edges = [e for e in cycle if G.edges[e]["source"] == "AI"] or cycle
+        weakest = min(ai_edges, key=lambda e: G.edges[e]["confidence"])
+        G.remove_edge(*weakest)         <i># phá chu trình tại cạnh yếu nhất</i>
+
+    R = nx.transitive_reduction(G)      <i># bỏ cạnh bắc cầu A→C khi đã có A→…→C</i>
+    R.add_nodes_from(G.nodes(data=True))
+    for u, v in R.edges: R.edges[u, v].update(G.edges[u, v])
+    layers = {n: i for i, gen in enumerate(nx.topological_generations(R)) for n in gen}
+    return R, layers</pre>
+
+<h2>Dễ bị hỏi</h2>
+<details><summary>Vì sao bỏ cạnh yếu nhất của AI mà không bỏ ngẫu nhiên?</summary><p>Cạnh độ tin cậy thấp nhiều khả năng là AI đoán sai. Cạnh GV thêm (source = LECTURER) luôn được ưu tiên giữ; chỉ khi chu trình toàn cạnh GV mới xét cả chu trình (<code>or cycle</code>).</p></details>
+<details><summary>Vì sao phải lặp <code>while True</code>?</summary><p>Một đồ thị có thể chứa nhiều chu trình. Mỗi lần chỉ tìm và phá một chu trình; lặp cho tới khi <code>find_cycle</code> báo hết.</p></details>
+<details><summary>Rút gọn bắc cầu có làm mất ràng buộc học không?</summary><p>Không. A→C bị bỏ chỉ khi vẫn còn A→B→C, nên thứ tự học hợp lệ không đổi mà cây bớt rối (xem TT03).</p></details>
+<details><summary>Vì sao phải phá chu trình trước rồi mới rút gọn?</summary><p>Rút gọn bắc cầu chỉ có nghĩa trên DAG. Còn chu trình thì “có đường từ A tới C” không còn xác định thứ tự (xem TT01, TT02).</p></details>
+<details><summary>Xếp tầng để làm gì?</summary><p>Mỗi nút có một số tầng, dùng để vẽ cây từ trên xuống: nút không tiên quyết ở tầng 0, nút sau nằm tầng thấp hơn các tiên quyết của nó.</p></details>
+</main>
+<script>
+var N = { N1: 70, N2: 230, N3: 390, N4: 550 };               // x của từng nút, cùng y = 110
+var E = [
+  { id: 'a', f: 'N1', t: 'N2', src: 'GV', c: 1.0, d: 'M106 110 L194 110', lx: 150, ly: 100 },
+  { id: 'b', f: 'N2', t: 'N3', src: 'AI', c: 0.8, d: 'M266 110 L354 110', lx: 310, ly: 100 },
+  { id: 'c', f: 'N3', t: 'N1', src: 'AI', c: 0.4, d: 'M390 88 C 390 5, 70 5, 70 88', lx: 230, ly: 30 },
+  { id: 'd', f: 'N3', t: 'N4', src: 'AI', c: 0.9, d: 'M426 110 L514 110', lx: 470, ly: 100 },
+  { id: 'e', f: 'N2', t: 'N4', src: 'AI', c: 0.7, d: 'M230 132 C 230 215, 550 215, 550 132', lx: 390, ly: 190 }
+];
+var ST = [
+  { gone: [], hot: ['a', 'b', 'c'], msg: '<b>Đồ thị thô.</b> N1→N2→N3→N1 là một chu trình (<code>find_cycle</code> tìm ra trong O(V + E)). Thêm N2→N4 và N3→N4.' },
+  { gone: ['c'], hot: ['a', 'b'], msg: '<b>Phá chu trình.</b> Trong chu trình, cạnh AI là N2→N3 (0,8) và N3→N1 (0,4). Chọn <b>yếu nhất = N3→N1</b> rồi bỏ. N1→N2 do GV thêm nên không bị đụng. Gọi <code>find_cycle</code> lại: hết chu trình.' },
+  { gone: ['c', 'e'], hot: ['e'], msg: '<b>Rút gọn bắc cầu.</b> N2→N4 thừa vì đã có N2→N3→N4. Bỏ cạnh này, thứ tự học vẫn đúng.' },
+  { gone: ['c', 'e'], hot: [], layers: true, msg: '<b>Xếp tầng.</b> <code>topological_generations</code> cho N1 = 0, N2 = 1, N3 = 2, N4 = 3: dùng để vẽ cây từ trên xuống. Kết quả là DAG gọn, đưa sang bước GV duyệt.' }
+];
+var L = { N1: 0, N2: 1, N3: 2, N4: 3 }, s = 0;
+function draw() {
+  var st = ST[s], g = '', n = '';
+  E.forEach(function (e) {
+    var gone = st.gone.indexOf(e.id) >= 0, hot = st.hot.indexOf(e.id) >= 0;
+    var cls = 'ed' + (gone ? ' gone' : '') + (hot ? (s === 0 ? ' bad' : ' on') : '');
+    g += '<path class="' + cls + '" d="' + e.d + '" marker-end="url(#ar)"/><text class="sm" x="' + e.lx + '" y="' + e.ly + '" text-anchor="middle">' + e.src + ' ' + String(e.c).replace('.', ',') + (gone ? ' ✗' : '') + '</text>';
+  });
+  $('#eg').innerHTML = g;
+  Object.keys(N).forEach(function (k) {
+    n += '<g class="nd' + (st.layers ? ' ok' : '') + '"><rect x="' + (N[k] - 36) + '" y="90" width="72" height="40" rx="3"/><text x="' + N[k] + '" y="115" text-anchor="middle">' + k + (st.layers ? ' · T' + L[k] : '') + '</text></g>';
+  });
+  $('#ng').innerHTML = n;
+  $('#msg').innerHTML = st.msg;
+  $('#cnt').textContent = 'Bước ' + (s + 1) + '/' + ST.length + (st.layers ? ' · T = tầng' : '');
+  $('#bk').disabled = s === 0; $('#nx').disabled = s === ST.length - 1;
+}
+$('#nx').onclick = function () { s++; draw(); };
+$('#bk').onclick = function () { s--; draw(); };
+$('#rs').onclick = function () { s = 0; draw(); };
+draw();
+</script>
+</body>
+</html>

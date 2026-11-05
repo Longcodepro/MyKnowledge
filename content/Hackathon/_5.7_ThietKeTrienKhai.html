@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5.7 Thiết kế triển khai</title>
+<link rel="stylesheet" href="assets/hoc.css">
+<script src="assets/hoc.js"></script>
+<style>
+.sv{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
+.sv .b{min-height:46px;font-weight:650}
+@media (max-width:560px){.sv{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<header class="top"><a href="index.html">← Mục lục</a><button class="b" id="tg" type="button">Chế độ tối</button></header>
+<main class="wrap">
+<div class="head"><span class="no">5.7</span><div><h1>Thiết kế triển khai</h1><p class="lede">Hệ thống chạy thành 8 dịch vụ bằng Docker Compose; CI/CD đưa bản mới lên máy chủ.</p></div></div>
+
+<div class="nho"><ul>
+<li>Cả hệ thống dựng bằng <mark>một file Docker Compose</mark>: nginx, api, worker, beat, postgres, redis, minio và stt (tùy chọn).</li>
+<li>Hai môi trường: <mark>dev</mark> (máy cá nhân) và <mark>demo</mark> (VM cloud, có dữ liệu mẫu và chế độ giả lập 30 SV).</li>
+<li>CI/CD: <mark>GitHub Actions</mark> chạy kiểm thử, build image, triển khai lên VM qua SSH.</li>
+</ul></div>
+
+<h2>Bấm từng dịch vụ để xem vai trò</h2>
+<div class="fig">
+<div class="sv" role="group" aria-label="Chọn dịch vụ" id="sv"></div>
+<div class="msg" id="msg" aria-live="polite"></div>
+<p class="cap">Cột “nói chuyện với” là suy luận từ vai trò từng dịch vụ trong bảng, không phải trích nguyên văn đề cương.</p>
+</div>
+
+<h2>Bảng 5.15: cấu hình dịch vụ</h2>
+<div class="tw"><table>
+<thead><tr><th>Dịch vụ</th><th>Image / tiến trình</th><th>Cổng</th><th>Ghi chú</th></tr></thead>
+<tbody>
+<tr><td>nginx</td><td>nginx:stable</td><td>80, 443</td><td>TLS, reverse proxy, nâng cấp WebSocket, phục vụ SPA</td></tr>
+<tr><td>api</td><td>FastAPI (uvicorn × 4)</td><td>8000</td><td>REST + WebSocket</td></tr>
+<tr><td>worker</td><td>Celery worker × N</td><td>—</td><td>Hàng đợi: documents, aggregation, matching, ai</td></tr>
+<tr><td>beat</td><td>Celery beat</td><td>—</td><td>Ghép cặp định kỳ, hết hạn gợi ý, dọn ghi âm</td></tr>
+<tr><td>postgres</td><td>postgres:16 + pgvector</td><td>5432</td><td>Volume dữ liệu, sao lưu hằng ngày</td></tr>
+<tr><td>redis</td><td>redis:7</td><td>6379</td><td>Broker, pub/sub, cache</td></tr>
+<tr><td>minio</td><td>minio</td><td>9000</td><td>Giáo trình, ghi âm</td></tr>
+<tr><td>stt (tùy chọn)</td><td>faster-whisper server</td><td>9100</td><td>Chạy trên máy GPU nếu tự host</td></tr>
+</tbody></table></div>
+
+<h2>Dễ bị hỏi</h2>
+<details><summary>Vì sao tách worker và beat khỏi api?</summary><p>Việc nặng (đọc giáo trình, tổng hợp bản đồ nhiệt, ghép cặp, gọi AI) chạy nền qua hàng đợi nên không làm chậm API. Beat chỉ lên lịch việc định kỳ.</p></details>
+<details><summary>Vì sao redis xuất hiện ba vai?</summary><p>Broker cho Celery, kênh pub/sub cho sự kiện thời gian thực, và cache. Một dịch vụ nhỏ phục vụ ba nhu cầu nên đỡ thêm thành phần.</p></details>
+<details><summary>Vì sao postgres dùng pgvector?</summary><p>Để lưu embedding của các đoạn giáo trình ngay trong cùng cơ sở dữ liệu, phục vụ RAG khi sinh cây và rubric mà không cần thêm kho vector riêng.</p></details>
+<details><summary>STT vì sao là tùy chọn?</summary><p>Nhận dạng giọng nói tự host cần máy GPU. Không có máy đó thì dùng dịch vụ ngoài; hệ thống vẫn chạy.</p></details>
+<details><summary>Dev và demo khác nhau thế nào?</summary><p>Dev chạy <code>docker compose</code> trên máy cá nhân. Demo chạy trên VM cloud, có dữ liệu mẫu và chế độ giả lập 30 SV cho buổi trình diễn.</p></details>
+</main>
+<script>
+var S = [
+  ['nginx', 'Cổng vào duy nhất: kết thúc TLS, chuyển yêu cầu tới api, nâng cấp kết nối lên WebSocket và phục vụ giao diện SPA.', 'trình duyệt, api'],
+  ['api', 'Nhận REST và WebSocket. Việc nặng không làm tại đây mà đẩy vào hàng đợi cho worker.', 'nginx, postgres, redis, minio'],
+  ['worker', 'Chạy việc nền theo bốn hàng đợi: documents, aggregation, matching, ai.', 'redis (nhận việc), postgres, minio'],
+  ['beat', 'Lên lịch: ghép cặp định kỳ, hết hạn gợi ý, dọn ghi âm cũ.', 'redis (đẩy việc cho worker)'],
+  ['postgres', 'Cơ sở dữ liệu chính, có pgvector cho embedding. Có volume dữ liệu và sao lưu hằng ngày.', 'api, worker'],
+  ['redis', 'Broker cho Celery, pub/sub cho sự kiện và cache.', 'api, worker, beat'],
+  ['minio', 'Kho tệp: giáo trình tải lên và ghi âm của SV.', 'api, worker'],
+  ['stt', 'Nhận dạng giọng nói faster-whisper, tùy chọn, chạy trên máy GPU nếu tự host.', 'api hoặc worker (gọi để chép lời)']
+];
+var box = $('#sv');
+S.forEach(function (s, i) {
+  var b = document.createElement('button');
+  b.type = 'button'; b.className = 'b'; b.textContent = s[0]; b.setAttribute('aria-pressed', 'false');
+  b.onclick = function () { show(i); };
+  box.appendChild(b);
+});
+function show(i) {
+  $$('.b', box).forEach(function (b, j) { b.setAttribute('aria-pressed', i === j); });
+  $('#msg').innerHTML = '<b>' + S[i][0] + '.</b> ' + S[i][1] + '<br><b>Nói chuyện với:</b> ' + S[i][2];
+}
+show(0);
+</script>
+</body>
+</html>
