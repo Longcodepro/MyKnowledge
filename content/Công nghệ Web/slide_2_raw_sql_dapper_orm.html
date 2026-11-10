@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raw SQL, Dapper và ORM</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #F8FAFC;
+            --card: #FFFFFF;
+            --text: #0F172A;
+            --muted: #475569;
+            --border: #E2E8F0;
+            --accent: #2563EB;
+            --accent-soft: #EFF6FF;
+            --green: #059669;
+            --green-soft: #ECFDF5;
+            --red: #DC2626;
+            --red-soft: #FEF2F2;
+            --amber: #D97706;
+            --amber-soft: #FFFBEB;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            user-select: none;
+        }
+
+        #deck {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slide {
+            position: absolute;
+            width: 90%;
+            max-width: 1120px;
+            height: 84vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(30px);
+            transition: opacity 0.35s ease, transform 0.35s ease, visibility 0.35s;
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(0);
+            z-index: 10;
+        }
+
+        .slide.prev {
+            transform: translateX(-30px);
+        }
+
+        .step {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(12px);
+            transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
+        }
+
+        .step.step-visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        h1 {
+            font-size: 2.75rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+
+        h2 {
+            font-size: 1.85rem;
+            font-weight: 700;
+            letter-spacing: -0.015em;
+            margin-bottom: 0.35rem;
+            color: var(--text);
+        }
+
+        .subtitle {
+            font-size: 1.05rem;
+            color: var(--muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .tag {
+            display: inline-block;
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 0.3rem 0.75rem;
+            border-radius: 6px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            border: 1px solid #BFDBFE;
+            margin-bottom: 0.75rem;
+            width: fit-content;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.35rem;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+        }
+
+        .card h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card p, .card li {
+            font-size: 0.93rem;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        .card ul {
+            padding-left: 1.15rem;
+            margin-top: 0.5rem;
+        }
+
+        .card li + li {
+            margin-top: 0.35rem;
+        }
+
+        .badge {
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 0.2rem 0.55rem;
+            border-radius: 4px;
+            background: #F1F5F9;
+            color: #334155;
+        }
+
+        .badge.green { background: var(--green-soft); color: var(--green); }
+        .badge.red { background: var(--red-soft); color: var(--red); }
+        .badge.amber { background: var(--amber-soft); color: var(--amber); }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: #F1F5F9;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .code-box {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.82rem;
+            background: #0F172A;
+            color: #F8FAFC;
+            padding: 1rem 1.2rem;
+            border-radius: 10px;
+            line-height: 1.55;
+            white-space: pre-wrap;
+        }
+
+        .kw { color: #93C5FD; }
+        .cm { color: #64748B; }
+        .fn { color: #6EE7B7; }
+        .st { color: #FDE68A; }
+
+        .map-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.55rem 0.85rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-top: 0.5rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.84rem;
+            background: #F8FAFC;
+        }
+
+        .footer-metrics {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.82rem;
+            color: var(--muted);
+        }
+    </style>
+</head>
+<body tabindex="0">
+
+<div id="deck">
+
+    <!-- SLIDE 1: Overview -->
+    <section class="slide active">
+        <span class="tag">Kiến Thức Backend & Database</span>
+        <h1>Hành Trình Kết Nối Database:<br>Raw SQL, Dapper & Full ORM</h1>
+        <p class="subtitle">Từ câu lệnh SQL thuần thô sơ đến các Micro-ORM và Full ORM hiện đại.</p>
+        <div class="grid-3">
+            <div class="card">
+                <h3>01. Raw SQL <span class="badge">Cấp độ nền tảng</span></h3>
+                <p>Viết chuỗi câu lệnh SQL trực tiếp và tự đọc từng cột dữ liệu. Kiểm soát 100% hiệu năng nhưng dài dòng, dễ dính lỗi bảo mật nếu cộng chuỗi.</p>
+                <div class="footer-metrics">
+                    <span>Hiệu năng: <strong style="color: var(--green);">100%</strong></span>
+                    <span>Độ an toàn: <strong style="color: var(--red);">Thấp (Thủ công)</strong></span>
+                </div>
+            </div>
+            <div class="card">
+                <h3>02. Dapper <span class="badge green">Micro-ORM</span></h3>
+                <p>Vẫn viết SQL chủ động nhưng tự động hóa hoàn toàn khâu Mapping (ánh xạ dữ liệu vào Object) và tham số hóa chống SQL Injection.</p>
+                <div class="footer-metrics">
+                    <span>Hiệu năng: <strong style="color: var(--green);">~98%</strong></span>
+                    <span>Mã nguồn: <strong style="color: var(--accent);">Gọn nhẹ</strong></span>
+                </div>
+            </div>
+            <div class="card">
+                <h3>03. Full ORM <span class="badge amber">EF Core / Prisma</span></h3>
+                <p>Thao tác 100% bằng đối tượng OOP và LINQ/Method. Hệ thống tự động sinh câu lệnh SQL, quản lý trạng thái và Migration.</p>
+                <div class="footer-metrics">
+                    <span>Tốc độ code: <strong style="color: var(--green);">Rất nhanh</strong></span>
+                    <span>Kiểm soát SQL: <strong style="color: var(--amber);">Trung bình</strong></span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 2: Mapping Concept -->
+    <section class="slide">
+        <h2>1. Khái Niệm Mapping (Ánh Xạ Dữ Liệu)</h2>
+        <p class="subtitle">Cầu nối dịch dữ liệu giữa Thế giới Bảng Quan hệ (Relational DB) và Thế giới Đối tượng (OOP).</p>
+        <div class="grid-2">
+            <div class="card step">
+                <h3>Thế giới Database (Bảng <code>users</code>) <span class="badge">Rows & Columns</span></h3>
+                <p>Lưu trữ dạng bảng phẳng, kiểu dữ liệu SQL (<code>INT</code>, <code>VARCHAR</code>, <code>DECIMAL</code>) và tên cột thường viết kiểu <code>snake_case</code>.</p>
+                <div class="map-row"><span>id (INT PK)</span> <strong>101</strong></div>
+                <div class="map-row"><span>full_name (VARCHAR)</span> <strong>'Nguyễn Thành Long'</strong></div>
+                <div class="map-row"><span>wallet_balance (DECIMAL)</span> <strong>2500000.00</strong></div>
+            </div>
+            <div class="card step">
+                <h3>Thế giới Ứng dụng (Class <code>User</code>) <span class="badge green">Objects & Properties</span></h3>
+                <p>Lưu trữ trên RAM dưới dạng Object hướng đối tượng, kiểu dữ liệu ngôn ngữ (<code>int</code>, <code>string</code>, <code>decimal</code>) và đặt tên <code>PascalCase</code>.</p>
+                <div class="map-row"><span>public int Id { get; set; }</span> <strong>101</strong></div>
+                <div class="map-row"><span>public string FullName { get; set; }</span> <strong>"Nguyễn Thành Long"</strong></div>
+                <div class="map-row"><span>public decimal WalletBalance { get; set; }</span> <strong>2500000m</strong></div>
+            </div>
+        </div>
+        <div class="card step" style="margin-top: 1.25rem; background: var(--accent-soft); border-color: #BFDBFE;">
+            <p style="color: var(--text);"><strong>Bài toán Mapping:</strong> Làm sao chuyển hàng nghìn dòng kết quả từ <code>DataReader</code> sang danh sách <code>List&lt;User&gt;</code> mà không phải gõ tay từng dòng <code>user.Id = reader.GetInt32(0)</code>?</p>
+        </div>
+    </section>
+
+    <!-- SLIDE 3: Raw SQL -->
+    <section class="slide">
+        <h2>2. Cấp Độ 1: Raw SQL (ADO.NET / Driver Thuần)</h2>
+        <p class="subtitle">Kiểm soát tối đa nhưng tốn công sức ánh xạ thủ công và tiềm ẩn rủi ro nối chuỗi.</p>
+        <div class="grid-2">
+            <div class="card step">
+                <h3>Code đọc & ánh xạ thủ công <span class="badge red">Dài dòng</span></h3>
+                <div class="code-box"><span class="cm">// 1. Dễ dính SQL Injection nếu cộng chuỗi trực tiếp:</span>
+<span class="kw">string</span> sql = <span class="st">"SELECT id, full_name FROM users WHERE id = "</span> + inputId;
+
+<span class="kw">using var</span> cmd = <span class="kw">new</span> <span class="fn">NpgsqlCommand</span>(sql, conn);
+<span class="kw">using var</span> reader = cmd.<span class="fn">ExecuteReader</span>();
+
+<span class="cm">// 2. Phải tự gán từng cột bằng tay (Manual Mapping):</span>
+<span class="kw">if</span> (reader.<span class="fn">Read</span>()) {
+    <span class="kw">return new</span> User {
+        Id = reader.<span class="fn">GetInt32</span>(0),
+        FullName = reader.<span class="fn">GetString</span>(1)
+    };
+}</div>
+            </div>
+            <div class="card step">
+                <h3>Đánh giá Raw SQL</h3>
+                <ul>
+                    <li><strong>Ưu điểm:</strong> Tốc độ thực thi nhanh nhất (không có chi phí trung gian), tối ưu được các câu truy vấn báo cáo cực kỳ phức tạp.</li>
+                    <li><strong>Nhược điểm 1 (Boilerplate):</strong> Bảng có 30 cột phải viết 30 dòng <code>reader.Get...</code>. Đổi tên cột dễ gây lỗi lúc chạy (Runtime Error).</li>
+                    <li><strong>Nhược điểm 2 (Bảo mật):</strong> Lập trình viên quên dùng <code>Parameters.AddWithValue</code> mà cộng chuỗi trực tiếp sẽ mở toang cửa cho <strong>SQL Injection</strong>.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 4: Dapper -->
+    <section class="slide">
+        <h2>3. Cấp Độ 2: Dapper (Micro-ORM)</h2>
+        <p class="subtitle">Điểm cân bằng vàng: Giữ nguyên sức mạnh chủ động của SQL, tự động hóa hoàn toàn khâu Mapping.</p>
+        <div class="grid-2">
+            <div class="card step">
+                <h3>Truy vấn với Dapper trong C# <span class="badge green">Gọn & An toàn</span></h3>
+                <div class="code-box"><span class="kw">string</span> sql = <span class="st">@"
+    SELECT id AS Id, full_name AS FullName, wallet_balance AS WalletBalance
+    FROM users
+    WHERE id = @UserId"</span>;
+
+<span class="cm">// Tự động truyền tham số an toàn + Tự động ánh xạ ra Object User</span>
+<span class="kw">var</span> user = <span class="kw">await</span> conn.<span class="fn">QueryFirstOrDefaultAsync</span>&lt;User&gt;(
+    sql,
+    <span class="kw">new</span> { UserId = 101 }
+);</div>
+            </div>
+            <div class="card step">
+                <h3>Cơ chế hoạt động bên dưới của Dapper</h3>
+                <ul>
+                    <li><strong>Parameterized Query tự động:</strong> Object <code>new { UserId = 101 }</code> được tự động biến thành <code>DbParameter</code>, triệt tiêu nguy cơ SQL Injection.</li>
+                    <li><strong>IL Emit Caching:</strong> Lần đầu chạy, Dapper sinh mã máy (IL Code) để map cột sang thuộc tính Class và lưu vào Cache. Các lần sau nhanh gần ngang code tay ADO.NET.</li>
+                    <li><strong>Phù hợp khi:</strong> Hệ thống cần hiệu năng cao, cấu trúc 3-Tier (DAO / BUS / Controller) rõ ràng và lập trình viên vững SQL.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 5: Full ORM -->
+    <section class="slide">
+        <h2>4. Cấp Độ 3: Full ORM (Entity Framework Core / Prisma)</h2>
+        <p class="subtitle">Tự động hóa toàn diện từ viết truy vấn, theo dõi thay đổi (Change Tracking) đến quản lý Migration.</p>
+        <div class="grid-2">
+            <div class="card step">
+                <h3>Thao tác bằng LINQ / OOP 100% <span class="badge amber">Trừu tượng cao</span></h3>
+                <div class="code-box"><span class="cm">// Không cần viết chữ SQL nào, trình dịch tự sinh câu lệnh</span>
+<span class="kw">var</span> user = <span class="kw">await</span> dbContext.Users
+    .<span class="fn">Include</span>(u => u.Orders)
+    .<span class="fn">FirstOrDefaultAsync</span>(u => u.Id == 101);
+
+<span class="cm">// Change Tracker tự phát hiện thuộc tính thay đổi để sinh lệnh UPDATE</span>
+user.WalletBalance += 500000m;
+<span class="kw">await</span> dbContext.<span class="fn">SaveChangesAsync</span>();</div>
+            </div>
+            <div class="card step">
+                <h3>Lợi ích & Cạm bẫy cần lưu ý</h3>
+                <ul>
+                    <li><strong>Lợi ích lớn:</strong> Phát triển tính năng CRUD cực nhanh, kiểm tra lỗi kiểu dữ liệu ngay lúc biên dịch (Compile-time), hỗ trợ Code-First Migration.</li>
+                    <li><strong>Chi phí Change Tracking:</strong> Tốn thêm RAM và CPU để theo dõi trạng thái từng Object (nên dùng <code>.AsNoTracking()</code> khi chỉ đọc).</li>
+                    <li><strong>Lỗi N+1 Query & Câu SQL kém tối ưu:</strong> Nếu lạm dụng vòng lặp hoặc <code>Include</code> quá nhiều bảng, ORM có thể sinh ra câu lệnh JOIN khổng lồ làm chậm DB.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 6: Matrix & Best Practices -->
+    <section class="slide">
+        <h2>5. Bảng So Sánh & Kiến Trúc Kết Hợp Thực Tế (CQRS)</h2>
+        <p class="subtitle">Không cần chọn một bỏ một — các hệ thống lớn thường kết hợp cả Dapper lẫn Full ORM.</p>
+        <div class="step">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tiêu chí</th>
+                        <th>Raw SQL (ADO.NET)</th>
+                        <th>Dapper (Micro-ORM)</th>
+                        <th>Full ORM (EF Core / Prisma)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Hiệu năng đọc/ghi</strong></td>
+                        <td>Nhanh nhất (Chuẩn 100%)</td>
+                        <td>Rất nhanh (~98% Raw SQL)</td>
+                        <td>Khá (Chậm hơn do Tracking & Dịch LINQ)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tốc độ phát triển (Dev Speed)</strong></td>
+                        <td>Chậm, tốn nhiều code lặp</td>
+                        <td>Nhanh, kiểm soát rõ câu SQL</td>
+                        <td>Cực nhanh cho các nghiệp vụ CRUD</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Kiểm soát câu lệnh SQL</strong></td>
+                        <td>Tuyệt đối (100%)</td>
+                        <td>Tuyệt đối (100%)</td>
+                        <td>Gián tiếp (Phụ thuộc SQL Generator)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Ứng dụng chuẩn trong thực tế</strong></td>
+                        <td>Batch job đặc thù, драйver cấp thấp</td>
+                        <td><strong>Luồng Đọc (Queries):</strong> Dashboard, Báo cáo, API tải cao</td>
+                        <td><strong>Luồng Ghi (Commands):</strong> Nghiệp vụ phức tạp, Quản lý Schema</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</div>
+
+<script>
+    const slides = document.querySelectorAll('.slide');
+    let currentSlide = 0;
+
+    function updateSlides() {
+        slides.forEach((slide, idx) => {
+            slide.classList.remove('active', 'prev');
+            if (idx === currentSlide) {
+                slide.classList.add('active');
+            } else if (idx < currentSlide) {
+                slide.classList.add('prev');
+            }
+        });
+    }
+
+    function nav(dir) {
+        const activeSlide = slides[currentSlide];
+        if (dir === 1) {
+            const unseen = activeSlide.querySelectorAll('.step:not(.step-visible)');
+            if (unseen.length > 0) {
+                unseen[0].classList.add('step-visible');
+            } else if (currentSlide < slides.length - 1) {
+                currentSlide++;
+                updateSlides();
+            }
+        } else {
+            const seen = activeSlide.querySelectorAll('.step.step-visible');
+            if (seen.length > 0) {
+                seen[seen.length - 1].classList.remove('step-visible');
+            } else if (currentSlide > 0) {
+                currentSlide--;
+                const prevSlide = slides[currentSlide];
+                prevSlide.querySelectorAll('.step').forEach(s => s.classList.add('step-visible'));
+                updateSlides();
+            }
+        }
+    }
+
+    window.addEventListener('load', () => {
+        document.body.focus();
+        updateSlides();
+    });
+
+    document.addEventListener('click', () => {
+        document.body.focus();
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            nav(1);
+        } else if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            nav(-1);
+        } else if (e.key === 'Home') {
+            e.preventDefault();
+            currentSlide = 0;
+            slides.forEach(s => s.querySelectorAll('.step').forEach(st => st.classList.remove('step-visible')));
+            updateSlides();
+        } else if (e.key === 'End') {
+            e.preventDefault();
+            currentSlide = slides.length - 1;
+            slides.forEach(s => s.querySelectorAll('.step').forEach(st => st.classList.add('step-visible')));
+            updateSlides();
+        }
+    });
+</script>
+</body>
+</html>

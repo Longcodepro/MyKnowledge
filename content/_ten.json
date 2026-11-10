@@ -19,5 +19,7 @@
   "OS/06-quan-ly-bo-nho.html": "OS 6: Quản lý bộ nhớ",
   "OS/07-bo-nho-ao.html": "OS 7: Bộ nhớ ảo",
   "OS/08-o-dia.html": "OS 8: Ổ đĩa và lưu trữ",
-  "Công nghệ Web/sql_transactions_acid_presentation.html": "SQL Transaction and Rollback"
+  "Công nghệ Web/slide_2_raw_sql_dapper_orm.html": "RAW - > ORM-Micro -> ORM-Full",
+  "Công nghệ Web/sql_transactions_acid_presentation.html": "SQL Transaction and Rollback",
+  "Công nghệ Web/slide_1_ngon_ngu_thu_vien_framework.html": "Laguage, Library, Framwork"
 }

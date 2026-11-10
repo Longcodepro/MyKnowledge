@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ngôn ngữ, Thư viện và Framework</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #F8FAFC;
+            --card: #FFFFFF;
+            --text: #0F172A;
+            --muted: #475569;
+            --border: #E2E8F0;
+            --accent: #2563EB;
+            --accent-soft: #EFF6FF;
+            --green: #059669;
+            --green-soft: #ECFDF5;
+            --amber: #D97706;
+            --amber-soft: #FFFBEB;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            user-select: none;
+        }
+
+        #deck {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slide {
+            position: absolute;
+            width: 90%;
+            max-width: 1120px;
+            height: 84vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(30px);
+            transition: opacity 0.35s ease, transform 0.35s ease, visibility 0.35s;
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(0);
+            z-index: 10;
+        }
+
+        .slide.prev {
+            transform: translateX(-30px);
+        }
+
+        .step {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(12px);
+            transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
+        }
+
+        .step.step-visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        h1 {
+            font-size: 2.75rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+
+        h2 {
+            font-size: 1.85rem;
+            font-weight: 700;
+            letter-spacing: -0.015em;
+            margin-bottom: 0.35rem;
+            color: var(--text);
+        }
+
+        .subtitle {
+            font-size: 1.05rem;
+            color: var(--muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .tag {
+            display: inline-block;
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 0.3rem 0.75rem;
+            border-radius: 6px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            border: 1px solid #BFDBFE;
+            margin-bottom: 0.75rem;
+            width: fit-content;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.35rem;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+        }
+
+        .card h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card p, .card li {
+            font-size: 0.94rem;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        .card ul {
+            padding-left: 1.15rem;
+            margin-top: 0.5rem;
+        }
+
+        .card li + li {
+            margin-top: 0.35rem;
+        }
+
+        .badge {
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 0.2rem 0.55rem;
+            border-radius: 4px;
+            background: #F1F5F9;
+            color: #334155;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            font-size: 0.92rem;
+        }
+
+        th, td {
+            padding: 0.8rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: #F1F5F9;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .code-box {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.84rem;
+            background: #0F172A;
+            color: #F8FAFC;
+            padding: 1.1rem 1.25rem;
+            border-radius: 10px;
+            line-height: 1.55;
+            white-space: pre-wrap;
+        }
+
+        .kw { color: #93C5FD; }
+        .cm { color: #64748B; }
+        .fn { color: #6EE7B7; }
+        .st { color: #FDE68A; }
+
+        .flow-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-top: 0.85rem;
+            padding: 0.85rem 1rem;
+            background: #F8FAFC;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 500;
+        }
+
+        .pill {
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            background: var(--card);
+            border: 1px solid #CBD5E1;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .pill.highlight {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body tabindex="0">
+
+<div id="deck">
+
+    <!-- SLIDE 1: Title -->
+    <section class="slide active">
+        <span class="tag">Kiến Thức Nền Tảng Phần Mềm</span>
+        <h1>Phân Biệt Ngôn Ngữ,<br>Thư Viện và Framework</h1>
+        <p class="subtitle">Hiểu rõ bản chất, nguyên lý Inversion of Control (IoC) và hệ sinh thái công cụ thực tế.</p>
+        <div class="grid-3" style="margin-top: 1rem;">
+            <div class="card">
+                <h3>01. Ngôn ngữ <span class="badge">Syntax & Core</span></h3>
+                <p>Nền tảng cú pháp và trình biên dịch để giao tiếp với máy tính từ con số 0.</p>
+            </div>
+            <div class="card">
+                <h3>02. Thư viện <span class="badge">Reusable Code</span></h3>
+                <p>Các hàm/module đóng gói sẵn. Lập trình viên chủ động gọi khi cần giải quyết việc cụ thể.</p>
+            </div>
+            <div class="card">
+                <h3>03. Framework <span class="badge">Architecture & IoC</span></h3>
+                <p>Bộ khung định hình toàn bộ kiến trúc dự án và tự điều phối luồng chạy ứng dụng.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 2: Analogy -->
+    <section class="slide">
+        <h2>1. Hình Dung Thực Tế: Xây Dựng Một Ngôi Nhà</h2>
+        <p class="subtitle">Sự khác biệt về mức độ trừu tượng và quyền tự quyết.</p>
+        <div class="grid-3">
+            <div class="card step">
+                <h3>Ngôn ngữ lập trình <span class="badge">Vật liệu thô</span></h3>
+                <p><strong>Gạch, xi măng, sắt thép, cưa, búa.</strong></p>
+                <ul>
+                    <li>Bạn có quyền tự do tuyệt đối: muốn đóng cái bàn hay xây tòa lâu đài đều được.</li>
+                    <li>Đánh đổi: Mất nhiều thời gian nếu phải tự trộn hồ, tự đúc từng viên gạch từ đầu.</li>
+                </ul>
+            </div>
+            <div class="card step">
+                <h3>Thư viện (Library) <span class="badge">Nội thất đúc sẵn</span></h3>
+                <p><strong>Cửa sổ, bóng đèn, bồn rửa chén mua sẵn.</strong></p>
+                <ul>
+                    <li>Không cần tự chế tạo lại cái bóng đèn.</li>
+                    <li>Bạn toàn quyền quyết định: mua hãng nào, lắp ở phòng nào, khi nào bật công tắc.</li>
+                </ul>
+            </div>
+            <div class="card step">
+                <h3>Framework <span class="badge">Bản vẽ & Khung nhà</span></h3>
+                <p><strong>Móng, cột trụ, hệ thống điện nước định sẵn.</strong></p>
+                <ul>
+                    <li>Định sẵn phòng khách ở đâu, nhà vệ sinh ở góc nào, chuẩn an toàn chịu lực.</li>
+                    <li>Bạn chỉ việc xây tường và trang trí vào đúng các ô trống quy định.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 3: Concept & IoC -->
+    <section class="slide">
+        <h2>2. Bản Chất Kỹ Thuật & Đảo Ngược Điều Khiển (IoC)</h2>
+        <p class="subtitle">Điểm khác biệt cốt lõi nhất giữa Thư viện và Framework nằm ở câu hỏi: "Ai gọi Ai?"</p>
+        <div class="grid-2">
+            <div class="card step">
+                <h3>Khi dùng Thư viện (Library) <span class="badge">Bạn nắm quyền</span></h3>
+                <p>Code của bạn làm chủ luồng chạy chính (Main Flow). Khi cần tính toán, xử lý chuỗi hay vẽ biểu đồ, bạn chủ động gọi hàm của thư viện.</p>
+                <div class="flow-box">
+                    <span class="pill highlight">Code của bạn</span>
+                    <span>&rarr; gọi hàm &rarr;</span>
+                    <span class="pill">Library</span>
+                    <span>&rarr; trả kết quả</span>
+                </div>
+                <ul>
+                    <li>Dễ dàng thay thế thư viện này bằng thư viện khác.</li>
+                    <li>Ví dụ: <code>NumPy</code>, <code>Pandas</code>, <code>Lodash</code>, <code>Axios</code>, <code>Dapper</code>.</li>
+                </ul>
+            </div>
+            <div class="card step">
+                <h3>Khi dùng Framework <span class="badge">Inversion of Control</span></h3>
+                <p>Framework nắm giữ luồng điều khiển chính (HTTP lifecycle, DI Container, Security). Khi có sự kiện, <strong>Framework sẽ tự gọi vào code của bạn</strong>.</p>
+                <div class="flow-box">
+                    <span class="pill highlight">Framework</span>
+                    <span>&rarr; kích hoạt &rarr;</span>
+                    <span class="pill">Code của bạn</span>
+                    <span>&rarr; phản hồi</span>
+                </div>
+                <ul>
+                    <li>Bắt buộc tuân thủ quy ước thư mục, lifecycle và kiến trúc của Framework.</li>
+                    <li>Ví dụ: <code>ASP.NET Core</code>, <code>NestJS</code>, <code>Spring Boot</code>, <code>Django</code>.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 4: Comparison Table -->
+    <section class="slide">
+        <h2>3. Bảng So Sánh Tổng Quan</h2>
+        <p class="subtitle">Đối chiếu theo 5 tiêu chí kỹ thuật quan trọng.</p>
+        <div class="step">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Tiêu chí</th>
+                        <th style="width: 26%;">Ngôn ngữ (Language)</th>
+                        <th style="width: 27%;">Thư viện (Library)</th>
+                        <th style="width: 27%;">Framework</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Bản chất</strong></td>
+                        <td>Tập quy tắc cú pháp & kiểu dữ liệu cốt lõi</td>
+                        <td>Tập hợp hàm/class giải quyết tác vụ cụ thể</td>
+                        <td>Bộ khung chuẩn hóa kiến trúc toàn dự án</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Quyền kiểm soát</strong></td>
+                        <td>Lập trình viên quyết định 100%</td>
+                        <td>Lập trình viên chủ động gọi khi cần</td>
+                        <td>Framework điều phối luồng chạy (IoC)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Phạm vi ảnh hưởng</strong></td>
+                        <td>Toàn bộ chương trình máy tính</td>
+                        <td>Cục bộ ở một tính năng (HTTP, Math, UI...)</td>
+                        <td>Xuyên suốt cấu trúc ứng dụng</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Chi phí thay thế</strong></td>
+                        <td>Viết lại toàn bộ hệ thống</td>
+                        <td>Thấp (chỉ cần đổi chỗ gọi hàm)</td>
+                        <td>Rất cao (gắn chặt với cấu trúc dự án)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Khi nào sử dụng?</strong></td>
+                        <td>Luôn luôn phải có để viết phần mềm</td>
+                        <td>Khi cần công cụ xử lý nhanh một bài toán con</td>
+                        <td>Khi xây dựng hệ thống lớn cần chuẩn hóa</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- SLIDE 5: Code Comparison -->
+    <section class="slide">
+        <h2>4. Ví Dụ Thực Tế: API Đăng Ký Người Dùng</h2>
+        <p class="subtitle">So sánh giữa viết thuần bằng Ngôn ngữ và xây dựng trên Framework.</p>
+        <div class="grid-2">
+            <div class="card step">
+                <h3>Trước khi dùng Framework (Code thuần)</h3>
+                <p style="margin-bottom: 0.75rem;">Phải tự mở socket HTTP, tự đọc stream dữ liệu, tự parse JSON, tự bắt điều kiện URL và xử lý lỗi thủ công.</p>
+                <div class="code-box"><span class="cm">// Tự xử lý luồng request thô từ con số 0</span>
+<span class="kw">if</span> (req.url === <span class="st">'/api/register'</span> && req.method === <span class="st">'POST'</span>) {
+    <span class="kw">let</span> body = <span class="st">''</span>;
+    req.<span class="fn">on</span>(<span class="st">'data'</span>, chunk => body += chunk);
+    req.<span class="fn">on</span>(<span class="st">'end'</span>, () => {
+        <span class="cm">// Tự parse JSON, tự validate, tự mở DB...</span>
+    });
+}</div>
+            </div>
+            <div class="card step">
+                <h3>Sau khi dùng Framework (NestJS / ASP.NET)</h3>
+                <p style="margin-bottom: 0.75rem;">Routing, parse body, kiểm tra hợp lệ (Validation) và bảo mật đã có Framework tự động thực hiện.</p>
+                <div class="code-box"><span class="cm">// Chỉ tập trung viết đúng logic nghiệp vụ</span>
+<span class="fn">@Controller</span>(<span class="st">'auth'</span>)
+<span class="kw">export class</span> AuthController {
+    <span class="fn">@Post</span>(<span class="st">'register'</span>)
+    <span class="fn">register</span>(<span class="fn">@Body</span>() dto: CreateUserDto) {
+        <span class="kw">return this</span>.authService.<span class="fn">create</span>(dto);
+    }
+}</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 6: Ecosystem -->
+    <section class="slide">
+        <h2>5. Hệ Sinh Thái Ngôn Ngữ, Thư Viện & Framework Phổ Biến</h2>
+        <p class="subtitle">Tổng hợp các công nghệ tiêu biểu trong thực tế doanh nghiệp hiện nay.</p>
+        <div class="step">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ngôn ngữ</th>
+                        <th>Lĩnh vực thế mạnh</th>
+                        <th>Thư viện (Library) tiêu biểu</th>
+                        <th>Framework nổi tiếng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>C# (.NET)</strong></td>
+                        <td>Enterprise Backend, Web API, Game</td>
+                        <td>Dapper, Newtonsoft.Json, AutoMapper</td>
+                        <td>ASP.NET Core, Blazor, MAUI</td>
+                    </tr>
+                    <tr>
+                        <td><strong>JavaScript / TS</strong></td>
+                        <td>Fullstack Web, Cloud Native</td>
+                        <td>React, Axios, Lodash, Zod</td>
+                        <td>Next.js, NestJS, Angular, Nuxt</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Python</strong></td>
+                        <td>AI / Machine Learning, Backend, Data</td>
+                        <td>NumPy, Pandas, Scikit-learn, SQLAlchemy</td>
+                        <td>FastAPI, Django, Flask</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Java</strong></td>
+                        <td>Hệ thống ngân hàng, Tài chính, Microservices</td>
+                        <td>Jackson, Lombok, Guava, JDBC</td>
+                        <td>Spring Boot, Quarkus, Micronaut</td>
+                    </tr>
+                    <tr>
+                        <td><strong>PHP</strong></td>
+                        <td>Web Application, E-Commerce, CMS</td>
+                        <td>Carbon, Guzzle, PHPUnit</td>
+                        <td>Laravel, Symfony</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</div>
+
+<script>
+    const slides = document.querySelectorAll('.slide');
+    let currentSlide = 0;
+
+    function updateSlides() {
+        slides.forEach((slide, idx) => {
+            slide.classList.remove('active', 'prev');
+            if (idx === currentSlide) {
+                slide.classList.add('active');
+            } else if (idx < currentSlide) {
+                slide.classList.add('prev');
+            }
+        });
+    }
+
+    function nav(dir) {
+        const activeSlide = slides[currentSlide];
+        if (dir === 1) {
+            const unseen = activeSlide.querySelectorAll('.step:not(.step-visible)');
+            if (unseen.length > 0) {
+                unseen[0].classList.add('step-visible');
+            } else if (currentSlide < slides.length - 1) {
+                currentSlide++;
+                updateSlides();
+            }
+        } else {
+            const seen = activeSlide.querySelectorAll('.step.step-visible');
+            if (seen.length > 0) {
+                seen[seen.length - 1].classList.remove('step-visible');
+            } else if (currentSlide > 0) {
+                currentSlide--;
+                const prevSlide = slides[currentSlide];
+                prevSlide.querySelectorAll('.step').forEach(s => s.classList.add('step-visible'));
+                updateSlides();
+            }
+        }
+    }
+
+    window.addEventListener('load', () => {
+        document.body.focus();
+        updateSlides();
+    });
+
+    document.addEventListener('click', () => {
+        document.body.focus();
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            nav(1);
+        } else if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            nav(-1);
+        } else if (e.key === 'Home') {
+            e.preventDefault();
+            currentSlide = 0;
+            slides.forEach(s => s.querySelectorAll('.step').forEach(st => st.classList.remove('step-visible')));
+            updateSlides();
+        } else if (e.key === 'End') {
+            e.preventDefault();
+            currentSlide = slides.length - 1;
+            slides.forEach(s => s.querySelectorAll('.step').forEach(st => st.classList.add('step-visible')));
+            updateSlides();
+        }
+    });
+</script>
+</body>
+</html>
