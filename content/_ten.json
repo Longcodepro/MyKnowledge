@@ -18,5 +18,6 @@
   "OS/05-deadlock.html": "OS 5: Deadlock",
   "OS/06-quan-ly-bo-nho.html": "OS 6: Quản lý bộ nhớ",
   "OS/07-bo-nho-ao.html": "OS 7: Bộ nhớ ảo",
-  "OS/08-o-dia.html": "OS 8: Ổ đĩa và lưu trữ"
+  "OS/08-o-dia.html": "OS 8: Ổ đĩa và lưu trữ",
+  "Công nghệ Web/sql_transactions_acid_presentation.html": "SQL Transaction and Rollback"
 }

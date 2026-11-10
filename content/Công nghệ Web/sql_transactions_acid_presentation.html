@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Transactions, Rollback & Cơ Chế ACID</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #F8FAFC;
+            color: #0F172A;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            outline: none;
+        }
+
+        .font-mono-code {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Viewport & Slide Layout */
+        #deck-viewport {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slide {
+            position: absolute;
+            width: 92vw;
+            max-width: 1120px;
+            max-height: 90vh;
+            overflow-y: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            padding: 1rem 0.5rem;
+        }
+
+        .slide::-webkit-scrollbar {
+            display: none;
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+            z-index: 10;
+        }
+
+        /* Step Reveal Animation */
+        .step {
+            opacity: 0.15;
+            transform: translateY(4px);
+            transition: all 0.25s ease;
+        }
+
+        .step.step-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Clean Minimal Card */
+        .card {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+        }
+
+        /* Code Block */
+        .code-box {
+            background: #0F172A;
+            color: #F8FAFC;
+            border-radius: 8px;
+            border: 1px solid #1E293B;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            line-height: 1.6;
+            padding: 1rem 1.25rem;
+        }
+
+        /* Minimal Table */
+        .clean-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        .clean-table th {
+            background: #F1F5F9;
+            color: #334155;
+            font-weight: 600;
+            text-align: left;
+            padding: 10px 14px;
+            border-bottom: 1px solid #CBD5E1;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .clean-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #E2E8F0;
+            color: #1E293B;
+            transition: background-color 0.25s ease;
+        }
+        .clean-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Subtle Interactive States */
+        .state-active {
+            border-color: #2563EB !important;
+            background-color: #EFF6FF !important;
+        }
+        .state-success {
+            border-color: #16A34A !important;
+            background-color: #F0FDF4 !important;
+        }
+        .state-error {
+            border-color: #DC2626 !important;
+            background-color: #FEF2F2 !important;
+        }
+    </style>
+</head>
+<body tabindex="0" id="main-body">
+
+    <main id="deck-viewport">
+
+        <!-- ==========================================
+             SLIDE 1: TITLE & OVERVIEW
+             ========================================== -->
+        <section class="slide active">
+            <div class="card p-10 flex flex-col justify-between gap-8">
+                <div class="space-y-4 max-w-3xl">
+                    <div class="text-xs font-mono-code uppercase tracking-widest text-slate-500 font-semibold">
+                        Cơ Sở Dữ Liệu Quan Hệ &amp; SQL
+                    </div>
+                    <h1 class="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight leading-tight">
+                        SQL Transactions, Rollback &amp; Cơ Chế ACID
+                    </h1>
+                    <p class="text-base text-slate-600 leading-relaxed">
+                        Nguyên lý quản lý giao dịch an toàn trong Hệ quản trị CSDL: Đảm bảo tính toàn vẹn dữ liệu theo quy tắc <strong>"Tất cả hoặc Không gì cả" (All-or-Nothing)</strong>, cơ chế hoàn tác bằng <strong>Undo Log</strong> và ghi bền vững bằng <strong>Write-Ahead Log (WAL)</strong>.
+                    </p>
+                </div>
+
+                <!-- Clean 4-Stage Pipeline Diagram -->
+                <div class="pt-4 border-t border-slate-200">
+                    <div class="text-xs font-mono-code text-slate-500 mb-3 uppercase">Luồng xử lý một Transaction trong CSDL</div>
+                    <div class="grid grid-cols-4 gap-4">
+                        <div class="p-4 rounded-lg bg-slate-50 border border-slate-200">
+                            <div class="font-mono-code text-xs font-semibold text-blue-600 mb-1">1. Client SQL</div>
+                            <div class="text-sm font-semibold text-slate-900">BEGIN &rarr; SQL</div>
+                            <div class="text-xs text-slate-500 mt-1">Gửi tập lệnh thuộc cùng một nghiệp vụ.</div>
+                        </div>
+                        <div class="p-4 rounded-lg bg-slate-50 border border-slate-200">
+                            <div class="font-mono-code text-xs font-semibold text-blue-600 mb-1">2. Lock &amp; MVCC</div>
+                            <div class="text-sm font-semibold text-slate-900">Cô lập dữ liệu</div>
+                            <div class="text-xs text-slate-500 mt-1">Khóa dòng đang sửa, tránh xung đột đọc/ghi.</div>
+                        </div>
+                        <div class="p-4 rounded-lg bg-slate-50 border border-slate-200">
+                            <div class="font-mono-code text-xs font-semibold text-blue-600 mb-1">3. Buffer Pool (RAM)</div>
+                            <div class="text-sm font-semibold text-slate-900">Sửa RAM &amp; Undo Log</div>
+                            <div class="text-xs text-slate-500 mt-1">Giữ bản sao cũ để sẵn sàng Rollback nếu lỗi.</div>
+                        </div>
+                        <div class="p-4 rounded-lg bg-slate-50 border border-slate-200">
+                            <div class="font-mono-code text-xs font-semibold text-blue-600 mb-1">4. Disk Storage</div>
+                            <div class="text-sm font-semibold text-slate-900">COMMIT xuống WAL</div>
+                            <div class="text-xs text-slate-500 mt-1">Ghi nhận vĩnh viễn xuống ổ cứng vật lý.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             SLIDE 2: AUTOCOMMIT VS EXPLICIT TRANSACTION
+             ========================================== -->
+        <section class="slide">
+            <div>
+                <h2 class="text-2xl font-bold text-slate-900">1. Tại sao cần Transaction? Autocommit vs Explicit Transaction</h2>
+                <p class="text-sm text-slate-600 mt-1">
+                    Một nghiệp vụ (như đặt hàng, chuyển tiền) gồm nhiều câu lệnh SQL. Nếu một bước thất bại, các bước trước đó không được phép lưu dở dang.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-5">
+                <!-- Left: Autocommit -->
+                <div class="step card p-5 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-200">
+                            <span class="font-semibold text-sm text-slate-900">Chế độ mặc định: Autocommit</span>
+                            <span class="font-mono-code text-xs text-red-600 font-medium">Rủi ro lệch dữ liệu</span>
+                        </div>
+                        <p class="text-xs text-slate-600 mb-3 leading-relaxed">
+                            Mỗi câu lệnh tự động lưu vĩnh viễn ngay khi chạy xong. Nếu câu lệnh sau gặp lỗi, dữ liệu của câu lệnh trước vẫn tồn tại.
+                        </p>
+                        <div class="code-box space-y-2 mb-3">
+                            <div>
+                                <span class="text-slate-400">-- 1. Trừ tiền tài khoản A (Đã tự động lưu!)</span><br>
+                                <span class="text-blue-400">UPDATE</span> accounts <span class="text-blue-400">SET</span> balance = balance - 1000000 <span class="text-blue-400">WHERE</span> id = 'A';
+                            </div>
+                            <div>
+                                <span class="text-slate-400">-- 2. Cộng tiền tài khoản B (Gặp lỗi!)</span><br>
+                                <span class="text-blue-400">UPDATE</span> accounts <span class="text-blue-400">SET</span> balance = balance + 1000000 <span class="text-blue-400">WHERE</span> id = 'B';<br>
+                                <span class="text-red-400">-- LỖI: Mất kết nối hoặc vi phạm ràng buộc!</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-3 rounded bg-red-50 border border-red-200 text-xs text-red-900">
+                        <strong>Hậu quả:</strong> Tài khoản A đã bị mất 1,000,000đ nhưng tài khoản B chưa nhận được tiền.
+                    </div>
+                </div>
+
+                <!-- Right: Explicit Transaction -->
+                <div class="step card p-5 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-200">
+                            <span class="font-semibold text-sm text-slate-900">Giao dịch tường minh: Explicit Transaction</span>
+                            <span class="font-mono-code text-xs text-green-700 font-medium">Bảo toàn dữ liệu</span>
+                        </div>
+                        <p class="text-xs text-slate-600 mb-3 leading-relaxed">
+                            Gom tất cả các câu lệnh vào một khối duy nhất. Chỉ lưu khi toàn bộ thành công, hoặc hủy bỏ tất cả nếu có lỗi.
+                        </p>
+                        <div class="code-box space-y-1.5 mb-3">
+                            <div class="text-slate-300 font-semibold">BEGIN TRANSACTION;</div>
+                            <div class="pl-3 border-l border-slate-600 space-y-1">
+                                <div><span class="text-blue-400">UPDATE</span> accounts <span class="text-blue-400">SET</span> balance = balance - 1000000 <span class="text-blue-400">WHERE</span> id = 'A';</div>
+                                <div><span class="text-blue-400">UPDATE</span> accounts <span class="text-blue-400">SET</span> balance = balance + 1000000 <span class="text-blue-400">WHERE</span> id = 'B';</div>
+                            </div>
+                            <div class="pt-1">
+                                <span class="text-green-400 font-semibold">COMMIT;</span> <span class="text-slate-400">-- Lưu nếu cả 2 thành công</span><br>
+                                <span class="text-red-400 font-semibold">ROLLBACK;</span> <span class="text-slate-400">-- Hoàn tác về ban đầu nếu có lỗi</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-3 rounded bg-green-50 border border-green-200 text-xs text-green-900">
+                        <strong>Kết quả:</strong> Nếu bước 2 lỗi, lệnh <code class="font-mono-code font-semibold">ROLLBACK</code> tự động hoàn trả lại 1,000,000đ cho tài khoản A.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom: 4 Core Commands -->
+            <div class="step card p-4">
+                <div class="grid grid-cols-4 gap-4 text-xs">
+                    <div>
+                        <code class="font-mono-code font-bold text-slate-900 block mb-1">BEGIN / START TRANSACTION</code>
+                        <span class="text-slate-600">Bắt đầu một giao dịch mới, tạm tắt chế độ tự động lưu.</span>
+                    </div>
+                    <div>
+                        <code class="font-mono-code font-bold text-green-700 block mb-1">COMMIT</code>
+                        <span class="text-slate-600">Xác nhận mọi thay đổi và lưu bền vững xuống ổ cứng.</span>
+                    </div>
+                    <div>
+                        <code class="font-mono-code font-bold text-red-600 block mb-1">ROLLBACK</code>
+                        <span class="text-slate-600">Hủy toàn bộ thay đổi từ sau lệnh BEGIN, khôi phục trạng thái gốc.</span>
+                    </div>
+                    <div>
+                        <code class="font-mono-code font-bold text-blue-600 block mb-1">SAVEPOINT &lt;tên&gt;</code>
+                        <span class="text-slate-600">Đặt điểm đánh dấu để có thể hoàn tác một phần giao dịch.</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             SLIDE 3: TRANSACTION LIFECYCLE (STATE MACHINE)
+             ========================================== -->
+        <section class="slide">
+            <div>
+                <h2 class="text-2xl font-bold text-slate-900">2. Vòng đời của một Transaction (5 Trạng thái)</h2>
+                <p class="text-sm text-slate-600 mt-1">
+                    Từ lúc bắt đầu (<code class="font-mono-code">BEGIN</code>) đến khi kết thúc, giao dịch đi qua các bước kiểm tra nghiêm ngặt trước khi thực sự ghi xuống đĩa.
+                </p>
+            </div>
+
+            <div class="card p-6">
+                <div class="grid grid-cols-11 gap-3 items-center">
+                    
+                    <!-- State 1: Active -->
+                    <div class="col-span-3">
+                        <div class="card p-4 border-2 state-active">
+                            <div class="font-mono-code text-xs text-blue-600 font-semibold mb-1">1. ACTIVE</div>
+                            <div class="text-sm font-bold text-slate-900 mb-1">Đang thực thi</div>
+                            <p class="text-xs text-slate-600 leading-relaxed">
+                                Đang chạy các câu lệnh <code class="font-mono-code">INSERT</code>, <code class="font-mono-code">UPDATE</code>, <code class="font-mono-code">DELETE</code>. Mọi thay đổi mới chỉ nằm tạm trên vùng nhớ <strong>RAM</strong>.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Arrows -->
+                    <div class="col-span-1 flex flex-col justify-between h-36 text-center font-mono-code text-xs text-slate-400">
+                        <div>&rarr;</div>
+                        <div>&rarr;</div>
+                    </div>
+
+                    <!-- Middle States: Partially Committed & Failed -->
+                    <div class="col-span-3 space-y-4">
+                        <div id="s3-node-2" class="step card p-4 border-2 border-slate-200">
+                            <div class="font-mono-code text-xs text-slate-500 font-semibold mb-1">2. PARTIALLY COMMITTED</div>
+                            <div class="text-sm font-bold text-slate-900 mb-1">Đã chạy xong lệnh cuối</div>
+                            <p class="text-xs text-slate-600 leading-relaxed">
+                                Đang chờ hệ thống đẩy dữ liệu từ bộ nhớ RAM xuống file Log trên ổ cứng (<code class="font-mono-code">fsync</code>).
+                            </p>
+                        </div>
+
+                        <div id="s3-node-4" class="step card p-4 border-2 border-slate-200">
+                            <div class="font-mono-code text-xs text-red-600 font-semibold mb-1">4. FAILED</div>
+                            <div class="text-sm font-bold text-slate-900 mb-1">Gặp sự cố / Lỗi</div>
+                            <p class="text-xs text-slate-600 leading-relaxed">
+                                Lỗi vi phạm ràng buộc, mất điện khi chưa kịp ghi đĩa, hoặc người dùng chủ động gọi lỗi.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Arrows -->
+                    <div class="col-span-1 flex flex-col justify-between h-36 text-center font-mono-code text-xs text-slate-400">
+                        <div>&rarr;</div>
+                        <div>&rarr;</div>
+                    </div>
+
+                    <!-- Final States: Committed & Aborted -->
+                    <div class="col-span-3 space-y-4">
+                        <div id="s3-node-3" class="step card p-4 border-2 border-slate-200">
+                            <div class="font-mono-code text-xs text-green-700 font-semibold mb-1">3. COMMITTED</div>
+                            <div class="text-sm font-bold text-slate-900 mb-1">Hoàn tất bền vững</div>
+                            <p class="text-xs text-slate-600 leading-relaxed">
+                                Đã ghi xong xuống đĩa cứng. Dữ liệu an toàn tuyệt đối và giải phóng khóa.
+                            </p>
+                        </div>
+
+                        <div id="s3-node-5" class="step card p-4 border-2 border-slate-200">
+                            <div class="font-mono-code text-xs text-red-600 font-semibold mb-1">5. ABORTED (ROLLBACK)</div>
+                            <div class="text-sm font-bold text-slate-900 mb-1">Đã hoàn tác</div>
+                            <p class="text-xs text-slate-600 leading-relaxed">
+                                Hệ thống lấy dữ liệu cũ từ <strong>Undo Log</strong> chép đè lại RAM, hủy bỏ mọi thay đổi.
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="card p-4 bg-slate-50 text-xs text-slate-700 leading-relaxed">
+                <strong>Điểm cốt lõi:</strong> Một giao dịch chỉ thực sự thành công khi bước sang trạng thái <strong>3. Committed</strong> (đã ghi Log xuống ổ cứng). Nếu mất điện ở bước 2 (Partially Committed), khi khởi động lại CSDL vẫn sẽ tự động <strong>Rollback</strong> giao dịch đó.
+            </div>
+        </section>
+
+        <!-- ==========================================
+             SLIDE 4: INTERACTIVE SIMULATION (TRANSFER & ROLLBACK)
+             ========================================== -->
+        <section class="slide">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900">3. Mô phỏng: Chuyển khoản 1,000,000đ &amp; Cơ chế Rollback</h2>
+                    <p class="text-sm text-slate-600 mt-1">
+                        Quan sát sự thay đổi của <strong>Bảng dữ liệu trên RAM</strong> và <strong>Undo Log</strong> qua từng câu lệnh (3 bước).
+                    </p>
+                </div>
+                <span id="s4-badge" class="font-mono-code text-xs px-3 py-1.5 rounded bg-slate-200 text-slate-800 font-semibold">
+                    Trạng thái: Ban đầu
+                </span>
+            </div>
+
+            <div class="grid grid-cols-12 gap-5">
+                <!-- Left: SQL Commands -->
+                <div class="col-span-5 flex flex-col justify-between gap-4">
+                    <div class="code-box space-y-3">
+                        <div class="text-slate-400 border-b border-slate-700 pb-2 text-xs">Kịch bản: Chuyển 1,000,000đ từ A01 sang B02</div>
+                        
+                        <div id="s4-cmd-1" class="p-2 rounded transition-all">
+                            <div class="text-slate-400 text-xs">-- Bước 1: Mở giao dịch &amp; Trừ tiền A01</div>
+                            <div class="text-white font-semibold">BEGIN;</div>
+                            <div><span class="text-blue-400">UPDATE</span> accounts <span class="text-blue-400">SET</span> balance = balance - 1000000</div>
+                            <div><span class="text-blue-400">WHERE</span> id = 'A01';</div>
+                        </div>
+
+                        <div id="s4-cmd-2" class="p-2 rounded transition-all opacity-40">
+                            <div class="text-slate-400 text-xs">-- Bước 2: Cộng tiền B02 (Tài khoản bị khóa!)</div>
+                            <div><span class="text-blue-400">UPDATE</span> accounts <span class="text-blue-400">SET</span> balance = balance + 1000000</div>
+                            <div><span class="text-blue-400">WHERE</span> id = 'B02';</div>
+                            <div id="s4-err-line" class="hidden text-red-400 text-xs mt-1 font-semibold">
+                                &rarr; LỖI: Tài khoản B02 đang bị khóa (FROZEN)!
+                            </div>
+                        </div>
+
+                        <div id="s4-cmd-3" class="p-2 rounded transition-all opacity-40">
+                            <div class="text-slate-400 text-xs">-- Bước 3: Hủy giao dịch &amp; Khôi phục từ Undo Log</div>
+                            <div class="text-red-400 font-semibold">ROLLBACK;</div>
+                        </div>
+                    </div>
+
+                    <div class="card p-4 bg-slate-50 text-xs text-slate-700 leading-relaxed" id="s4-note">
+                        <strong>Trạng thái ban đầu:</strong> Tài khoản A01 có <strong>5,000,000đ</strong>, B02 có <strong>2,000,000đ</strong>. Nhấn phím mũi tên phải <strong>(&rarr;)</strong> để chạy từng bước.
+                    </div>
+                </div>
+
+                <!-- Right: Live Tables -->
+                <div class="col-span-7 flex flex-col justify-between gap-4">
+                    <!-- Main Table -->
+                    <div class="card overflow-hidden">
+                        <div class="px-4 py-2.5 bg-slate-100 border-b border-slate-200 flex justify-between items-center">
+                            <span class="font-mono-code text-xs font-semibold text-slate-700">Bảng: accounts (Trong RAM)</span>
+                            <span class="font-mono-code text-xs text-slate-500" id="s4-total">Tổng tiền: 7,000,000đ</span>
+                        </div>
+                        <table class="clean-table font-mono-code">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Chủ tài khoản</th>
+                                    <th>Trạng thái</th>
+                                    <th>Số dư (balance)</th>
+                                    <th>Khóa (Lock)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr id="s4-row-a">
+                                    <td class="font-semibold">A01</td>
+                                    <td class="font-sans">Nguyễn Văn A</td>
+                                    <td><span class="text-xs text-green-700 font-semibold">ACTIVE</span></td>
+                                    <td class="font-bold" id="s4-bal-a">5,000,000đ</td>
+                                    <td class="text-xs text-slate-400" id="s4-lock-a">Không</td>
+                                </tr>
+                                <tr id="s4-row-b">
+                                    <td class="font-semibold">B02</td>
+                                    <td class="font-sans">Trần Thị B</td>
+                                    <td><span class="text-xs text-red-600 font-semibold">FROZEN</span></td>
+                                    <td class="font-bold" id="s4-bal-b">2,000,000đ</td>
+                                    <td class="text-xs text-slate-400" id="s4-lock-b">Không</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Undo Log Box -->
+                    <div class="card p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-mono-code text-xs font-semibold text-slate-700">Vùng nhớ Undo Log (Lưu giá trị gốc trước khi sửa)</span>
+                            <span class="font-mono-code text-xs text-slate-500" id="s4-undo-status">Trống</span>
+                        </div>
+                        <div id="s4-undo-box" class="p-3 rounded bg-slate-50 border border-slate-200 font-mono-code text-xs text-slate-500">
+                            Chưa có dữ liệu cũ nào cần lưu.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden Step Markers -->
+                <div class="hidden">
+                    <span class="step"></span>
+                    <span class="step"></span>
+                    <span class="step"></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             SLIDE 5: SAVEPOINT (PARTIAL ROLLBACK)
+             ========================================== -->
+        <section class="slide">
+            <div>
+                <h2 class="text-2xl font-bold text-slate-900">4. SAVEPOINT — Hoàn tác từng phần trong Transaction</h2>
+                <p class="text-sm text-slate-600 mt-1">
+                    Khi một giao dịch dài có nhiều bước, <code class="font-mono-code font-semibold">SAVEPOINT</code> giúp quay lui lại đúng bước bị lỗi mà không làm mất kết quả của các bước đã thành công trước đó.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-12 gap-5 items-stretch">
+                <!-- Left: SQL Example -->
+                <div class="col-span-6 code-box flex flex-col justify-between">
+                    <div class="space-y-1.5">
+                        <div class="text-white font-semibold">BEGIN TRANSACTION;</div>
+                        
+                        <div class="pt-1 text-slate-400">-- Bước 1: Đặt vé máy bay (Thành công)</div>
+                        <div><span class="text-blue-400">INSERT INTO</span> bookings <span class="text-blue-400">VALUES</span> ('FLIGHT_VN123');</div>
+                        
+                        <div class="pt-1 text-blue-300 font-semibold">-- Đánh dấu cột mốc an toàn sau khi đặt vé</div>
+                        <div class="text-blue-300 font-semibold">SAVEPOINT sp_flight_done;</div>
+
+                        <div class="pt-1 text-slate-400">-- Bước 2: Thử đặt phòng VIP (Hết phòng -> Lỗi)</div>
+                        <div><span class="text-blue-400">INSERT INTO</span> hotels <span class="text-blue-400">VALUES</span> ('VIP_ROOM');</div>
+
+                        <div class="pt-1 text-red-400 font-semibold">-- Chỉ hủy bước 2, giữ nguyên vé máy bay ở bước 1</div>
+                        <div class="text-red-400 font-semibold">ROLLBACK TO SAVEPOINT sp_flight_done;</div>
+
+                        <div class="pt-1 text-slate-400">-- Bước 3: Đặt phòng tiêu chuẩn thay thế &amp; Lưu</div>
+                        <div><span class="text-blue-400">INSERT INTO</span> hotels <span class="text-blue-400">VALUES</span> ('STANDARD_ROOM');</div>
+                        <div class="text-green-400 font-semibold pt-1">COMMIT;</div>
+                    </div>
+                </div>
+
+                <!-- Right: Visual Flow -->
+                <div class="col-span-6 flex flex-col justify-between gap-3">
+                    <div class="card p-4">
+                        <div class="font-mono-code text-xs text-slate-500 mb-1">BƯỚC 1</div>
+                        <div class="text-sm font-bold text-slate-900">Đặt vé máy bay &rarr; Tạo <code class="font-mono-code text-blue-600">SAVEPOINT</code></div>
+                        <p class="text-xs text-slate-600 mt-1">Bản ghi vé máy bay được giữ an toàn tại cột mốc <code class="font-mono-code">sp_flight_done</code>.</p>
+                    </div>
+
+                    <div class="step card p-4 border-l-4 border-l-red-500">
+                        <div class="font-mono-code text-xs text-red-600 mb-1">BƯỚC 2 (GẶP SỰ CỐ)</div>
+                        <div class="text-sm font-bold text-slate-900">Gọi <code class="font-mono-code text-red-600">ROLLBACK TO SAVEPOINT</code></div>
+                        <p class="text-xs text-slate-600 mt-1">Chỉ xóa bỏ thao tác đặt phòng VIP bị lỗi. Giao dịch <strong>vẫn đang mở</strong>, không bị hủy toàn bộ.</p>
+                    </div>
+
+                    <div class="step card p-4 border-l-4 border-l-green-600">
+                        <div class="font-mono-code text-xs text-green-700 mb-1">BƯỚC 3 (HOÀN TẤT)</div>
+                        <div class="text-sm font-bold text-slate-900">Thực hiện phương án thay thế &amp; <code class="font-mono-code text-green-700">COMMIT</code></div>
+                        <p class="text-xs text-slate-600 mt-1">Lưu thành công cả vé máy bay (Bước 1) và phòng tiêu chuẩn (Bước 3).</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             SLIDE 6: 4 ACID PROPERTIES
+             ========================================== -->
+        <section class="slide">
+            <div>
+                <h2 class="text-2xl font-bold text-slate-900">5. Bốn tính chất ACID &amp; Cơ chế thực thi bên dưới CSDL</h2>
+                <p class="text-sm text-slate-600 mt-1">
+                    ACID là 4 tiêu chuẩn bắt buộc để đánh giá một Hệ quản trị CSDL có đảm bảo an toàn cho các giao dịch hay không.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <!-- Atomicity -->
+                <div class="step card p-5">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-base font-bold text-slate-900">A — Atomicity (Tính Nguyên Tố)</h3>
+                        <span class="font-mono-code text-xs px-2 py-0.5 bg-slate-100 text-slate-700 rounded">Cơ chế: Undo Log</span>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed mb-2">
+                        Giao dịch là một đơn vị không thể chia nhỏ: Hoặc tất cả các câu lệnh đều thành công, hoặc không câu lệnh nào được thực hiện.
+                    </p>
+                    <div class="text-xs text-slate-800 bg-slate-50 p-2.5 rounded border border-slate-200">
+                        <strong>Cách CSDL thực hiện:</strong> Lưu bản sao dữ liệu cũ vào <em>Undo Log</em> để khôi phục ngay khi thực thi <code class="font-mono-code">ROLLBACK</code>.
+                    </div>
+                </div>
+
+                <!-- Consistency -->
+                <div class="step card p-5">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-base font-bold text-slate-900">C — Consistency (Tính Nhất Quán)</h3>
+                        <span class="font-mono-code text-xs px-2 py-0.5 bg-slate-100 text-slate-700 rounded">Cơ chế: Constraints</span>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed mb-2">
+                        Dữ liệu trước và sau khi giao dịch kết thúc phải luôn tuân thủ toàn bộ các quy tắc, ràng buộc của cơ sở dữ liệu.
+                    </p>
+                    <div class="text-xs text-slate-800 bg-slate-50 p-2.5 rounded border border-slate-200">
+                        <strong>Cách CSDL thực hiện:</strong> Kiểm tra khóa chính (<code class="font-mono-code">PK</code>), khóa ngoại (<code class="font-mono-code">FK</code>), <code class="font-mono-code">CHECK (balance &gt;= 0)</code>. Vi phạm sẽ tự động hủy giao dịch.
+                    </div>
+                </div>
+
+                <!-- Isolation -->
+                <div class="step card p-5">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-base font-bold text-slate-900">I — Isolation (Tính Cô Lập)</h3>
+                        <span class="font-mono-code text-xs px-2 py-0.5 bg-slate-100 text-slate-700 rounded">Cơ chế: Locks &amp; MVCC</span>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed mb-2">
+                        Các giao dịch chạy đồng thời không được làm lộ dữ liệu dở dang hoặc ghi đè sai lệch lên kết quả của nhau.
+                    </p>
+                    <div class="text-xs text-slate-800 bg-slate-50 p-2.5 rounded border border-slate-200">
+                        <strong>Cách CSDL thực hiện:</strong> Dùng khóa dòng (Row Locks) khi ghi và cơ chế đa phiên bản (MVCC) khi đọc.
+                    </div>
+                </div>
+
+                <!-- Durability -->
+                <div class="step card p-5">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-base font-bold text-slate-900">D — Durability (Tính Bền Vững)</h3>
+                        <span class="font-mono-code text-xs px-2 py-0.5 bg-slate-100 text-slate-700 rounded">Cơ chế: Redo Log / WAL</span>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed mb-2">
+                        Khi lệnh <code class="font-mono-code">COMMIT</code> đã báo thành công, dữ liệu được bảo toàn vĩnh viễn ngay cả khi sập nguồn ngay lập tức.
+                    </p>
+                    <div class="text-xs text-slate-800 bg-slate-50 p-2.5 rounded border border-slate-200">
+                        <strong>Cách CSDL thực hiện:</strong> Ghi thay đổi vào file nhật ký tuần tự trên đĩa cứng (<em>Write-Ahead Log</em>) trước khi báo hoàn tất.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             SLIDE 7: READ PHENOMENA & ISOLATION LEVELS
+             ========================================== -->
+        <section class="slide">
+            <div>
+                <h2 class="text-2xl font-bold text-slate-900">6. Hiện tượng đọc đồng thời &amp; 4 Mức cô lập (Isolation Levels)</h2>
+                <p class="text-sm text-slate-600 mt-1">
+                    Tùy vào nhu cầu cân bằng giữa <strong>Độ chính xác</strong> và <strong>Tốc độ xử lý</strong>, SQL cung cấp 4 mức cô lập từ thấp đến cao.
+                </p>
+            </div>
+
+            <!-- 3 Read Phenomena Cards -->
+            <div class="grid grid-cols-3 gap-4">
+                <div class="card p-4">
+                    <div class="text-sm font-bold text-slate-900 mb-1">1. Dirty Read (Đọc dữ liệu rác)</div>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Đọc phải dữ liệu do giao dịch khác vừa sửa nhưng <strong>chưa COMMIT</strong>. Nếu giao dịch kia Rollback, dữ liệu vừa đọc là sai.
+                    </p>
+                </div>
+                <div class="card p-4">
+                    <div class="text-sm font-bold text-slate-900 mb-1">2. Non-Repeatable Read</div>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Trong cùng 1 giao dịch, đọc 1 dòng 2 lần lại ra <strong>2 giá trị khác nhau</strong> vì có giao dịch khác vừa <code class="font-mono-code">UPDATE</code> và <code class="font-mono-code">COMMIT</code> dòng đó.
+                    </p>
+                </div>
+                <div class="card p-4">
+                    <div class="text-sm font-bold text-slate-900 mb-1">3. Phantom Read (Đọc bóng ma)</div>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Truy vấn tập hợp 2 lần nhưng lần sau <strong>xuất hiện thêm dòng mới</strong> do giao dịch khác vừa <code class="font-mono-code">INSERT</code> và <code class="font-mono-code">COMMIT</code>.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Isolation Matrix Table -->
+            <div class="step card overflow-hidden">
+                <table class="clean-table">
+                    <thead>
+                        <tr>
+                            <th>Mức cô lập (Isolation Level)</th>
+                            <th>Dirty Read</th>
+                            <th>Non-Repeatable Read</th>
+                            <th>Phantom Read</th>
+                            <th>Đặc điểm &amp; Ứng dụng thực tế</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="font-mono-code font-semibold">READ UNCOMMITTED</td>
+                            <td class="text-red-600 font-medium">Có thể bị</td>
+                            <td class="text-red-600 font-medium">Có thể bị</td>
+                            <td class="text-red-600 font-medium">Có thể bị</td>
+                            <td class="text-xs text-slate-600">Nhanh nhất nhưng không an toàn. Rất ít dùng.</td>
+                        </tr>
+                        <tr>
+                            <td class="font-mono-code font-semibold text-blue-600">READ COMMITTED</td>
+                            <td class="text-green-700 font-medium">Ngăn chặn</td>
+                            <td class="text-red-600 font-medium">Có thể bị</td>
+                            <td class="text-red-600 font-medium">Có thể bị</td>
+                            <td class="text-xs text-slate-600"><strong>Mặc định của PostgreSQL, SQL Server, Oracle.</strong> Chỉ đọc dữ liệu đã Commit.</td>
+                        </tr>
+                        <tr>
+                            <td class="font-mono-code font-semibold text-blue-600">REPEATABLE READ</td>
+                            <td class="text-green-700 font-medium">Ngăn chặn</td>
+                            <td class="text-green-700 font-medium">Ngăn chặn</td>
+                            <td class="text-slate-600 font-medium">Có thể (Chuẩn SQL)</td>
+                            <td class="text-xs text-slate-600"><strong>Mặc định của MySQL InnoDB.</strong> Đảm bảo đọc cùng 1 dòng luôn nhất quán.</td>
+                        </tr>
+                        <tr>
+                            <td class="font-mono-code font-semibold">SERIALIZABLE</td>
+                            <td class="text-green-700 font-medium">Ngăn chặn</td>
+                            <td class="text-green-700 font-medium">Ngăn chặn</td>
+                            <td class="text-green-700 font-medium">Ngăn chặn</td>
+                            <td class="text-xs text-slate-600">An toàn tuyệt đối như chạy tuần tự từng giao dịch, nhưng tốc độ chậm nhất.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             SLIDE 8: STORAGE INTERNALS (RAM, UNDO, WAL)
+             ========================================== -->
+        <section class="slide">
+            <div>
+                <h2 class="text-2xl font-bold text-slate-900">7. Cơ chế bên dưới CSDL: Undo Log &amp; Write-Ahead Log (WAL)</h2>
+                <p class="text-sm text-slate-600 mt-1">
+                    Cách CSDL phối hợp giữa bộ nhớ <strong>RAM</strong> và <strong>Ổ cứng</strong> để vừa đạt tốc độ phản hồi nhanh, vừa không mất dữ liệu khi mất điện.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-5">
+                <!-- Left: RAM Layer -->
+                <div class="card p-5 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                        <span class="font-bold text-sm text-slate-900">Tầng 1: Bộ nhớ RAM (Tốc độ cực nhanh)</span>
+                        <span class="font-mono-code text-xs text-slate-500">Buffer Pool</span>
+                    </div>
+
+                    <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200">
+                        <div class="font-mono-code text-xs font-semibold text-slate-800 mb-1">1. Undo Log (Bản ghi hoàn tác)</div>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            Trước khi sửa dữ liệu từ <code class="font-mono-code">10M</code> thành <code class="font-mono-code">8M</code>, CSDL cất giá trị gốc <code class="font-mono-code">10M</code> vào Undo Log.
+                            <br>• Nếu gọi <strong>ROLLBACK</strong>: Chép ngược <code class="font-mono-code">10M</code> trả lại bảng.
+                            <br>• Nếu giao dịch khác đọc cùng lúc (MVCC): Đọc giá trị <code class="font-mono-code">10M</code> từ đây mà không cần chờ khóa.
+                        </p>
+                    </div>
+
+                    <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200">
+                        <div class="font-mono-code text-xs font-semibold text-slate-800 mb-1">2. Data Pages (Trang dữ liệu đang sửa)</div>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            Câu lệnh <code class="font-mono-code">UPDATE</code> thực chất chỉ sửa dữ liệu trên RAM (gọi là <em>Dirty Page</em>) chứ chưa ghi ngay vào file bảng trên ổ cứng vì ghi ngẫu nhiên (Random I/O) rất chậm.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Right: Disk Layer -->
+                <div class="step card p-5 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                        <span class="font-bold text-sm text-slate-900">Tầng 2: Ổ cứng vật lý (Lưu trữ bền vững)</span>
+                        <span class="font-mono-code text-xs text-slate-500">Disk / SSD</span>
+                    </div>
+
+                    <div class="p-3.5 rounded-lg bg-blue-50/50 border border-blue-200">
+                        <div class="font-mono-code text-xs font-semibold text-blue-700 mb-1">3. Write-Ahead Log (WAL / Redo Log)</div>
+                        <p class="text-xs text-slate-700 leading-relaxed">
+                            Khi gọi <strong>COMMIT</strong>, CSDL chỉ cần ghi nối tiếp (Sequential Append) thay đổi vào cuối file WAL trên ổ cứng. Ghi tuần tự cực nhanh và đủ để khôi phục lại toàn bộ dữ liệu nếu máy chủ bị sập nguồn đột ngột.
+                        </p>
+                    </div>
+
+                    <div class="p-3.5 rounded-lg bg-slate-50 border border-slate-200">
+                        <div class="font-mono-code text-xs font-semibold text-slate-800 mb-1">4. Data Files (File dữ liệu chính thức)</div>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            Định kỳ ở chế độ chạy ngầm (<em>Checkpoint</em>), CSDL mới gom các trang nhớ đã sửa trên RAM để đồng bộ xuống file dữ liệu chính thức trên ổ cứng mà không làm chậm giao dịch của người dùng.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================
+             SLIDE 9: DEADLOCK & BEST PRACTICES
+             ========================================== -->
+        <section class="slide">
+            <div>
+                <h2 class="text-2xl font-bold text-slate-900">8. Hiện tượng Deadlock &amp; Nguyên tắc thực hành tốt</h2>
+                <p class="text-sm text-slate-600 mt-1">
+                    Cách nhận diện xung đột khóa chéo (Deadlock) và 4 nguyên tắc quan trọng khi lập trình với SQL Transaction.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-12 gap-5">
+                <!-- Left: Deadlock Explanation -->
+                <div class="col-span-5 card p-5 flex flex-col justify-between">
+                    <div>
+                        <div class="font-bold text-sm text-slate-900 mb-2 pb-2 border-b border-slate-200">
+                            Hiện tượng Deadlock (Khóa chết chéo)
+                        </div>
+                        <p class="text-xs text-slate-600 leading-relaxed mb-3">
+                            Xảy ra khi 2 giao dịch khóa dữ liệu theo <strong>thứ tự ngược nhau</strong> và chờ nhau giải phóng khóa:
+                        </p>
+                        <div class="space-y-2 font-mono-code text-xs bg-slate-50 p-3 rounded border border-slate-200 mb-3">
+                            <div><strong>Tx 1:</strong> Đang khóa dòng <strong>A</strong> &rarr; Chờ khóa dòng <strong>B</strong></div>
+                            <div><strong>Tx 2:</strong> Đang khóa dòng <strong>B</strong> &rarr; Chờ khóa dòng <strong>A</strong></div>
+                        </div>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            <strong>Cách CSDL xử lý:</strong> Hệ thống tự động phát hiện vòng lặp chờ và chọn 1 trong 2 giao dịch để <strong>bắt buộc ROLLBACK</strong>, giúp giao dịch còn lại chạy tiếp.
+                        </p>
+                    </div>
+                    <div class="p-3 rounded bg-slate-100 text-xs text-slate-800">
+                        <strong>Cách phòng tránh:</strong> Luôn cập nhật các dòng theo cùng một thứ tự ID cố định (ví dụ: luôn khóa A trước, B sau).
+                    </div>
+                </div>
+
+                <!-- Right: 4 Golden Rules -->
+                <div class="col-span-7 flex flex-col justify-between gap-3">
+                    <div class="card p-3.5">
+                        <div class="text-sm font-bold text-slate-900">1. Giữ Transaction ngắn gọn nhất có thể</div>
+                        <p class="text-xs text-slate-600 mt-0.5">
+                            Không gọi API bên ngoài (gửi email, thanh toán bên thứ 3) nằm giữa <code class="font-mono-code">BEGIN</code> và <code class="font-mono-code">COMMIT</code> để tránh giữ khóa quá lâu gây nghẽn toàn hệ thống.
+                        </p>
+                    </div>
+
+                    <div class="card p-3.5">
+                        <div class="text-sm font-bold text-slate-900">2. Luôn đảm bảo gọi ROLLBACK trong khối bắt lỗi (Try / Catch)</div>
+                        <p class="text-xs text-slate-600 mt-0.5">
+                            Nếu code ứng dụng bị lỗi mà quên gọi <code class="font-mono-code">ROLLBACK</code>, kết nối sẽ bị treo ở trạng thái giữ khóa (<code class="font-mono-code">idle in transaction</code>).
+                        </p>
+                    </div>
+
+                    <div class="card p-3.5">
+                        <div class="text-sm font-bold text-slate-900">3. Khóa dòng tường minh khi kiểm tra số dư (<code class="font-mono-code">SELECT ... FOR UPDATE</code>)</div>
+                        <p class="text-xs text-slate-600 mt-0.5">
+                            Tránh hai giao dịch cùng đọc thấy số dư 5,000,000đ rồi cùng trừ tiền một lúc gây âm tài khoản.
+                        </p>
+                    </div>
+
+                    <div class="card p-3.5">
+                        <div class="text-sm font-bold text-slate-900">4. Thiết lập thời gian chờ khóa tối đa (<code class="font-mono-code">lock_timeout</code>)</div>
+                        <p class="text-xs text-slate-600 mt-0.5">
+                            Cấu hình timeout (ví dụ 3 giây) để hủy nhanh các truy vấn bị kẹt khóa thay vì làm đầy hàng đợi kết nối.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        (function () {
+            const slides = Array.from(document.querySelectorAll('.slide'));
+            const mainBody = document.getElementById('main-body');
+            let currentSlideIndex = 0;
+
+            // Ensure immediate keyboard focus without needing mouse click
+            function enforceFocus() {
+                if (document.activeElement !== mainBody) {
+                    mainBody.focus({ preventScroll: true });
+                }
+                window.focus();
+            }
+            window.addEventListener('load', enforceFocus);
+            window.addEventListener('DOMContentLoaded', enforceFocus);
+            document.addEventListener('click', enforceFocus);
+            setTimeout(enforceFocus, 80);
+
+            // Sync Slide 3 State Machine subtle borders
+            function syncSlide3() {
+                const s3 = slides[2];
+                const visibleCount = s3.querySelectorAll('.step.step-visible').length;
+                const n2 = document.getElementById('s3-node-2');
+                const n3 = document.getElementById('s3-node-3');
+                const n4 = document.getElementById('s3-node-4');
+                const n5 = document.getElementById('s3-node-5');
+
+                [n2, n3, n4, n5].forEach(el => {
+                    el.classList.remove('state-active', 'state-success', 'state-error');
+                });
+
+                if (visibleCount >= 1) n2.classList.add('state-active');
+                if (visibleCount >= 2) n4.classList.add('state-error');
+                if (visibleCount >= 3) n3.classList.add('state-success');
+                if (visibleCount >= 4) n5.classList.add('state-error');
+            }
+
+            // Sync Slide 4 Bank Transfer & Rollback Simulation
+            function syncSlide4() {
+                const s4 = slides[3];
+                const stepCount = s4.querySelectorAll('.step.step-visible').length;
+
+                const badge = document.getElementById('s4-badge');
+                const cmd1 = document.getElementById('s4-cmd-1');
+                const cmd2 = document.getElementById('s4-cmd-2');
+                const cmd3 = document.getElementById('s4-cmd-3');
+                const errLine = document.getElementById('s4-err-line');
+                const note = document.getElementById('s4-note');
+
+                const rowA = document.getElementById('s4-row-a');
+                const rowB = document.getElementById('s4-row-b');
+                const balA = document.getElementById('s4-bal-a');
+                const lockA = document.getElementById('s4-lock-a');
+                const total = document.getElementById('s4-total');
+                const undoStatus = document.getElementById('s4-undo-status');
+                const undoBox = document.getElementById('s4-undo-box');
+
+                [cmd1, cmd2, cmd3].forEach(c => {
+                    c.className = 'p-2 rounded transition-all opacity-40';
+                });
+                rowA.style.backgroundColor = '';
+                rowB.style.backgroundColor = '';
+                errLine.classList.add('hidden');
+
+                if (stepCount === 0) {
+                    cmd1.classList.remove('opacity-40');
+                    badge.textContent = 'Trạng thái: Ban đầu';
+                    badge.className = 'font-mono-code text-xs px-3 py-1.5 rounded bg-slate-200 text-slate-800 font-semibold';
+
+                    balA.textContent = '5,000,000đ';
+                    balA.className = 'font-bold text-slate-900';
+                    lockA.textContent = 'Không';
+                    lockA.className = 'text-xs text-slate-400';
+                    total.textContent = 'Tổng tiền: 7,000,000đ';
+
+                    undoStatus.textContent = 'Trống';
+                    undoBox.textContent = 'Chưa có dữ liệu cũ nào cần lưu.';
+                    undoBox.className = 'p-3 rounded bg-slate-50 border border-slate-200 font-mono-code text-xs text-slate-500';
+
+                    note.innerHTML = '<strong>Trạng thái ban đầu:</strong> Tài khoản A01 có <strong>5,000,000đ</strong>, B02 có <strong>2,000,000đ</strong>. Nhấn phím mũi tên phải <strong>(&rarr;)</strong> để chạy Bước 1.';
+                } else if (stepCount === 1) {
+                    cmd1.className = 'p-2 rounded bg-slate-800 border border-blue-500 transition-all opacity-100';
+                    badge.textContent = 'Bước 1/3: Đã trừ tiền A01 trên RAM (Chưa Commit)';
+                    badge.className = 'font-mono-code text-xs px-3 py-1.5 rounded bg-blue-100 text-blue-800 font-semibold';
+
+                    rowA.style.backgroundColor = '#EFF6FF';
+                    balA.textContent = '4,000,000đ (Tạm thời)';
+                    balA.className = 'font-bold text-blue-700';
+                    lockA.textContent = 'Đang khóa (X-Lock)';
+                    lockA.className = 'text-xs text-blue-700 font-semibold';
+                    total.textContent = 'Tổng tạm thời: 6,000,000đ';
+
+                    undoStatus.textContent = 'Đã lưu 1 bản ghi';
+                    undoBox.innerHTML = 'Lưu giá trị gốc của <strong>A01</strong> trước khi sửa: <strong>balance = 5,000,000đ</strong>';
+                    undoBox.className = 'p-3 rounded bg-blue-50 border border-blue-200 font-mono-code text-xs text-slate-800';
+
+                    note.innerHTML = '<strong>Bước 1:</strong> Hệ thống lưu số dư gốc (5,000,000đ) vào <strong>Undo Log</strong>, khóa dòng A01 và giảm số dư trên RAM xuống 4,000,000đ.';
+                } else if (stepCount === 2) {
+                    cmd2.className = 'p-2 rounded bg-slate-800 border border-red-500 transition-all opacity-100';
+                    errLine.classList.remove('hidden');
+                    badge.textContent = 'Bước 2/3: Lỗi khi cộng tiền B02!';
+                    badge.className = 'font-mono-code text-xs px-3 py-1.5 rounded bg-red-100 text-red-800 font-semibold';
+
+                    rowA.style.backgroundColor = '#EFF6FF';
+                    rowB.style.backgroundColor = '#FEF2F2';
+                    balA.textContent = '4,000,000đ (Tạm thời)';
+                    balA.className = 'font-bold text-blue-700';
+                    lockA.textContent = 'Đang khóa (X-Lock)';
+                    lockA.className = 'text-xs text-blue-700 font-semibold';
+                    total.textContent = 'Lỗi giao dịch: Chuẩn bị Rollback';
+
+                    undoStatus.textContent = 'Sẵn sàng khôi phục';
+                    undoBox.innerHTML = 'Giao dịch gặp lỗi ở Bước 2 &rarr; Chuẩn bị lấy giá trị <strong>5,000,000đ</strong> từ Undo Log để hoàn trả cho A01.';
+                    undoBox.className = 'p-3 rounded bg-red-50 border border-red-200 font-mono-code text-xs text-red-900';
+
+                    note.innerHTML = '<strong>Bước 2:</strong> Lệnh cộng tiền cho B02 thất bại do tài khoản đang bị khóa. Giao dịch không thể hoàn tất và phải gọi <strong>ROLLBACK</strong>.';
+                } else if (stepCount >= 3) {
+                    cmd3.className = 'p-2 rounded bg-slate-800 border border-green-500 transition-all opacity-100';
+                    badge.textContent = 'Bước 3/3: Đã ROLLBACK — Dữ liệu khôi phục 100%';
+                    badge.className = 'font-mono-code text-xs px-3 py-1.5 rounded bg-green-100 text-green-800 font-semibold';
+
+                    rowA.style.backgroundColor = '#F0FDF4';
+                    balA.textContent = '5,000,000đ (Đã hoàn trả)';
+                    balA.className = 'font-bold text-green-700';
+                    lockA.textContent = 'Đã mở khóa';
+                    lockA.className = 'text-xs text-green-700 font-semibold';
+                    total.textContent = 'Tổng tiền: 7,000,000đ (An toàn)';
+
+                    undoStatus.textContent = 'Đã áp dụng xong';
+                    undoBox.innerHTML = '&check; Đã chép ngược <strong>5,000,000đ</strong> từ Undo Log về lại bảng <strong>accounts</strong> và giải phóng khóa.';
+                    undoBox.className = 'p-3 rounded bg-green-50 border border-green-200 font-mono-code text-xs text-green-900';
+
+                    note.innerHTML = '<strong>Bước 3:</strong> Nhờ <strong>Undo Log</strong>, lệnh <code class="font-mono-code font-bold">ROLLBACK</code> đã trả lại đúng 5,000,000đ cho A01 như chưa từng có giao dịch lỗi xảy ra.';
+                }
+            }
+
+            function updateView() {
+                slides.forEach((slide, idx) => {
+                    if (idx === currentSlideIndex) {
+                        slide.classList.add('active');
+                        slide.scrollTop = 0;
+                    } else {
+                        slide.classList.remove('active');
+                    }
+                });
+                syncSlide3();
+                syncSlide4();
+            }
+
+            function next() {
+                const activeSlide = slides[currentSlideIndex];
+                const unseenSteps = activeSlide.querySelectorAll('.step:not(.step-visible)');
+
+                if (unseenSteps.length > 0) {
+                    unseenSteps[0].classList.add('step-visible');
+                    syncSlide3();
+                    syncSlide4();
+                } else if (currentSlideIndex < slides.length - 1) {
+                    currentSlideIndex++;
+                    slides[currentSlideIndex].querySelectorAll('.step').forEach(s => s.classList.remove('step-visible'));
+                    updateView();
+                }
+            }
+
+            function prev() {
+                const activeSlide = slides[currentSlideIndex];
+                const seenSteps = activeSlide.querySelectorAll('.step.step-visible');
+
+                if (seenSteps.length > 0) {
+                    seenSteps[seenSteps.length - 1].classList.remove('step-visible');
+                    syncSlide3();
+                    syncSlide4();
+                } else if (currentSlideIndex > 0) {
+                    currentSlideIndex--;
+                    slides[currentSlideIndex].querySelectorAll('.step').forEach(s => s.classList.add('step-visible'));
+                    updateView();
+                }
+            }
+
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter' || e.key === 'PageDown') {
+                    e.preventDefault();
+                    next();
+                } else if (e.key === 'ArrowLeft' || e.key === 'PageUp' || e.key === 'Backspace') {
+                    e.preventDefault();
+                    prev();
+                } else if (e.key === 'Home') {
+                    e.preventDefault();
+                    currentSlideIndex = 0;
+                    slides[0].querySelectorAll('.step').forEach(s => s.classList.remove('step-visible'));
+                    updateView();
+                } else if (e.key === 'End') {
+                    e.preventDefault();
+                    currentSlideIndex = slides.length - 1;
+                    slides[currentSlideIndex].querySelectorAll('.step').forEach(s => s.classList.add('step-visible'));
+                    updateView();
+                }
+            });
+
+            updateView();
+        })();
+    </script>
+</body>
+</html>

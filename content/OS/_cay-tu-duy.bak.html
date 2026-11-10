@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OS: Cây tư duy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+<style>
+:root{--desk:#f3ede0;--paper:#fffdf8;--ink:#2a2a2a;--muted:#6b6455}
+*{box-sizing:border-box}
+body{margin:0;background:var(--desk);color:var(--ink);font:16px/1.45 system-ui,"Segoe UI",Roboto,sans-serif}
+header{padding:20px 16px 4px;max-width:1100px;margin:0 auto}
+h1{margin:0 0 4px;font-size:24px}
+header p{margin:0;color:var(--muted)}
+#scroller{overflow-x:auto;padding:14px 16px 40px}
+/* Giấy ô chấm như vở: sáng, quen mắt, không phải nền trơn "máy làm" */
+#paper{min-width:1300px;max-width:1700px;margin:0 auto;border-radius:6px;background:var(--paper) radial-gradient(#e6dfcc 1.1px,transparent 1.4px) 0 0/26px 26px;box-shadow:0 2px 4px rgba(80,60,20,.15),0 14px 36px rgba(80,60,20,.14)}
+svg{display:block;width:100%;height:auto}
+svg text{font-family:"Patrick Hand","Comic Sans MS","Segoe Print",cursive}
+.leaf text{font-size:19px;fill:var(--ink)}
+.leaf .n{font-weight:700;fill:var(--c)}
+.leaf rect{fill:transparent}
+.leaf:hover rect{fill:var(--c);fill-opacity:.13}
+.leaf:hover text{text-decoration:underline}
+.pill{cursor:pointer}
+.pill .hit{fill:#fff;fill-opacity:0}
+.pill:hover .hit{fill-opacity:.16}
+.pill text{fill:#fff}
+.pill .t{font-size:14px;opacity:.92}
+.pill .m{font-size:17px}
+.open text{font-size:14px;fill:var(--c);text-decoration:underline}
+.open:hover text{font-weight:700}
+.title{font-size:27px;fill:#d62828}
+.ico{font-size:30px;font-family:"Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif!important}
+</style>
+</head>
+<body>
+<header>
+  <h1>OS: Cây tư duy</h1>
+  <p>Bấm một chữ trên cành để nhảy thẳng tới phần đó trong bài. Bấm khối màu của nhánh để thu gọn hoặc mở ra.</p>
+</header>
+<div id="scroller"><div id="paper"><svg id="svg" role="img" aria-label="Sơ đồ tư duy môn Hệ điều hành"></svg></div></div>
+<script>
+// Mỗi nhánh: [file, nhãn, tên bài, hình nhỏ, các phần theo thứ tự s1, s2, ...]. Phần ở vị trí i có neo #s(i+1).
+const D=[
+["01-tong-quan-he-dieu-hanh","OS 1","Tổng quan hệ điều hành","🖥️",["Cấu trúc máy tính","Hệ điều hành là gì","Lịch sử","Phân loại","Khái niệm cơ bản","Bộ nhớ, file, thiết bị, an ninh","System call","Cấu trúc hệ điều hành"]],
+["02-tien-trinh-va-luong","OS 2","Tiến trình và luồng","⚙️",["Chương trình và tiến trình","Trạng thái tiến trình","PCB và chuyển ngữ cảnh","Điều phối tiến trình","Tạo và kết thúc","Hợp tác và IPC","Luồng","Mô hình đa luồng"]],
+["03-dieu-phoi-cpu","OS 3","Điều phối CPU","⏱️",["Vì sao cần điều phối","Ba cấp điều phối","Tiêu chuẩn điều phối","FCFS, SJF, SRTF","Ưu tiên, Round Robin, đa mức","Chạy thử thuật toán","Đa xử lý và đánh giá"]],
+["04-dong-bo-hoa","OS 4","Đồng bộ hóa","🔒",["Hợp tác và race","Đoạn găng","Giải pháp phần mềm","Giải pháp phần cứng","Semaphore","Monitor và thông điệp","Producer–Consumer","Readers–Writers, triết gia"]],
+["05-deadlock","OS 5","Deadlock","⛔",["Deadlock là gì","Bốn điều kiện","Đồ thị cấp phát","Ba cách xử lý","Phòng tránh, nhà băng","Phát hiện","Phục hồi"]],
+["06-quan-ly-bo-nho","OS 6","Quản lý bộ nhớ","🧩",["Bộ nhớ cần quản lý gì","Địa chỉ và liên kết","Cấp phát liên tục","Phân trang","Phân đoạn","Kết hợp"]],
+["07-bo-nho-ao","OS 7","Bộ nhớ ảo","☁️",["Khái niệm","Phân trang theo yêu cầu","Thay thế trang","Cấp phát khung trang","Thrashing"]],
+["08-o-dia","OS 8","Ổ đĩa và lưu trữ","💽",["Bên trong ổ cứng","Định danh và hiệu suất","Định thời truy cập đĩa","Định dạng và phân vùng","RAID"]],
+];
+// Màu bút dạ theo thứ tự cầu vồng; chữ trắng trên các màu này đều đủ tương phản.
+const COL=["#1971c2","#0c8599","#2f9e44","#a16207","#e8590c","#c92a2a","#d6336c","#7048e8"];
+const ROW=36,GAPG=30,XB=240,PW=180,PH=50,MINH=118,LX=XB+PW+46,HALF=790;
+const svg=document.getElementById('svg'),NS='http://www.w3.org/2000/svg';
+const open=new Set(D.map((_,i)=>i));
+try{const s=JSON.parse(localStorage.getItem('os-tree-open'));if(Array.isArray(s)){open.clear();s.forEach(i=>open.add(i))}}catch(e){}
+function S(tag,attrs,parent,text){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(text!=null)e.textContent=text;(parent||svg).append(e);return e}
+// Số "ngẫu nhiên" cố định theo n: mỗi lần mở trang vẫn ra đúng một hình, nhưng các cành không giống hệt nhau.
+const R=n=>{const x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x)};
+// Nhánh dày ở gốc, thon dần ra ngọn: vẽ thành một hình đặc quanh đường cong Bézier.
+function taper(p0,p1,p2,p3,w0,w1,c,parent){
+  const N=28,L=[],Rt=[];
+  for(let i=0;i<=N;i++){
+    const t=i/N,u=1-t;
+    const x=u*u*u*p0[0]+3*u*u*t*p1[0]+3*u*t*t*p2[0]+t*t*t*p3[0],y=u*u*u*p0[1]+3*u*u*t*p1[1]+3*u*t*t*p2[1]+t*t*t*p3[1];
+    const dx=3*u*u*(p1[0]-p0[0])+6*u*t*(p2[0]-p1[0])+3*t*t*(p3[0]-p2[0]),dy=3*u*u*(p1[1]-p0[1])+6*u*t*(p2[1]-p1[1])+3*t*t*(p3[1]-p2[1]);
+    const n=Math.hypot(dx,dy)||1,w=w0+(w1-w0)*t;
+    L.push([x-dy/n*w,y+dx/n*w]);Rt.push([x+dy/n*w,y-dx/n*w]);
+  }
+  const pts=L.concat(Rt.reverse()).map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1));
+  S('path',{d:'M'+pts.join('L')+'Z',fill:c},parent);
+}
+function cloud(parent){
+  const g=S('g',{},parent);
+  [95,83,71,59].forEach((r,i)=>S('path',{d:`M${-r} -22A${r} ${r} 0 0 1 ${r} -22`,fill:'none',stroke:['#e63946','#f4a261','#f2cc3a','#52b788'][i],'stroke-width':11,'stroke-linecap':'round'},g));
+  const C=[[-80,8,40],[-38,-20,46],[22,-26,48],[74,2,42],[-36,26,38],[30,28,40],[0,0,46]];
+  C.forEach(([x,y,r])=>S('circle',{cx:x,cy:y,r:r+3,fill:'#3a86d6'},g));
+  C.forEach(([x,y,r])=>S('circle',{cx:x,cy:y,r,fill:'#dcecfb'},g));
+}
+function draw(){
+  svg.innerHTML='';
+  // Bộ lọc làm méo nhẹ nét vẽ để cành, gạch chân, đám mây hơi run như bút dạ thật (chữ thì giữ nguyên cho dễ đọc).
+  const defs=S('defs',{});
+  const fl=S('filter',{id:'wob',filterUnits:'userSpaceOnUse',x:-1000,y:-1200,width:2000,height:2400},defs);
+  S('feTurbulence',{type:'fractalNoise',baseFrequency:'0.017',numOctaves:2,seed:7,result:'n'},fl);
+  S('feDisplacementMap',{in:'SourceGraphic',in2:'n',scale:6,xChannelSelector:'R',yChannelSelector:'G'},fl);
+  // Phải: OS1..4 từ trên xuống (chiều kim đồng hồ). Trái: OS5..8 từ dưới lên, nên liệt kê ngược để xếp từ trên xuống.
+  const sides=[[+1,[0,1,2,3]],[-1,[7,6,5,4]]];
+  const hOf=i=>Math.max(MINH,(open.has(i)?D[i][4].length:0)*ROW);
+  const sideH=ids=>ids.reduce((a,i)=>a+hOf(i),0)+GAPG*(ids.length-1);
+  const Hmax=Math.max(360,...sides.map(s=>sideH(s[1])));
+  const back=S('g',{filter:'url(#wob)'});const front=S('g',{});
+  sides.forEach(([sg,ids])=>{
+    let y=-sideH(ids)/2;
+    ids.forEach(i=>{
+      const [f,tag,name,ico,secs]=D[i],c=COL[i],h=hOf(i),by=y+h/2,shown=open.has(i),gx=sg>0?XB:-XB-PW,cx=gx+PW/2;
+      taper([sg*50,0],[sg*XB*(.5+R(i)*.12),R(i+9)*30-15],[sg*XB*.45,by],[sg*XB,by],17,4,c,back);
+      const pa=((R(i+3)-.5)*2.4).toFixed(2),pr=`rotate(${pa} ${cx} ${by})`;
+      S('rect',{x:gx,y:by-PH/2,width:PW,height:PH,rx:16,fill:c,transform:pr},back);
+      const p=S('g',{class:'pill',transform:pr},front);
+      p.append(Object.assign(document.createElementNS(NS,'title'),{textContent:'Bấm để thu gọn / mở ra'}));
+      S('rect',{class:'hit',x:gx,y:by-PH/2,width:PW,height:PH,rx:16},p);
+      S('text',{x:cx,y:by-4,'text-anchor':'middle',class:'t'},p,tag);
+      S('text',{x:cx,y:by+15,'text-anchor':'middle',class:'m'},p,name);
+      S('text',{x:cx,y:by-PH/2-12,'text-anchor':'middle',class:'ico',transform:`rotate(${(R(i+5)-.5)*16} ${cx} ${by-PH/2-12})`},front,ico);
+      p.onclick=()=>{open.has(i)?open.delete(i):open.add(i);try{localStorage.setItem('os-tree-open',JSON.stringify([...open]))}catch(_){}draw()};
+      const ol=S('a',{href:f+'.html',class:'open',style:'--c:'+c},front);
+      S('text',{x:cx,y:by+PH/2+19,'text-anchor':'middle'},ol,'mở cả bài ↗');
+      if(shown)secs.forEach((s,k)=>{
+        const seed=i*40+k,ang=((R(seed+1)-.5)*3.4).toFixed(2),ly=y+(h-secs.length*ROW)/2+k*ROW+ROW/2+(R(seed+2)-.5)*2.6,px=sg*LX,tr=`rotate(${ang} ${px} ${ly})`;
+        const a=S('a',{href:`${f}.html#s${k+1}`,class:'leaf',style:'--c:'+c,transform:tr},front);
+        const r=S('rect',{rx:6},a);
+        const t=S('text',{x:px,y:ly+5,'text-anchor':sg>0?'start':'end'},a);
+        S('tspan',{class:'n'},t,(k+1)+' ');S('tspan',{},t,s);
+        const tw=t.getComputedTextLength();
+        r.setAttribute('x',sg>0?LX-4:-LX-tw-4);r.setAttribute('y',ly-15);r.setAttribute('width',tw+8);r.setAttribute('height',28);
+        const ex=sg*(XB+PW),sx=sg*(LX-8),uy=ly+9,k1=14+R(seed+3)*18,over=4+R(seed+4)*14;
+        S('path',{d:`M${ex} ${by}C${ex+sg*k1} ${by} ${sx-sg*k1} ${uy} ${sx} ${uy}L${sg*(LX+tw+over)} ${uy}`,fill:'none',stroke:c,'stroke-width':(2.8+R(seed+5)*1.2).toFixed(1),'stroke-linecap':'round',transform:tr},back);
+      });
+      y+=h+GAPG;
+    });
+  });
+  cloud(back);
+  S('text',{x:0,y:9,'text-anchor':'middle',class:'title',transform:'rotate(-2)'},front,'Hệ điều hành');
+  const vh=Hmax+150;svg.setAttribute('viewBox',`${-HALF} ${-vh/2} ${HALF*2} ${vh}`);
+}
+// Font chữ tay chỉ tải khi đã có chữ trên trang: vẽ một lần, tải xong thì vẽ lại để gạch chân khớp độ dài chữ.
+draw();
+document.fonts.load('19px "Patrick Hand"').then(draw,()=>{});
+</script>
+</body>
+</html>
