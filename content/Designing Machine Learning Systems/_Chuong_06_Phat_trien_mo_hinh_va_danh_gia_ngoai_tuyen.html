@@ -505,4 +505,209 @@ sup a{text-decoration:none;color:#b00}.fd{color:#b00;text-decoration:none;font-w
 <p><a class="fd" id="fn46" href="#r46">[46]</a> P. J. Bickel, E. A. Hammel, and J. W. O'Connell, &quot;Sex Bias in Graduate Admissions: Data from Berkeley,&quot; <em>Science</em> 187 (1975): 398-404, <a href="https://oreil.ly/TeR7E">https://oreil.ly/TeR7E</a>.</p>
 <p><a class="fd" id="fn47" href="#r47">[47]</a> Với những độc giả muốn tìm hiểu thêm về thiết kế UX giữa các nền văn hóa, Jenny Shen có một bài đăng rất hay.</p>
 
+
+<!-- BOOKMARK & READING PROGRESS SYSTEM -->
+<div id="read-progress" style="position:fixed;top:0;left:0;height:3px;background:#2563eb;width:0%;z-index:9999;transition:width .1s linear;"></div>
+
+<div id="bookmark-widget" style="position:fixed;bottom:20px;right:20px;z-index:9999;font-family:system-ui,-apple-system,sans-serif;font-size:13px;display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+  <div id="bm-prompt" style="display:none;background:#1e293b;color:#fff;padding:8px 12px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);max-width:260px;line-height:1.4;">
+    <span>Đọc tiếp từ lần trước (<span id="bm-saved-pct">0%</span>)?</span>
+    <div style="margin-top:6px;display:flex;gap:6px;">
+      <button id="bm-resume-btn" style="background:#2563eb;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-weight:600;">Tiếp tục</button>
+      <button id="bm-dismiss-btn" style="background:#475569;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">Bỏ qua</button>
+    </div>
+  </div>
+  
+  <div style="display:flex;align-items:center;background:#fff;border:1px solid #cbd5e1;box-shadow:0 2px 8px rgba(0,0,0,0.1);border-radius:24px;padding:4px 10px;gap:8px;">
+    <span id="bm-pct-display" style="color:#64748b;font-weight:600;min-width:32px;">0%</span>
+    <button id="bm-mark-btn" title="Đánh dấu vị trí hiện tại" style="background:#2563eb;color:#fff;border:none;padding:5px 10px;border-radius:16px;cursor:pointer;font-weight:500;display:flex;align-items:center;gap:4px;">
+      🔖 Đánh dấu
+    </button>
+    <button id="bm-jump-btn" title="Nhảy đến vị trí đã đánh dấu" style="background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;padding:5px 10px;border-radius:16px;cursor:pointer;font-weight:500;display:none;">
+      📌 Về mốc
+    </button>
+  </div>
+</div>
+
+<style>
+.bm-bookmarked {
+  border-left: 4px solid #2563eb !important;
+  background-color: rgba(37, 99, 235, 0.08) !important;
+  padding-left: 10px !important;
+  border-radius: 4px !important;
+  transition: all 0.3s ease;
+}
+@media (prefers-color-scheme: dark) {
+  #bookmark-widget > div:last-child {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+  }
+  #bm-jump-btn {
+    background: #334155 !important;
+    color: #e2e8f0 !important;
+    border-color: #475569 !important;
+  }
+  .bm-bookmarked {
+    background-color: rgba(37, 99, 235, 0.2) !important;
+  }
+}
+</style>
+
+<script>
+(function() {
+  const pageKey = 'reader_bm_' + (location.pathname.split('/').pop() || 'index');
+  const progressBar = document.getElementById('read-progress');
+  const pctDisplay = document.getElementById('bm-pct-display');
+  const promptBox = document.getElementById('bm-prompt');
+  const savedPctSpan = document.getElementById('bm-saved-pct');
+  const resumeBtn = document.getElementById('bm-resume-btn');
+  const dismissBtn = document.getElementById('bm-dismiss-btn');
+  const markBtn = document.getElementById('bm-mark-btn');
+  const jumpBtn = document.getElementById('bm-jump-btn');
+
+  let currentBookmarkedElem = null;
+
+  function getScrollPct() {
+    const h = document.documentElement, b = document.body;
+    const st = 'scrollTop' in h ? h.scrollTop : b.scrollTop;
+    const sh = ('scrollHeight' in h ? h.scrollHeight : b.scrollHeight) - h.clientHeight;
+    return sh > 0 ? Math.min(100, Math.max(0, Math.round((st / sh) * 100))) : 0;
+  }
+
+  function updateProgress() {
+    const pct = getScrollPct();
+    if (progressBar) progressBar.style.width = pct + '%';
+    if (pctDisplay) pctDisplay.textContent = pct + '%';
+  }
+
+  window.addEventListener('scroll', () => {
+    updateProgress();
+    const scrollY = window.scrollY;
+    if (scrollY > 100) {
+      try {
+        const data = JSON.parse(localStorage.getItem(pageKey) || '{}');
+        data.lastScrollY = scrollY;
+        data.lastPct = getScrollPct();
+        localStorage.setItem(pageKey, JSON.stringify(data));
+      } catch(e) {}
+    }
+  }, { passive: true });
+
+  function highlightElem(elem) {
+    if (currentBookmarkedElem) currentBookmarkedElem.classList.remove('bm-bookmarked');
+    if (elem) {
+      elem.classList.add('bm-bookmarked');
+      currentBookmarkedElem = elem;
+    }
+  }
+
+  function getElementPath(el) {
+    if (!el || el === document.body) return '';
+    const idx = Array.from(el.parentNode.children).indexOf(el);
+    return el.tagName + ':' + idx;
+  }
+
+  function findElementByPath(path) {
+    if (!path) return null;
+    const [tag, idx] = path.split(':');
+    const els = document.body.querySelectorAll(tag);
+    return els[parseInt(idx, 10)] || null;
+  }
+
+  function saveManualBookmark() {
+    const els = document.querySelectorAll('p, h1, h2, h3, h4, h5, table, .box');
+    let target = null;
+    for (const el of els) {
+      const rect = el.getBoundingClientRect();
+      if (rect.top >= 40 && rect.top <= window.innerHeight * 0.5) {
+        target = el;
+        break;
+      }
+    }
+    const scrollY = window.scrollY;
+    const pct = getScrollPct();
+    try {
+      const data = JSON.parse(localStorage.getItem(pageKey) || '{}');
+      data.manualScrollY = scrollY;
+      data.manualPct = pct;
+      data.elemPath = target ? getElementPath(target) : '';
+      localStorage.setItem(pageKey, JSON.stringify(data));
+    } catch(e) {}
+
+    if (target) highlightElem(target);
+    markBtn.textContent = '✓ Đã lưu';
+    if (jumpBtn) jumpBtn.style.display = 'inline-block';
+    setTimeout(() => { markBtn.textContent = '🔖 Đánh dấu'; }, 2000);
+  }
+
+  markBtn.addEventListener('click', saveManualBookmark);
+
+  jumpBtn.addEventListener('click', () => {
+    try {
+      const data = JSON.parse(localStorage.getItem(pageKey) || '{}');
+      if (data.manualScrollY !== undefined) {
+        window.scrollTo({ top: data.manualScrollY, behavior: 'smooth' });
+        if (data.elemPath) {
+          const el = findElementByPath(data.elemPath);
+          if (el) highlightElem(el);
+        }
+      }
+    } catch(e) {}
+  });
+
+  function initBookmark() {
+    updateProgress();
+    try {
+      const raw = localStorage.getItem(pageKey);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      if (data.manualScrollY !== undefined) {
+        jumpBtn.style.display = 'inline-block';
+        if (data.elemPath) {
+          const el = findElementByPath(data.elemPath);
+          if (el) highlightElem(el);
+        }
+      }
+      const targetY = data.manualScrollY || data.lastScrollY;
+      const targetPct = data.manualPct || data.lastPct;
+      if (targetY && targetY > 150) {
+        savedPctSpan.textContent = targetPct + '%';
+        promptBox.style.display = 'block';
+        resumeBtn.onclick = () => {
+          window.scrollTo({ top: targetY, behavior: 'smooth' });
+          promptBox.style.display = 'none';
+        };
+        dismissBtn.onclick = () => {
+          promptBox.style.display = 'none';
+        };
+      }
+    } catch(e) {}
+  }
+
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', initBookmark);
+  } else {
+    initBookmark();
+  }
+
+  document.addEventListener('dblclick', (e) => {
+    const p = e.target.closest('p, h1, h2, h3, h4, h5, li');
+    if (p) {
+      highlightElem(p);
+      try {
+        const data = JSON.parse(localStorage.getItem(pageKey) || '{}');
+        data.manualScrollY = window.scrollY;
+        data.manualPct = getScrollPct();
+        data.elemPath = getElementPath(p);
+        localStorage.setItem(pageKey, JSON.stringify(data));
+      } catch(e) {}
+      markBtn.textContent = '✓ Đã lưu';
+      jumpBtn.style.display = 'inline-block';
+      setTimeout(() => { markBtn.textContent = '🔖 Đánh dấu'; }, 2000);
+    }
+  });
+})();
+</script>
+
 </body></html>

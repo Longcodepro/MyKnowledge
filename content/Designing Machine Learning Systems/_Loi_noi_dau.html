@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lời nói đầu - Thiết kế các hệ thống Machine Learning</title><style>body{max-width:860px;margin:0 auto;padding:16px 16px 60px;font:17px/1.7 Georgia,'Times New Roman',serif;color:#1d1d1f;background:#fff}
+h1{font-size:2em;line-height:1.25;border-bottom:2px solid #ccc;padding-bottom:.3em}h2{font-size:1.5em;margin-top:2em;border-bottom:1px solid #ddd}h3{font-size:1.25em;margin-top:1.6em}h4{font-size:1.1em}h5{font-size:1.02em;font-style:italic}
+img{max-width:100%;height:auto;display:block;margin:12px auto}.figimgs{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}.figimgs img{max-width:48%}
+.cap{text-align:center;color:#555;font-size:.92em;margin-top:0}table{border-collapse:collapse;margin:12px auto;max-width:100%;display:block;overflow-x:auto}th,td{border:1px solid #bbb;padding:6px 10px}th{background:#f0f0f0}
+.box{background:#f6f6f6;border:1px solid #ccc;padding:4px 18px;margin:20px 0}.note{background:#fff8e1;border-left:4px solid #f0b400;padding:8px 14px;font-size:.92em}
+sup a{text-decoration:none;color:#b00}.fd{color:#b00;text-decoration:none;font-weight:bold}a{word-break:break-word}
+@media(prefers-color-scheme:dark){body{background:#17181a;color:#e6e6e6}th{background:#2a2b2e}.box{background:#202225;border-color:#444}.note{background:#2b2616}img{background:#fff}.cap{color:#aaa}h1,h2{border-color:#444}td,th{border-color:#555}}</style></head><body>
+<h1>Lời nói đầu</h1>
+<p class="note"><b>Ghi chú của người dịch:</b> Văn bản được dịch đầy đủ và nguyên văn 100% từ phần Lời nói đầu (Preface), cuốn sách <i>Designing Machine Learning Systems</i> của tác giả Chip Huyen.</p>
+
+<p>Kể từ khóa học machine learning đầu tiên mà tôi giảng dạy tại Đại học Stanford vào năm 2017, rất nhiều người đã hỏi tôi lời khuyên về cách triển khai các mô hình ML tại tổ chức của họ. Những câu hỏi này có thể mang tính khái quát, chẳng hạn như "Tôi nên dùng mô hình nào?" "Bao lâu thì tôi nên huấn luyện lại mô hình của mình một lần?" "Làm thế nào để tôi phát hiện sự dịch chuyển phân phối dữ liệu (data distribution shift)?" "Làm thế nào để đảm bảo rằng các đặc trưng được sử dụng trong quá trình huấn luyện nhất quán với các đặc trưng được sử dụng trong quá trình suy luận (inference)?" Những câu hỏi này cũng có thể rất cụ thể, chẳng hạn như "Tôi tin chắc rằng việc chuyển từ dự đoán hàng loạt (batch prediction) sang dự đoán trực tuyến (online prediction) sẽ giúp tăng hiệu năng của mô hình, nhưng làm thế nào để tôi thuyết phục được sếp cho phép làm điều đó?" hoặc "Tôi là nhà khoa học dữ liệu (data scientist) kỳ cựu nhất tại công ty và gần đây tôi được giao nhiệm vụ thiết lập nền tảng machine learning đầu tiên cho công ty; tôi nên bắt đầu từ đâu?" Câu trả lời ngắn gọn của tôi cho tất cả những câu hỏi này luôn là: "Còn tùy." Còn câu trả lời dài của tôi thường bao gồm hàng giờ thảo luận để hiểu rõ xuất phát điểm của người hỏi, điều họ thực sự đang cố gắng đạt được là gì, cùng với những ưu và nhược điểm của các cách tiếp cận khác nhau đối với trường hợp sử dụng cụ thể của họ. Các hệ thống ML vừa phức tạp lại vừa độc nhất. Chúng phức tạp vì bao gồm nhiều thành phần khác nhau (thuật toán ML, dữ liệu, logic nghiệp vụ, các số liệu đánh giá, hạ tầng bên dưới, v.v.) và liên quan đến nhiều bên liên quan khác nhau (các nhà khoa học dữ liệu, kỹ sư ML, lãnh đạo doanh nghiệp, người dùng, và thậm chí cả toàn xã hội). Các hệ thống ML độc nhất vì chúng phụ thuộc vào dữ liệu, mà dữ liệu lại biến đổi vô cùng phong phú từ trường hợp sử dụng này sang trường hợp sử dụng khác. Ví dụ, hai công ty có thể hoạt động trong cùng một lĩnh vực (thương mại điện tử) và cùng có một bài toán muốn ML giải quyết (hệ thống gợi ý - recommender system), nhưng hệ thống ML tạo ra của họ có thể có kiến trúc mô hình khác nhau, sử dụng các tập đặc trưng khác nhau, được đánh giá trên các số liệu khác nhau, và mang lại tỷ suất hoàn vốn đầu tư (ROI) khác nhau.</p>
+
+<p>Nhiều bài viết blog và bài hướng dẫn (tutorial) về đưa ML vào môi trường thực tế (ML production) chỉ tập trung trả lời một câu hỏi cụ thể. Dù sự tập trung đó giúp truyền tải thông điệp rõ ràng, chúng có thể tạo ra cảm tưởng rằng có thể xem xét từng câu hỏi một cách tách biệt. Trong thực tế, những thay đổi ở một thành phần rất có thể sẽ ảnh hưởng đến các thành phần khác. Do đó, cần phải xem xét hệ thống như một tổng thể toàn diện khi đưa ra bất kỳ quyết định thiết kế nào. Cuốn sách này áp dụng một cách tiếp cận toàn diện (holistic approach) đối với các hệ thống ML. Nó tính đến các thành phần khác nhau của hệ thống và các mục tiêu của những bên liên quan khác nhau tham gia vào đó. Nội dung trong cuốn sách này được minh họa bằng các nghiên cứu tình huống (case study) thực tế, nhiều trường hợp trong số đó là do chính tôi trực tiếp tham gia, được chứng thực bằng nguồn tài liệu tham khảo phong phú, và được đánh giá chuyên môn bởi các chuyên gia thực hành ML ở cả giới học thuật lẫn công nghiệp. Những phần đòi hỏi kiến thức chuyên sâu về một chủ đề nhất định—chẳng hạn như xử lý hàng loạt so với xử lý luồng dữ liệu (batch processing vs. stream processing), hạ tầng lưu trữ và tính toán, và AI có trách nhiệm (responsible AI)—được các chuyên gia có công việc tập trung vào đúng chủ đề đó đánh giá thêm. Nói cách khác, cuốn sách này là một nỗ lực nhằm đưa ra những câu trả lời thấu đáo, đa chiều cho các câu hỏi đã đề cập ở trên và hơn thế nữa. Khi lần đầu tiên viết những bài giảng làm nền tảng cho cuốn sách này, tôi nghĩ rằng mình viết chúng cho các sinh viên của mình nhằm chuẩn bị cho các bạn trước những đòi hỏi trong công việc tương lai với tư cách là các nhà khoa học dữ liệu và kỹ sư ML. Tuy nhiên, tôi nhanh chóng nhận ra rằng bản thân mình cũng học hỏi được vô số điều trong suốt quá trình đó. Những bản thảo ban đầu mà tôi chia sẻ với những độc giả đọc sớm đã khơi mào cho nhiều cuộc trò chuyện nhằm thử thách những giả định của tôi, buộc tôi phải cân nhắc nhiều góc nhìn khác nhau, và giới thiệu cho tôi những bài toán cùng các phương pháp tiếp cận mới. Tôi hy vọng quá trình học tập này sẽ tiếp tục đồng hành cùng tôi khi cuốn sách giờ đây đã nằm trên tay bạn, bởi vì bạn sở hữu những kinh nghiệm và góc nhìn độc đáo của riêng mình. Xin vui lòng chia sẻ với tôi bất kỳ phản hồi nào bạn có về cuốn sách này, thông qua máy chủ Discord về MLOps do tôi quản lý (nơi bạn cũng có thể tìm thấy những độc giả khác của cuốn sách này), Twitter, LinkedIn, hoặc các kênh khác mà bạn có thể tìm thấy trên trang web của tôi.</p>
+
+<h2>Cuốn sách này dành cho ai</h2>
+
+<p>Cuốn sách này dành cho bất kỳ ai muốn tận dụng ML để giải quyết các vấn đề trong thế giới thực. ML trong cuốn sách này đề cập đến cả học sâu (deep learning) lẫn các thuật toán cổ điển, với thiên hướng hướng tới các hệ thống ML ở quy mô lớn, chẳng hạn như những hệ thống tại các doanh nghiệp vừa và lớn hay các startup đang tăng trưởng nhanh. Các hệ thống ở quy mô nhỏ hơn thường ít phức tạp hơn và có thể hưởng lợi ít hơn từ cách tiếp cận toàn diện được trình bày trong cuốn sách này. Vì nền tảng của tôi là kỹ thuật, ngôn ngữ của cuốn sách này hướng tới các kỹ sư, bao gồm kỹ sư ML, nhà khoa học dữ liệu, kỹ sư dữ liệu, kỹ sư nền tảng ML và các nhà quản lý kỹ thuật. Có thể bạn sẽ thấy mình trong một trong các tình huống sau:</p>
+
+<ul>
+<li>Bạn được giao một bài toán kinh doanh và rất nhiều dữ liệu thô. Bạn muốn xử lý/xây dựng đặc trưng cho lượng dữ liệu này và chọn các số liệu phù hợp để giải quyết bài toán đó.</li>
+<li>Các mô hình ban đầu của bạn hoạt động tốt trong các thí nghiệm ngoại tuyến (offline) và bạn muốn triển khai chúng.</li>
+<li>Bạn có rất ít phản hồi về hiệu năng hoạt động của các mô hình sau khi chúng đã được triển khai, và bạn muốn tìm cách phát hiện nhanh, gỡ lỗi và xử lý bất kỳ sự cố nào mà mô hình có thể gặp phải trong môi trường thực tế (production).</li>
+<li>Quy trình phát triển, đánh giá, triển khai và cập nhật mô hình của nhóm bạn phần lớn vẫn là thủ công, chậm chạp và dễ xảy ra sai sót. Bạn muốn tự động hóa và cải thiện quy trình này.</li>
+<li>Mỗi trường hợp sử dụng ML trong tổ chức của bạn được triển khai theo một quy trình làm việc riêng biệt, và bạn muốn đặt nền móng (ví dụ: kho lưu trữ mô hình - model store, kho lưu trữ đặc trưng - feature store, các công cụ giám sát) để có thể chia sẻ và tái sử dụng qua nhiều trường hợp sử dụng khác nhau.</li>
+<li>Bạn lo ngại rằng có thể có những thiên vị/định kiến (bias) trong các hệ thống ML của mình và bạn muốn xây dựng các hệ thống có trách nhiệm!</li>
+</ul>
+
+<p>Bạn cũng có thể nhận được nhiều lợi ích từ cuốn sách nếu bạn thuộc một trong các nhóm đối tượng sau:</p>
+
+<ul>
+<li>Các nhà phát triển công cụ muốn xác định những mảng còn chưa được phục vụ tốt trong ML production và tìm hiểu cách định vị công cụ của mình trong hệ sinh thái.</li>
+<li>Các cá nhân đang tìm kiếm các vị trí công việc liên quan đến ML trong ngành công nghiệp.</li>
+<li>Các nhà lãnh đạo kỹ thuật và kinh doanh đang cân nhắc việc áp dụng các giải pháp ML để cải thiện sản phẩm và/hoặc quy trình kinh doanh của mình. Những độc giả không có nền tảng kỹ thuật vững chắc có thể nhận được nhiều lợi ích nhất từ Chương 1, Chương 2 và Chương 11.</li>
+</ul>
+
+<h2>Những gì cuốn sách này không đề cập</h2>
+
+<p>Cuốn sách này không phải là sách nhập môn ML. Hiện đã có rất nhiều sách, khóa học và tài nguyên về lý thuyết ML, vì vậy cuốn sách này tránh lặp lại các khái niệm đó để tập trung vào các khía cạnh thực tế của ML. Cụ thể, cuốn sách giả định rằng độc giả đã có hiểu biết cơ bản về các chủ đề sau:</p>
+
+<ul>
+<li>Các mô hình ML như phân cụm (clustering), hồi quy logistic (logistic regression), cây quyết định (decision trees), lọc cộng tác (collaborative filtering), cùng nhiều kiến trúc mạng nơ-ron khác nhau bao gồm mạng truyền thẳng (feed-forward), hồi quy (recurrent), tích chập (convolutional) và transformer</li>
+<li>Các kỹ thuật ML như học có giám sát so với học không giám sát, hạ gradient (gradient descent), hàm mục tiêu/hàm mất mát (objective/loss function), điều chuẩn (regularization), khả năng tổng quát hóa (generalization) và tinh chỉnh siêu tham số (hyperparameter tuning)</li>
+<li>Các chỉ số đo lường như độ chính xác (accuracy), F1, độ chuẩn xác (precision), độ thu hồi (recall), ROC, sai số bình phương trung bình (mean squared error - MSE) và log-likelihood</li>
+<li>Các khái niệm thống kê như phương sai (variance), xác suất (probability) và phân phối chuẩn/phân phối đuôi dài (normal/long-tail distribution)</li>
+<li>Các tác vụ ML phổ biến như mô hình hóa ngôn ngữ (language modeling), phát hiện bất thường (anomaly detection), phân loại đối tượng (object classification) và dịch máy (machine translation)</li>
+</ul>
+
+<p>Bạn không nhất thiết phải hiểu tường tận chân tơ kẽ tóc những chủ đề này—đối với những khái niệm mà định nghĩa chính xác có thể cần đôi chút công sức để nhớ lại, chẳng hạn như điểm F1 (F1 score), chúng tôi có đính kèm các ghi chú ngắn để tham khảo—nhưng bạn nên có một hình dung sơ bộ về ý nghĩa của chúng trước khi bắt đầu. Mặc dù cuốn sách này đề cập đến các công cụ hiện hành để minh họa cho các khái niệm và giải pháp nhất định, đây không phải là một cuốn sách hướng dẫn từng bước (tutorial). Công nghệ phát triển theo thời gian. Các công cụ có thể nhanh chóng nổi lên rồi thoái trào, nhưng các phương pháp tiếp cận nền tảng để giải quyết vấn đề sẽ tồn tại lâu dài hơn nhiều. Cuốn sách này cung cấp một khuôn khổ để bạn đánh giá công cụ nào hoạt động tốt nhất cho trường hợp sử dụng của mình. Khi có một công cụ bạn muốn sử dụng, việc tìm kiếm các bài hướng dẫn về nó trên mạng thường rất dễ dàng. Do đó, cuốn sách này có rất ít đoạn mã nguồn (code snippet) mà thay vào đó tập trung cung cấp nhiều thảo luận xung quanh các sự đánh đổi (trade-off), ưu nhược điểm và các ví dụ cụ thể.</p>
+
+<h2>Định hướng đọc cuốn sách này</h2>
+
+<p>Các chương trong cuốn sách này được tổ chức để phản ánh những bài toán mà các nhà khoa học dữ liệu có thể gặp phải khi họ tiến triển qua từng giai đoạn trong vòng đời của một dự án ML. Hai chương đầu tiên đặt nền móng để thiết lập một dự án ML hướng tới thành công, bắt đầu từ câu hỏi cơ bản nhất: dự án của bạn có cần đến ML không? Phần này cũng bao gồm việc lựa chọn các mục tiêu cho dự án của bạn và cách định hình bài toán theo hướng giúp tìm ra các giải pháp đơn giản hơn. Nếu bạn đã quen thuộc với những cân nhắc này và nóng lòng muốn đi thẳng vào các giải pháp kỹ thuật, bạn hoàn toàn có thể bỏ qua hai chương đầu tiên. Các Chương 4 đến 6 đề cập đến giai đoạn tiền triển khai (pre-deployment) của một dự án ML: từ việc tạo dữ liệu huấn luyện và xây dựng đặc trưng cho đến việc phát triển và đánh giá các mô hình trong môi trường phát triển. Đây là giai đoạn mà chuyên môn về cả ML lẫn miền bài toán (domain) đặc biệt cần thiết. Các Chương 7 đến 9 đề cập đến giai đoạn triển khai và sau triển khai (deployment and post-deployment) của một dự án ML. Chúng ta sẽ học thông qua một câu chuyện mà nhiều độc giả có thể thấy quen thuộc rằng việc triển khai xong một mô hình chưa phải là kết thúc của quá trình triển khai. Mô hình đã triển khai sẽ cần phải được giám sát và cập nhật liên tục trước môi trường và các yêu cầu kinh doanh luôn biến đổi. Các Chương 3 và 10 tập trung vào hạ tầng cần thiết để giúp các bên liên quan thuộc các chuyên môn khác nhau có thể phối hợp cùng nhau nhằm mang lại các hệ thống ML thành công. Chương 3 tập trung vào các hệ thống dữ liệu, trong khi Chương 10 tập trung vào hạ tầng tính toán và các nền tảng ML. Tôi đã đắn đo một thời gian dài về việc nên đi sâu vào các hệ thống dữ liệu đến mức nào và nên giới thiệu nó ở đâu trong cuốn sách. Các hệ thống dữ liệu, bao gồm cơ sở dữ liệu, định dạng dữ liệu, sự dịch chuyển dữ liệu và các công cụ xử lý dữ liệu, thường ít được đề cập trong các chương trình giảng dạy ML, và do đó nhiều nhà khoa học dữ liệu có thể coi chúng là cấp thấp hoặc không liên quan. Sau khi tham khảo ý kiến của nhiều đồng nghiệp, tôi quyết định rằng vì các hệ thống ML phụ thuộc vào dữ liệu, việc đề cập sớm các kiến thức cơ bản về hệ thống dữ liệu sẽ giúp chúng ta có cùng một góc nhìn chung để thảo luận về các vấn đề dữ liệu trong phần còn lại của cuốn sách. Dù chúng ta đề cập đến nhiều khía cạnh kỹ thuật của một hệ thống ML trong cuốn sách này, các hệ thống ML được xây dựng bởi con người, phục vụ con người, và có thể tạo ra tác động to lớn đến cuộc sống của rất nhiều người. Sẽ thật thiếu sót nếu viết một cuốn sách về đưa ML vào thực tế mà lại thiếu một chương về khía cạnh con người, và đó chính là trọng tâm của Chương 11, chương cuối cùng của cuốn sách.</p>
+
+<p>Lưu ý rằng "nhà khoa học dữ liệu" (data scientist) là một vai trò đã phát triển rất nhiều trong vài năm qua, và đã có nhiều cuộc thảo luận để xác định vai trò này nên bao gồm những trách nhiệm gì—chúng ta sẽ đi sâu vào một số cuộc thảo luận này trong Chương 10. Trong cuốn sách này, chúng tôi sử dụng "nhà khoa học dữ liệu" như một thuật ngữ chung bao hàm bất kỳ ai làm việc trong việc phát triển và triển khai các mô hình ML, bao gồm cả những người có chức danh công việc có thể là kỹ sư ML, kỹ sư dữ liệu, nhà phân tích dữ liệu, v.v.</p>
+
+<h2>Kho lưu trữ GitHub và Cộng đồng</h2>
+
+<p>Đi kèm với cuốn sách này là một kho lưu trữ GitHub chứa:</p>
+
+<ul>
+<li>Phần ôn tập các khái niệm ML cơ bản</li>
+<li>Danh sách các tài liệu tham khảo được sử dụng trong sách cùng các tài nguyên nâng cao, cập nhật khác</li>
+<li>Các đoạn mã nguồn được sử dụng trong sách</li>
+<li>Danh sách các công cụ bạn có thể sử dụng cho những bài toán cụ thể mà bạn có thể gặp phải trong quy trình làm việc của mình</li>
+</ul>
+
+<p>Tôi cũng vận hành một máy chủ Discord về MLOps, nơi bạn được khuyến khích tham gia thảo luận và đặt các câu hỏi về cuốn sách.</p>
+
+<h2>Các quy ước được sử dụng trong sách</h2>
+
+<p>Các quy ước in ấn (typography) sau đây được sử dụng trong cuốn sách này:</p>
+
+<h3>Chữ nghiêng (Italic)</h3>
+
+<p>Chỉ các thuật ngữ mới, URL, địa chỉ email, tên tệp và phần mở rộng của tệp.</p>
+
+<h3>Độ rộng cố định (Constant width)</h3>
+
+<p>Được sử dụng cho các danh sách mã chương trình (code listing), cũng như bên trong các đoạn văn để đề cập đến các phần tử chương trình như tên biến hoặc tên hàm, cơ sở dữ liệu, kiểu dữ liệu, biến môi trường, câu lệnh và từ khóa.</p>
+
+<div class="box">
+<p class="note"><b>GHI CHÚ (NOTE):</b> Phần tử này biểu thị một ghi chú chung.</p>
+</div>
+
+<div class="box">
+<p class="note" style="border-left-color:#d9534f;"><b>CẢNH BÁO (WARNING):</b> Phần tử này chỉ thị một cảnh báo hoặc lưu ý thận trọng.</p>
+</div>
+
+<h2>Sử dụng các ví dụ mã nguồn</h2>
+
+<p>Như đã đề cập, tài liệu bổ sung (ví dụ mã nguồn, bài tập, v.v.) có sẵn để tải về tại <a href="https://oreil.ly/designing-machine-learningsystems-code">https://oreil.ly/designing-machine-learningsystems-code</a>. Nếu bạn có câu hỏi kỹ thuật hoặc gặp sự cố khi sử dụng các ví dụ mã nguồn, vui lòng gửi email tới <a href="mailto:bookquestions@oreilly.com">bookquestions@oreilly.com</a>.</p>
+
+<p>Cuốn sách này ra đời nhằm giúp bạn hoàn thành công việc của mình. Nhìn chung, nếu mã ví dụ được cung cấp cùng với cuốn sách này, bạn có thể sử dụng nó trong các chương trình và tài liệu của mình. Bạn không cần phải liên hệ với chúng tôi để xin phép trừ khi bạn sao chép lại một phần đáng kể của mã nguồn. Chẳng hạn, viết một chương trình sử dụng một vài đoạn mã từ cuốn sách này không cần xin phép. Việc bán hoặc phân phối các ví dụ từ sách của O'Reilly thì bắt buộc phải xin phép. Trả lời một câu hỏi bằng cách trích dẫn cuốn sách này và dẫn lại mã ví dụ không cần xin phép. Việc đưa một lượng đáng kể mã ví dụ từ cuốn sách này vào tài liệu sản phẩm của bạn thì bắt buộc phải xin phép.</p>
+
+<p>Chúng tôi rất trân trọng, nhưng nhìn chung không bắt buộc ghi công (attribution). Việc ghi công thường bao gồm tiêu đề sách, tác giả, nhà xuất bản và mã ISBN. Ví dụ: "<i>Designing Machine Learning Systems</i> của Chip Huyen (O'Reilly). Bản quyền 2022 Huyen Thi Khanh Nguyen, 978-1-098-10796-3."</p>
+
+<p>Nếu bạn cảm thấy việc sử dụng mã ví dụ của mình nằm ngoài phạm vi sử dụng hợp lý (fair use) hoặc ngoài sự cho phép ở trên, xin vui lòng liên hệ với chúng tôi qua địa chỉ email <a href="mailto:permissions@oreilly.com">permissions@oreilly.com</a>.</p>
+
+<h2>Nền tảng học trực tuyến O'Reilly</h2>
+
+<div class="box">
+<p class="note"><b>GHI CHÚ:</b> Trong hơn 40 năm qua, O'Reilly Media đã cung cấp đào tạo về công nghệ và kinh doanh, tri thức cùng những hiểu biết sâu sắc để giúp các công ty thành công.</p>
+</div>
+
+<p>Mạng lưới chuyên gia và các nhà đổi mới độc đáo của chúng tôi chia sẻ tri thức và chuyên môn của họ thông qua sách báo, bài viết và nền tảng học tập trực tuyến của chúng tôi. Nền tảng học trực tuyến của O'Reilly cung cấp cho bạn quyền truy cập theo nhu cầu vào các khóa đào tạo trực tiếp, các lộ trình học tập chuyên sâu, các môi trường lập trình tương tác, cùng một kho tàng văn bản và video khổng lồ từ O'Reilly và hơn 200 nhà xuất bản khác. Để biết thêm thông tin, hãy truy cập <a href="https://oreilly.com">https://oreilly.com</a>.</p>
+
+<h2>Cách liên hệ với chúng tôi</h2>
+
+<p>Xin vui lòng gửi các ý kiến đóng góp và câu hỏi liên quan đến cuốn sách này tới nhà xuất bản:</p>
+
+<ul>
+<li>O'Reilly Media, Inc.</li>
+<li>1005 Gravenstein Highway North</li>
+<li>Sebastopol, CA 95472</li>
+<li>800-998-9938 (tại Hoa Kỳ hoặc Canada)</li>
+<li>707-829-0515 (quốc tế hoặc nội hạt)</li>
+<li>707-829-0104 (fax)</li>
+</ul>
+
+<p>Chúng tôi có một trang web dành riêng cho cuốn sách này, nơi chúng tôi liệt kê các đính chính (errata), các ví dụ và bất kỳ thông tin bổ sung nào. Bạn có thể truy cập trang này tại <a href="https://oreil.ly/designing-machine-learning-systems">https://oreil.ly/designing-machine-learning-systems</a>. Gửi email tới <a href="mailto:bookquestions@oreilly.com">bookquestions@oreilly.com</a> để bình luận hoặc đặt các câu hỏi kỹ thuật về cuốn sách này. Để biết tin tức và thông tin về sách cũng như các khóa học của chúng tôi, hãy truy cập <a href="https://oreilly.com">https://oreilly.com</a>. Tìm chúng tôi trên LinkedIn: <a href="https://linkedin.com/company/oreilly-media">https://linkedin.com/company/oreilly-media</a>. Theo dõi chúng tôi trên Twitter: <a href="https://twitter.com/oreillymedia">https://twitter.com/oreillymedia</a>.</p>
+
+<p>Xem chúng tôi trên YouTube: <a href="https://youtube.com/oreillymedia">https://youtube.com/oreillymedia</a></p>
+
+<h2>Lời cảm ơn</h2>
+
+<p>Cuốn sách này đã mất hai năm để viết, và nhiều năm trước đó để chuẩn bị. Nhìn lại, tôi vừa kinh ngạc vừa vô cùng biết ơn trước sự giúp đỡ to lớn mà mình đã nhận được trong quá trình viết cuốn sách này. Tôi đã cố gắng hết sức để đưa tên của tất cả những người đã giúp đỡ tôi vào đây, nhưng do những thiếu sót cố hữu trong trí nhớ của con người, chắc chắn tôi đã vô tình bỏ sót nhiều người. Nếu tôi lỡ quên không nhắc đến tên bạn, xin hãy hiểu rằng đó không phải là vì tôi không trân trọng đóng góp của bạn, và xin hãy vui lòng nhắc tôi để tôi có thể khắc phục sớm nhất có thể!</p>
+
+<p>Trước hết và trên hết, tôi muốn cảm ơn đội ngũ trợ giảng của khóa học, những người đã giúp tôi phát triển khóa học và các tài liệu làm nền tảng cho cuốn sách này: Michael Cooper, Xi Yin, Chloe He, Kinbert Chou, Megan Leszczynski, Karan Goel và Michele Catasta. Tôi muốn cảm ơn các giáo sư của mình, Christopher Ré và Mehran Sahami, những người mà nếu không có họ thì khóa học đã không thể tồn tại ngay từ đầu. Tôi muốn gửi lời cảm ơn đến một danh sách dài các chuyên gia bình duyệt (reviewer), những người không chỉ dành cho tôi sự khích lệ mà còn giúp nâng cao chất lượng cuốn sách lên nhiều bậc: Eugene Yan, Josh Wills, Han-chung Lee, Thomas Dietterich, Irene Tematelewo, Goku Mohandas, Jacopo Tagliabue, Andrey Kurenkov, Zach Nussbaum, Jay Chia, Laurens Geffert, Brian Spiering, Erin Ledell, Rosanne Liu, Chin Ling, Shreya Shankar và Sara Hooker. Tôi muốn cảm ơn tất cả những độc giả đã đọc phiên bản phát hành sớm (early release) của cuốn sách và đóng góp cho tôi những ý tưởng về cách cải thiện sách, bao gồm Charles Frye, Xintong Yu, Jordan Zhang, Jonathon Belotti và Cynthia Yu. Dĩ nhiên, cuốn sách này sẽ không thể hoàn thành nếu thiếu đội ngũ tại O'Reilly, đặc biệt là biên tập viên phát triển của tôi, Jill Leonard, cùng các biên tập viên sản xuất của tôi, Kristen Brown, Sharon Tripp và Gregory Hyman. Tôi xin cảm ơn Laurence Moroney, Hannes Hapke và Rebecca Novack, những người đã giúp tôi đưa cuốn sách này từ một ý tưởng thành một bản đề xuất chính thức. Sau cùng, cuốn sách này là sự tích lũy của những bài học vô giá mà tôi đã đúc rút được trong suốt sự nghiệp của mình cho đến nay. Tôi có được những bài học này là nhờ những người đồng nghiệp và cựu đồng nghiệp vô cùng tài năng và kiên nhẫn tại Claypot AI, Primer AI, Netflix, NVIDIA và Snorkel AI. Mỗi người mà tôi từng làm việc cùng đều đã dạy cho tôi điều gì đó mới mẻ về việc đưa ML vào thế giới thực. Lời cảm ơn đặc biệt xin gửi tới người đồng sáng lập của tôi, Zhenzhong Xu, vì đã gánh vác mọi vấn đề phát sinh tại công ty khởi nghiệp của chúng tôi, cho phép tôi dành thời gian cho cuốn sách này. Cảm ơn Luke, vì đã luôn ủng hộ hết mình cho mọi điều tôi muốn làm, bất kể điều đó có tham vọng đến đâu.</p>
+
+<!-- BOOKMARK & READING PROGRESS SYSTEM -->
+<div id="read-progress" style="position:fixed;top:0;left:0;height:3px;background:#2563eb;width:0%;z-index:9999;transition:width .1s linear;"></div>
+
+<div id="bookmark-widget" style="position:fixed;bottom:20px;right:20px;z-index:9999;font-family:system-ui,-apple-system,sans-serif;font-size:13px;display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+  <div id="bm-prompt" style="display:none;background:#1e293b;color:#fff;padding:8px 12px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);max-width:260px;line-height:1.4;">
+    <span>Đọc tiếp từ lần trước (<span id="bm-saved-pct">0%</span>)?</span>
+    <div style="margin-top:6px;display:flex;gap:6px;">
+      <button id="bm-resume-btn" style="background:#2563eb;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-weight:600;">Tiếp tục</button>
+      <button id="bm-dismiss-btn" style="background:#475569;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">Bỏ qua</button>
+    </div>
+  </div>
+  
+  <div style="display:flex;align-items:center;background:#fff;border:1px solid #cbd5e1;box-shadow:0 2px 8px rgba(0,0,0,0.1);border-radius:24px;padding:4px 10px;gap:8px;">
+    <span id="bm-pct-display" style="color:#64748b;font-weight:600;min-width:32px;">0%</span>
+    <button id="bm-mark-btn" title="Đánh dấu vị trí hiện tại" style="background:#2563eb;color:#fff;border:none;padding:5px 10px;border-radius:16px;cursor:pointer;font-weight:500;display:flex;align-items:center;gap:4px;">
+      🔖 Đánh dấu
+    </button>
+    <button id="bm-jump-btn" title="Nhảy đến vị trí đã đánh dấu" style="background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;padding:5px 10px;border-radius:16px;cursor:pointer;font-weight:500;display:none;">
+      📌 Về mốc
+    </button>
+  </div>
+</div>
+
+<style>
+.bm-bookmarked {
+  border-left: 4px solid #2563eb !important;
+  background-color: rgba(37, 99, 235, 0.08) !important;
+  padding-left: 10px !important;
+  border-radius: 4px !important;
+  transition: all 0.3s ease;
+}
+@media (prefers-color-scheme: dark) {
+  #bookmark-widget > div:last-child {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+  }
+  #bm-jump-btn {
+    background: #334155 !important;
+    color: #e2e8f0 !important;
+    border-color: #475569 !important;
+  }
+  .bm-bookmarked {
+    background-color: rgba(37, 99, 235, 0.2) !important;
+  }
+}
+</style>
+
+<script>
+(function() {
+  const pageKey = 'reader_bm_' + (location.pathname.split('/').pop() || 'index');
+  const progressBar = document.getElementById('read-progress');
+  const pctDisplay = document.getElementById('bm-pct-display');
+  const promptBox = document.getElementById('bm-prompt');
+  const savedPctSpan = document.getElementById('bm-saved-pct');
+  const resumeBtn = document.getElementById('bm-resume-btn');
+  const dismissBtn = document.getElementById('bm-dismiss-btn');
+  const markBtn = document.getElementById('bm-mark-btn');
+  const jumpBtn = document.getElementById('bm-jump-btn');
+
+  let currentBookmarkedElem = null;
+
+  function getScrollPct() {
+    const h = document.documentElement, b = document.body;
+    const st = 'scrollTop' in h ? h.scrollTop : b.scrollTop;
+    const sh = ('scrollHeight' in h ? h.scrollHeight : b.scrollHeight) - h.clientHeight;
+    return sh > 0 ? Math.min(100, Math.max(0, Math.round((st / sh) * 100))) : 0;
+  }
+
+  function updateProgress() {
+    const pct = getScrollPct();
+    if (progressBar) progressBar.style.width = pct + '%';
+    if (pctDisplay) pctDisplay.textContent = pct + '%';
+  }
+
+  window.addEventListener('scroll', () => {
+    updateProgress();
+    const scrollY = window.scrollY;
+    if (scrollY > 100) {
+      try {
+        const data = JSON.parse(localStorage.getItem(pageKey) || '{}');
+        data.lastScrollY = scrollY;
+        data.lastPct = getScrollPct();
+        localStorage.setItem(pageKey, JSON.stringify(data));
+      } catch(e) {}
+    }
+  }, { passive: true });
+
+  function highlightElem(elem) {
+    if (currentBookmarkedElem) currentBookmarkedElem.classList.remove('bm-bookmarked');
+    if (elem) {
+      elem.classList.add('bm-bookmarked');
+      currentBookmarkedElem = elem;
+    }
+  }
+
+  function getElementPath(el) {
+    if (!el || el === document.body) return '';
+    const idx = Array.from(el.parentNode.children).indexOf(el);
+    return el.tagName + ':' + idx;
+  }
+
+  function findElementByPath(path) {
+    if (!path) return null;
+    const [tag, idx] = path.split(':');
+    const els = document.body.querySelectorAll(tag);
+    return els[parseInt(idx, 10)] || null;
+  }
+
+  function saveManualBookmark() {
+    const els = document.querySelectorAll('p, h1, h2, h3, h4, h5, table, .box');
+    let target = null;
+    for (const el of els) {
+      const rect = el.getBoundingClientRect();
+      if (rect.top >= 40 && rect.top <= window.innerHeight * 0.5) {
+        target = el;
+        break;
+      }
+    }
+    const scrollY = window.scrollY;
+    const pct = getScrollPct();
+    try {
+      const data = JSON.parse(localStorage.getItem(pageKey) || '{}');
+      data.manualScrollY = scrollY;
+      data.manualPct = pct;
+      data.elemPath = target ? getElementPath(target) : '';
+      localStorage.setItem(pageKey, JSON.stringify(data));
+    } catch(e) {}
+
+    if (target) highlightElem(target);
+    markBtn.textContent = '✓ Đã lưu';
+    if (jumpBtn) jumpBtn.style.display = 'inline-block';
+    setTimeout(() => { markBtn.textContent = '🔖 Đánh dấu'; }, 2000);
+  }
+
+  markBtn.addEventListener('click', saveManualBookmark);
+
+  jumpBtn.addEventListener('click', () => {
+    try {
+      const data = JSON.parse(localStorage.getItem(pageKey) || '{}');
+      if (data.manualScrollY !== undefined) {
+        window.scrollTo({ top: data.manualScrollY, behavior: 'smooth' });
+        if (data.elemPath) {
+          const el = findElementByPath(data.elemPath);
+          if (el) highlightElem(el);
+        }
+      }
+    } catch(e) {}
+  });
+
+  function initBookmark() {
+    updateProgress();
+    try {
+      const raw = localStorage.getItem(pageKey);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      if (data.manualScrollY !== undefined) {
+        jumpBtn.style.display = 'inline-block';
+        if (data.elemPath) {
+          const el = findElementByPath(data.elemPath);
+          if (el) highlightElem(el);
+        }
+      }
+      const targetY = data.manualScrollY || data.lastScrollY;
+      const targetPct = data.manualPct || data.lastPct;
+      if (targetY && targetY > 150) {
+        savedPctSpan.textContent = targetPct + '%';
+        promptBox.style.display = 'block';
+        resumeBtn.onclick = () => {
+          window.scrollTo({ top: targetY, behavior: 'smooth' });
+          promptBox.style.display = 'none';
+        };
+        dismissBtn.onclick = () => {
+          promptBox.style.display = 'none';
+        };
+      }
+    } catch(e) {}
+  }
+
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', initBookmark);
+  } else {
+    initBookmark();
+  }
+
+  document.addEventListener('dblclick', (e) => {
+    const p = e.target.closest('p, h1, h2, h3, h4, h5, li');
+    if (p) {
+      highlightElem(p);
+      try {
+        const data = JSON.parse(localStorage.getItem(pageKey) || '{}');
+        data.manualScrollY = window.scrollY;
+        data.manualPct = getScrollPct();
+        data.elemPath = getElementPath(p);
+        localStorage.setItem(pageKey, JSON.stringify(data));
+      } catch(e) {}
+      markBtn.textContent = '✓ Đã lưu';
+      jumpBtn.style.display = 'inline-block';
+      setTimeout(() => { markBtn.textContent = '🔖 Đánh dấu'; }, 2000);
+    }
+  });
+})();
+</script>
+
+</body></html>
